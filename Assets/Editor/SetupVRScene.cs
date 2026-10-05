@@ -42,6 +42,10 @@ public static class SetupVRScene
             $"Assets/Animated Hands/Prefabs/{(side == "l" ? "Left" : "Right")} Hand Model.prefab");
         var hand = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab, controller);
         hand.name = (side == "l" ? "Left" : "Right") + " Hand Model";
+        // même placement que dans "My project" : 10 cm sous la manette, tourné de ±90° sur Z
+        hand.transform.localPosition = new Vector3(0f, -0.1f, 0f);
+        hand.transform.localRotation = Quaternion.Euler(0f, 0f, side == "l" ? 90f : -90f);
+        hand.transform.localScale = Vector3.one;
 
         var anim = hand.GetComponent<AnimateHandOnInput>() ?? hand.AddComponent<AnimateHandOnInput>();
         anim.handAnimator = hand.GetComponentInChildren<Animator>();

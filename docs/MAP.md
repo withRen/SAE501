@@ -22,8 +22,8 @@ Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **dé
 |---|---|---|
 | Bunker | Salle du joueur : établi, pupitre, 4 ouvertures | x ±2,5 · z ±3 |
 | Couloir gauche | Les zombies arrivent par le haut (z = 13) | x −5,4 à −3,8 · z −2 à 14 |
-| Cuisine | Pièce sur le côté du couloir gauche | x −10 à −5,6 · z 2 à 6 |
-| Générateur | Au bout du couloir gauche : lumières, piège électrique | x −10 à −5,6 · z 8 à 12 |
+| Cuisine | Mobilier de cuisine du fichier Blender (plan de travail, évier, four, frigo, bouilloire), même disposition que l'original | x −11 à −5,6 · z 0,6 à 6,2 |
+| Générateur | Au bout du couloir gauche : lumières, piège électrique | x −10 à −5,6 · z 8,4 à 12,4 |
 | Couloir droit | Relié au petit couloir du fichier Blender | x 4,8 à 6,4 · z −0,6 à 14 |
 | Stockage | Planches, piles, chargeurs | x 6,6 à 10,6 · z 5 à 9 |
 
@@ -32,6 +32,10 @@ Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **dé
 **Caméras** (3 écrans du pupitre) : couloir gauche, couloir droit, générateur. Elles regardent depuis le bunker vers le haut des couloirs.
 
 **Points d'apparition des zombies** : `Spawn_Gauche` et `Spawn_Droit` (objets vides en haut des couloirs, dans la hiérarchie sous `Map`).
+
+## Bunker
+
+La salle du fichier Blender était une cuisine complète. Le mobilier de cuisine a été déplacé dans la pièce **Cuisine** de la carte (objet `Cuisine_Mobilier`). Le bunker garde l'établi, les planches, le marteau, la radio, la lampe à huile et les fenêtres, et reçoit des casiers et des caisses (`Bunker_Materiel`) : plus de cuisine là où le joueur apparaît.
 
 ## État
 

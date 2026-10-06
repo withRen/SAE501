@@ -11,7 +11,7 @@ public static class RoomBuilder
 {
     const string Dir = "Assets/Generated";
 
-    static Material darkM, metalM, plankM, ghostM, pistolM, headM, nailM, batteryM, magM, lightM;
+    static Material lockerM, darkM, metalM, plankM, ghostM, pistolM, headM, nailM, batteryM, magM, lightM;
     static Transform env, items, bunkerRoot, mapRoot;
 
     // Position de départ du joueur (dans la salle importée de Blender, repère Unity)
@@ -59,6 +59,8 @@ public static class RoomBuilder
 
         BuildLights(pendant);
         MakeRoomColliders();
+        MoveKitchenToCuisine();
+        BuildBunkerProps();
         BuildSlots(slots);
         BuildPlanks(planks);
         BuildHammer(hammerNode);
@@ -93,6 +95,7 @@ public static class RoomBuilder
         pistolM = Mat("Pistol", new Color(0.12f, 0.12f, 0.13f), 0.5f);
         headM = Mat("HammerHead", new Color(0.35f, 0.36f, 0.38f), 0.5f);
         nailM = Mat("Nail", new Color(0.75f, 0.75f, 0.78f), 0.6f);
+        lockerM = Mat("Locker", new Color(0.16f, 0.20f, 0.18f), 0.35f);
         batteryM = Mat("Battery", new Color(0.25f, 0.45f, 0.30f));
         magM = Mat("Magazine", new Color(0.22f, 0.22f, 0.24f), 0.4f);
         lightM = Mat("FlashlightBar", new Color(0.9f, 0.8f, 0.3f), 0.1f, "Universal Render Pipeline/Unlit");
@@ -258,6 +261,41 @@ public static class RoomBuilder
         }
     }
 
+    // ---------- la cuisine : le mobilier du fichier Blender part dans la pièce "Cuisine" de la carte ----------
+    static readonly string[] KitchenNodes = { "KitchenCabinets_Lower", "KitchenCabinets_Upper", "Countertop", "Backsplash", "Sink", "Stove", "Fridge", "Kettle", "Pot_Enamel", "Pan_01", "Bottle_01" };
+    // centre de la pièce Cuisine (repère final) : le mobilier garde sa disposition d'origine, tourné de 90° comme le bunker
+    static readonly Vector3 CuisineCenter = new Vector3(-8.3f, 0f, 3.4f);
+
+    static void MoveKitchenToCuisine()
+    {
+        var set = new GameObject("Cuisine_Mobilier").transform;
+        set.SetParent(mapRoot, false);
+        set.SetPositionAndRotation(CuisineCenter, Quaternion.Euler(0f, 90f, 0f));
+        foreach (var n in KitchenNodes)
+        {
+            var t = Find(roomRoot.transform, n);
+            if (t == null) { Debug.LogWarning("Mobilier introuvable : " + n); continue; }
+            t.SetParent(set, false);   // garde la position locale d'origine
+        }
+    }
+
+    // matériel de bunker à la place de la cuisine : casiers métalliques et caisses (repère du fichier Blender)
+    static void BuildBunkerProps()
+    {
+        var props = new GameObject("Bunker_Materiel").transform;
+        props.SetParent(env, false);
+        // casiers le long du mur "est" (sous la fenêtre on laisse la place libre)
+        for (int i = 0; i < 3; i++)
+            Box("Casier", props, new Vector3(-2.72f, 0.95f, 1.0f + 0.52f * i), new Vector3(0.5f, 1.9f, 0.5f), lockerM);
+        Box("Casier", props, new Vector3(-2.72f, 0.95f, -2.1f), new Vector3(0.5f, 1.9f, 0.5f), lockerM);
+        // caisses côté "ouest"
+        Box("Caisse", props, new Vector3(2.5f, 0.35f, -1.75f), new Vector3(0.7f, 0.7f, 0.7f), metalM);
+        Box("Caisse", props, new Vector3(2.55f, 0.95f, -1.75f), new Vector3(0.5f, 0.5f, 0.5f), metalM, true, new Vector3(0, 20, 0));
+        Box("Caisse", props, new Vector3(2.6f, 0.3f, -0.95f), new Vector3(0.6f, 0.6f, 0.6f), metalM);
+        // étagère métallique contre le mur "ouest", près de la porte
+        Box("Etagere", props, new Vector3(2.75f, 1.0f, 2.0f), new Vector3(0.35f, 2.0f, 0.9f), darkM);
+    }
+
     static void BuildSlots(List<Pose> slots)
     {
         // 4 ouvertures x 3 emplacements : position et orientation viennent du fichier Blender
@@ -369,8 +407,8 @@ public static class RoomBuilder
     {
         var cams = new Camera[3];
         string[] names = { "CCTV_CouloirGauche", "CCTV_CouloirDroit", "CCTV_Generateur" };
-        Vector3[] pos = { new Vector3(-4.6f, 2.3f, -1.6f), new Vector3(5.6f, 2.3f, -0.4f), new Vector3(-9.6f, 2.35f, 8.3f) };
-        Vector3[] look = { new Vector3(-4.6f, 1.0f, 10f), new Vector3(5.6f, 1.0f, 10f), new Vector3(-6.4f, 0.8f, 10f) };
+        Vector3[] pos = { new Vector3(-4.6f, 2.3f, -1.6f), new Vector3(5.6f, 2.3f, -0.4f), new Vector3(-9.6f, 2.35f, 8.8f) };
+        Vector3[] look = { new Vector3(-4.6f, 1.0f, 10f), new Vector3(5.6f, 1.0f, 10f), new Vector3(-6.4f, 0.8f, 10.4f) };
         for (int i = 0; i < 3; i++)
         {
             var g = new GameObject(names[i]);
@@ -389,11 +427,11 @@ public static class RoomBuilder
     {
         blockM = Mat("Blockout", new Color(0.28f, 0.28f, 0.30f));
         float lo = -1.5f, hi = -0.5f;                        // porte de gauche du bunker (z)
-        // Gauche : petit couloir vers un long couloir, avec Cuisine (z 2..6) et Générateur (z 8..12) sur le côté
+        // Gauche : petit couloir vers un long couloir, avec Cuisine (z 0,6..6,2) et Générateur (z 8,4..12,4) sur le côté
         Hall("Couloir_Gauche_Entree", new Vector2(-3.8f, lo), new Vector2(-2.6f, hi), ('W', lo, hi), ('E', lo, hi));
-        Hall("Couloir_Gauche", new Vector2(-5.4f, -2.0f), new Vector2(-3.8f, 14.0f), ('E', lo, hi), ('W', 3.2f, 4.8f), ('W', 9.2f, 10.8f));
-        Hall("Cuisine", new Vector2(-10.0f, 2.0f), new Vector2(-5.6f, 6.0f), ('E', 3.2f, 4.8f));
-        Hall("Generateur", new Vector2(-10.0f, 8.0f), new Vector2(-5.6f, 12.0f), ('E', 9.2f, 10.8f));
+        Hall("Couloir_Gauche", new Vector2(-5.4f, -2.0f), new Vector2(-3.8f, 14.0f), ('E', lo, hi), ('W', 2.7f, 4.1f), ('W', 9.7f, 11.1f));
+        Hall("Cuisine", new Vector2(-11.0f, 0.6f), new Vector2(-5.6f, 6.2f), ('E', 2.7f, 4.1f));
+        Hall("Generateur", new Vector2(-10.0f, 8.4f), new Vector2(-5.6f, 12.4f), ('E', 9.7f, 11.1f));
         // Droite : le couloir existant du fichier Blender (au bout de la porte sud) mène à un long couloir avec le Stockage
         Hall("Couloir_Droit", new Vector2(4.8f, -0.6f), new Vector2(6.4f, 14.0f), ('E', 6.2f, 7.8f));
         Hall("Stockage", new Vector2(6.6f, 5.0f), new Vector2(10.6f, 9.0f), ('W', 6.2f, 7.8f));
@@ -410,7 +448,8 @@ public static class RoomBuilder
         foreach (var (n, p, c) in new[] {
             ("Lumiere_CouloirGauche", new Vector3(-4.6f, 2.3f, 6f), new Color(0.45f, 0.55f, 0.7f)),
             ("Lumiere_CouloirDroit", new Vector3(5.6f, 2.3f, 6f), new Color(0.45f, 0.55f, 0.7f)),
-            ("Lumiere_Generateur", new Vector3(-7.8f, 2.3f, 10f), new Color(0.35f, 0.7f, 0.45f)) })
+            ("Lumiere_Generateur", new Vector3(-7.8f, 2.3f, 10.4f), new Color(0.35f, 0.7f, 0.45f)),
+            ("Lumiere_Cuisine", new Vector3(-8.3f, 2.3f, 3.4f), new Color(0.6f, 0.5f, 0.4f)) })
         {
             var lg = new GameObject(n);
             lg.transform.SetParent(mapRoot, false);

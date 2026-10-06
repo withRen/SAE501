@@ -16,6 +16,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [001](#001--journal-des-prompts) | 2026-10-06 | Journal des prompts | Documentation | Fichier créé |
 | [002](#002--vérification-du-dépôt-par-rapport-au-document-de-lancement-de-la-saé) | 2026-10-06 | Vérification du dépôt vs document de lancement SAÉ | GitHub / organisation | Bilan fourni |
 | [003](#003--nom-du-jeu) | 2026-10-06 | Nom du jeu : The Last Escapor | Documentation | Renommé partout |
+| [004](#004--readme) | 2026-10-06 | README du dépôt | Documentation | README.md créé |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -112,3 +113,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - L'identifiant technique de l'appli (`com.sae501.vr`) et le nom du dépôt (`SAE501`) ne changent pas, pour ne pas casser les installations existantes.
 
 **Liens** : commit de cette entrée · release v0.1.0
+
+---
+
+### 004 — README
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Documentation |
+| **Statut** | Fait |
+
+**Prompt**
+
+> Fait moi le readme d'abord
+
+**Résultat**
+
+- Création de `README.md` à la racine : pitch, description du jeu, état d'avancement, contrôles, technique (versions), ouverture du projet, build Quest, avertissement sur la scène générée par script, organisation du code, liens vers les documents, organisation du groupe, calendrier, usage de l'IA, crédits, problèmes connus.
+- Le GDD (`docs/GDD.md`) est annoncé mais pas encore écrit.
+
+**Liens** : [README.md](../README.md)

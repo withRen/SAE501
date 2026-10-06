@@ -9,8 +9,8 @@ public class Nail : MonoBehaviour
     public GameObject visual;
     public Collider col;
     public int hitsNeeded = 3;
-    public float restZ = 0.06f;
-    public float drivenZ = -0.015f;
+    public float restZ = 0.05f;
+    public float drivenZ = -0.025f;
 
     int hits;
     float lastHit;

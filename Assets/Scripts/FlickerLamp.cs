@@ -5,7 +5,10 @@ public class FlickerLamp : MonoBehaviour
 {
     public Light lamp;
     public Renderer bulb;
+    public int bulbMaterialIndex;
     public float baseIntensity = 6f;
+    public float burstMinGap = 2f;
+    public float burstMaxGap = 7f;
 
     float burstEnd, nextBurst;
     Material bulbMat;
@@ -13,7 +16,12 @@ public class FlickerLamp : MonoBehaviour
     void Start()
     {
         nextBurst = Time.time + Random.Range(1f, 4f);
-        if (bulb) bulbMat = bulb.material;
+        if (bulb)
+        {
+            var mats = bulb.materials;   // instances, pour ne pas modifier l'asset
+            bulb.materials = mats;
+            bulbMat = mats[Mathf.Clamp(bulbMaterialIndex, 0, mats.Length - 1)];
+        }
     }
 
     void Update()
@@ -22,7 +30,7 @@ public class FlickerLamp : MonoBehaviour
         if (Time.time >= nextBurst)
         {
             burstEnd = Time.time + Random.Range(0.15f, 0.5f);
-            nextBurst = burstEnd + Random.Range(2f, 7f);
+            nextBurst = burstEnd + Random.Range(burstMinGap, burstMaxGap);
         }
         if (Time.time < burstEnd)
             k *= Random.value < 0.5f ? Random.Range(0.03f, 0.4f) : Random.Range(0.8f, 1f);

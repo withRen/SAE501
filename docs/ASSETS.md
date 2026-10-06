@@ -5,6 +5,15 @@
 
 ---
 
+## 0. Pièce principale (fournie par l'équipe)
+
+| Asset | Usage | Statut | Fichier |
+|---|---|---|---|
+| LastBoardStanding_Kitchen.blend | Salle principale : murs, fenêtres, portes, établi, mobilier, couloir sud, emplacements de planches (`PlankSlot_*`) | ✅ importé | `Assets/Room/` |
+
+Réimport : exporter depuis Blender en FBX (axes Y haut / -Z avant), puis menu **SAE501 → Salle → 1 - Importer la salle**, puis **SAE501 → Build VR Scene**.
+Textures issues de Poly Haven (CC0) et modèles Poly Haven (CC0).
+
 ## 1. Armes et outils (le kit du joueur)
 
 | Asset | Usage dans le jeu | Tâches liées | Priorité | Statut | Lien |

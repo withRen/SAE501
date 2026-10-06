@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -9,8 +11,12 @@ public static class RoomBuilder
 {
     const string Dir = "Assets/Generated";
 
-    static Material wallM, floorM, ceilM, darkM, metalM, plankM, doorM, ghostM, bulbM, pistolM, headM, nailM, batteryM, magM, lightM;
+    static Material darkM, metalM, plankM, ghostM, pistolM, headM, nailM, batteryM, magM, lightM;
     static Transform env, items;
+
+    // Position de départ du joueur (dans la salle importée de Blender, repère Unity)
+    static readonly Vector3 Spawn = new Vector3(0.8f, 0f, 1.35f);
+    static GameObject roomRoot;
 
     public static void Populate(GameObject rig)
     {
@@ -23,22 +29,36 @@ public static class RoomBuilder
         // ambiance sombre
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.035f, 0.035f, 0.04f);
+        RenderSettings.ambientLight = new Color(0.02f, 0.02f, 0.025f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.02f, 0.02f, 0.025f);
         RenderSettings.fogDensity = 0.03f;
 
+        rig.transform.position = Spawn;
         var cam = rig.GetComponentInChildren<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = Color.black;
 
-        BuildRoom();
-        BuildLamp();
-        var corridorCams = BuildCorridors();
-        BuildMonitors(rig, cam, corridorCams);
-        BuildWorkbench();
-        BuildDoors();
+        var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(RoomImport.FbxPath);
+        if (fbx == null) { Debug.LogError("Salle introuvable : lance d'abord SAE501 > Salle > 1 - Importer la salle"); return; }
+        roomRoot = Object.Instantiate(fbx);
+        roomRoot.name = "Room (Blender)";
+        roomRoot.transform.SetParent(env, false);
+
+        var slots = CollectSlots(roomRoot.transform);
+        var planks = CollectPlanks(roomRoot.transform);
+        var hammerNode = Find(roomRoot.transform, "Hammer");
+        var pendant = Find(roomRoot.transform, "CeilingPendant");
+
+        BuildLights(pendant);
+        MakeRoomColliders();
+        BuildSlots(slots);
+        BuildPlanks(planks);
+        BuildHammer(hammerNode);
+        var feeds = BuildCameras();
+        BuildMonitors(rig, cam, feeds);
+        BuildBatteries();
         BuildBelt(rig, cam);
 
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
@@ -56,24 +76,15 @@ public static class RoomBuilder
 
     static void MakeMaterials()
     {
-        wallM = Mat("Wall", new Color(0.30f, 0.30f, 0.32f));
-        floorM = Mat("Floor", new Color(0.20f, 0.20f, 0.21f));
-        ceilM = Mat("Ceiling", new Color(0.24f, 0.24f, 0.25f));
         darkM = Mat("Dark", new Color(0.10f, 0.10f, 0.11f), 0.3f);
         metalM = Mat("Metal", new Color(0.45f, 0.46f, 0.48f), 0.4f);
         plankM = Mat("Plank", new Color(0.55f, 0.52f, 0.48f));
-        doorM = Mat("Door", new Color(0.18f, 0.18f, 0.20f), 0.2f);
         pistolM = Mat("Pistol", new Color(0.12f, 0.12f, 0.13f), 0.5f);
         headM = Mat("HammerHead", new Color(0.35f, 0.36f, 0.38f), 0.5f);
         nailM = Mat("Nail", new Color(0.75f, 0.75f, 0.78f), 0.6f);
         batteryM = Mat("Battery", new Color(0.25f, 0.45f, 0.30f));
         magM = Mat("Magazine", new Color(0.22f, 0.22f, 0.24f), 0.4f);
         lightM = Mat("FlashlightBar", new Color(0.9f, 0.8f, 0.3f), 0.1f, "Universal Render Pipeline/Unlit");
-
-        bulbM = Mat("Bulb", new Color(1f, 0.85f, 0.6f));
-        bulbM.EnableKeyword("_EMISSION");
-        bulbM.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-        bulbM.SetColor("_EmissionColor", new Color(1f, 0.8f, 0.5f) * 2.5f);
 
         ghostM = Mat("Ghost", new Color(0.2f, 1f, 0.4f, 0.3f), 0f, "Universal Render Pipeline/Unlit");
         ghostM.SetFloat("_Surface", 1f);
@@ -123,111 +134,258 @@ public static class RoomBuilder
         return grab;
     }
 
-    // ---------- salle ----------
-    static void BuildRoom()
+    // ---------- salle importée ----------
+    static Transform Find(Transform root, string name)
     {
-        Box("Floor", env, new Vector3(0, -0.1f, 0), new Vector3(6.4f, 0.2f, 6.4f), floorM);
-        Box("Ceiling", env, new Vector3(0, 3.1f, 0), new Vector3(6.4f, 0.2f, 6.4f), ceilM);
-        Box("Wall_Back", env, new Vector3(0, 1.5f, -3.1f), new Vector3(6.4f, 3f, 0.2f), wallM);
-        Box("Wall_Front", env, new Vector3(0, 1.5f, 3.1f), new Vector3(6.4f, 3f, 0.2f), wallM);
-
-        // murs gauche / droit avec ouverture de porte (z -0.5..0.5, h 2.1)
-        foreach (float sx in new[] { -1f, 1f })
-        {
-            string n = sx < 0 ? "Left" : "Right";
-            float x = 3.1f * sx;
-            Box($"Wall_{n}_A", env, new Vector3(x, 1.5f, -1.85f), new Vector3(0.2f, 3f, 2.7f), wallM);
-            Box($"Wall_{n}_B", env, new Vector3(x, 1.5f, 1.85f), new Vector3(0.2f, 3f, 2.7f), wallM);
-            Box($"Wall_{n}_Lintel", env, new Vector3(x, 2.55f, 0f), new Vector3(0.2f, 0.9f, 1f), wallM);
-        }
-
-        // quelques caisses pour casser le volume
-        Box("Crate_1", env, new Vector3(2.5f, 0.35f, 2.4f), new Vector3(0.7f, 0.7f, 0.7f), metalM);
-        Box("Crate_2", env, new Vector3(-2.5f, 0.25f, 2.5f), new Vector3(0.5f, 0.5f, 0.5f), metalM);
+        foreach (var t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+        return null;
     }
 
-    static void BuildLamp()
-    {
-        var g = new GameObject("CeilingLamp");
-        g.transform.SetParent(env, false);
-        Prim(PrimitiveType.Cylinder, "Cord", g.transform, new Vector3(0, 2.85f, 0), new Vector3(0.01f, 0.15f, 0.01f), darkM);
-        Prim(PrimitiveType.Cylinder, "Shade", g.transform, new Vector3(0, 2.7f, 0), new Vector3(0.3f, 0.04f, 0.3f), metalM);
-        var bulb = Prim(PrimitiveType.Sphere, "Bulb", g.transform, new Vector3(0, 2.62f, 0), Vector3.one * 0.09f, bulbM);
+    struct Pose { public string name; public Vector3 pos; public Quaternion rot; public Mesh mesh; public Material[] mats; }
 
+    static List<Pose> CollectSlots(Transform root)
+    {
+        var res = new List<Pose>();
+        foreach (var t in root.GetComponentsInChildren<Transform>(true).Where(x => x.name.StartsWith("PlankSlot_")).ToList())
+        {
+            res.Add(new Pose { name = t.name, pos = t.position, rot = t.rotation });
+            Object.DestroyImmediate(t.gameObject);
+        }
+        return res;
+    }
+
+    static List<Pose> CollectPlanks(Transform root)
+    {
+        var res = new List<Pose>();
+        foreach (var t in root.GetComponentsInChildren<Transform>(true).Where(x => x.name.StartsWith("Plank_")).OrderBy(x => x.name).ToList())
+        {
+            var mf = t.GetComponent<MeshFilter>();
+            res.Add(new Pose { name = t.name, pos = t.position, rot = t.rotation, mesh = mf.sharedMesh, mats = t.GetComponent<Renderer>().sharedMaterials });
+            Object.DestroyImmediate(t.gameObject);
+        }
+        return res;
+    }
+
+    static readonly string[] NoCollider = { "Floor_Debris", "Floor_Papers", "Rug", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "CrankRadio_Handle" };
+
+    static void MakeRoomColliders()
+    {
+        foreach (var r in roomRoot.GetComponentsInChildren<MeshRenderer>(true))
+        {
+            GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic);
+            if (NoCollider.Any(n => r.name.StartsWith(n))) continue;
+            r.gameObject.AddComponent<BoxCollider>();
+        }
+    }
+
+    static void BuildLights(Transform pendant)
+    {
+        // lampe suspendue qui grésille (au centre, au-dessus de l'établi)
         var lg = new GameObject("LampLight");
-        lg.transform.SetParent(g.transform, false);
-        lg.transform.localPosition = new Vector3(0, 2.55f, 0);
+        lg.transform.SetParent(env, false);
+        lg.transform.position = new Vector3(0, 1.85f, 0);
         var l = lg.AddComponent<Light>();
         l.type = LightType.Point;
         l.color = new Color(1f, 0.78f, 0.5f);
-        l.range = 9f;
-        l.intensity = 6f;
+        l.range = 7f;
+        l.intensity = 2.2f;
         l.shadows = LightShadows.None;
 
-        var f = g.AddComponent<FlickerLamp>();
-        f.lamp = l;
-        f.bulb = bulb.GetComponent<Renderer>();
-        f.baseIntensity = 6f;
-    }
+        var bulbMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Room/Materials/BulbOff.mat");
+        bulbMat.EnableKeyword("_EMISSION");
+        bulbMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        bulbMat.SetColor("_EmissionColor", new Color(1f, 0.8f, 0.5f) * 2.5f);
+        EditorUtility.SetDirty(bulbMat);
 
-    // couloirs derrière les portes (pour avoir quelque chose à filmer) -> retourne 2 caméras
-    static Camera[] BuildCorridors()
-    {
-        var cams = new Camera[3];
-        int i = 0;
+        var f = lg.AddComponent<FlickerLamp>();
+        f.lamp = l;
+        f.bulb = pendant.GetComponent<Renderer>();
+        f.bulbMaterialIndex = 2;          // 3e matériau du pendentif = ampoule (BulbOff)
+        f.baseIntensity = 2.2f;
+
+        // lampe à huile sur l'établi
+        var oil = Find(roomRoot.transform, "OilLamp");
+        var og = new GameObject("OilLampLight");
+        og.transform.SetParent(env, false);
+        og.transform.position = oil.position + new Vector3(0, 0.18f, 0);
+        var ol = og.AddComponent<Light>();
+        ol.type = LightType.Point;
+        ol.color = new Color(1f, 0.52f, 0.18f);
+        ol.range = 3.5f;
+        ol.intensity = 0.8f;
+        ol.shadows = LightShadows.None;
+        var of = og.AddComponent<FlickerLamp>();
+        of.lamp = ol;
+        of.baseIntensity = 0.8f;
+        of.burstMinGap = 4f;
+        of.burstMaxGap = 12f;
+
+        // clair de lune par les deux fenêtres (est : x = -3, ouest : x = +3)
         foreach (float sx in new[] { -1f, 1f })
         {
-            string n = sx < 0 ? "Left" : "Right";
-            var c = new GameObject($"Corridor_{n}").transform;
-            c.SetParent(env, false);
-            float cx = 5.1f * sx;
-            Box("Floor", c, new Vector3(cx, -0.05f, 0), new Vector3(3.8f, 0.1f, 3.2f), floorM);
-            Box("Ceiling", c, new Vector3(cx, 2.65f, 0), new Vector3(3.8f, 0.1f, 3.2f), ceilM);
-            Box("Far", c, new Vector3(7.05f * sx, 1.3f, 0), new Vector3(0.1f, 2.6f, 3.2f), wallM);
-            Box("Side_A", c, new Vector3(cx, 1.3f, -1.55f), new Vector3(3.8f, 2.6f, 0.1f), wallM);
-            Box("Side_B", c, new Vector3(cx, 1.3f, 1.55f), new Vector3(3.8f, 2.6f, 0.1f), wallM);
-            Box("Pillar", c, new Vector3(5.8f * sx, 1.3f, -0.9f), new Vector3(0.4f, 2.6f, 0.4f), metalM);
-
-            var lg = new GameObject("CorridorLight");
-            lg.transform.SetParent(c, false);
-            lg.transform.position = new Vector3(5.7f * sx, 2.2f, 0);
-            var l = lg.AddComponent<Light>();
-            l.type = LightType.Point;
-            l.color = sx < 0 ? new Color(0.5f, 0.6f, 1f) : new Color(1f, 0.5f, 0.45f);
-            l.range = 2.8f;
-            l.intensity = 2f;
-            l.shadows = LightShadows.None;
-
-            var cg = new GameObject($"CCTV_{n}Door");
-            cg.transform.SetParent(env, false);
-            cg.transform.position = new Vector3(6.7f * sx, 2.3f, 0);
-            cg.transform.LookAt(new Vector3(3.1f * sx, 1.0f, 0));
-            cams[i++] = cg.AddComponent<Camera>();
+            var mg = new GameObject(sx < 0 ? "Moon_East" : "Moon_West");
+            mg.transform.SetParent(env, false);
+            mg.transform.position = new Vector3(4.9f * sx, 2.5f, sx < 0 ? -0.3f : 0f);
+            mg.transform.LookAt(new Vector3(2.0f * sx, 0.6f, sx < 0 ? -0.3f : 0f));
+            var ml = mg.AddComponent<Light>();
+            ml.type = LightType.Spot;
+            ml.color = new Color(0.42f, 0.56f, 1f);
+            ml.spotAngle = 70f;
+            ml.range = 9f;
+            ml.intensity = 9f;
+            ml.shadows = LightShadows.None;
         }
+    }
 
-        var rg = new GameObject("CCTV_Room");
-        rg.transform.SetParent(env, false);
-        rg.transform.position = new Vector3(2.8f, 2.8f, -2.8f);
-        rg.transform.LookAt(new Vector3(0, 1.0f, 0));
-        cams[2] = rg.AddComponent<Camera>();
+    static void BuildSlots(List<Pose> slots)
+    {
+        // 4 ouvertures x 3 emplacements : position et orientation viennent du fichier Blender
+        var holder = new GameObject("BarricadeSlots").transform;
+        holder.SetParent(env, false);
+        foreach (var p in slots)
+        {
+            var s = new GameObject(p.name.Replace("PlankSlot_", "Slot_"));
+            s.transform.SetParent(holder, false);
+            s.transform.SetPositionAndRotation(p.pos, p.rot);
+            var ghost = Box("Ghost", s.transform, Vector3.zero, new Vector3(1.24f, 0.18f, 0.04f), ghostM, false);
+            var gr = ghost.GetComponent<Renderer>();
+            gr.enabled = false;   // visible uniquement quand une planche est en main
+            s.AddComponent<BarricadeSlot>().ghost = gr;
+        }
+    }
+
+    static void BuildPlanks(List<Pose> planks)
+    {
+        // les 5 premières sont empilées sur l'établi (comme dans le fichier) ; les 3 autres sont posées au sol, près de la porte sud
+        // Le maillage du fichier est à plat : le "dessus" de la planche (axe Z du composant) doit regarder vers le haut.
+        var flat = Quaternion.Euler(-90, 0, 0);
+        for (int i = 0; i < planks.Count; i++)
+        {
+            var p = planks[i];
+            Vector3 pos; Quaternion rot;
+            if (i < 5)
+            {
+                pos = new Vector3(p.pos.x, 0.916f + 0.032f * i, p.pos.z);
+                rot = Quaternion.Euler(0, p.rot.eulerAngles.y, 0) * flat;
+            }
+            else
+            {
+                pos = new Vector3(-1.7f, 0.02f + 0.032f * (i - 5), 1.35f);
+                rot = flat;
+            }
+            MakePlank(pos, rot, p.mesh, p.mats);
+        }
+    }
+
+    static void BuildHammer(Transform node)
+    {
+        var mesh = node.GetComponent<MeshFilter>().sharedMesh;
+        var mats = node.GetComponent<Renderer>().sharedMaterials;
+        var pos = node.position;
+        Object.DestroyImmediate(node.gameObject);
+
+        // l'axe le plus long du maillage devient l'axe Y du marteau ; le bout le plus large est la tête
+        var v = mesh.vertices; var b = mesh.bounds;
+        int ax = b.size.x >= b.size.y && b.size.x >= b.size.z ? 0 : (b.size.y >= b.size.z ? 1 : 2);
+        float len = b.size[ax], lo = b.min[ax], hi = b.max[ax];
+        Vector3 SliceCenter(bool high, out Vector3 ext)
+        {
+            Vector3 mn = Vector3.one * 1e9f, mx = -Vector3.one * 1e9f, sum = Vector3.zero; int n = 0;
+            foreach (var p in v)
+            {
+                bool inSlice = high ? p[ax] > hi - 0.22f * len : p[ax] < lo + 0.22f * len;
+                if (!inSlice) continue;
+                mn = Vector3.Min(mn, p); mx = Vector3.Max(mx, p); sum += p; n++;
+            }
+            ext = mx - mn;
+            return sum / Mathf.Max(1, n);
+        }
+        var cHi = SliceCenter(true, out var eHi); var cLo = SliceCenter(false, out var eLo);
+        float crossHi = eHi.x * eHi.y * eHi.z / Mathf.Max(1e-6f, eHi[ax]), crossLo = eLo.x * eLo.y * eLo.z / Mathf.Max(1e-6f, eLo[ax]);
+        bool headHigh = crossHi >= crossLo;
+        Vector3 headC = headHigh ? cHi : cLo, headExt = headHigh ? eHi : eLo;
+        Vector3 axisDir = Vector3.zero; axisDir[ax] = headHigh ? 1f : -1f;
+        var q = Quaternion.FromToRotation(axisDir, Vector3.up);
+
+        var h = new GameObject("Hammer");
+        h.transform.SetParent(items, false);
+        h.transform.position = pos + new Vector3(0, 0.08f, 0);
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(h.transform, false);
+        vis.transform.localRotation = q;
+        vis.transform.localPosition = -(q * b.center);
+        vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+        vis.AddComponent<MeshRenderer>().sharedMaterials = mats;
+
+        var hc = q * headC + vis.transform.localPosition;
+        var hs = new Vector3(Mathf.Abs((q * headExt).x), Mathf.Abs((q * headExt).y), Mathf.Abs((q * headExt).z));
+        var head = new GameObject("Head");
+        head.transform.SetParent(h.transform, false);
+        head.transform.localPosition = hc;
+        var hbc = head.AddComponent<BoxCollider>();
+        hbc.size = hs + Vector3.one * 0.02f;
+        head.AddComponent<HammerHead>();
+
+        var handle = new GameObject("HandleCollider");
+        handle.transform.SetParent(h.transform, false);
+        var hb = handle.AddComponent<BoxCollider>();
+        hb.size = new Vector3(0.03f, len, 0.03f);
+
+        var attach = new GameObject("Attach").transform;
+        attach.SetParent(h.transform, false);
+        attach.localPosition = new Vector3(0, -len * 0.18f, 0);
+
+        h.AddComponent<Rigidbody>();
+        hammerGrab = MakeGrab(h, attach);
+        h.AddComponent<BeltItem>().type = BeltItemType.Hammer;
+        h.AddComponent<Hammer>();
+    }
+    static XRGrabInteractable hammerGrab;
+
+    // 3 caméras de surveillance : couloir sud, et deux coins de la salle
+    static Camera[] BuildCameras()
+    {
+        var cams = new Camera[3];
+        string[] names = { "CCTV_Corridor", "CCTV_Room_SW", "CCTV_Room_NE" };
+        Vector3[] pos = { new Vector3(-0.8f, 2.35f, 2.45f), new Vector3(2.8f, 2.5f, 2.3f), new Vector3(-2.8f, 2.5f, -2.3f) };
+        Vector3[] look = { new Vector3(-0.8f, 1.0f, 4.6f), new Vector3(-1.0f, 1.0f, -1.0f), new Vector3(1.0f, 1.0f, 1.0f) };
+        for (int i = 0; i < 3; i++)
+        {
+            var g = new GameObject(names[i]);
+            g.transform.SetParent(env, false);
+            g.transform.position = pos[i];
+            g.transform.LookAt(look[i]);
+            cams[i] = g.AddComponent<Camera>();
+        }
+        // un peu de lumière froide dans le couloir pour que la caméra voie quelque chose
+        var lg = new GameObject("CorridorLight");
+        lg.transform.SetParent(env, false);
+        lg.transform.position = new Vector3(-0.8f, 2.2f, 3.8f);
+        var l = lg.AddComponent<Light>();
+        l.type = LightType.Point;
+        l.color = new Color(0.5f, 0.6f, 1f);
+        l.range = 3f;
+        l.intensity = 2f;
+        l.shadows = LightShadows.None;
         return cams;
     }
 
-    // ---------- table + écrans ----------
+    // ---------- pupitre + écrans ----------
     static void BuildMonitors(GameObject rig, Camera head, Camera[] feeds)
     {
-        var table = new GameObject("MonitorTable").transform;
+        var tableMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Room/Materials/TableWood.mat") ?? metalM;
+        var table = new GameObject("MonitorDesk").transform;
         table.SetParent(env, false);
-        Box("Top", table, new Vector3(0, 0.72f, 1.0f), new Vector3(2.0f, 0.06f, 0.6f), metalM);
-        foreach (float lx in new[] { -0.9f, 0.9f })
-            foreach (float lz in new[] { 0.75f, 1.25f })
+        Box("Top", table, new Vector3(1.3f, 0.72f, 2.15f), new Vector3(1.8f, 0.06f, 0.6f), tableMat);
+        foreach (float lx in new[] { 0.45f, 2.15f })
+            foreach (float lz in new[] { 1.9f, 2.4f })
                 Box("Leg", table, new Vector3(lx, 0.35f, lz), new Vector3(0.06f, 0.7f, 0.06f), darkM);
 
         var stationGo = new GameObject("MonitorStation");
         var station = stationGo.AddComponent<MonitorStation>();
         station.feeds = new Material[feeds.Length];
 
-        float[] xs = { -0.55f, 0f, 0.55f };
+        float[] xs = { 0.78f, 1.3f, 1.82f };
         for (int i = 0; i < feeds.Length; i++)
         {
             var rt = new RenderTexture(320, 180, 16) { name = $"Feed_{i}" };
@@ -244,8 +402,9 @@ public static class RoomBuilder
 
             var m = new GameObject($"Monitor_{i}");
             m.transform.SetParent(stationGo.transform, false);
-            m.transform.position = new Vector3(xs[i], 0.98f, 1.12f);
-            m.transform.rotation = Quaternion.Euler(10f, 15f * xs[i] / 0.55f, 0f);
+            m.transform.position = new Vector3(xs[i], 0.98f, 2.22f);
+            // écrans tournés vers le joueur (placé au nord du pupitre) et un peu inclinés
+            m.transform.rotation = Quaternion.Euler(10f, -15f * (xs[i] - 1.3f) / 0.52f, 0f);
             var col = m.AddComponent<BoxCollider>();
             col.size = new Vector3(0.5f, 0.32f, 0.08f);
             Box("Body", m.transform, Vector3.zero, new Vector3(0.5f, 0.32f, 0.04f), darkM, false);
@@ -278,38 +437,29 @@ public static class RoomBuilder
         station.overlay = q.transform;
         station.overlayRenderer = q.GetComponent<Renderer>();
         q.SetActive(false);
-
-        // petite batterie sur la table
-        MakeBattery(new Vector3(0.9f, 0.78f, 1.0f));
     }
 
-    // ---------- établi + planches + piles ----------
-    static void BuildWorkbench()
+    static void BuildBatteries()
     {
-        var wb = new GameObject("Workbench").transform;
-        wb.SetParent(env, false);
-        Box("Top", wb, new Vector3(0, 0.9f, -2.6f), new Vector3(2.8f, 0.08f, 0.7f), metalM);
-        Box("Shelf", wb, new Vector3(0, 0.35f, -2.6f), new Vector3(2.6f, 0.05f, 0.6f), metalM);
-        foreach (float lx in new[] { -1.3f, 1.3f })
-            foreach (float lz in new[] { -2.9f, -2.3f })
-                Box("Leg", wb, new Vector3(lx, 0.45f, lz), new Vector3(0.07f, 0.9f, 0.07f), darkM);
-
-        for (int pile = 0; pile < 2; pile++)
-            for (int i = 0; i < 3; i++)
-                MakePlank(new Vector3(pile == 0 ? -0.65f : 0.65f, 0.97f + i * 0.055f, -2.55f), Quaternion.identity);
-
-        MakeBattery(new Vector3(0f, 0.97f, -2.4f));
-        MakeBattery(new Vector3(2.5f, 0.05f, -2.5f));
+        MakeBattery(new Vector3(2.05f, 0.77f, 2.15f));    // sur le pupitre
+        MakeBattery(new Vector3(0.0f, 0.92f, 0.15f));     // sur l'établi
+        MakeBattery(new Vector3(-2.7f, 0.92f, 0.8f));     // sur le plan de travail
+        MakeBattery(new Vector3(-2.2f, 0.04f, -2.2f));    // au sol, dans un coin
     }
 
-    static GameObject MakePlank(Vector3 pos, Quaternion rot)
+    static GameObject MakePlank(Vector3 pos, Quaternion rot, Mesh mesh, Material[] mats)
     {
         var p = new GameObject("Plank");
         p.transform.SetParent(items, false);
         p.transform.SetPositionAndRotation(pos, rot);
         var bc = p.AddComponent<BoxCollider>();
-        bc.size = new Vector3(1.2f, 0.14f, 0.04f);
-        Box("Visual", p.transform, Vector3.zero, new Vector3(1.2f, 0.14f, 0.04f), plankM, false);
+        bc.size = new Vector3(1.2f, 0.15f, 0.03f);
+        // le maillage du fichier est à plat (fin sur Y) : on le tourne pour que la face soit sur +Z
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(p.transform, false);
+        vis.transform.localRotation = Quaternion.Euler(90, 0, 0);
+        vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+        vis.AddComponent<MeshRenderer>().sharedMaterials = mats;
         var rb = p.AddComponent<Rigidbody>();
         rb.mass = 2f;
         MakeGrab(p);
@@ -325,12 +475,12 @@ public static class RoomBuilder
             var sc = n.AddComponent<SphereCollider>();
             sc.isTrigger = true;
             sc.radius = 0.05f;
-            sc.center = new Vector3(0, 0, 0.04f);
-            var vis = Prim(PrimitiveType.Cylinder, "Visual", n.transform, new Vector3(0, 0, 0.06f), new Vector3(0.016f, 0.04f, 0.016f), nailM, new Vector3(90, 0, 0));
+            sc.center = new Vector3(0, 0, 0.03f);
+            var nv = Prim(PrimitiveType.Cylinder, "Visual", n.transform, new Vector3(0, 0, 0.05f), new Vector3(0.016f, 0.04f, 0.016f), nailM, new Vector3(90, 0, 0));
             var nail = n.AddComponent<Nail>();
-            nail.visual = vis;
+            nail.visual = nv;
             nail.col = sc;
-            vis.SetActive(false);   // les clous n'apparaissent que marteau en main
+            nv.SetActive(false);   // les clous n'apparaissent que marteau en main
             sc.enabled = false;
             nails[i] = nail;
         }
@@ -338,8 +488,8 @@ public static class RoomBuilder
         // zone pour tenir la planche avec l'autre main
         var hz = new GameObject("HoldZone");
         hz.transform.SetParent(p.transform, false);
-        var hc = hz.AddComponent<BoxCollider>();
-        hc.size = new Vector3(1.3f, 0.26f, 0.16f);
+        var hcol = hz.AddComponent<BoxCollider>();
+        hcol.size = new Vector3(1.3f, 0.26f, 0.16f);
         var hold = hz.AddComponent<XRSimpleInteractable>();
 
         var pl = p.AddComponent<Plank>();
@@ -362,32 +512,6 @@ public static class RoomBuilder
         b.AddComponent<Battery>();
     }
 
-    // ---------- portes + emplacements de planches ----------
-    static void BuildDoors()
-    {
-        foreach (float sx in new[] { -1f, 1f })
-        {
-            string n = sx < 0 ? "Left" : "Right";
-            var d = new GameObject($"Door_{n}").transform;
-            d.SetParent(env, false);
-            Box("Leaf", d, new Vector3(3.1f * sx, 1.05f, 0f), new Vector3(0.08f, 2.1f, 1f), doorM);
-            Box("Handle", d, new Vector3(3.0f * sx, 1.0f, 0.35f), new Vector3(0.05f, 0.05f, 0.14f), metalM, false);
-
-            Vector3 normal = new Vector3(-sx, 0, 0);   // vers l'intérieur de la pièce
-            for (int i = 0; i < 3; i++)
-            {
-                var s = new GameObject($"Slot_{n}_{i}");
-                s.transform.SetParent(d, false);
-                s.transform.position = new Vector3(2.95f * sx, 0.55f + 0.5f * i, 0f);
-                s.transform.rotation = Quaternion.LookRotation(normal, Vector3.up);
-                var ghost = Box("Ghost", s.transform, Vector3.zero, new Vector3(1.24f, 0.18f, 0.06f), ghostM, false);
-                var gr = ghost.GetComponent<Renderer>();
-                gr.enabled = false;   // visible uniquement quand une planche est en main
-                s.AddComponent<BarricadeSlot>().ghost = gr;
-            }
-        }
-    }
-
     // ---------- ceinture + kit ----------
     static BeltSocket MakeSocket(Transform belt, string name, Vector3 localPos, BeltItemType type, XRGrabInteractable start)
     {
@@ -407,7 +531,7 @@ public static class RoomBuilder
     static void BuildBelt(GameObject rig, Camera head)
     {
         var belt = new GameObject("Belt");
-        belt.transform.SetPositionAndRotation(new Vector3(0, 0.95f, 0), Quaternion.identity);
+        belt.transform.SetPositionAndRotation(Spawn + new Vector3(0, 0.95f, 0), Quaternion.identity);
         var br = belt.AddComponent<BeltRig>();
         br.head = head.transform;
         br.rigRoot = rig.transform;
@@ -415,12 +539,11 @@ public static class RoomBuilder
         Vector3 B = belt.transform.position;
 
         var pistol = MakePistol(B + new Vector3(0.22f, 0f, 0.02f));
-        var hammer = MakeHammer(B + new Vector3(-0.24f, 0f, -0.08f));
         var light = MakeFlashlight(B + new Vector3(0.2f, 0f, -0.12f));
         var mag = MakeMagazine(B + new Vector3(-0.1f, 0f, 0.18f));
 
         MakeSocket(belt.transform, "Holster_Pistol", new Vector3(0.22f, 0f, 0.02f), BeltItemType.Pistol, pistol);
-        MakeSocket(belt.transform, "Holster_Hammer", new Vector3(-0.24f, 0f, -0.08f), BeltItemType.Hammer, hammer);
+        MakeSocket(belt.transform, "Holster_Hammer", new Vector3(-0.24f, 0f, -0.08f), BeltItemType.Hammer, hammerGrab);
         MakeSocket(belt.transform, "Holster_Flashlight", new Vector3(0.2f, 0f, -0.12f), BeltItemType.Flashlight, light);
         MakeSocket(belt.transform, "Holster_Magazine", new Vector3(-0.1f, 0f, 0.18f), BeltItemType.Magazine, mag);
     }
@@ -495,21 +618,6 @@ public static class RoomBuilder
         var grab = MakeGrab(m);
         m.AddComponent<BeltItem>().type = BeltItemType.Magazine;
         m.AddComponent<Magazine>().rounds = 12;
-        return grab;
-    }
-
-    static XRGrabInteractable MakeHammer(Vector3 pos)
-    {
-        var h = new GameObject("Hammer");
-        h.transform.SetParent(items, false);
-        h.transform.position = pos;
-        var handle = Box("Handle", h.transform, new Vector3(0, 0.05f, 0), new Vector3(0.03f, 0.3f, 0.03f), plankM, true);
-        var head = Box("Head", h.transform, new Vector3(0, 0.2f, 0.01f), new Vector3(0.05f, 0.05f, 0.14f), headM, true);
-        head.AddComponent<HammerHead>();
-        h.AddComponent<Rigidbody>();
-        var grab = MakeGrab(h);
-        h.AddComponent<BeltItem>().type = BeltItemType.Hammer;
-        h.AddComponent<Hammer>();
         return grab;
     }
 

@@ -794,6 +794,14 @@ public static class RoomBuilder
         MakeSocket(belt.transform, "Holster_Magazine", new Vector3(-0.1f, 0f, 0.18f), BeltItemType.Magazine, mag);
     }
 
+    static Material SmokeMat()
+    {
+        const string path = "Assets/Generated/GunSmoke.mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null) { m = new Material(Shader.Find("Sprites/Default")); AssetDatabase.CreateAsset(m, path); }
+        return m;
+    }
+
     static XRGrabInteractable MakePistol(Vector3 pos)
     {
         var p = new GameObject("Pistol");
@@ -815,6 +823,7 @@ public static class RoomBuilder
         muzzle.SetParent(p.transform, false);
         muzzle.localPosition = new Vector3(0, 0.01f, 0.11f);
         pi.muzzle = muzzle;
+        pi.smokeMaterial = SmokeMat();
 
         var fl = new GameObject("Flash");
         fl.transform.SetParent(muzzle, false);

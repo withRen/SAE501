@@ -29,11 +29,11 @@ public static class RoomBuilder
         // ambiance sombre
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.004f, 0.004f, 0.006f);
+        RenderSettings.ambientLight = new Color(0.0015f, 0.0015f, 0.002f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogColor = new Color(0.005f, 0.005f, 0.007f);
-        RenderSettings.fogDensity = 0.07f;
+        RenderSettings.fogColor = new Color(0.003f, 0.003f, 0.004f);
+        RenderSettings.fogDensity = 0.1f;
 
         rig.transform.position = Spawn;
         var cam = rig.GetComponentInChildren<Camera>();
@@ -186,9 +186,9 @@ public static class RoomBuilder
         lg.transform.position = new Vector3(0, 1.85f, 0);
         var l = lg.AddComponent<Light>();
         l.type = LightType.Point;
-        l.color = new Color(1f, 0.82f, 0.6f);
-        l.range = 5.5f;
-        l.intensity = 1.0f;
+        l.color = new Color(1f, 0.8f, 0.58f);
+        l.range = 4.5f;
+        l.intensity = 0.6f;
         l.shadows = LightShadows.None;
 
         var bulbMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Room/Materials/BulbOff.mat");
@@ -201,7 +201,8 @@ public static class RoomBuilder
         f.lamp = l;
         f.bulb = pendant.GetComponent<Renderer>();
         f.bulbMaterialIndex = 2;          // 3e matériau du pendentif = ampoule (BulbOff)
-        f.baseIntensity = 1.0f;
+        f.baseIntensity = 0.6f;
+        f.dipDepth = 0.45f;
 
         // lampe à huile sur l'établi
         var oil = Find(roomRoot.transform, "OilLamp");
@@ -211,14 +212,17 @@ public static class RoomBuilder
         var ol = og.AddComponent<Light>();
         ol.type = LightType.Point;
         ol.color = new Color(1f, 0.52f, 0.18f);
-        ol.range = 2.5f;
-        ol.intensity = 0.45f;
+        ol.range = 2.2f;
+        ol.intensity = 0.3f;
         ol.shadows = LightShadows.None;
         var of = og.AddComponent<FlickerLamp>();
         of.lamp = ol;
-        of.baseIntensity = 0.45f;
-        of.burstMinGap = 4f;
-        of.burstMaxGap = 12f;
+        of.baseIntensity = 0.3f;
+        of.hum = 0.08f;
+        of.humSpeed = 2.4f;
+        of.dipDepth = 0.75f;
+        of.burstMinGap = 5f;
+        of.burstMaxGap = 14f;
 
         // clair de lune par les deux fenêtres (est : x = -3, ouest : x = +3)
         foreach (float sx in new[] { -1f, 1f })
@@ -229,10 +233,10 @@ public static class RoomBuilder
             mg.transform.LookAt(new Vector3(2.0f * sx, 0.6f, sx < 0 ? -0.3f : 0f));
             var ml = mg.AddComponent<Light>();
             ml.type = LightType.Spot;
-            ml.color = new Color(0.42f, 0.56f, 1f);
+            ml.color = new Color(0.32f, 0.42f, 0.55f);
             ml.spotAngle = 70f;
             ml.range = 9f;
-            ml.intensity = 3f;
+            ml.intensity = 1.2f;
             ml.shadows = LightShadows.None;
         }
     }
@@ -363,9 +367,9 @@ public static class RoomBuilder
         lg.transform.position = new Vector3(-0.8f, 2.2f, 3.8f);
         var l = lg.AddComponent<Light>();
         l.type = LightType.Point;
-        l.color = new Color(0.5f, 0.6f, 1f);
+        l.color = new Color(0.4f, 0.5f, 0.6f);
         l.range = 2.5f;
-        l.intensity = 1.2f;
+        l.intensity = 0.8f;
         l.shadows = LightShadows.None;
         return cams;
     }

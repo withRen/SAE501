@@ -21,3 +21,5 @@ mono_crash.*
 *.apk
 *.aab
 sysinfo.txt
+.utmp/
+*_BackUpThisFolder_ButDontShipItWithYourGame/

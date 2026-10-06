@@ -23,7 +23,7 @@ public class Zombie : MonoBehaviour
     [Header("Attaque")]
     public float attackRange = 1.15f;
     public float attackCooldown = 1.5f;
-    public float attackDamage = 15f;
+    public int attackDamage = 1;             // le joueur a 4 PV (GDD)
     public float attackHitDelay = 0.45f;    // moment du coup dans l'animation
 
     public State state { get; private set; }

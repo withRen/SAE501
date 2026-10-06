@@ -381,9 +381,34 @@ public static class RoomBuilder
         }
     }
 
+    // UI diégétique de l'équipe : vignettage rouge selon les PV, écran noir + texte à la mort, puis relance de la scène
+    static void BuildHealthUI(GameObject rig)
+    {
+        var head = rig.GetComponentInChildren<Camera>().transform;
+        var ui = new GameObject("UI_Sante");
+        ui.transform.SetParent(rig.transform, false);
+        var hv = ui.AddComponent<HealthVignette>();
+        hv.head = head;
+
+        var tg = new GameObject("TexteGameOver");
+        tg.transform.SetParent(ui.transform, false);
+        var tm = tg.AddComponent<TextMesh>();
+        tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        tm.fontSize = 80;
+        tm.characterSize = 0.02f;
+        tm.anchor = TextAnchor.MiddleCenter;
+        tm.alignment = TextAlignment.Center;
+        tm.color = new Color(0.8f, 0.1f, 0.1f);
+        tg.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
+        var go = ui.AddComponent<GameOverUI>();
+        go.head = head;
+        go.gameOverText = tm;
+    }
+
     static void BuildZombieSetup(GameObject rig)
     {
         rig.AddComponent<PlayerHealth>();
+        BuildHealthUI(rig);
         var sp = new GameObject("ZombieSpawner");
         sp.transform.SetParent(mapRoot, false);
         var z = sp.AddComponent<ZombieSpawner>();

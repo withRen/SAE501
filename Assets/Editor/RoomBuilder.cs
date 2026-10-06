@@ -12,7 +12,7 @@ public static class RoomBuilder
     const string Dir = "Assets/Generated";
 
     static Material darkM, metalM, plankM, ghostM, pistolM, headM, nailM, batteryM, magM, lightM;
-    static Transform env, items;
+    static Transform env, items, bunkerRoot, mapRoot;
 
     // Position de départ du joueur (dans la salle importée de Blender, repère Unity)
     static readonly Vector3 Spawn = new Vector3(0.8f, 0f, 1.35f);
@@ -23,8 +23,14 @@ public static class RoomBuilder
         if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets", "Generated");
         MakeMaterials();
 
+        // Tout le bunker est construit dans le repère du fichier Blender, puis tourné de 90° à la fin
+        // pour que ses 2 portes donnent à gauche et à droite (voir la carte dans docs/MAP.md).
+        bunkerRoot = new GameObject("Bunker").transform;
+        mapRoot = new GameObject("Map").transform;
         env = new GameObject("Environment").transform;
+        env.SetParent(bunkerRoot, false);
         items = new GameObject("Items").transform;
+        items.SetParent(bunkerRoot, false);
 
         // ambiance sombre
         RenderSettings.skybox = null;
@@ -60,6 +66,11 @@ public static class RoomBuilder
         BuildMonitors(rig, cam, feeds);
         BuildBatteries();
         BuildBelt(rig, cam);
+
+        // portes à gauche et à droite : on tourne le bunker de 90°, le joueur regarde vers le haut de la carte (+Z)
+        bunkerRoot.rotation = Quaternion.Euler(0f, 90f, 0f);
+        rig.transform.SetPositionAndRotation(bunkerRoot.TransformPoint(Spawn), Quaternion.identity);
+        BuildMap();
 
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
     }
@@ -352,32 +363,102 @@ public static class RoomBuilder
     }
     static XRGrabInteractable hammerGrab;
 
-    // 3 caméras de surveillance : couloir sud, et deux coins de la salle
+    // 3 caméras de surveillance (repère final, hors du bunker) : couloir gauche, couloir droit, générateur.
+    // Elles regardent les couloirs depuis le bunker : les zombies arrivent vers la caméra.
     static Camera[] BuildCameras()
     {
         var cams = new Camera[3];
-        string[] names = { "CCTV_Corridor", "CCTV_Room_SW", "CCTV_Room_NE" };
-        Vector3[] pos = { new Vector3(-0.8f, 2.35f, 2.45f), new Vector3(2.8f, 2.5f, 2.3f), new Vector3(-2.8f, 2.5f, -2.3f) };
-        Vector3[] look = { new Vector3(-0.8f, 1.0f, 4.6f), new Vector3(-1.0f, 1.0f, -1.0f), new Vector3(1.0f, 1.0f, 1.0f) };
+        string[] names = { "CCTV_CouloirGauche", "CCTV_CouloirDroit", "CCTV_Generateur" };
+        Vector3[] pos = { new Vector3(-4.6f, 2.3f, -1.6f), new Vector3(5.6f, 2.3f, -0.4f), new Vector3(-9.6f, 2.35f, 8.3f) };
+        Vector3[] look = { new Vector3(-4.6f, 1.0f, 10f), new Vector3(5.6f, 1.0f, 10f), new Vector3(-6.4f, 0.8f, 10f) };
         for (int i = 0; i < 3; i++)
         {
             var g = new GameObject(names[i]);
-            g.transform.SetParent(env, false);
+            g.transform.SetParent(mapRoot, false);
             g.transform.position = pos[i];
             g.transform.LookAt(look[i]);
             cams[i] = g.AddComponent<Camera>();
         }
-        // un peu de lumière froide dans le couloir pour que la caméra voie quelque chose
-        var lg = new GameObject("CorridorLight");
-        lg.transform.SetParent(env, false);
-        lg.transform.position = new Vector3(-0.8f, 2.2f, 3.8f);
-        var l = lg.AddComponent<Light>();
-        l.type = LightType.Point;
-        l.color = new Color(0.4f, 0.5f, 0.6f);
-        l.range = 2.5f;
-        l.intensity = 0.8f;
-        l.shadows = LightShadows.None;
         return cams;
+    }
+
+    // ---------- carte : couloirs et pièces en boîtes grises (repère final) ----------
+    static Material blockM;
+
+    static void BuildMap()
+    {
+        blockM = Mat("Blockout", new Color(0.28f, 0.28f, 0.30f));
+        float lo = -1.5f, hi = -0.5f;                        // porte de gauche du bunker (z)
+        // Gauche : petit couloir vers un long couloir, avec Cuisine (z 2..6) et Générateur (z 8..12) sur le côté
+        Hall("Couloir_Gauche_Entree", new Vector2(-3.8f, lo), new Vector2(-2.6f, hi), ('W', lo, hi), ('E', lo, hi));
+        Hall("Couloir_Gauche", new Vector2(-5.4f, -2.0f), new Vector2(-3.8f, 14.0f), ('E', lo, hi), ('W', 3.2f, 4.8f), ('W', 9.2f, 10.8f));
+        Hall("Cuisine", new Vector2(-10.0f, 2.0f), new Vector2(-5.6f, 6.0f), ('E', 3.2f, 4.8f));
+        Hall("Generateur", new Vector2(-10.0f, 8.0f), new Vector2(-5.6f, 12.0f), ('E', 9.2f, 10.8f));
+        // Droite : le couloir existant du fichier Blender (au bout de la porte sud) mène à un long couloir avec le Stockage
+        Hall("Couloir_Droit", new Vector2(4.8f, -0.6f), new Vector2(6.4f, 14.0f), ('E', 6.2f, 7.8f));
+        Hall("Stockage", new Vector2(6.6f, 5.0f), new Vector2(10.6f, 9.0f), ('W', 6.2f, 7.8f));
+
+        // points d'apparition des zombies (bouts des couloirs)
+        foreach (var (n, p) in new[] { ("Spawn_Gauche", new Vector3(-4.6f, 0f, 13.3f)), ("Spawn_Droit", new Vector3(5.6f, 0f, 13.3f)) })
+        {
+            var s = new GameObject(n).transform;
+            s.SetParent(mapRoot, false);
+            s.position = p;
+        }
+
+        // un peu de lumière froide pour que les caméras voient quelque chose (sans ombre)
+        foreach (var (n, p, c) in new[] {
+            ("Lumiere_CouloirGauche", new Vector3(-4.6f, 2.3f, 6f), new Color(0.45f, 0.55f, 0.7f)),
+            ("Lumiere_CouloirDroit", new Vector3(5.6f, 2.3f, 6f), new Color(0.45f, 0.55f, 0.7f)),
+            ("Lumiere_Generateur", new Vector3(-7.8f, 2.3f, 10f), new Color(0.35f, 0.7f, 0.45f)) })
+        {
+            var lg = new GameObject(n);
+            lg.transform.SetParent(mapRoot, false);
+            lg.transform.position = p;
+            var l = lg.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = c;
+            l.range = 4.5f;
+            l.intensity = 0.8f;
+            l.shadows = LightShadows.None;
+        }
+    }
+
+    // pièce / couloir en boîtes : sol, plafond, 4 murs avec des ouvertures ('W','E' = murs en x min/max, 'S','N' = murs en z min/max)
+    static void Hall(string name, Vector2 min, Vector2 max, params (char side, float a, float b)[] gaps)
+    {
+        var g = new GameObject(name).transform;
+        g.SetParent(mapRoot, false);
+        const float t = 0.15f, h = 2.6f;
+        var c = new Vector3((min.x + max.x) / 2f, 0, (min.y + max.y) / 2f);
+        Box("Sol", g, new Vector3(c.x, -0.05f, c.z), new Vector3(max.x - min.x + t, 0.1f, max.y - min.y + t), blockM);
+        Box("Plafond", g, new Vector3(c.x, h + 0.05f, c.z), new Vector3(max.x - min.x + t, 0.1f, max.y - min.y + t), blockM);
+        Wall(g, true, min.x, min.y, max.y, 'W', gaps);
+        Wall(g, true, max.x, min.y, max.y, 'E', gaps);
+        Wall(g, false, min.y, min.x, max.x, 'S', gaps);
+        Wall(g, false, max.y, min.x, max.x, 'N', gaps);
+    }
+
+    static void Wall(Transform parent, bool alongZ, float fixedCoord, float from, float to, char side, (char side, float a, float b)[] gaps)
+    {
+        const float t = 0.15f, h = 2.6f, door = 2.1f;
+        var list = gaps.Where(x => x.side == side).OrderBy(x => x.a).ToList();
+        float cursor = from;
+        void Seg(float s0, float s1, float y0, float y1)
+        {
+            if (s1 - s0 < 0.01f) return;
+            float m = (s0 + s1) / 2f, len = s1 - s0, y = (y0 + y1) / 2f, hh = y1 - y0;
+            var pos = alongZ ? new Vector3(fixedCoord, y, m) : new Vector3(m, y, fixedCoord);
+            var size = alongZ ? new Vector3(t, hh, len) : new Vector3(len, hh, t);
+            Box("Mur" + side, parent, pos, size, blockM);
+        }
+        foreach (var gp in list)
+        {
+            Seg(cursor, gp.a, 0, h);
+            Seg(gp.a, gp.b, door, h);     // linteau au-dessus de l'ouverture
+            cursor = gp.b;
+        }
+        Seg(cursor, to, 0, h);
     }
 
     // ---------- pupitre + écrans ----------
@@ -392,6 +473,7 @@ public static class RoomBuilder
                 Box("Leg", table, new Vector3(lx, 0.35f, lz), new Vector3(0.06f, 0.7f, 0.06f), darkM);
 
         var stationGo = new GameObject("MonitorStation");
+        stationGo.transform.SetParent(bunkerRoot, false);
         var station = stationGo.AddComponent<MonitorStation>();
         station.feeds = new Material[feeds.Length];
 
@@ -541,6 +623,7 @@ public static class RoomBuilder
     static void BuildBelt(GameObject rig, Camera head)
     {
         var belt = new GameObject("Belt");
+        belt.transform.SetParent(bunkerRoot, false);
         belt.transform.SetPositionAndRotation(Spawn + new Vector3(0, 0.95f, 0), Quaternion.identity);
         var br = belt.AddComponent<BeltRig>();
         br.head = head.transform;

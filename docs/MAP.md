@@ -1,4 +1,4 @@
-# Carte — BARRICADE : THE LAST STAND
+# Carte — THE LAST ESCAPOR
 
 Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **décors vus par les caméras** (le joueur n'y va pas) ; les zombies en sortent et arrivent vers le bunker.
 

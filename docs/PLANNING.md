@@ -1,4 +1,4 @@
-# BARRICADE : THE LAST STAND — Plan de production
+# THE LAST ESCAPOR — Plan de production
 
 > Basé sur le GDD. Rendu le **13 novembre 2026** (J14). Estimations en heures de travail (h) pour une personne.
 > Légende statut : ✅ fait dans le prototype · 🟡 existe mais à adapter au GDD · ⬜ à faire

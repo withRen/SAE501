@@ -1,4 +1,4 @@
-# Journal des prompts — BARRICADE : THE LAST STAND
+# Journal des prompts — THE LAST ESCAPOR
 
 Historique des demandes (prompts) faites à l'assistant pendant le développement, avec ce qui a été fait en réponse.
 Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et dans l'index.
@@ -15,6 +15,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 |---|---|---|---|---|
 | [001](#001--journal-des-prompts) | 2026-10-06 | Journal des prompts | Documentation | Fichier créé |
 | [002](#002--vérification-du-dépôt-par-rapport-au-document-de-lancement-de-la-saé) | 2026-10-06 | Vérification du dépôt vs document de lancement SAÉ | GitHub / organisation | Bilan fourni |
+| [003](#003--nom-du-jeu) | 2026-10-06 | Nom du jeu : The Last Escapor | Documentation | Renommé partout |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -89,3 +90,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Bilan donné en réponse : ce qui est en place, ce qui manque (GDD, README, journal de bord avec usage de l'IA, captures ou vidéo, prefabs, tutoriel, confort), et l'ordre de priorité avant le jalon du vendredi 9 octobre.
 
 **Liens** : [docs/PLANNING.md](PLANNING.md) · [docs/MAP.md](MAP.md)
+
+---
+
+### 003 — Nom du jeu
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Documentation |
+| **Statut** | Fait |
+
+**Prompt**
+
+> Le nom du jeux : The last escapor
+
+**Résultat**
+
+- Le jeu s'appelle **The Last Escapor** (ancien titre de travail du GDD : « Barricade : The Last Stand »).
+- Renommé dans les 4 documents de `docs/` (titres), dans les réglages Unity (nom de l'appli affiché sur le casque), dans la description du dépôt GitHub et dans la release v0.1.0.
+- L'identifiant technique de l'appli (`com.sae501.vr`) et le nom du dépôt (`SAE501`) ne changent pas, pour ne pas casser les installations existantes.
+
+**Liens** : commit de cette entrée · release v0.1.0

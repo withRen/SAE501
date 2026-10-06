@@ -1,4 +1,4 @@
-# Assets du projet — BARRICADE : THE LAST STAND
+# Assets du projet — THE LAST ESCAPOR
 
 > Liste des assets trouvés sur l'Asset Store, rangés par usage et reliés aux tâches de [PLANNING.md](PLANNING.md).
 > Statut : ⬜ à importer · ✅ importé · ❌ écarté. Prix et licence : **à remplir par la personne qui télécharge** (je ne les ai pas vérifiés).

@@ -15,9 +15,7 @@ public static class SetupVRScene
         var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None)) Object.DestroyImmediate(cam.gameObject);
 
-        var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        floor.name = "Floor";
-        floor.transform.localScale = new Vector3(2, 1, 2);
+        foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None)) Object.DestroyImmediate(l.gameObject);
 
         var rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(XriDir + "Prefabs/XR Origin (XR Rig).prefab");
         var rig = (GameObject)PrefabUtility.InstantiatePrefab(rigPrefab);
@@ -25,6 +23,8 @@ public static class SetupVRScene
 
         AddHand(rig, "Left Controller", "l", "XRI Left Interaction", actions);
         AddHand(rig, "Right Controller", "r", "XRI Right Interaction", actions);
+
+        RoomBuilder.Populate(rig);
 
         var path = "Assets/Scenes/MainScene.unity";
         EditorSceneManager.SaveScene(scene, path);

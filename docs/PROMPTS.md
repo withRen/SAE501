@@ -14,10 +14,6 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | N° | Date | Sujet | Domaine | Résultat |
 |---|---|---|---|---|
 | [001](#001--journal-des-prompts) | 2026-10-06 | Journal des prompts | Documentation | Fichier créé |
-| [002](#002--vérification-du-dépôt-par-rapport-au-document-de-lancement-de-la-saé) | 2026-10-06 | Vérification du dépôt vs document de lancement SAÉ | GitHub / organisation | Bilan fourni |
-| [003](#003--nom-du-jeu) | 2026-10-06 | Nom du jeu : The Last Escapor | Documentation | Renommé partout |
-| [004](#004--readme) | 2026-10-06 | README du dépôt | Documentation | README.md créé |
-| [005](#005--fichier-de-règles-et-mentions-de-lia) | 2026-10-06 | Fichier de règles local, mentions de l'IA | Documentation | Règles créées ; retrait des mentions non appliqué |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 

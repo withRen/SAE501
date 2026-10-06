@@ -36,7 +36,7 @@ Textures issues de Poly Haven (CC0) et modèles Poly Haven (CC0).
 
 | Asset | Usage dans le jeu | Tâches liées | Priorité | Statut | Lien |
 |---|---|---|---|---|---|
-| Free Shirtless Zombie | Modèle du zombie (à vérifier : animations incluses ?) | 5.1, 5.4 à 5.8 | DOIT | ⬜ | [Asset Store](https://assetstore.unity.com/packages/3d/characters/humanoids/free-shirtless-zombie-276762) |
+| Free Shirtless Zombie | Modèle du zombie (rig humanoïde, **sans aucune animation**) | 5.1, 5.4 à 5.8 | DOIT | ✅ importé, utilisé | [Asset Store](https://assetstore.unity.com/packages/3d/characters/humanoids/free-shirtless-zombie-276762) |
 
 ## 4. Textures (salle, béton, métal rouillé)
 
@@ -65,7 +65,7 @@ Ces assets ne correspondent à aucune mécanique du GDD pour l'instant. Ils sont
 | Besoin | Pourquoi | Tâches liées |
 |---|---|---|
 | Sons : tir, culasse, chargeur, pas, grognements, bois qui se fend, marteau | Aucun asset audio dans la liste | 9.1 à 9.4 |
-| Animations du zombie (marche, frappe, mort) | À vérifier dans l'asset zombie, sinon Mixamo (licence à contrôler) | 5.7, 5.8 |
+| Animations du zombie (marche, frappe, mort) | Absentes du pack : animées par script (`ZombieBoneAnim`) en attendant de vrais clips (Mixamo : licence à contrôler) | 5.7, 5.8 |
 | Fenêtre / cadre de fenêtre | Pour les 2 fenêtres du GDD | 2.2, 2.3 |
 | Effets : sang, étincelles, vignettage rouge | UI de santé | 8.2 |
 

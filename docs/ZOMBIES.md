@@ -2,19 +2,23 @@
 
 Toutes les valeurs d'équilibrage sont dans **`Assets/Scripts/ZombieLevels.cs`** (un seul endroit à modifier). Les valeurs « niveau » 2 à 4 pour les PV des zombies (×1,3 / ×1,6 / ×2) sont **proposées par l'IA** : à valider ou à changer par le groupe.
 
-## 1. Hitbox du zombi
+## 1. Modèle, rig et hitbox
 
-Le rig actuel est le **zombie provisoire en boîtes** (le modèle de l'Asset Store n'est pas encore importé). Son rig : un pivot `Visual` avec `Torse`, `Tete`, `BrasG`, `BrasD`, `JambeG`, `JambeD`. Il est découpé en 3 zones touchables, chacune sur un objet enfant du prefab avec un composant `ZombieHitbox` :
+**Modèle :** *Free Shirtless Zombie* (Asset Store, dossier `Assets/NewPunch/ShirtlessZombieFree`). Prefab utilisé : `ShirtlessZombie_FREE_URP`. Il fait 1,76 m de haut, a 3 niveaux de détail (LOD) et un rig **humanoïde** (squelette de type Unreal : `pelvis`, `spine_01` à `spine_03`, `clavicle`, `upperarm`, `lowerarm`, `hand` + doigts, `neck_01`, `head`, `thigh`, `calf`, `foot`, `ball`).
 
-| Zone | Objet du prefab | Parties du rig | Collider | Part des PV de base retirée par tir | Tirs pour tuer (niveau 1) |
-|---|---|---|---|---|---|
-| **Tête** | `Hitbox_Tete` | `Tete` | sphère r = 0,2 m, centre y = 1,6 m | **100 %** (one-shot, tue à tous les niveaux) | **1** |
-| **Torse** | `Hitbox_Torse` | `Torse` + `BrasG` + `BrasD` | boîte 0,78 × 0,74 × 0,32 m, centre y = 1,08 m | **33 %** (1/3) | **3** |
-| **Jambes** | `Hitbox_Jambes` | `JambeG` + `JambeD` | boîte 0,45 × 0,70 × 0,28 m, centre y = 0,35 m | **20 %** (1/5) | **5** |
+**Le pack gratuit ne contient aucune animation** (0 clip, pas d'Animator Controller) : les animations sont donc faites **par script** (`ZombieBoneAnim`, os tournés à chaque image) : marche traînante, bras tendus devant, buste penché, bras qui s'abattent à l'attaque, chute en arrière à la mort. Ce n'est pas du vrai mocap : si le groupe trouve de vrais clips humanoïdes (marche, attaque, mort), on les met dans un Animator Controller ; `ZombieAnimationBridge` pilote déjà les paramètres `Speed`, `Attack`, `Die`.
+
+Hitbox : 3 zones, posées **sur les os** (elles suivent l'animation), chacune avec un composant `ZombieHitbox` :
+
+| Zone | Objets (collider) | Os | Part des PV de base retirée par tir | Tirs pour tuer (niveau 1) |
+|---|---|---|---|---|
+| **Tête** | `Hitbox_Tete` (sphère 0,14 m) | `head` | **100 %** (one-shot, tue à tous les niveaux) | **1** |
+| **Torse** | `Hitbox_Torse` (boîte du bassin au cou), `Hitbox_Bras_l/r` (capsules épaule → main) | `spine_02`, `upperarm_l/r` | **33 %** (1/3) | **3** |
+| **Jambes** | `Hitbox_Cuisse_l/r`, `Hitbox_Mollet_l/r` (capsules) | `thigh_l/r`, `calf_l/r` | **20 %** (1/5) | **5** |
 
 - Les bras comptent comme du **torse**.
 - Un tir qui ne tue pas **ralentit** le zombie (1,8 s au torse, 2,7 s aux jambes).
-- Avec le vrai modèle : une zone par os (tête = os `Head`, torse = `Spine` + bras, jambes = `UpperLeg` + `LowerLeg`), en gardant les mêmes composants `ZombieHitbox`. Le test dans l'éditeur ne couvre pas encore ce cas.
+- Le zombie provisoire en boîtes reste disponible (menu *SAE501 → Zombie → Reconstruire le prefab provisoire*) et sert de secours si le pack n'est pas importé.
 
 ## 2. Niveaux (une vague = un niveau)
 

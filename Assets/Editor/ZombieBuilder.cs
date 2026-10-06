@@ -59,6 +59,87 @@ public static class ZombieBuilder
         return g;
     }
 
+    const string ModelPrefab = "Assets/NewPunch/ShirtlessZombieFree/Prefabs/ShirtlessZombie_FREE_URP.prefab";
+
+    // Zombie avec le modèle « Shirtless Zombie FREE » (rig humanoïde, sans animation : os animés par ZombieBoneAnim).
+    [MenuItem("SAE501/Zombie/Reconstruire le prefab (modèle Shirtless Zombie)")]
+    public static GameObject BuildShirtless()
+    {
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPrefab);
+        if (model == null) return BuildPlaceholder();
+        if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
+
+        var root = new GameObject("Zombie");
+        var visual = new GameObject("Visual").transform;
+        visual.SetParent(root.transform, false);
+        var m = (GameObject)PrefabUtility.InstantiatePrefab(model, visual);
+        PrefabUtility.UnpackPrefabInstance(m, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        m.name = "ShirtlessZombie";
+        m.transform.localPosition = Vector3.zero; m.transform.localRotation = Quaternion.identity;
+        foreach (var e in m.GetComponentsInChildren<FreeZombie_EyesGlow>(true)) Object.DestroyImmediate(e);   // script HDRP du pack, inutile
+        var anim = m.GetComponent<Animator>();
+        if (anim) anim.enabled = false;                    // aucun clip : on pilote les os par script
+
+        Transform B(string n) { foreach (var t in m.GetComponentsInChildren<Transform>(true)) if (t.name == n) return t; Debug.LogError("os introuvable : " + n); return null; }
+        var head = B("head");
+
+        var z = root.AddComponent<Zombie>();
+        z.ApplyLevel(1);
+
+        // ---- hitbox sur les os (suivent l'animation) : tête 100 % / torse + bras 33 % / jambes 20 % ----
+        void Hit(string name, Transform bone, HitZone zone, System.Func<GameObject, Collider> make)
+        {
+            var g = new GameObject(name);
+            g.transform.SetParent(bone, true);
+            var c = make(g);
+            var h = g.AddComponent<ZombieHitbox>(); h.zombie = z; h.zone = zone;
+        }
+        float Sc(Transform t) => Mathf.Max(0.0001f, t.lossyScale.x);
+        // sphère au point monde `p`, rayon monde `r`
+        void Sphere(string n, Transform bone, HitZone zone, Vector3 p, float r) =>
+            Hit(n, bone, zone, g => { g.transform.position = p; g.transform.rotation = root.transform.rotation; var c = g.AddComponent<SphereCollider>(); c.radius = r / Sc(g.transform); return c; });
+        // boîte au point monde `p`, taille monde `size` (axes du zombie)
+        void Box(string n, Transform bone, HitZone zone, Vector3 p, Vector3 size) =>
+            Hit(n, bone, zone, g => { g.transform.position = p; g.transform.rotation = root.transform.rotation; var c = g.AddComponent<BoxCollider>(); c.size = size / Sc(g.transform); return c; });
+        // capsule entre deux os (monde)
+        void Capsule(string n, Transform bone, HitZone zone, Vector3 a, Vector3 b, float r) =>
+            Hit(n, bone, zone, g =>
+            {
+                g.transform.position = (a + b) / 2f;
+                g.transform.rotation = Quaternion.FromToRotation(Vector3.up, (b - a).normalized);
+                var c = g.AddComponent<CapsuleCollider>();
+                c.direction = 1; c.radius = r / Sc(g.transform); c.height = (b - a).magnitude / Sc(g.transform) + 2f * c.radius;
+                return c;
+            });
+
+        Sphere("Hitbox_Tete", head, HitZone.Head, head.position + Vector3.up * 0.08f, 0.14f);
+        var pelvis = B("pelvis"); var sp2 = B("spine_02"); var neck = B("neck_01");
+        Box("Hitbox_Torse", sp2, HitZone.Torso, (pelvis.position + neck.position) / 2f + Vector3.up * 0.02f, new Vector3(0.42f, (neck.position.y - pelvis.position.y) + 0.06f, 0.26f));
+        foreach (var side in new[] { "l", "r" })
+        {
+            Capsule("Hitbox_Bras_" + side, B("upperarm_" + side), HitZone.Torso, B("upperarm_" + side).position, B("hand_" + side).position, 0.06f);
+            Capsule("Hitbox_Cuisse_" + side, B("thigh_" + side), HitZone.Legs, B("thigh_" + side).position, B("calf_" + side).position, 0.1f);
+            Capsule("Hitbox_Mollet_" + side, B("calf_" + side), HitZone.Legs, B("calf_" + side).position, B("foot_" + side).position + Vector3.up * 0.02f, 0.075f);
+        }
+
+        var agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
+        agent.radius = 0.3f; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
+        var rb = root.AddComponent<Rigidbody>(); rb.isKinematic = true;
+
+        var bone = root.AddComponent<ZombieBoneAnim>();
+        bone.visual = visual;
+        bone.spine = B("spine_01"); bone.neck = neck; bone.head = head;
+        bone.thighL = B("thigh_l"); bone.thighR = B("thigh_r"); bone.calfL = B("calf_l"); bone.calfR = B("calf_r");
+        bone.armL = B("upperarm_l"); bone.armR = B("upperarm_r"); bone.foreL = B("lowerarm_l"); bone.foreR = B("lowerarm_r");
+        var bridge = root.AddComponent<ZombieAnimationBridge>();
+        bridge.boneAnim = bone;
+
+        var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+        Object.DestroyImmediate(root);
+        AssetDatabase.SaveAssets();
+        return prefab;
+    }
+
     [MenuItem("SAE501/Zombie/Reconstruire le prefab provisoire")]
     public static GameObject BuildPlaceholder()
     {
@@ -139,5 +220,6 @@ public static class ZombieBuilder
         return prefab;
     }
 
-    public static GameObject EnsurePrefab() => AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) ?? BuildPlaceholder();
+    // reconstruit à chaque génération de scène : modèle Shirtless Zombie s'il est importé, sinon silhouette en boîtes
+    public static GameObject EnsurePrefab() => BuildShirtless();
 }

@@ -8,6 +8,7 @@ public class ZombieAnimationBridge : MonoBehaviour
 {
     public Animator animator;
     public ZombieProcAnim procedural;
+    public ZombieBoneAnim boneAnim;            // modèle réel sans clips : os animés par script
 
     public string speedParam = "Speed";
     public string attackTrigger = "Attack";
@@ -27,17 +28,20 @@ public class ZombieAnimationBridge : MonoBehaviour
         LastSpeed = s;
         if (animator != null && Has(speedParam)) animator.SetFloat(speedParam, s);
         if (procedural != null) procedural.moveSpeed = s;
+        if (boneAnim != null) boneAnim.moveSpeed = s;
     }
 
     public void Attack()
     {
         if (animator != null && Has(attackTrigger)) animator.SetTrigger(attackTrigger);
         if (procedural != null) procedural.PlayAttack();
+        if (boneAnim != null) boneAnim.PlayAttack();
     }
 
     public void Die()
     {
         if (animator != null && Has(dieTrigger)) animator.SetTrigger(dieTrigger);
         if (procedural != null) procedural.PlayDie();
+        if (boneAnim != null) boneAnim.PlayDie();
     }
 }

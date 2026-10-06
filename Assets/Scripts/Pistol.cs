@@ -13,6 +13,14 @@ public class Pistol : MonoBehaviour
     public TextMesh hud;
     public float range = 60f;
 
+    [Header("HUD munitions")]
+    public Color hudNormal = Color.white;
+    public Color hudLow = new Color(1f, 0.6f, 0.1f);
+    public Color hudEmpty = new Color(1f, 0.15f, 0.1f);
+    public int lowThreshold = 3;
+
+    MeshRenderer hudRenderer;
+
     XRGrabInteractable grab;
     AudioSource src;
     static AudioClip shot, click;
@@ -25,7 +33,20 @@ public class Pistol : MonoBehaviour
         src.spatialBlend = 1f;
         if (!shot) { shot = ProcAudio.Shot(); click = ProcAudio.Click(); }
         if (flash) flash.enabled = false;
+        if (hud) hudRenderer = hud.GetComponent<MeshRenderer>();
         UpdateHud();
+    }
+
+    // Le compteur n'est visible que quand le pistolet est en main (pas dans le holster).
+    void Update()
+    {
+        if (!hud) return;
+        bool held = BeltItem.InHand(grab);
+        if (hudRenderer) hudRenderer.enabled = held;
+        if (!held) return;
+
+        // chargeur vide : clignote en rouge
+        if (ammo <= 0) hud.color = Mathf.Repeat(Time.time, 0.6f) < 0.3f ? hudEmpty : hudEmpty * 0.35f;
     }
 
     void OnActivate(ActivateEventArgs a)
@@ -62,6 +83,8 @@ public class Pistol : MonoBehaviour
 
     void UpdateHud()
     {
-        if (hud) hud.text = ammo.ToString("00");
+        if (!hud) return;
+        hud.text = ammo.ToString("00") + "/" + maxAmmo.ToString("00");
+        hud.color = ammo <= 0 ? hudEmpty : (ammo <= lowThreshold ? hudLow : hudNormal);
     }
 }

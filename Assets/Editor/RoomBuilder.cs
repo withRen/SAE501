@@ -29,11 +29,11 @@ public static class RoomBuilder
         // ambiance sombre
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.0015f, 0.0015f, 0.002f);
+        RenderSettings.ambientLight = new Color(0.0008f, 0.0008f, 0.0012f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.003f, 0.003f, 0.004f);
-        RenderSettings.fogDensity = 0.1f;
+        RenderSettings.fogDensity = 0.12f;
 
         rig.transform.position = Spawn;
         var cam = rig.GetComponentInChildren<Camera>();
@@ -184,11 +184,14 @@ public static class RoomBuilder
         var lg = new GameObject("LampLight");
         lg.transform.SetParent(env, false);
         lg.transform.position = new Vector3(0, 1.85f, 0);
+        lg.transform.rotation = Quaternion.Euler(90f, 0f, 0f);   // vers le sol
         var l = lg.AddComponent<Light>();
-        l.type = LightType.Point;
+        l.type = LightType.Spot;
+        l.spotAngle = 110f;
+        l.innerSpotAngle = 40f;
         l.color = new Color(1f, 0.8f, 0.58f);
-        l.range = 4.5f;
-        l.intensity = 0.6f;
+        l.range = 4.2f;
+        l.intensity = 0.55f;
         l.shadows = LightShadows.None;
 
         var bulbMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Room/Materials/BulbOff.mat");
@@ -201,7 +204,7 @@ public static class RoomBuilder
         f.lamp = l;
         f.bulb = pendant.GetComponent<Renderer>();
         f.bulbMaterialIndex = 2;          // 3e matériau du pendentif = ampoule (BulbOff)
-        f.baseIntensity = 0.6f;
+        f.baseIntensity = 0.55f;
         f.dipDepth = 0.45f;
 
         // lampe à huile sur l'établi
@@ -212,12 +215,15 @@ public static class RoomBuilder
         var ol = og.AddComponent<Light>();
         ol.type = LightType.Point;
         ol.color = new Color(1f, 0.52f, 0.18f);
-        ol.range = 2.2f;
-        ol.intensity = 0.3f;
-        ol.shadows = LightShadows.None;
+        ol.range = 2.6f;
+        ol.intensity = 0.9f;
+        ol.shadows = LightShadows.Soft;       // ombres des planches, de la lampe, des chaises...
+        ol.shadowStrength = 0.95f;
+        ol.shadowBias = 0.03f;
+        ol.shadowNormalBias = 0.4f;
         var of = og.AddComponent<FlickerLamp>();
         of.lamp = ol;
-        of.baseIntensity = 0.3f;
+        of.baseIntensity = 0.9f;
         of.hum = 0.08f;
         of.humSpeed = 2.4f;
         of.dipDepth = 0.75f;
@@ -236,7 +242,7 @@ public static class RoomBuilder
             ml.color = new Color(0.32f, 0.42f, 0.55f);
             ml.spotAngle = 70f;
             ml.range = 9f;
-            ml.intensity = 1.2f;
+            ml.intensity = 0.8f;
             ml.shadows = LightShadows.None;
         }
     }

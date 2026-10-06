@@ -29,11 +29,11 @@ public static class RoomBuilder
         // ambiance sombre
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.02f, 0.02f, 0.025f);
+        RenderSettings.ambientLight = new Color(0.004f, 0.004f, 0.006f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogColor = new Color(0.02f, 0.02f, 0.025f);
-        RenderSettings.fogDensity = 0.03f;
+        RenderSettings.fogColor = new Color(0.005f, 0.005f, 0.007f);
+        RenderSettings.fogDensity = 0.07f;
 
         rig.transform.position = Spawn;
         var cam = rig.GetComponentInChildren<Camera>();
@@ -186,9 +186,9 @@ public static class RoomBuilder
         lg.transform.position = new Vector3(0, 1.85f, 0);
         var l = lg.AddComponent<Light>();
         l.type = LightType.Point;
-        l.color = new Color(1f, 0.78f, 0.5f);
-        l.range = 7f;
-        l.intensity = 2.2f;
+        l.color = new Color(1f, 0.82f, 0.6f);
+        l.range = 5.5f;
+        l.intensity = 1.0f;
         l.shadows = LightShadows.None;
 
         var bulbMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Room/Materials/BulbOff.mat");
@@ -201,7 +201,7 @@ public static class RoomBuilder
         f.lamp = l;
         f.bulb = pendant.GetComponent<Renderer>();
         f.bulbMaterialIndex = 2;          // 3e matériau du pendentif = ampoule (BulbOff)
-        f.baseIntensity = 2.2f;
+        f.baseIntensity = 1.0f;
 
         // lampe à huile sur l'établi
         var oil = Find(roomRoot.transform, "OilLamp");
@@ -211,12 +211,12 @@ public static class RoomBuilder
         var ol = og.AddComponent<Light>();
         ol.type = LightType.Point;
         ol.color = new Color(1f, 0.52f, 0.18f);
-        ol.range = 3.5f;
-        ol.intensity = 0.8f;
+        ol.range = 2.5f;
+        ol.intensity = 0.45f;
         ol.shadows = LightShadows.None;
         var of = og.AddComponent<FlickerLamp>();
         of.lamp = ol;
-        of.baseIntensity = 0.8f;
+        of.baseIntensity = 0.45f;
         of.burstMinGap = 4f;
         of.burstMaxGap = 12f;
 
@@ -232,7 +232,7 @@ public static class RoomBuilder
             ml.color = new Color(0.42f, 0.56f, 1f);
             ml.spotAngle = 70f;
             ml.range = 9f;
-            ml.intensity = 9f;
+            ml.intensity = 3f;
             ml.shadows = LightShadows.None;
         }
     }
@@ -364,8 +364,8 @@ public static class RoomBuilder
         var l = lg.AddComponent<Light>();
         l.type = LightType.Point;
         l.color = new Color(0.5f, 0.6f, 1f);
-        l.range = 3f;
-        l.intensity = 2f;
+        l.range = 2.5f;
+        l.intensity = 1.2f;
         l.shadows = LightShadows.None;
         return cams;
     }
@@ -578,6 +578,7 @@ public static class RoomBuilder
         l.range = 4f;
         l.intensity = 8f;
         l.shadows = LightShadows.None;
+        l.enabled = false;   // allumé 0,04 s par tir
         pi.flash = l;
 
         var tg = new GameObject("AmmoHUD");

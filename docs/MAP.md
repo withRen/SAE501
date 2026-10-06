@@ -33,6 +33,17 @@ Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **dé
 
 **Points d'apparition des zombies** : prefab `ZombieSpawnPoints` (bout du couloir gauche, bout du couloir droit, fenêtre Nord dans la cour). Détail et NavMesh : [ZOMBIES.md](ZOMBIES.md).
 
+## Zones débloquées par niveau
+
+Le joueur peut marcher (rig avec `CharacterController`). Des **portes verrouillées** ferment les zones jusqu'au bon niveau (détail : wiki « Niveaux et vagues »).
+
+| Niveau | Zone accessible | Porte (repère carte) |
+|---|---|---|
+| 1 | Bunker seul | — |
+| 2 | + couloirs gauche et droit, + Cuisine | x −3,9 · z −1,0 (gauche) ; x 3,9 · z 0,8 (droit) |
+| 3 | + Stockage | x 5,5 · z 7,0 |
+| 4 | + Générateur (objectif : l'activer) | x −5,5 · z 10,4 |
+
 ## Bunker et Cuisine
 
 La salle du fichier Blender (`Assets/Room`) est une cuisine complète : elle est placée **telle quelle** comme pièce Cuisine (objet `Cuisine (salle Blender)`).

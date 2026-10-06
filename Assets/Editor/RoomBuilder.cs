@@ -84,11 +84,12 @@ public static class RoomBuilder
         MoveRoomToCuisine();
         BuildBunkerShell();
         BuildMap();
+        BuildGatesAndGenerator();
         BuildStartingBarricades();
         BuildZombieSetup(rig);
 
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
-        NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), roomRoot);
+        NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), roomRoot, gatesRoot);
     }
 
     // ---------- matériaux ----------
@@ -409,6 +410,58 @@ public static class RoomBuilder
         go.gameOverText = tm;
     }
 
+    static GameObject gatesRoot;
+
+    static TextMesh MakeLabel(string name, Transform parent, Vector3 pos, Quaternion rot, float charSize, Color c)
+    {
+        var g = new GameObject(name);
+        g.transform.SetParent(parent, false);
+        g.transform.position = pos; g.transform.rotation = rot;
+        var tm = g.AddComponent<TextMesh>();
+        tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        tm.fontSize = 64; tm.characterSize = charSize; tm.anchor = TextAnchor.MiddleCenter; tm.alignment = TextAlignment.Center; tm.color = c;
+        g.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
+        return tm;
+    }
+
+    // Portes qui verrouillent les zones de la carte jusqu'à un certain niveau, et le générateur (objectif final)
+    static void BuildGatesAndGenerator()
+    {
+        gatesRoot = new GameObject("Portes_Niveaux");
+        gatesRoot.transform.SetParent(mapRoot, false);
+        // pos = centre du passage ; size = (épaisseur, hauteur, largeur) ; viewer = côté d'où le joueur arrive (le panneau y est lisible)
+        void Gate(string name, string zone, int level, Vector3 pos, float width, Vector3 viewer)
+        {
+            var root = new GameObject("Porte_" + name).transform;
+            root.SetParent(gatesRoot.transform, false);
+            var leaf = Box("Battant", root, pos + Vector3.up * 1.05f, new Vector3(0.12f, 2.1f, width), metalM);
+            leaf.transform.SetParent(root, true);
+            var tm = MakeLabel("Panneau", root, pos + Vector3.up * 1.5f + viewer * 0.09f, Quaternion.LookRotation(-viewer), 0.012f, new Color(1f, 0.2f, 0.15f));
+            var g = root.gameObject.AddComponent<ZoneGate>();
+            g.unlockLevel = level; g.zoneName = zone; g.door = leaf.transform; g.doorCollider = leaf.GetComponent<Collider>(); g.sign = tm;
+            tm.transform.SetParent(root, true);
+        }
+        Gate("Couloir_Gauche", "Couloir gauche et cuisine", 2, new Vector3(-3.9f, 0f, -1.0f), 1.0f, Vector3.right);
+        Gate("Couloir_Droit", "Couloir droit", 2, new Vector3(3.9f, 0f, 0.8f), 1.0f, Vector3.left);
+        Gate("Stockage", "Stockage", 3, new Vector3(5.5f, 0f, 7.0f), 1.6f, Vector3.left);
+        Gate("Generateur", "Générateur", 4, new Vector3(-5.5f, 0f, 10.4f), 1.4f, Vector3.right);
+
+        // le générateur, au fond de la salle Générateur (x -10..-5,7 · z 8,4..12,4)
+        var gen = new GameObject("Generateur_Objectif").transform;
+        gen.SetParent(mapRoot, false);
+        Box("Corps", gen, new Vector3(-8.2f, 0.55f, 11.9f), new Vector3(2.0f, 1.1f, 0.8f), metalM);
+        Box("Cuve", gen, new Vector3(-9.3f, 1.2f, 11.9f), new Vector3(0.5f, 0.5f, 0.5f), darkM, false);
+        Box("Tuyau", gen, new Vector3(-7.1f, 1.45f, 11.9f), new Vector3(0.12f, 0.7f, 0.12f), darkM, false);
+        var panel = Box("Pupitre", gen, new Vector3(-8.2f, 0.95f, 11.45f), new Vector3(0.7f, 0.3f, 0.12f), darkM);
+        var btnGo = Box("Bouton", gen, new Vector3(-8.2f, 1.02f, 11.37f), new Vector3(0.22f, 0.22f, 0.08f), lightM);
+        btnGo.GetComponent<BoxCollider>().size = new Vector3(1.4f, 1.4f, 2.5f);   // zone de sélection plus généreuse
+        var btn = btnGo.AddComponent<XRSimpleInteractable>();
+        var label = MakeLabel("Etat", gen, new Vector3(-8.2f, 1.45f, 11.36f), Quaternion.identity, 0.01f, new Color(1f, 0.85f, 0.4f));
+        var lamp = GameObject.Find("Lumiere_Generateur");
+        var g2 = gen.gameObject.AddComponent<Generator>();
+        g2.button = btn; g2.buttonRenderer = btnGo.GetComponent<Renderer>(); g2.label = label; g2.lamp = lamp ? lamp.GetComponent<Light>() : null;
+    }
+
     static void BuildZombieSetup(GameObject rig)
     {
         rig.AddComponent<PlayerHealth>();
@@ -419,6 +472,8 @@ public static class RoomBuilder
         z.zombiePrefab = ZombieBuilder.EnsurePrefab();
         var pts = (GameObject)PrefabUtility.InstantiatePrefab(ZombieBuilder.BuildSpawnPoints(), mapRoot);
         z.points = pts.GetComponent<ZombieSpawnPoints>();
+        z.spawnOnStart = false;               // c'est le WaveManager qui fait apparaître les zombies
+        sp.AddComponent<WaveManager>().spawner = z;
     }
 
     static void BuildPlanks(List<Pose> planks)

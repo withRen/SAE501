@@ -33,7 +33,7 @@ Les PV d'un zombie valent `100 × facteur du niveau`. Chaque tir au torse ou aux
 
 Les niveaux au-delà de 4 gardent les valeurs du niveau 4. Ces nombres de tirs sont ceux **mesurés** avec le vrai code dans l'éditeur.
 
-Passage au niveau suivant : `ZombieSpawner.NextLevel()` (à appeler au début de chaque vague ; elle remet aussi à zéro le quota de régénération du joueur).
+Le passage d'un niveau à l'autre est géré par le `WaveManager` (voir wiki « Niveaux et vagues ») : il règle `ZombieSpawner.level`, ce qui fixe PV et dégâts des zombies créés, et remet à zéro le quota de régénération du joueur.
 
 ## 3. Santé du joueur
 

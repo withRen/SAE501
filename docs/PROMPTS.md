@@ -21,6 +21,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [010](#010--navmesh-des-zombis-hitbox-et-niveaux) | 2026-10-06 | NavMesh des zombis, hitbox tête/torse/jambes, niveaux et dégâts | Gameplay | Prefab des points de départ, 3 zones de hitbox, table des niveaux |
 | [011](#011--modèle-free-shirtless-zombie) | 2026-10-06 | Utiliser le modèle Free Shirtless Zombie (déjà importé) | Gameplay | Zombie remplacé par le modèle, hitbox sur les os, animations par script |
 | [012](#012--wiki-github) | 2026-10-06 | Wiki GitHub : une page par fonctionnalité (zombies, vignettage, planches et clous) | Documentation | 3 pages + accueil + barre latérale publiés |
+| [013](#013--niveaux-par-vagues-et-générateur) | 2026-10-06 | Système de niveaux par vagues (4), zones débloquées, objectif générateur | Gameplay | WaveManager, portes verrouillées, générateur |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -253,3 +254,28 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Pages rédigées par l'IA à partir du code et des tests : **Zombies**, **Planches et clous**, **Vignettage de dégâts**, plus `Home` et `_Sidebar`. Chaque page indique ce qui est testé dans l'éditeur et ce qui ne l'est pas au casque.
 - Le wiki est un dépôt git séparé (`SAE501.wiki.git`) ; GitHub ne le crée qu'après la première page faite à la main dans l'interface.
 - Règle « une page de wiki par fonctionnalité » ajoutée au fichier de règles de l'assistant.
+
+---
+
+### 013 — Niveaux par vagues et générateur
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> Fait le système de niveau par vagues, en gros y a 4 vagues donc 4 niveaux
+> Limites de la carte par niveau : Niveau 1 on a pas accès aux couloirs · Niveau 2 on a accès à la cuisine et aux couloirs · Niveau 3 stockage · Niveau 4 générateur
+> Objectif ça sera d'activer le générateur
+
+**Résultat**
+
+- `WaveManager` : 4 niveaux, apparition des zombies par niveau, pause de réparation entre deux vagues, annonces, victoire.
+- `ZoneGate` : 4 portes verrouillées (couloir gauche, couloir droit, stockage, générateur) qui bloquent le joueur et s'ouvrent au bon niveau ; panneau rouge « VERROUILLÉ ».
+- `Generator` : bouton à maintenir 5 s dans la salle Générateur (niveau 4) ; victoire.
+- **Choix de l'IA à valider** (non précisés) : nombre de zombies par vague (4/6/8/10), intervalles, points d'apparition par niveau (niveau 1 : fenêtre Nord seulement), pause de 20 s, « maintenir 5 s » pour activer le générateur, renforts au niveau 4.
+- Test dans l'éditeur : enchaînement des niveaux, portes fermées/ouvertes, joueur arrêté à la porte au niveau 0 puis libre au niveau 2, zombies niveau 4 à 200 PV / 50 %, victoire. Non testé : au casque, équilibrage.
+- Page de wiki : Niveaux et vagues.

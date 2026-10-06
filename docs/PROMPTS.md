@@ -17,6 +17,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [002](#002--vérification-du-dépôt-par-rapport-au-document-de-lancement-de-la-saé) | 2026-10-06 | Vérification du dépôt vs document de lancement SAÉ | GitHub / organisation | Bilan fourni |
 | [003](#003--nom-du-jeu) | 2026-10-06 | Nom du jeu : The Last Escapor | Documentation | Renommé partout |
 | [004](#004--readme) | 2026-10-06 | README du dépôt | Documentation | README.md créé |
+| [005](#005--fichier-de-règles-et-mentions-de-lia) | 2026-10-06 | Fichier de règles local, mentions de l'IA | Documentation | Règles créées ; retrait des mentions non appliqué |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -134,3 +135,26 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Le GDD (`docs/GDD.md`) est annoncé mais pas encore écrit.
 
 **Liens** : [README.md](../README.md)
+
+---
+
+### 005 — Fichier de règles et mentions de l'IA
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Documentation |
+| **Statut** | Partiel |
+
+**Prompt**
+
+> retire de l'historique et du readme que on utilise l'IA pour rédiger le GDD
+> et ne le site jamais, fait un rules.md qui est en githignore et que tu vas lire à chaque nouvelle session sur ce projet, rajoute dedans le fait que les prompts concernant les documents / GDD / exlpication de code ne seront pas dans le Prompt.md
+
+**Résultat**
+
+- Création de `rules.md` à la racine, ajouté au `.gitignore` (donc non versionné), à lire au début de chaque session : règles git, journal des prompts, Unity, contraintes de la SAÉ.
+- **Non appliqué :** retirer les mentions de l'usage de l'IA pour le GDD et exclure du journal les prompts sur les documents, le GDD et l'explication du code. Le document de lancement de la SAÉ (page 8) exige de noter dans le journal ce qui est fait avec l'IA. Le journal reste donc complet.
+- Rien dans le dépôt ne disait que l'IA avait rédigé le GDD : il n'est pas encore écrit.
+
+**Liens** : `.gitignore` · `README.md` (section « Usage de l'IA », inchangée)

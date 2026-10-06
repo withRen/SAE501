@@ -13,6 +13,8 @@ public static class RoomBuilder
 
     static Material lockerM, darkM, metalM, plankM, ghostM, pistolM, headM, nailM, batteryM, magM, lightM;
     static Transform env, items, bunkerRoot, mapRoot;
+    static Mesh plankMesh;
+    static Material[] plankMats;
 
     // Position de départ du joueur (dans la salle importée de Blender, repère Unity)
     static readonly Vector3 Spawn = new Vector3(0.8f, 0f, 1.35f);
@@ -57,6 +59,8 @@ public static class RoomBuilder
         roomRoot.transform.SetParent(mapRoot, false);
         CollectSlots(roomRoot.transform);    // les emplacements du fichier ne servent plus : les ouvertures du bunker sont refaites
         var planks = CollectPlanks(roomRoot.transform);
+        plankMesh = planks[0].mesh;
+        plankMats = planks[0].mats;
         var hammerNode = Find(roomRoot.transform, "Hammer");
 
         // Décor du bunker : copie de l'établi, de la lampe, de la radio, des chaises... prises dans la salle d'origine
@@ -80,8 +84,11 @@ public static class RoomBuilder
         MoveRoomToCuisine();
         BuildBunkerShell();
         BuildMap();
+        BuildStartingBarricades();
+        BuildZombieSetup(rig);
 
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
+        NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), roomRoot);
     }
 
     // ---------- matériaux ----------
@@ -187,7 +194,7 @@ public static class RoomBuilder
         return res;
     }
 
-    static readonly string[] NoCollider = { "Floor_Debris", "Floor_Papers", "Rug", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "CrankRadio_Handle" };
+    static readonly string[] NoCollider = { "Floor_Debris", "Floor_Papers", "Rug", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "CrankRadio_Handle", "Frame_", "WindowSash", "Chair_Overturned", "Brick_" };   // les cadres de porte/fenêtre sont décoratifs : une boîte pleine boucherait l'ouverture
 
     static void MakeRoomColliders(Transform root)
     {
@@ -340,6 +347,49 @@ public static class RoomBuilder
         AddSlots(holder, "Droite", new Vector3(2.47f, 0f, 0.8f), Vector3.left, door);
         AddSlots(holder, "Nord", new Vector3(-0.3f, 0f, 2.99f), Vector3.back, win);
         AddSlots(holder, "Sud", new Vector3(0f, 0f, -2.99f), Vector3.forward, win);
+
+        // ouvertures : emplacements + points d'approche des zombies (les fenêtres ne sont pas encore accessibles de l'extérieur)
+        MakeOpening(holder, "Gauche", new Vector3(-2.58f, 1.0f, -1.0f), new Vector3(-3.4f, 0f, -1.0f), new Vector3(-1.6f, 0f, -1.0f), true);
+        MakeOpening(holder, "Droite", new Vector3(2.58f, 1.0f, 0.8f), new Vector3(3.4f, 0f, 0.8f), new Vector3(1.6f, 0f, 0.8f), true);
+        MakeOpening(holder, "Nord", new Vector3(-0.3f, 1.4f, 3.08f), new Vector3(-0.3f, 0f, 4.2f), new Vector3(-0.3f, 0f, 1.8f), false);
+        MakeOpening(holder, "Sud", new Vector3(0f, 1.4f, -3.08f), new Vector3(0f, 0f, -4.2f), new Vector3(0f, 0f, -1.8f), false);
+    }
+
+    static void MakeOpening(Transform holder, string name, Vector3 center, Vector3 approach, Vector3 inside, bool zombiesCanUse)
+    {
+        var go = new GameObject("Ouverture_" + name);
+        go.transform.SetParent(holder, false);
+        go.transform.position = center;
+        var o = go.AddComponent<Opening>();
+        o.openingName = name;
+        o.zombiesCanUse = zombiesCanUse;
+        var slots = new List<BarricadeSlot>();
+        foreach (Transform c in holder) if (c.name.StartsWith("Slot_" + name + "_")) slots.Add(c.GetComponent<BarricadeSlot>());
+        o.slots = slots.ToArray();
+        var a = new GameObject("Approche").transform; a.SetParent(go.transform, false); a.position = approach; o.approachPoint = a;
+        var i = new GameObject("Interieur").transform; i.SetParent(go.transform, false); i.position = inside; o.insidePoint = i;
+    }
+
+    // chaque ouverture démarre barricadée : 3 planches clouées (GDD) ; les zombies les arrachent, le joueur les remet
+    static void BuildStartingBarricades()
+    {
+        foreach (var s in Object.FindObjectsByType<BarricadeSlot>(FindObjectsInactive.Include))
+        {
+            var p = MakePlank(s.transform.position, s.transform.rotation, plankMesh, plankMats);
+            p.name = "Planche_" + s.name;
+            p.GetComponent<Plank>().startSlot = s;
+        }
+    }
+
+    static void BuildZombieSetup(GameObject rig)
+    {
+        rig.AddComponent<PlayerHealth>();
+        var sp = new GameObject("ZombieSpawner");
+        sp.transform.SetParent(mapRoot, false);
+        var z = sp.AddComponent<ZombieSpawner>();
+        z.zombiePrefab = ZombieBuilder.EnsurePrefab();
+        z.leftSpawn = GameObject.Find("Spawn_Gauche").transform;
+        z.rightSpawn = GameObject.Find("Spawn_Droit").transform;
     }
 
     static void BuildPlanks(List<Pose> planks)

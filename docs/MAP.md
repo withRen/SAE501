@@ -38,6 +38,16 @@ Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **dé
 La salle du fichier Blender (`Assets/Room`) est une cuisine complète : elle est placée **telle quelle** comme pièce Cuisine (objet `Cuisine (salle Blender)`).
 Le bunker est une salle neuve en boîtes grises (`Bunker`, construite par `BuildBunkerShell`). Il reprend de la salle d'origine l'établi, la lampe suspendue, la lampe à huile, la radio, les chaises et les cadres de fenêtres/portes (objet `Bunker_Decor`), plus des casiers et des caisses (`Bunker_Materiel`). Les planches et le marteau interactifs sont dans le bunker.
 
+## Analyse pour les zombies (NavMesh)
+
+Forme de la carte : un « U » ouvert vers le haut. Le bunker est en bas, les deux couloirs montent de chaque côté (gauche : 14,9 m jusqu'à la porte ; droite : 13,2 m), et les zombies apparaissent tout en haut (`Spawn_Gauche`, `Spawn_Droit`, à z = 13,3).
+
+- **Chemins :** chaque bout de couloir a un chemin complet jusqu'à la porte de son côté et jusqu'à l'intérieur du bunker (environ 16 à 20 m). Les deux couloirs ne sont **pas reliés** entre eux : un zombie de gauche ne peut aller qu'à la porte gauche, et inversement.
+- **Portes :** 1 m de large. L'agent des zombies fait donc 0,3 m de rayon (réglage du projet, `NavMeshAreas`), sinon il ne passe pas.
+- **Fenêtres (devant et derrière le joueur) :** il n'y a pas de sol à l'extérieur, entre les couloirs et au sud du bunker. Aucun zombie ne peut les atteindre pour l'instant (`zombiesCanUse = false`). Pour les utiliser, il faudra créer une cour au nord (entre les deux couloirs, reliée en haut) et un passage au sud.
+- **Obstacles :** l'établi et le pupitre bloquent le centre du bunker ; les chaises renversées et les cadres de porte n'ont plus de collision (ils bloquaient le passage).
+- **Barricades :** chaque ouverture démarre avec ses 3 planches clouées. Les zombies s'arrêtent au point d'approche devant l'ouverture, arrachent une planche toutes les 3 s, puis entrent.
+
 ## État
 
 Blockout en boîtes grises (sans décor) dans `MainScene`, objet `Map`. Reconstruit par **SAE501 → Build VR Scene** (`RoomBuilder.BuildMap`). À faire : habillage des pièces, NavMesh, ouverture de la porte au bout du couloir droit.

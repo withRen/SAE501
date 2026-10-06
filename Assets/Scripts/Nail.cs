@@ -36,6 +36,15 @@ public class Nail : MonoBehaviour
         if (visual.activeSelf != vis) visual.SetActive(vis);
     }
 
+    // clou déjà enfoncé (planche pré-posée au début de la partie)
+    public void SetDriven()
+    {
+        hits = hitsNeeded;
+        z = drivenZ;
+        visual.SetActive(true);
+        Apply();
+    }
+
     public void ResetHits()
     {
         hits = 0;

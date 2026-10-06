@@ -7,6 +7,7 @@ public class BarricadeSlot : MonoBehaviour
 {
     public static readonly List<BarricadeSlot> All = new List<BarricadeSlot>();
     public bool Occupied;
+    public Plank Plank;                // planche actuellement posée ici (null si libre)
     public Renderer ghost;
 
     Material gm;

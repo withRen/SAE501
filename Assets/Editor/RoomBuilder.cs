@@ -625,7 +625,10 @@ public static class RoomBuilder
         vis.AddComponent<MeshRenderer>().sharedMaterials = mats;
         var rb = p.AddComponent<Rigidbody>();
         rb.mass = 2f;
-        MakeGrab(p);
+        var plankGrab = MakeGrab(p);
+        // la planche ne doit utiliser que son propre collider (sinon elle "vole" celui de la zone de maintien)
+        plankGrab.colliders.Clear();
+        plankGrab.colliders.Add(bc);
 
         // clous aux deux extrémités, face vers la pièce (+Z local)
         var nails = new Nail[2];

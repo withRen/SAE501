@@ -24,3 +24,5 @@ sysinfo.txt
 .utmp/
 *_BackUpThisFolder_ButDontShipItWithYourGame/
 rules.md
+/Assets/_Recovery/
+/Assets/_Recovery.meta

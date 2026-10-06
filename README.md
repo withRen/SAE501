@@ -115,6 +115,7 @@ docs/         documents du projet (ci-dessous)
 |---|---|
 | [docs/PLANNING.md](docs/PLANNING.md) | objectifs, tâches et sous-tâches, planning sur 14 jours, risques |
 | [docs/MAP.md](docs/MAP.md) | carte : bunker, couloirs, Cuisine, Générateur, Stockage |
+| [docs/ZOMBIES.md](docs/ZOMBIES.md) | hitbox du zombi, niveaux (PV, dégâts), points de départ NavMesh |
 | [docs/ASSETS.md](docs/ASSETS.md) | liste des assets (Asset Store, textures) et façon de les importer |
 | [docs/PROMPTS.md](docs/PROMPTS.md) | journal des demandes faites à l'assistant IA et ce qui en est sorti |
 

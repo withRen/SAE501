@@ -10,8 +10,8 @@ public class HealthVignette : MonoBehaviour
     public Material material;                       // matériau utilisant SAE501/DamageVignette
     public Color color = new Color(0.55f, 0f, 0f, 1f);
 
-    [Tooltip("Intensité de base selon les PV perdus (0 perdu, puis de plus en plus). Adaptée au nombre de PV max.")]
-    public float[] intensityByHpLost = { 0f, 0.35f, 0.6f, 0.9f };
+    [Tooltip("Intensité de base selon la part de vie perdue (de 0 % à 100 %, répartie régulièrement ; valeurs intermédiaires interpolées).")]
+    public float[] intensityByHpLost = { 0f, 0.5f, 0.75f, 0.95f };
 
     public float smooth = 5f;          // vitesse de transition
     public float hitFlash = 0.6f;      // pic supplémentaire à chaque coup reçu
@@ -21,7 +21,7 @@ public class HealthVignette : MonoBehaviour
     Renderer rend;
     Material mat;
     float shown, flash;
-    int hp, max;
+    float hp, max;
 
     void Start()
     {
@@ -51,12 +51,14 @@ public class HealthVignette : MonoBehaviour
     void Update()
     {
         if (rend == null) return;
-        float lostFraction = max > 0 ? 1f - hp / (float)max : 0f;
-        int idx = Mathf.Clamp(Mathf.RoundToInt(lostFraction * (intensityByHpLost.Length - 1)), 0, intensityByHpLost.Length - 1);
-        float target = intensityByHpLost[idx];
+        float lostFraction = max > 0f ? Mathf.Clamp01(1f - hp / max) : 0f;
+        float pos = lostFraction * (intensityByHpLost.Length - 1);
+        int i0 = Mathf.Clamp(Mathf.FloorToInt(pos), 0, intensityByHpLost.Length - 1);
+        int i1 = Mathf.Min(i0 + 1, intensityByHpLost.Length - 1);
+        float target = Mathf.Lerp(intensityByHpLost[i0], intensityByHpLost[i1], pos - i0);
 
-        // « cœur qui bat » : double battement quand il reste 1 PV (ou moins du quart des PV)
-        if (hp > 0 && hp <= Mathf.Max(1, max / 4))
+        // « cœur qui bat » : double battement quand il reste le quart des PV ou moins
+        if (hp > 0f && hp <= max * 0.25f)
         {
             float t = Mathf.Repeat(Time.time * heartbeatHz, 1f);
             float beat = Mathf.Exp(-14f * t) + 0.6f * Mathf.Exp(-14f * Mathf.Abs(t - 0.3f));

@@ -351,7 +351,7 @@ public static class RoomBuilder
         // ouvertures : emplacements + points d'approche des zombies (les fenêtres ne sont pas encore accessibles de l'extérieur)
         MakeOpening(holder, "Gauche", new Vector3(-2.58f, 1.0f, -1.0f), new Vector3(-3.4f, 0f, -1.0f), new Vector3(-1.6f, 0f, -1.0f), true);
         MakeOpening(holder, "Droite", new Vector3(2.58f, 1.0f, 0.8f), new Vector3(3.4f, 0f, 0.8f), new Vector3(1.6f, 0f, 0.8f), true);
-        MakeOpening(holder, "Nord", new Vector3(-0.3f, 1.4f, 3.08f), new Vector3(-0.3f, 0f, 4.2f), new Vector3(-0.3f, 0f, 1.8f), false);
+        MakeOpening(holder, "Nord", new Vector3(-0.3f, 1.4f, 3.08f), new Vector3(-0.3f, 0f, 4.2f), new Vector3(-0.3f, 0f, 1.8f), true);
         MakeOpening(holder, "Sud", new Vector3(0f, 1.4f, -3.08f), new Vector3(0f, 0f, -4.2f), new Vector3(0f, 0f, -1.8f), false);
     }
 
@@ -417,8 +417,8 @@ public static class RoomBuilder
         sp.transform.SetParent(mapRoot, false);
         var z = sp.AddComponent<ZombieSpawner>();
         z.zombiePrefab = ZombieBuilder.EnsurePrefab();
-        z.leftSpawn = GameObject.Find("Spawn_Gauche").transform;
-        z.rightSpawn = GameObject.Find("Spawn_Droit").transform;
+        var pts = (GameObject)PrefabUtility.InstantiatePrefab(ZombieBuilder.BuildSpawnPoints(), mapRoot);
+        z.points = pts.GetComponent<ZombieSpawnPoints>();
     }
 
     static void BuildPlanks(List<Pose> planks)
@@ -546,12 +546,19 @@ public static class RoomBuilder
         Hall("Couloir_Droit", new Vector2(3.9f, -0.6f), new Vector2(5.5f, 14.0f), G('W', 0.3f, 1.3f), G('E', 6.2f, 7.8f));
         Hall("Stockage", new Vector2(5.7f, 5.0f), new Vector2(9.7f, 9.0f), G('W', 6.2f, 7.8f));
 
-        // points d'apparition des zombies (bouts des couloirs)
-        foreach (var (n, p) in new[] { ("Spawn_Gauche", new Vector3(-4.7f, 0f, 13.3f)), ("Spawn_Droit", new Vector3(4.7f, 0f, 13.3f)) })
+        // cour au nord du bunker (entre les deux couloirs) : c'est là que les zombies arrivent par la fenêtre Nord
         {
-            var s = new GameObject(n).transform;
-            s.SetParent(mapRoot, false);
-            s.position = p;
+            var cour = new GameObject("Cour_Nord").transform;
+            cour.SetParent(mapRoot, false);
+            const float zMin = 3.05f, zMax = 8.0f, xMin = -3.9f, xMax = 3.9f, th = 0.15f, hh = 2.7f;
+            float cx = (xMin + xMax) / 2f, cz = (zMin + zMax) / 2f;
+            Box("Sol", cour, new Vector3(cx, -0.05f, cz), new Vector3(xMax - xMin, 0.1f, zMax - zMin), blockM);
+            Box("Plafond", cour, new Vector3(cx, hh + 0.05f, cz), new Vector3(xMax - xMin, 0.1f, zMax - zMin), blockM);
+            Box("MurNord", cour, new Vector3(cx, hh / 2f, zMax + th / 2f), new Vector3(xMax - xMin + th, hh, th), blockM);
+            var lc = new GameObject("Lumiere_Cour").AddComponent<Light>();
+            lc.transform.SetParent(cour, false);
+            lc.transform.position = new Vector3(0f, 2.3f, 5.5f);
+            lc.type = LightType.Point; lc.color = new Color(0.45f, 0.55f, 0.7f); lc.range = 5f; lc.intensity = 0.8f; lc.shadows = LightShadows.None;
         }
 
         // un peu de lumière froide pour que les caméras voient quelque chose (sans ombre)

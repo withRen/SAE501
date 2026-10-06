@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
 
-// Logique de santé du joueur (GDD : 4 PV, +1 PV après 10 s sans dégât, max 2 PV régénérés par vague).
+// Logique de santé du joueur : 100 PV (= 100 %). Les zombies retirent un pourcentage de la vie max (voir ZombieLevels).
+// Régénération (GDD) : +25 PV (l'ancien « 1 PV sur 4 ») après 10 s sans dégât, 2 fois maximum par vague.
 // Sur le XR Origin. Les zombies appellent PlayerHealth.Instance.TakeDamage().
 // (UI : HealthVignette, GameOverUI.)
 public class PlayerHealth : MonoBehaviour
@@ -9,16 +10,17 @@ public class PlayerHealth : MonoBehaviour
     public static PlayerHealth Instance { get; private set; }
 
     [Header("Règles du GDD")]
-    public int maxHealth = 4;
-    public float regenDelay = 10f;      // secondes sans dégât avant +1 PV
-    public int maxRegenPerWave = 2;     // PV récupérables par vague
+    public float maxHealth = 100f;
+    public float regenDelay = 10f;      // secondes sans dégât avant la régénération
+    public float regenAmount = 25f;     // PV rendus à chaque régénération
+    public int maxRegenPerWave = 2;     // nombre de régénérations par vague
 
-    public int Health { get; private set; }
-    public bool IsDead => Health <= 0;
+    public float Health { get; private set; }
+    public bool IsDead => Health <= 0f;
     public bool Dead => IsDead;         // alias utilisé par les zombies
 
-    public event Action<int, int> Changed;  // (pv actuels, pv max)
-    public event Action<int> Damaged;       // dégâts subis
+    public event Action<float, float> Changed;  // (pv actuels, pv max)
+    public event Action<float> Damaged;         // dégâts subis (en PV)
     public event Action Died;
 
     float sinceLastHit;
@@ -55,7 +57,7 @@ public class PlayerHealth : MonoBehaviour
         sinceLastHit += Time.deltaTime;
         if (Health < maxHealth && regenThisWave < maxRegenPerWave && sinceLastHit >= regenDelay)
         {
-            Health++;
+            Health = Mathf.Min(maxHealth, Health + regenAmount);
             regenThisWave++;
             sinceLastHit = 0f;
             Changed?.Invoke(Health, maxHealth);
@@ -63,16 +65,19 @@ public class PlayerHealth : MonoBehaviour
     }
 
     // Appelé par le zombie à chaque coup de griffe.
-    public void TakeDamage(int amount = 1)
+    public void TakeDamageFraction(float fractionOfMax) => TakeDamage(fractionOfMax * maxHealth);
+
+    public void TakeDamage(float amount)
     {
         if (IsDead) return;
 
-        Health = Mathf.Max(0, Health - amount);
+        Health = Mathf.Max(0f, Health - amount);
+        if (Health < 0.01f) Health = 0f;      // évite qu'il reste 0,00001 PV après 3 coups d'un tiers
         sinceLastHit = 0f;
         Damaged?.Invoke(amount);
         Changed?.Invoke(Health, maxHealth);
 
-        if (Health <= 0) Died?.Invoke();
+        if (Health <= 0f) Died?.Invoke();
     }
 
     // À appeler au début de chaque vague (WaveManager) : remet le quota de régénération à zéro.

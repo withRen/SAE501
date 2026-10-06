@@ -31,7 +31,7 @@ Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **dé
 
 **Caméras** (3 écrans du pupitre) : couloir gauche, couloir droit, générateur. Elles regardent depuis le bunker vers le haut des couloirs.
 
-**Points d'apparition des zombies** : `Spawn_Gauche` et `Spawn_Droit` (objets vides en haut des couloirs, dans la hiérarchie sous `Map`).
+**Points d'apparition des zombies** : prefab `ZombieSpawnPoints` (bout du couloir gauche, bout du couloir droit, fenêtre Nord dans la cour). Détail et NavMesh : [ZOMBIES.md](ZOMBIES.md).
 
 ## Bunker et Cuisine
 
@@ -44,7 +44,7 @@ Forme de la carte : un « U » ouvert vers le haut. Le bunker est en bas, les de
 
 - **Chemins :** chaque bout de couloir a un chemin complet jusqu'à la porte de son côté et jusqu'à l'intérieur du bunker (environ 16 à 20 m). Les deux couloirs ne sont **pas reliés** entre eux : un zombie de gauche ne peut aller qu'à la porte gauche, et inversement.
 - **Portes :** 1 m de large. L'agent des zombies fait donc 0,3 m de rayon (réglage du projet, `NavMeshAreas`), sinon il ne passe pas.
-- **Fenêtres (devant et derrière le joueur) :** il n'y a pas de sol à l'extérieur, entre les couloirs et au sud du bunker. Aucun zombie ne peut les atteindre pour l'instant (`zombiesCanUse = false`). Pour les utiliser, il faudra créer une cour au nord (entre les deux couloirs, reliée en haut) et un passage au sud.
+- **Fenêtres :** la fenêtre **Nord** (devant le joueur) est accessible : une cour fermée (`Cour_Nord`, z 3 à 8) a été ajoutée entre les deux couloirs, et les zombies y apparaissent. La fenêtre **Sud** (derrière le joueur) reste inaccessible (`zombiesCanUse = false`) : il faudrait un passage au sud.
 - **Obstacles :** l'établi et le pupitre bloquent le centre du bunker ; les chaises renversées et les cadres de porte n'ont plus de collision (ils bloquaient le passage).
 - **Barricades :** chaque ouverture démarre avec ses 3 planches clouées. Les zombies s'arrêtent au point d'approche devant l'ouverture, arrachent une planche toutes les 3 s, puis entrent.
 

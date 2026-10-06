@@ -6,7 +6,7 @@ using UnityEngine.AI;
 //   Marche  : va vers l'ouverture accessible la plus proche (chemin NavMesh)
 //   Casse   : arrache une planche toutes les 3 secondes tant qu'il en reste
 //   Attaque : ouverture libre -> entre dans le bunker et frappe le joueur
-//   Mort    : tir à la tête = mort immédiate ; tir au corps = ralentit
+//   Mort    : tête = mort immédiate ; torse (33 %) et jambes (20 %) retirent une part des PV (voir ZombieLevels)
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {
@@ -23,8 +23,14 @@ public class Zombie : MonoBehaviour
     [Header("Attaque")]
     public float attackRange = 1.15f;
     public float attackCooldown = 1.5f;
-    public int attackDamage = 1;             // le joueur a 4 PV (GDD)
+    [Tooltip("Part de la vie max du joueur retirée à chaque coup (0..1). Fixée par le niveau, voir ZombieLevels.")]
+    public float attackDamage = 0.2f;
     public float attackHitDelay = 0.45f;    // moment du coup dans l'animation
+
+    [Header("Vie")]
+    public int level = 1;
+    public float Health { get; private set; } = ZombieLevels.BaseHealth;
+    public float MaxHealth { get; private set; } = ZombieLevels.BaseHealth;
 
     public State state { get; private set; }
     public Opening target { get; private set; }
@@ -35,6 +41,15 @@ public class Zombie : MonoBehaviour
     float slowUntil, nextBreak, nextAttack, hitAt = -1f, repath;
     Plank pendingPlank;
     PlayerHealth player;
+
+    // règle PV et dégâts selon le niveau (à appeler juste après la création, avant Start)
+    public void ApplyLevel(int lvl)
+    {
+        level = Mathf.Clamp(lvl, 1, ZombieLevels.MaxLevel);
+        var st = ZombieLevels.For(level);
+        MaxHealth = Health = ZombieLevels.BaseHealth * st.hpMultiplier;
+        attackDamage = st.playerDamage;
+    }
 
     void Awake()
     {
@@ -146,7 +161,7 @@ public class Zombie : MonoBehaviour
         if (hitAt > 0f && Time.time >= hitAt)
         {
             hitAt = -1f;
-            if (FlatDistanceToPlayer() <= attackRange * 1.3f) player.TakeDamage(attackDamage);
+            if (FlatDistanceToPlayer() <= attackRange * 1.3f) player.TakeDamageFraction(attackDamage);
         }
     }
 
@@ -163,12 +178,15 @@ public class Zombie : MonoBehaviour
         transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(d), 360f * Time.deltaTime);
     }
 
-    // appelé par le tir (voir ZombieHitbox)
-    public void OnHit(bool head)
+    // appelé par le tir (voir ZombieHitbox) : la tête tue d'un coup, le torse et les jambes retirent une part des PV de base
+    public void OnHit(HitZone zone)
     {
         if (Dead) return;
-        if (head) Die();
-        else slowUntil = Time.time + slowDuration;     // tir au corps : ralenti
+        if (zone == HitZone.Head) { Health = 0f; Die(); return; }
+
+        Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
+        if (Health <= 0.01f) { Health = 0f; Die(); return; }
+        slowUntil = Time.time + (zone == HitZone.Legs ? slowDuration * 1.5f : slowDuration);     // touché : ralenti (plus longtemps aux jambes)
     }
 
     public void Die()

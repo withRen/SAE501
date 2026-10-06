@@ -869,26 +869,59 @@ public static class RoomBuilder
         var p = new GameObject("Pistol");
         p.transform.SetParent(items, false);
         p.transform.position = pos;
-        Box("Slide", p.transform, new Vector3(0, 0.01f, 0.02f), new Vector3(0.03f, 0.035f, 0.17f), pistolM, true);
-        Box("Grip", p.transform, new Vector3(0, -0.045f, -0.04f), new Vector3(0.028f, 0.09f, 0.04f), pistolM, true, new Vector3(-10, 0, 0));
+
+        // modèle M1911 du pack Modern Guns (sinon : boîtes grises)
+        GunBuilder.Gun gun = GunBuilder.Available ? GunBuilder.InstantiateGun(p.transform) : null;
+        Vector3 attachPos, magWellPos, hudPos, smokePos, muzzlePos;
+        if (gun != null)
+        {
+            var bc = p.AddComponent<BoxCollider>();
+            bc.center = new Vector3(0f, 0.035f, 0.07f); bc.size = new Vector3(0.03f, 0.13f, 0.23f);
+            attachPos = new Vector3(0f, 0.02f, -0.015f);        // le creux de la poignée
+            magWellPos = new Vector3(0f, -0.05f, -0.01f);       // sous la crosse
+            hudPos = new Vector3(0f, 0.122f, 0.0f);             // dessus de la culasse, vers l'arrière
+            smokePos = new Vector3(0f, 0.1f, -0.02f);           // arrière de la culasse
+            muzzlePos = gun.barrel.localPosition;
+        }
+        else
+        {
+            Box("Slide", p.transform, new Vector3(0, 0.01f, 0.02f), new Vector3(0.03f, 0.035f, 0.17f), pistolM, true);
+            Box("Grip", p.transform, new Vector3(0, -0.045f, -0.04f), new Vector3(0.028f, 0.09f, 0.04f), pistolM, true, new Vector3(-10, 0, 0));
+            attachPos = new Vector3(0, -0.04f, -0.045f);
+            magWellPos = new Vector3(0, -0.11f, -0.05f);
+            hudPos = new Vector3(0, 0.03f, -0.03f);
+            smokePos = new Vector3(0f, 0.02f, -0.07f);
+            muzzlePos = new Vector3(0, 0.01f, 0.11f);
+        }
 
         var attach = new GameObject("Attach").transform;
         attach.SetParent(p.transform, false);
-        attach.localPosition = new Vector3(0, -0.04f, -0.045f);
+        attach.localPosition = attachPos;
 
         p.AddComponent<Rigidbody>();
         var grab = MakeGrab(p, attach);
         p.AddComponent<BeltItem>().type = BeltItemType.Pistol;
         var pi = p.AddComponent<Pistol>();
-
-        var muzzle = new GameObject("Muzzle").transform;
-        muzzle.SetParent(p.transform, false);
-        muzzle.localPosition = new Vector3(0, 0.01f, 0.11f);
-        pi.muzzle = muzzle;
         pi.smokeMaterial = SmokeMat();
+        pi.smokeLocalPosition = smokePos;
+        if (gun != null)
+        {
+            pi.muzzle = gun.barrel;
+            pi.animator = gun.animator; pi.slider = gun.slider; pi.ejection = gun.ejection;
+            pi.casingPrefab = GunBuilder.CasingPrefab();
+            pi.muzzleFlashPrefab = GunBuilder.MuzzleFlashPrefab();
+            gun.animator.GetComponent<GunAnimationEvents>().pistol = pi;
+        }
+        else
+        {
+            var muzzle = new GameObject("Muzzle").transform;
+            muzzle.SetParent(p.transform, false);
+            muzzle.localPosition = muzzlePos;
+            pi.muzzle = muzzle;
+        }
 
         var fl = new GameObject("Flash");
-        fl.transform.SetParent(muzzle, false);
+        fl.transform.SetParent(pi.muzzle, false);
         var l = fl.AddComponent<Light>();
         l.type = LightType.Point;
         l.color = new Color(1f, 0.8f, 0.4f);
@@ -900,12 +933,12 @@ public static class RoomBuilder
 
         var tg = new GameObject("AmmoHUD");
         tg.transform.SetParent(p.transform, false);
-        tg.transform.localPosition = new Vector3(0, 0.03f, -0.03f);
+        tg.transform.localPosition = hudPos;
         tg.transform.localEulerAngles = new Vector3(90, 0, 0);
         var tm = tg.AddComponent<TextMesh>();
         tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         tm.fontSize = 64;
-        tm.characterSize = 0.004f;
+        tm.characterSize = 0.0035f;
         tm.anchor = TextAnchor.MiddleCenter;
         tm.color = new Color(1f, 0.85f, 0.3f);
         tg.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
@@ -914,7 +947,7 @@ public static class RoomBuilder
         // emplacement du chargeur sous la crosse
         var well = new GameObject("MagWell");
         well.transform.SetParent(p.transform, false);
-        well.transform.localPosition = new Vector3(0, -0.11f, -0.05f);
+        well.transform.localPosition = magWellPos;
         var sc = well.AddComponent<SphereCollider>();
         sc.isTrigger = true;
         sc.radius = 0.05f;
@@ -930,10 +963,23 @@ public static class RoomBuilder
         m.transform.SetParent(items, false);
         m.transform.position = pos;
         var bc = m.AddComponent<BoxCollider>();
-        bc.size = new Vector3(0.03f, 0.08f, 0.05f);
-        Box("Visual", m.transform, Vector3.zero, new Vector3(0.03f, 0.08f, 0.05f), magM, false);
+        Transform attach = null;
+        if (GunBuilder.Available)
+        {
+            // chargeur du pack avec ses 2 cartouches ; son origine est au bas du chargeur : on centre la prise et le collider
+            GunBuilder.InstantiateMagazine(m.transform);
+            bc.center = new Vector3(0f, 0.05f, 0.005f); bc.size = new Vector3(0.022f, 0.105f, 0.05f);
+            attach = new GameObject("Attach").transform;
+            attach.SetParent(m.transform, false);
+            attach.localPosition = new Vector3(0f, 0.05f, 0.005f);
+        }
+        else
+        {
+            bc.size = new Vector3(0.03f, 0.08f, 0.05f);
+            Box("Visual", m.transform, Vector3.zero, new Vector3(0.03f, 0.08f, 0.05f), magM, false);
+        }
         m.AddComponent<Rigidbody>();
-        var grab = MakeGrab(m);
+        var grab = MakeGrab(m, attach);
         m.AddComponent<BeltItem>().type = BeltItemType.Magazine;
         m.AddComponent<Magazine>().rounds = 12;
         return grab;

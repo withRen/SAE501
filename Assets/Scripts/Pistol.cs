@@ -25,6 +25,20 @@ public class Pistol : MonoBehaviour
 
     ParticleSystem smoke;
 
+    [Header("Modèle Modern Guns : M1911 (animation, douille, flash)")]
+    public Animator animator;                       // animation « Fire » du pack (glissière, chien, détente)
+    public Transform slider;                        // glissière : reste en arrière quand le chargeur est vide
+    public Transform ejection;                      // sortie des douilles (Ejection_Location)
+    public GameObject casingPrefab;                 // douille du pack
+    public GameObject muzzleFlashPrefab;            // flash du pack
+    [Range(0f, 1f)] public float fireStartNormalized = 0.42f;   // l'animation du pack tire à 0,117 s ; on saute le début pour tirer sans retard
+    public float casingDelay = 0.085f;              // la douille sort à 0,183 s dans le clip ; on part à 0,42 × 0,233 s = 0,098 s : 0,085 s plus tard
+    public Vector3 slideBackOffset = new Vector3(0f, 0f, -0.039f);
+
+    Vector3 sliderRest;
+    float lastShot = -10f;
+    Collider[] ownColliders;
+
     [Header("HUD munitions")]
     public Color hudNormal = Color.white;
     public Color hudLow = new Color(1f, 0.6f, 0.1f);
@@ -46,6 +60,8 @@ public class Pistol : MonoBehaviour
         if (!shot) { shot = ProcAudio.Shot(); click = ProcAudio.Click(); }
         if (flash) flash.enabled = false;
         BuildSmoke();
+        if (slider) sliderRest = slider.localPosition;
+        ownColliders = GetComponents<Collider>();
         if (hud) hudRenderer = hud.GetComponent<MeshRenderer>();
         UpdateHud();
     }
@@ -65,14 +81,30 @@ public class Pistol : MonoBehaviour
     void OnActivate(ActivateEventArgs a)
     {
         if (!BeltItem.InHand(grab)) return;
-        if (ammo <= 0) { src.PlayOneShot(click); Haptic(a.interactorObject, emptyHapticAmplitude, 0.03f); return; }
+        Fire(a.interactorObject);
+    }
+
+    // un tir complet (son, flash, fumée, animation du pack, douille, haptique, rayon) ; public pour pouvoir être testé sans casque
+    public void Fire(IXRActivateInteractor interactor = null)
+    {
+        if (ammo <= 0) { src.PlayOneShot(click); Haptic(interactor, emptyHapticAmplitude, 0.03f); return; }
 
         ammo--;
         UpdateHud();
         src.PlayOneShot(shot);
         StartCoroutine(Flash());
         if (smoke) smoke.Emit(14);
-        Haptic(a.interactorObject, hapticAmplitude, hapticDuration);
+        lastShot = Time.time;
+        if (animator) animator.Play("Fire", 0, fireStartNormalized);
+        // Unity ne livre pas les événements d'animation situés après un départ décalé : la douille est donc déclenchée par un minuteur
+        CancelInvoke(nameof(EjectCasing));
+        Invoke(nameof(EjectCasing), casingDelay);
+        if (muzzleFlashPrefab && muzzle)
+        {
+            var f = Instantiate(muzzleFlashPrefab, muzzle.position, muzzle.rotation, muzzle);
+            Destroy(f, 1f);
+        }
+        Haptic(interactor, hapticAmplitude, hapticDuration);
 
         if (Physics.Raycast(muzzle.position, muzzle.forward, out var hit, range, ~0, QueryTriggerInteraction.Ignore))
         {
@@ -80,6 +112,33 @@ public class Pistol : MonoBehaviour
             hit.collider.SendMessage("OnShot", hit, SendMessageOptions.DontRequireReceiver);
         }
     }
+
+    // éjecte une douille vers la droite et le haut
+    public void EjectCasing()
+    {
+        if (!casingPrefab || !ejection) return;
+        var c = Instantiate(casingPrefab, ejection.position, ejection.rotation);
+        var rb = c.GetComponent<Rigidbody>();
+        if (rb)
+        {
+            rb.mass = 0.01f;
+            rb.linearVelocity = ejection.right * Random.Range(1.0f, 1.6f) + ejection.up * Random.Range(0.8f, 1.2f) - ejection.forward * 0.3f + Random.insideUnitSphere * 0.15f;
+            rb.angularVelocity = Random.insideUnitSphere * 20f;
+        }
+        foreach (var cc in c.GetComponentsInChildren<Collider>())
+            foreach (var own in ownColliders) if (own) Physics.IgnoreCollision(cc, own);
+        Destroy(c, 2.5f);
+    }
+
+    // glissière bloquée en arrière quand le chargeur est vide (le clip du pack n'a pas cette pose)
+    void LateUpdate()
+    {
+        if (!slider) return;
+        if (ammo <= 0 && Time.time - lastShot > 0.3f) slider.localPosition = sliderRest + slideBackOffset;
+        else if (ammo > 0 && Time.time - lastShot > 0.3f && (slider.localPosition - sliderRest).sqrMagnitude > 1e-8f && !AnimatorBusy()) slider.localPosition = sliderRest;
+    }
+
+    bool AnimatorBusy() => animator && animator.GetCurrentAnimatorStateInfo(0).IsName("Fire");
 
     // Petite bouffée de fumée grise qui sort de l'arrière de l'arme, vers l'arrière et le haut.
     void BuildSmoke()

@@ -19,7 +19,7 @@ Textures issues de Poly Haven (CC0) et modèles Poly Haven (CC0).
 | Asset | Usage dans le jeu | Tâches liées | Priorité | Statut | Lien |
 |---|---|---|---|---|---|
 | Guns Pack – Low Poly Guns Collection | Pistolet (choix n°1) | 3.1 à 3.6 | DOIT | ⬜ | [Asset Store](https://assetstore.unity.com/packages/3d/props/guns/guns-pack-low-poly-guns-collection-192553) |
-| Modern Guns – Handgun | Pistolet (alternative) | 3.1 à 3.6 | DOIT | ⬜ | [Asset Store](https://assetstore.unity.com/packages/3d/props/guns/modern-guns-handgun-129821) |
+| Modern Guns – Handgun | Pistolet **choisi** (M1911 animé, chargeur, balle, flash) ; matériaux URP du chargeur et de la balle sans texture, refaits dans `Assets/Generated` | 3.1 à 3.6 | DOIT | ✅ importé, utilisé | [Asset Store](https://assetstore.unity.com/packages/3d/props/guns/modern-guns-handgun-129821) |
 | Marteau | Marteau pour clouer les planches | 4.3, 4.6 | DOIT | ⬜ | [Asset Store](https://assetstore.unity.com/packages/package/20496) |
 | Electric Torch | Lampe torche (hors GDD, à trancher) | voir PLANNING §8 | POURRAIT | ⬜ | [Asset Store](https://assetstore.unity.com/packages/3d/props/furniture/electric-torch-224071) |
 

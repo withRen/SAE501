@@ -22,6 +22,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [011](#011--modèle-free-shirtless-zombie) | 2026-10-06 | Utiliser le modèle Free Shirtless Zombie (déjà importé) | Gameplay | Zombie remplacé par le modèle, hitbox sur les os, animations par script |
 | [012](#012--wiki-github) | 2026-10-06 | Wiki GitHub : une page par fonctionnalité (zombies, vignettage, planches et clous) | Documentation | 3 pages + accueil + barre latérale publiés |
 | [013](#013--niveaux-par-vagues-et-générateur) | 2026-10-06 | Système de niveaux par vagues (4), zones débloquées, objectif générateur | Gameplay | WaveManager, portes verrouillées, générateur |
+| [014](#014--pistolet-modern-guns-handgun) | 2026-10-06 | Utiliser le pack Modern Guns : Handgun (analyse, animations, chargeur, balle) | Gameplay | M1911 intégré, tir animé, douille, flash, fumée, haptique |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -279,3 +280,26 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Choix de l'IA à valider** (non précisés) : nombre de zombies par vague (4/6/8/10), intervalles, points d'apparition par niveau (niveau 1 : fenêtre Nord seulement), pause de 20 s, « maintenir 5 s » pour activer le générateur, renforts au niveau 4.
 - Test dans l'éditeur : enchaînement des niveaux, portes fermées/ouvertes, joueur arrêté à la porte au niveau 0 puis libre au niveau 2, zombies niveau 4 à 200 PV / 50 %, victoire. Non testé : au casque, équilibrage.
 - Page de wiki : Niveaux et vagues.
+
+---
+
+### 014 — Pistolet Modern Guns : Handgun
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> (suite de l'entrée 009 : fumée à l'arrière, retour haptique, respecter les animations)
+> Pour le gun utilise : Modern Guns: Handgun — Déjà importé dans le projet unity, analyse la façon dont il fonctionne, ses animations ainsi que les éléments tels que le chargeur et la balle déjà proposé par le pack
+
+**Résultat**
+
+- **Analyse du pack** documentée dans le wiki (page « Pistolet ») : structure du M1911 (glissière, chien, détente, canon, éjection), animation `M1911@Fire` (0,233 s, tir à 0,117 s, douille à 0,183 s), contrôleur à 2 états, `SimpleShoot`, chargeur « plein » avec 2 cartouches, balle en 2 parties, flash de bouche.
+- **Intégration :** M1911 à la place des boîtes grises, chargeur et douille du pack, animation de tir jouée tout de suite (l'animation d'origine tire avec 117 ms de retard), douille éjectée, flash de bouche, glissière qui reste en arrière à vide, fumée à l'arrière et vibration de la manette (demande de l'entrée 009).
+- **Problèmes du pack** corrigés sans le modifier : matériaux Standard (paquet URP importé), matériaux URP du chargeur et de la balle **sans texture** (refaits), flash en shaders anciens (refait), `SimpleShoot` inutilisable (retiré), événements d'animation non livrés après un départ décalé (minuteur).
+- Test dans l'éditeur : 12 tirs, compteur, douille (apparaît puis disparaît), glissière bloquée puis libérée au rechargement, captures du flash et du chargeur texturé. **Non testé : au casque.**
+- Le dossier du pack (`Assets/Nokobot`) n'est pas ajouté au dépôt.

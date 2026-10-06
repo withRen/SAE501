@@ -15,6 +15,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 |---|---|---|---|---|
 | [001](#001--journal-des-prompts) | 2026-10-06 | Journal des prompts | Documentation | Fichier créé |
 | [006](#006--génération-des-zombies) | 2026-10-06 | Génération des zombies : analyse de la carte, mouvement, animations, attaque | Gameplay | Système testé avec un zombie provisoire |
+| [007](#007--intégration-de-la-branche-ui-hugo) | 2026-10-06 | Intégrer la branche UI-Hugo et la tester dans l'environnement | Gameplay | UI de santé, Game Over et HUD intégrés, testés |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -97,3 +98,30 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Non testé : les animations du modèle réel, et tout au casque.
 
 **Liens** : issues #26 à #33 · [docs/MAP.md](MAP.md)
+
+---
+
+### 007 — Intégration de la branche UI-Hugo
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> pull la branche : UI-Hugo
+> Met la en place dans l'environnement qu'on procède au test
+
+**Résultat**
+
+- La branche `UI-Hugo` (1 commit de LeCapet : UI pistolet, Game Over, PV) est fusionnée dans `main`.
+- **Repris :** `HealthVignette`, `GameOverUI`, `HeadOverlay`, le HUD du pistolet (`Pistol.cs`), `PlayerHealth` (4 PV, régénération, `NewWave`), `BARRICADE_Scripts.md`.
+- **`PlayerHealth` fusionné** avec la version des zombies : règles de la branche (4 PV) + `HeadPosition` ; le zombie inflige 1 PV par coup.
+- **Non repris :** les modifications de réglages OpenXR de la branche (elles désactivaient *Meta Quest Support* et les profils des manettes Quest, cause du plantage au lancement), un réglage URP, et un binaire Windows de 7 Mo (`XrApiLayer_METAX_operator.dll`).
+- L'UI est ajoutée à la scène par `RoomBuilder` (`UI_Sante`).
+- **Test dans l'éditeur :** le zombie arrive, tue le joueur (4 coups), le vignettage rouge s'épaissit à chaque PV perdu, fondu noir et texte « VOUS ÊTES MORT », puis la scène redémarre à 4/4 PV. Compteur du pistolet : caché au holster, `12/12` en main, orange à 3 balles, rouge à vide.
+- Non testé : au casque.
+
+**Liens** : commit `daf5d2f` · branche `UI-Hugo` · [docs/MAP.md](MAP.md)

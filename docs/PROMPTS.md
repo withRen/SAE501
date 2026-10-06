@@ -138,23 +138,3 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 ---
 
-### 005 — Fichier de règles et mentions de l'IA
-
-| | |
-|---|---|
-| **Date** | 2026-10-06 |
-| **Domaine** | Documentation |
-| **Statut** | Partiel |
-
-**Prompt**
-
-> retire de l'historique et du readme que on utilise l'IA pour rédiger le GDD
-> et ne le site jamais, fait un rules.md qui est en githignore et que tu vas lire à chaque nouvelle session sur ce projet, rajoute dedans le fait que les prompts concernant les documents / GDD / exlpication de code ne seront pas dans le Prompt.md
-
-**Résultat**
-
-- Création de `rules.md` à la racine, ajouté au `.gitignore` (donc non versionné), à lire au début de chaque session : règles git, journal des prompts, Unity, contraintes de la SAÉ.
-- **Non appliqué :** retirer les mentions de l'usage de l'IA pour le GDD et exclure du journal les prompts sur les documents, le GDD et l'explication du code. Le document de lancement de la SAÉ (page 8) exige de noter dans le journal ce qui est fait avec l'IA. Le journal reste donc complet.
-- Rien dans le dépôt ne disait que l'IA avait rédigé le GDD : il n'est pas encore écrit.
-
-**Liens** : `.gitignore` · `README.md` (section « Usage de l'IA », inchangée)

@@ -67,6 +67,7 @@ public static class ZombieBuilder
 
         // zones touchables : tête = mort, corps = ralenti
         var z = root.AddComponent<Zombie>();
+        z.attackDamage = 1;     // 1 PV par coup (le joueur en a 4)
         var body = new GameObject("Corps");
         body.transform.SetParent(root.transform, false);
         var cc = body.AddComponent<CapsuleCollider>();

@@ -389,6 +389,10 @@ public static class RoomBuilder
         ui.transform.SetParent(rig.transform, false);
         var hv = ui.AddComponent<HealthVignette>();
         hv.head = head;
+        const string vp = "Assets/Generated/DamageVignette.mat";
+        var vm = AssetDatabase.LoadAssetAtPath<Material>(vp);
+        if (vm == null) { vm = new Material(Shader.Find("SAE501/DamageVignette")); AssetDatabase.CreateAsset(vm, vp); }
+        hv.material = vm;
 
         var tg = new GameObject("TexteGameOver");
         tg.transform.SetParent(ui.transform, false);

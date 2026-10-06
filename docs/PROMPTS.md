@@ -20,6 +20,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [009](#009--pistolet-fumée-et-haptique) | 2026-10-06 | Asset Modern Guns Handgun, fumée au tir, haptique | Gameplay | Fumée et haptique faits ; modèle 3D en attente |
 | [010](#010--navmesh-des-zombis-hitbox-et-niveaux) | 2026-10-06 | NavMesh des zombis, hitbox tête/torse/jambes, niveaux et dégâts | Gameplay | Prefab des points de départ, 3 zones de hitbox, table des niveaux |
 | [011](#011--modèle-free-shirtless-zombie) | 2026-10-06 | Utiliser le modèle Free Shirtless Zombie (déjà importé) | Gameplay | Zombie remplacé par le modèle, hitbox sur les os, animations par script |
+| [012](#012--wiki-github) | 2026-10-06 | Wiki GitHub : une page par fonctionnalité (zombies, vignettage, planches et clous) | Documentation | 3 pages + accueil + barre latérale publiés |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -228,3 +229,27 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Hitbox tête / torse (+ bras) / jambes posées sur les os, mêmes valeurs que dans l'entrée 010.
 - Non testé : au casque, performances (3 LOD, mais le coût sur Quest n'est pas mesuré).
 - Le dossier du pack (`Assets/NewPunch`, 92 Mo) n'a pas été ajouté au dépôt dans ce commit.
+
+---
+
+### 012 — Wiki GitHub
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | Documentation |
+| **Statut** | Fait |
+
+**Prompt**
+
+> Je veux que pour chacune des modifications / ajout au jeu, tu me fasse une explication dans le Wiki sur github exemple là le ZOMBIES.md dans le wiki avec une page pour le Zombies
+> Rajoute également aux rules le fait de faire ça à chaque ajout de fonctionnalités
+> Fait de la même façon l'explication du vignettage au moment où le personnage reçoit des degats
+> Le placement auto et la detection des planches / clous
+> (puis : « Le wiki "Home" est créé »)
+
+**Résultat**
+
+- Pages rédigées par l'IA à partir du code et des tests : **Zombies**, **Planches et clous**, **Vignettage de dégâts**, plus `Home` et `_Sidebar`. Chaque page indique ce qui est testé dans l'éditeur et ce qui ne l'est pas au casque.
+- Le wiki est un dépôt git séparé (`SAE501.wiki.git`) ; GitHub ne le crée qu'après la première page faite à la main dans l'interface.
+- Règle « une page de wiki par fonctionnalité » ajoutée au fichier de règles de l'assistant.

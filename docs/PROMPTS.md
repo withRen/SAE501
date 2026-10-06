@@ -14,6 +14,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | N° | Date | Sujet | Domaine | Résultat |
 |---|---|---|---|---|
 | [001](#001--journal-des-prompts) | 2026-10-06 | Journal des prompts | Documentation | Fichier créé |
+| [002](#002--vérification-du-dépôt-par-rapport-au-document-de-lancement-de-la-saé) | 2026-10-06 | Vérification du dépôt vs document de lancement SAÉ | GitHub / organisation | Bilan fourni |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -66,3 +67,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - À partir de maintenant, chaque demande est ajoutée ici avec son résultat.
 
 **Liens** : ce fichier
+
+---
+
+### 002 — Vérification du dépôt par rapport au document de lancement de la SAÉ
+
+| | |
+|---|---|
+| **Date** | 2026-10-06 |
+| **Domaine** | GitHub / organisation |
+| **Statut** | Fait (bilan) |
+
+**Prompt**
+
+> @"/Users/rahimtam/Downloads/SAE 5.D.01 - Lancement Dispositifs Interactifs.pdf"
+> Vérifie si le Repo github a tout ce qui est demandé dans ce doc
+
+**Résultat**
+
+- Lecture du document de lancement (32 pages) et comparaison avec le dépôt, le projet GitHub, les issues, les releases et les branches.
+- Bilan donné en réponse : ce qui est en place, ce qui manque (GDD, README, journal de bord avec usage de l'IA, captures ou vidéo, prefabs, tutoriel, confort), et l'ordre de priorité avant le jalon du vendredi 9 octobre.
+
+**Liens** : [docs/PLANNING.md](PLANNING.md) · [docs/MAP.md](MAP.md)

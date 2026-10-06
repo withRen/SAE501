@@ -16,18 +16,3 @@ public class MonitorStation : MonoBehaviour
 
     public void Hide() => overlay.gameObject.SetActive(false);
 }
-
-public class MonitorScreen : MonoBehaviour
-{
-    public MonitorStation station;
-    public int index;
-
-    void Awake() => GetComponent<XRSimpleInteractable>().selectEntered.AddListener(_ => station.Show(index));
-}
-
-public class MonitorOverlayClose : MonoBehaviour
-{
-    public MonitorStation station;
-
-    void Awake() => GetComponent<XRSimpleInteractable>().selectEntered.AddListener(_ => station.Hide());
-}

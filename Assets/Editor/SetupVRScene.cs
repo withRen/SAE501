@@ -24,8 +24,8 @@ public static class SetupVRScene
         AddHand(rig, "Left Controller", "l", "XRI Left Interaction", actions);
         AddHand(rig, "Right Controller", "r", "XRI Right Interaction", actions);
 
-        // méthode du cours : VR Player > Tracking Origin Mode > Floor
-        rig.GetComponent<Unity.XR.CoreUtils.XROrigin>().RequestedTrackingOriginMode = Unity.XR.CoreUtils.XROrigin.TrackingOriginMode.Floor;
+        // même mode de suivi que dans "My project"
+        rig.GetComponent<Unity.XR.CoreUtils.XROrigin>().RequestedTrackingOriginMode = Unity.XR.CoreUtils.XROrigin.TrackingOriginMode.Device;
 
         RoomBuilder.Populate(rig);
 

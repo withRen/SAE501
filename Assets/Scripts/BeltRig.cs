@@ -2,17 +2,6 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-public enum BeltItemType { Pistol, Hammer, Flashlight, Magazine }
-
-public class BeltItem : MonoBehaviour
-{
-    public BeltItemType type;
-
-    // vrai si l'objet est tenu par une main (et pas rangé dans un holster)
-    public static bool InHand(XRGrabInteractable g) =>
-        g != null && g.isSelected && !(g.firstInteractorSelecting is XRSocketInteractor);
-}
-
 // Ceinture : suit la tête (position + rotation en Y lissée) à hauteur de hanche.
 [DefaultExecutionOrder(-50)]
 public class BeltRig : MonoBehaviour
@@ -42,20 +31,4 @@ public class BeltRig : MonoBehaviour
             new Vector3(head.position.x, rigRoot.position.y + h * heightRatio, head.position.z),
             Quaternion.Euler(0f, yaw, 0f));
     }
-}
-
-// Holster : n'accepte qu'un type d'objet
-public class BeltSocket : XRSocketInteractor
-{
-    public BeltItemType accepts;
-
-    bool Match(object o)
-    {
-        var c = o as Component;
-        var item = c ? c.GetComponent<BeltItem>() : null;
-        return item && item.type == accepts;
-    }
-
-    public override bool CanHover(IXRHoverInteractable interactable) => base.CanHover(interactable) && Match(interactable);
-    public override bool CanSelect(IXRSelectInteractable interactable) => base.CanSelect(interactable) && Match(interactable);
 }

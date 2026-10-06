@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
@@ -29,7 +30,7 @@ public static class RoomBuilder
         // ambiance sombre
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.0008f, 0.0008f, 0.0012f);
+        RenderSettings.ambientLight = new Color(0.006f, 0.009f, 0.016f);   // lueur lunaire diffuse (aucun coût)
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.003f, 0.003f, 0.004f);
@@ -39,6 +40,11 @@ public static class RoomBuilder
         var cam = rig.GetComponentInChildren<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = Color.black;
+        var cd = cam.GetUniversalAdditionalCameraData();
+        cd.renderPostProcessing = false;
+        cd.requiresColorOption = CameraOverrideOption.Off;
+        cd.requiresDepthOption = CameraOverrideOption.Off;
+        new GameObject("QuestPerformance").AddComponent<QuestPerformance>();
 
         var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(RoomImport.FbxPath);
         if (fbx == null) { Debug.LogError("Salle introuvable : lance d'abord SAE501 > Salle > 1 - Importer la salle"); return; }
@@ -207,20 +213,26 @@ public static class RoomBuilder
         f.baseIntensity = 0.55f;
         f.dipDepth = 0.45f;
 
-        // lampe à huile sur l'établi
+        // lampe à huile sur l'établi : projecteur large vers le bas AVEC ombres (1 seul rendu d'ombre, au lieu de 6 pour une lumière ponctuelle)
         var oil = Find(roomRoot.transform, "OilLamp");
         var og = new GameObject("OilLampLight");
         og.transform.SetParent(env, false);
         og.transform.position = oil.position + new Vector3(0, 0.18f, 0);
+        og.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         var ol = og.AddComponent<Light>();
-        ol.type = LightType.Point;
+        ol.type = LightType.Spot;
+        ol.spotAngle = 150f;
+        ol.innerSpotAngle = 60f;
         ol.color = new Color(1f, 0.52f, 0.18f);
-        ol.range = 2.6f;
+        ol.range = 3f;
         ol.intensity = 0.9f;
-        ol.shadows = LightShadows.Soft;       // ombres des planches, de la lampe, des chaises...
+        ol.shadows = LightShadows.Hard;
         ol.shadowStrength = 0.95f;
         ol.shadowBias = 0.03f;
         ol.shadowNormalBias = 0.4f;
+        var oild = new SerializedObject(ol.GetUniversalAdditionalLightData());
+        var tier = oild.FindProperty("m_AdditionalLightsShadowResolutionTier");
+        if (tier != null) { tier.intValue = UniversalAdditionalLightData.AdditionalLightsShadowResolutionTierMedium; oild.ApplyModifiedPropertiesWithoutUndo(); }
         var of = og.AddComponent<FlickerLamp>();
         of.lamp = ol;
         of.baseIntensity = 0.9f;
@@ -230,21 +242,24 @@ public static class RoomBuilder
         of.burstMinGap = 5f;
         of.burstMaxGap = 14f;
 
-        // clair de lune par les deux fenêtres (est : x = -3, ouest : x = +3)
-        foreach (float sx in new[] { -1f, 1f })
-        {
-            var mg = new GameObject(sx < 0 ? "Moon_East" : "Moon_West");
-            mg.transform.SetParent(env, false);
-            mg.transform.position = new Vector3(4.9f * sx, 2.5f, sx < 0 ? -0.3f : 0f);
-            mg.transform.LookAt(new Vector3(2.0f * sx, 0.6f, sx < 0 ? -0.3f : 0f));
-            var ml = mg.AddComponent<Light>();
-            ml.type = LightType.Spot;
-            ml.color = new Color(0.32f, 0.42f, 0.55f);
-            ml.spotAngle = 70f;
-            ml.range = 9f;
-            ml.intensity = 0.8f;
-            ml.shadows = LightShadows.None;
-        }
+        // rebond de la lumière de la lampe sur les murs et le plafond : lumière d'appoint très faible, sans ombre
+        var fg = new GameObject("OilLampBounce");
+        fg.transform.SetParent(env, false);
+        fg.transform.position = oil.position + new Vector3(0, 0.3f, 0);
+        var fl = fg.AddComponent<Light>();
+        fl.type = LightType.Point;
+        fl.color = new Color(1f, 0.5f, 0.2f);
+        fl.range = 4.8f;
+        fl.intensity = 0.14f;
+        fl.shadows = LightShadows.None;
+        var ff = fg.AddComponent<FlickerLamp>();
+        ff.lamp = fl;
+        ff.baseIntensity = 0.14f;
+        ff.hum = 0.08f;
+        ff.humSpeed = 2.4f;
+        ff.dipDepth = 0.75f;
+        ff.burstMinGap = 5f;
+        ff.burstMaxGap = 14f;
     }
 
     static void BuildSlots(List<Pose> slots)
@@ -351,6 +366,7 @@ public static class RoomBuilder
         h.AddComponent<Hammer>();
     }
     static XRGrabInteractable hammerGrab;
+    static CctvFeeds cctv;
 
     // 3 caméras de surveillance : couloir sud, et deux coins de la salle
     static Camera[] BuildCameras()
@@ -367,16 +383,20 @@ public static class RoomBuilder
             g.transform.LookAt(look[i]);
             cams[i] = g.AddComponent<Camera>();
         }
-        // un peu de lumière froide dans le couloir pour que la caméra voie quelque chose
-        var lg = new GameObject("CorridorLight");
-        lg.transform.SetParent(env, false);
-        lg.transform.position = new Vector3(-0.8f, 2.2f, 3.8f);
-        var l = lg.AddComponent<Light>();
-        l.type = LightType.Point;
-        l.color = new Color(0.4f, 0.5f, 0.6f);
-        l.range = 2.5f;
-        l.intensity = 0.8f;
-        l.shadows = LightShadows.None;
+        foreach (var c in cams)
+        {
+            c.farClipPlane = 15f;
+            var d = c.GetUniversalAdditionalCameraData();
+            d.renderShadows = false;            // pas d'ombres dans les vues de surveillance
+            d.renderPostProcessing = false;
+            d.antialiasing = AntialiasingMode.None;
+            d.requiresColorOption = CameraOverrideOption.Off;
+            d.requiresDepthOption = CameraOverrideOption.Off;
+        }
+        var feedsGo = new GameObject("CctvFeeds");
+        feedsGo.transform.SetParent(env, false);
+        cctv = feedsGo.AddComponent<CctvFeeds>();
+        cctv.cameras.AddRange(cams);
         return cams;
     }
 
@@ -394,6 +414,7 @@ public static class RoomBuilder
         var stationGo = new GameObject("MonitorStation");
         var station = stationGo.AddComponent<MonitorStation>();
         station.feeds = new Material[feeds.Length];
+        station.cctv = cctv;
 
         float[] xs = { 0.78f, 1.3f, 1.82f };
         for (int i = 0; i < feeds.Length; i++)
@@ -472,7 +493,10 @@ public static class RoomBuilder
         vis.AddComponent<MeshRenderer>().sharedMaterials = mats;
         var rb = p.AddComponent<Rigidbody>();
         rb.mass = 2f;
-        MakeGrab(p);
+        var plankGrab = MakeGrab(p);
+        // la planche ne doit utiliser que son propre collider (sinon elle "vole" celui de la zone de maintien)
+        plankGrab.colliders.Clear();
+        plankGrab.colliders.Add(bc);
 
         // clous aux deux extrémités, face vers la pièce (+Z local)
         var nails = new Nail[2];

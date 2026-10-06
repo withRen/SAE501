@@ -38,6 +38,13 @@ public static class RoomImport
             ti.maxTextureSize = 1024;
             ti.mipmapEnabled = true;
             ti.alphaIsTransparency = !isNormal;
+            // Quest : compression ASTC (4 à 8 fois moins de mémoire et de bande passante qu'une texture non compressée)
+            ti.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+            {
+                name = "Android", overridden = true, maxTextureSize = 1024,
+                format = isNormal ? TextureImporterFormat.ASTC_5x5 : TextureImporterFormat.ASTC_6x6,
+                textureCompression = TextureImporterCompression.Compressed
+            });
             ti.SaveAndReimport();
         }
         AssetDatabase.StopAssetEditing();

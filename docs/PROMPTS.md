@@ -48,6 +48,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [037](#037--contour-des-objets-interactifs) | 2026-10-07 | Contour autour des objets avec lesquels on peut interagir | Interactions, rendu | `InteractableOutline` + `Outline.shader` : liseré discret au repos, épais au survol de la main, masqué en main |
 | [038](#038--test-du-décor-extérieur-dalban-branche-features_exterieur) | 2026-10-07 | Ajouter pour test le décor extérieur de la branche `features_exterieur` | Décor, revue | Branche locale `test/exterieur` : décor extrait en prefab, placé par le générateur, ciel en skybox, brouillard 0,03 |
 | [039](#039--sphère-de-ciel-dalban-seule) | 2026-10-07 | Retirer la forêt, garder seulement la sphère de ciel d'Alban | Décor | Forêt, montagnes, pins et lune retirés ; sphère de ciel sans brouillard qui suit la tête ; brouillard d'origine (0,12) |
+| [040](#040--nouvelle-carte-liaisons-ambiance-plus-sombre) | 2026-10-07 | Remplacer la carte par nouvellemap.blend, vérifier les liaisons, assombrir l'ambiance | Carte, lumière | Fichier identique à la carte déjà importée ; liaisons vérifiées ; lumières ×0,6, ciel ×0,4 |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -773,3 +774,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Gardé aussi : cadres, plaques et voyants des portes de niveau (pas liés à la forêt).
 - Vérifié dans l'éditeur : ciel visible dehors, par la fenêtre et par le trou du toit ; la sphère suit la tête en mode Play ; aucune erreur. **Pas testé au casque.**
 - Toujours sur la branche locale `test/exterieur`, rien poussé.
+
+### 040 — Nouvelle carte, liaisons, ambiance plus sombre
+
+**Prompt**
+
+> (fichier joint : nouvellemap.blend) Remplace la carte actuelle par celle-ci. Veille bien a ce qu'il n'y ai pas de bug de liaisons etc. Rassombri un peu encore l'ambiance globale, c'était encore trop claire
+
+**Résultat** (vérifications et code par l'IA, Claude Code)
+
+- **Carte** : `nouvellemap.blend` est identique octet pour octet (même MD5) à `LastBoardStanding_Kitchen (1).blend`, déjà importé le 7 octobre au matin (commit e69f594). Vérifié aussi par Blender : mêmes 26 lumières, 4 caméras, mêmes positions. Réexporter n'aurait rien changé : rien n'a été réimporté.
+- **Liaisons vérifiées** (noms que le générateur utilise) : `Generator`, `Generator_Switch`, `Bunker_Hammer_Workbench`, `Plank_01`, `Light_Bunker_Workbench`, `Light_GeneratorBulb`, objets retirés (`Corridor_Door`, `Door_Boarded_Planks`, `Hammer`, `Stockage_Hammer`), 6 `Bunker_PlankSlot_*`, 17 planches, 4 caméras CCTV ayant chacune leur écran. Reconstruction de la scène sans aucun avertissement.
+- **Ambiance** (`RoomBuilder.cs`) : `LightLevel = 0.6` (toutes les lumières de la carte à 60 %) et `SkyLevel = 0.4` (ciel vu par les fenêtres et le toit). Mesuré à 0,7 : image ~12 % plus sombre, d'où le passage à 0,6.
+- La connexion MCP avec Unity s'est coupée avant la reconstruction à 0,6 : **scène à reconstruire** (SAE501 → Build VR Scene). **Pas testé au casque.**
+- Sur la branche locale `test/exterieur`, rien poussé.

@@ -161,6 +161,10 @@ public static class RoomBuilder
     }
 
     // ---------- lumières du fichier ----------
+    // niveau général de toutes les lumières de la carte (1 = valeurs d'origine) : baissé pour une ambiance plus sombre
+    const float LightLevel = 0.6f;
+    // luminosité du ciel (sphère d'Alban) vu par les fenêtres et le trou du toit
+    const float SkyLevel = 0.4f;
     static void BuildMapLights()
     {
         var root = new GameObject("Lumieres").transform;
@@ -188,6 +192,7 @@ public static class RoomBuilder
                 l.intensity = li.energy / 24f;         // 18 W (lampe à huile) -> 0,75
                 l.range = Mathf.Clamp(1.1f * Mathf.Sqrt(li.energy), 2.5f, 6.5f);
             }
+            l.intensity *= LightLevel;                 // ambiance générale (voir LightLevel)
             // lampe à huile de l'établi : la seule avec des ombres (planches, chaises), et qui vacille
             if (li.name == "Light_Bunker_Workbench")
             {
@@ -238,7 +243,7 @@ public static class RoomBuilder
             m.SetTexture("_BaseMap", src.GetTexture("_BaseMap"));
             m.SetTextureScale("_BaseMap", src.GetTextureScale("_BaseMap"));
             m.SetTextureOffset("_BaseMap", src.GetTextureOffset("_BaseMap"));
-            m.SetColor("_BaseColor", src.GetColor("_BaseColor"));
+            m.SetColor("_BaseColor", src.GetColor("_BaseColor") * SkyLevel);   // ciel assombri
             EditorUtility.SetDirty(m);
             r.sharedMaterial = m;
             r.shadowCastingMode = ShadowCastingMode.Off;

@@ -51,13 +51,18 @@ public class Pistol : MonoBehaviour
     AudioSource src;
     static AudioClip shot, click;
 
+    [Header("Sons (si vides : sons générés par code)")]
+    public AudioClip shotClip;          // tir
+    public AudioClip reloadClip;        // chargeur inséré
+    public AudioClip dryFireClip;       // clic quand le chargeur est vide
+
     void Awake()
     {
         grab = GetComponent<XRGrabInteractable>();
         grab.activated.AddListener(OnActivate);
         src = gameObject.AddComponent<AudioSource>();
         src.spatialBlend = 1f;
-        if (!shot) { shot = ProcAudio.Shot(); click = ProcAudio.Click(); }
+        if (!shot) { shot = ProcAudio.Shot(); click = ProcAudio.DryFire(); }
         if (flash) flash.enabled = false;
         BuildSmoke();
         if (slider) sliderRest = slider.localPosition;
@@ -87,11 +92,11 @@ public class Pistol : MonoBehaviour
     // un tir complet (son, flash, fumée, animation du pack, douille, haptique, rayon) ; public pour pouvoir être testé sans casque
     public void Fire(IXRActivateInteractor interactor = null)
     {
-        if (ammo <= 0) { src.PlayOneShot(click); Haptic(interactor, emptyHapticAmplitude, 0.03f); return; }
+        if (ammo <= 0) { src.PlayOneShot(dryFireClip ? dryFireClip : click); Haptic(interactor, emptyHapticAmplitude, 0.03f); return; }
 
         ammo--;
         UpdateHud();
-        src.PlayOneShot(shot);
+        src.PlayOneShot(shotClip ? shotClip : shot);
         StartCoroutine(Flash());
         if (smoke) smoke.Emit(14);
         lastShot = Time.time;
@@ -231,7 +236,7 @@ public class Pistol : MonoBehaviour
     public void Load(int rounds)
     {
         ammo = Mathf.Min(rounds, maxAmmo);
-        src.PlayOneShot(click);
+        src.PlayOneShot(reloadClip ? reloadClip : click);
         UpdateHud();
     }
 

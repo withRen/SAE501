@@ -92,6 +92,7 @@ public static class RoomBuilder
         BuildBunkerOpenings(slots);
         BuildGatesAndGenerator();
         BuildZombieSetup(rig);
+        BuildMusic();
 
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
@@ -308,6 +309,55 @@ public static class RoomBuilder
         MakeBattery(B(-2.6f, -11.75f, 0.92f));    // sur l'établi
         MakeBattery(B(-5.5f, -8.6f, 0.04f));      // au sol, près des lits
         MakeBattery(B(-20.5f, -2.1f, 0.92f));     // dans la cuisine (niveau 2)
+    }
+
+    // sons courts du pistolet : décompressés au chargement (pas de latence au tir), Vorbis pour rester léger sur le Quest
+    static AudioClip GunClip(string path)
+    {
+        if (AssetImporter.GetAtPath(path) is AudioImporter ai)
+        {
+            var st = ai.defaultSampleSettings;
+            if (st.loadType != AudioClipLoadType.DecompressOnLoad || st.compressionFormat != AudioCompressionFormat.Vorbis)
+            {
+                st.loadType = AudioClipLoadType.DecompressOnLoad;
+                st.compressionFormat = AudioCompressionFormat.Vorbis;
+                st.quality = 0.7f;
+                ai.defaultSampleSettings = st;
+                ai.forceToMono = true;          // le son vient de l'arme : spatialisé en 3D, une seule voix suffit
+                ai.SaveAndReimport();
+            }
+        }
+        var c = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+        if (!c) Debug.LogWarning("Son introuvable : " + path);
+        return c;
+    }
+
+    // ---------- musique de fond : les deux pistes du jeu, en alternance ----------
+    static void BuildMusic()
+    {
+        string[] paths = { "Assets/Audio/Music/Musique_Principale_1.mp3", "Assets/Audio/Music/Musique_Principale_2.mp3" };
+        var clips = new List<AudioClip>();
+        foreach (var p in paths)
+        {
+            // musique longue : lue en streaming (pas chargée entière en mémoire sur le Quest), compressée en Vorbis
+            if (AssetImporter.GetAtPath(p) is AudioImporter ai)
+            {
+                var st = ai.defaultSampleSettings;
+                if (st.loadType != AudioClipLoadType.Streaming || st.compressionFormat != AudioCompressionFormat.Vorbis)
+                {
+                    st.loadType = AudioClipLoadType.Streaming;
+                    st.compressionFormat = AudioCompressionFormat.Vorbis;
+                    st.quality = 0.6f;
+                    ai.defaultSampleSettings = st;
+                    ai.SaveAndReimport();
+                }
+            }
+            var c = AssetDatabase.LoadAssetAtPath<AudioClip>(p);
+            if (c) clips.Add(c); else Debug.LogWarning("Musique introuvable : " + p);
+        }
+        var go = new GameObject("Musique");
+        go.transform.SetParent(bunkerRoot, false);
+        go.AddComponent<MusicPlayer>().tracks = clips.ToArray();
     }
 
     // ---------- portes de niveau et générateur ----------
@@ -765,6 +815,9 @@ public static class RoomBuilder
         p.AddComponent<BeltItem>().type = BeltItemType.Pistol;
         var pi = p.AddComponent<Pistol>();
         pi.smokeMaterial = SmokeMat();
+        pi.shotClip = GunClip("Assets/Audio/Gun/Pistolet_Tir.mp3");
+        pi.reloadClip = GunClip("Assets/Audio/Gun/Pistolet_Rechargement.mp3");
+        // pi.dryFireClip : on garde le clic généré par code (ProcAudio.DryFire), ou on y met un fichier plus tard
         pi.smokeLocalPosition = smokePos;
         if (gun != null)
         {

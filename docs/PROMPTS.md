@@ -31,6 +31,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [020](#020--pause-plus-longue-entre-les-vagues) | 2026-10-07 | Plus de temps entre les vagues | Gameplay | Pause 20 → 35 s |
 | [021](#021--musiques-de-fond-et-sons-du-pistolet) | 2026-10-07 | Deux musiques de fond en alternance, sons du pistolet (tir, rechargement), clic à vide | Audio | MusicPlayer, sons du pistolet, clic de culasse vide |
 | [022](#022--commit-propre-des-packs-dassets) | 2026-10-07 | Commiter proprement dans main | Dépôt | 3 commits : pack pistolet, pack zombie, NavMesh ; bruit de régénération laissé de côté |
+| [023](#023--analyse-du-skin-du-joueur-protective-suit-man) | 2026-10-07 | Skin du joueur « Protective suit man » : vérifier le modèle et les animations du pack | Personnage joueur | Pack analysé : humanoïde de 1,86 m, aucune animation |
+| [024](#024--sons-de-lancement-et-voix-des-zombies) | 2026-10-07 | Sons à ajouter : lancement de la partie, zombies et une variante | Audio | Son de lancement, cris de zombie en 3D (2 variantes) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -493,3 +495,48 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **3 commits séparés** dans `main` : pack Modern Guns (9 Mo), pack Free Shirtless Zombie (92 Mo, textures et modèles en Git LFS : 28 fichiers), NavMesh de la scène.
 - **Laissés de côté volontairement** (bruit local, pas du travail) : 22 matériaux / render textures de `Assets/Generated` réécrits par Unity (il retire un bloc de version interne à chaque génération), `Zombie_Mixamo.controller` (même cause), `DevAgentSettings.asset` (adresse IP locale du débogueur Meta), suppression de `RuntimeActionBindings.json` (régénéré par Unity).
 - Le dépôt reste **privé** : les packs sont sous licence Asset Store.
+
+---
+
+### 023 — Analyse du skin du joueur (Protective suit man)
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Personnage joueur |
+| **Statut** | Analyse faite (rien d'intégré au jeu) |
+
+**Prompt**
+
+> Le personnage joueur aura ce skin (texture) : Protective suit man (Asset Store 158254)
+> Vérifie le modèle, les animations qui sont déjà présents dans l'asset
+
+**Résultat**
+
+- Pack lu dans le cache de l'Asset Store (`Protective suit man.unitypackage`, 62 Mo) puis **importé dans le projet** (`Assets/Protection_suite`), **non commité**.
+- **Modèle** : un seul FBX, humanoïde de 1,86 m (T-pose, 1,38 m d'envergure), 15 617 triangles, 8 068 sommets, 2 matériaux (combinaison + visière en verre), 3 jeux d'UV, 67 os au **même squelette que le zombie** (noms de type Unreal, doigts, os de torsion, os IK `ik_hand_gun` / `ik_foot`). Configuré en Humanoïde dans Unity.
+- **Animations : aucune.** Le FBX n'a aucun clip, il n'y a ni `.anim` ni Animator Controller dans le pack ; l'Animator du prefab n'a pas de contrôleur.
+- **Problèmes à régler avant de l'utiliser** : shader « Standard (2sided) » du pack écrit pour l'ancien pipeline de rendu (rose sous URP) ; 4 textures TGA de 4096×4096 non compressées (224 Mo sur disque, aucun réglage Android) ; maillage en lecture/écriture.
+- **Non vérifié** (outil Unity indisponible à ce moment-là) : validité de l'avatar dans Unity, mémoire réelle des textures, rendu.
+
+---
+
+### 024 — Sons de lancement et voix des zombies
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Audio |
+| **Statut** | Fait (mesuré dans l'éditeur, pas écouté au casque) |
+
+**Prompt**
+
+> (fichiers `lancement_partie.mp3`, `zombis.mp3`, `zombis2.mp3`) Voici les sons à rajouter : Lancement de la partie. Zombis, et un autre variante des zombis
+
+**Résultat**
+
+- **Lancement de la partie** (5,8 s) : joué une fois au démarrage de la scène par `WaveManager`, non spatialisé, volume 90 %. Mesuré : 5,7 s. Choix de l'IA à valider : « lancement » interprété comme le démarrage de la scène (aussi rejoué après défaite ou victoire) ; à déplacer si un écran de démarrage est ajouté.
+- **Voix des zombies** (8,1 s et 1,4 s) : `ZombieVoice` sur chaque zombie, cris en 3D (premier cri 0,5 à 2,5 s après l'apparition, puis toutes les 5 à 12 s), variante tirée au hasard à chaque cri, hauteur de voix ±8 %, 3 zombies maximum qui crient en même temps, voix coupée en fondu à la mort. **Choix de l'IA** : la répartition des deux variantes (aléatoire) et la fréquence des cris sont à régler à l'oreille.
+- **Vérifié dans l'éditeur** : 4 zombies, les 2 variantes jouées en alternance aléatoire, jamais plus de 3 voix ; voix coupée 0,6 s après un tir à la tête en plein cri. **Non écouté** au casque (volumes).
+- Le dossier contenait 2 autres fichiers non cités (`dragon-studio-…`, dont une copie identique de `zombis.mp3`) : non utilisés.
+- Pages de wiki : Zombies (voix), Niveaux et vagues (son de lancement).

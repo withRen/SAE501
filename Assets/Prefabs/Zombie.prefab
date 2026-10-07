@@ -3211,6 +3211,7 @@ GameObject:
   - component: {fileID: 99386021874001072}
   - component: {fileID: 8847693506991553387}
   - component: {fileID: 2022766816865418597}
+  - component: {fileID: 1449065886529926053}
   - component: {fileID: 5918886184603064916}
   m_Layer: 0
   m_Name: Zombie
@@ -3305,6 +3306,26 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1449065886529926053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8098143063374109313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fbfe5698d884ec195a8bf39a8cf626, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombieVoice
+  variants:
+  - {fileID: 8300000, guid: e59fbeb041d4d47cc92cac17c6924de6, type: 3}
+  - {fileID: 8300000, guid: bd6691499f0e14dca9cdeafbcf7ffc0b, type: 3}
+  volume: 0.8
+  firstCryDelay: {x: 0.5, y: 2.5}
+  pauseBetweenCries: {x: 5, y: 12}
+  maxDistance: 25
+  maxVoicesAtOnce: 3
 --- !u!114 &5918886184603064916
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -136,6 +136,7 @@ public static class ZombieBuilder
         agent.radius = NavBuilder.AgentRadius; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
         var rb = root.AddComponent<Rigidbody>(); rb.isKinematic = true;
 
+        root.AddComponent<ZombieVoice>().variants = RoomBuilder.ZombieVoices();     // cris de zombie (3D)
         var bridge = root.AddComponent<ZombieAnimationBridge>();
         if (mixamo)
         {
@@ -229,6 +230,7 @@ public static class ZombieBuilder
 
         var proc = root.AddComponent<ZombieProcAnim>();
         proc.visual = visual; proc.armL = armL; proc.armR = armR; proc.legL = legL; proc.legR = legR;
+        root.AddComponent<ZombieVoice>().variants = RoomBuilder.ZombieVoices();     // cris de zombie (3D)
         var bridge = root.AddComponent<ZombieAnimationBridge>();
         bridge.procedural = proc;
 

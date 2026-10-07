@@ -311,6 +311,31 @@ public static class RoomBuilder
         MakeBattery(B(-20.5f, -2.1f, 0.92f));     // dans la cuisine (niveau 2)
     }
 
+    // son d'effet : Vorbis ; loadType = DecompressOnLoad (court, sans latence) ou CompressedInMemory (plus long, moins de mémoire)
+    static AudioClip SfxClip(string path, AudioClipLoadType loadType, bool mono)
+    {
+        if (AssetImporter.GetAtPath(path) is AudioImporter ai)
+        {
+            var st = ai.defaultSampleSettings;
+            if (st.loadType != loadType || st.compressionFormat != AudioCompressionFormat.Vorbis || ai.forceToMono != mono)
+            {
+                st.loadType = loadType;
+                st.compressionFormat = AudioCompressionFormat.Vorbis;
+                st.quality = 0.7f;
+                ai.defaultSampleSettings = st;
+                ai.forceToMono = mono;
+                ai.SaveAndReimport();
+            }
+        }
+        var c = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+        if (!c) Debug.LogWarning("Son introuvable : " + path);
+        return c;
+    }
+
+    public static AudioClip[] ZombieVoices() => new[] {
+        SfxClip("Assets/Audio/Zombie/Zombie_Voix_1.mp3", AudioClipLoadType.CompressedInMemory, true),
+        SfxClip("Assets/Audio/Zombie/Zombie_Voix_2.mp3", AudioClipLoadType.CompressedInMemory, true) };
+
     // sons courts du pistolet : décompressés au chargement (pas de latence au tir), Vorbis pour rester léger sur le Quest
     static AudioClip GunClip(string path)
     {
@@ -728,7 +753,9 @@ public static class RoomBuilder
         var pts = (GameObject)PrefabUtility.InstantiatePrefab(ZombieBuilder.BuildSpawnPoints(), mapRoot);
         z.points = pts.GetComponent<ZombieSpawnPoints>();
         z.spawnOnStart = false;               // c'est le WaveManager qui fait apparaître les zombies
-        sp.AddComponent<WaveManager>().spawner = z;
+        var wm = sp.AddComponent<WaveManager>();
+        wm.spawner = z;
+        wm.startClip = SfxClip("Assets/Audio/Game/Lancement_Partie.mp3", AudioClipLoadType.CompressedInMemory, false);
     }
 
     // ---------- ceinture + kit ----------

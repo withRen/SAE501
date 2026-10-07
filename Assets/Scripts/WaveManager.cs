@@ -32,6 +32,10 @@ public class WaveManager : MonoBehaviour
     public int lastLevelMaxAlive = 6;
     public float victoryRestartDelay = 12f;
 
+    [Header("Son")]
+    public AudioClip startClip;                // joué au lancement de la partie (début de la scène)
+    [Range(0f, 1f)] public float startVolume = 0.9f;
+
     enum Phase { Waiting, Wave, Break, Victory }
     Phase phase = Phase.Waiting;
     float timer, spawnTimer, reinforceTimer;
@@ -72,6 +76,14 @@ public class WaveManager : MonoBehaviour
         banner = MakeText("Annonce", head, new Vector3(0f, 0.12f, 1.5f), 0.006f, 64, TextAnchor.MiddleCenter, new Color(1f, 0.85f, 0.4f));
         status = MakeText("Statut", head, new Vector3(0f, -0.30f, 1.5f), 0.0035f, 64, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.55f));
         banner.gameObject.SetActive(false);
+
+        // son de lancement de la partie (non spatialisé : il vient de partout)
+        if (startClip)
+        {
+            var a = gameObject.AddComponent<AudioSource>();
+            a.playOnAwake = false; a.spatialBlend = 0f; a.volume = startVolume;
+            a.PlayOneShot(startClip);
+        }
     }
 
     static TextMesh MakeText(string name, Transform parent, Vector3 localPos, float charSize, int fontSize, TextAnchor anchor, Color c)

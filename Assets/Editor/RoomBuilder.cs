@@ -298,6 +298,7 @@ public static class RoomBuilder
             var ucd = g.AddComponent<UniversalAdditionalCameraData>();
             ucd.renderShadows = false;
             ucd.renderPostProcessing = false;
+            g.AddComponent<CctvOverlay>().label = CctvOverlay.LabelFor(c.name);   // [7.2] « ● REC », nom de la caméra, heure
             list.Add(cam);
         }
         return list.ToArray();
@@ -446,7 +447,7 @@ public static class RoomBuilder
             feeds[i].backgroundColor = Color.black;
             feeds[i].depth = -10;
 
-            var sm = Mat($"Screen_{i}", Color.white, 0f, "Universal Render Pipeline/Unlit");
+            var sm = Mat($"Screen_{i}", Color.white, 0f, "SAE501/CCTV");          // [7.2] effet caméra de surveillance (vert, grain, lignes)
             sm.SetTexture("_BaseMap", rt);
             station.feeds[i] = sm;
 

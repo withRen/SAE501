@@ -35,6 +35,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [024](#024--sons-de-lancement-et-voix-des-zombies) | 2026-10-07 | Sons à ajouter : lancement de la partie, zombies et une variante | Audio | Son de lancement, cris de zombie en 3D (2 variantes) |
 | [025](#025--revue-des-pull-requests-69-79-77-rien-poussé-dans-le-main) | 2026-10-07 | Revue des PR #69, #79 et #77 : fonctionnement et conflits, sans rien pousser dans le main | Revue | 2 bugs bloquants (#69 entrée, #77 shader), #79 OK, #67 en conflit |
 | [026](#026--revue-bugs-et-optimisation-rien-poussé) | 2026-10-07 | Vérifier bugs et optimisation, sans rien pousser | Revue | Quest rendu avec le pipeline PC, 26 lumières temps réel, ombre de point light, textures 4K du zombie, petites allocations par image |
+| [027](#027--corrections-doptimisation-rien-poussé) | 2026-10-07 | Appliquer les corrections d'optimisation proposées | Optimisation | Niveau Quest, textures 1024 px, CCTV rendues seulement si vues, allocations par image supprimées ; occlusion culling essayé puis retiré |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -573,3 +574,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Rendu** : une caméra de surveillance rendue à chaque image même quand personne ne regarde les écrans ; caméra du joueur à 1000 m de portée ; occlusion culling non précalculé.
 - **Code** : `ZombieAnimationBridge` lit `animator.parameters` (copie de tableau) à chaque appel ; texte de statut du `WaveManager` et horloge CCTV reconstruits à chaque image ; `Zombie.ChooseOpening` relancé à chaque image si aucune ouverture n'est accessible.
 - Rien n'a été corrigé : liste et ordre proposés dans la réponse.
+
+### 027 — Corrections d'optimisation (rien poussé)
+
+**Prompt**
+
+> Oui
+
+**Résultat** (commits locaux, rien poussé ; vérifié dans l'éditeur, **pas au casque**)
+
+- **Niveau de qualité « Quest »** (`Mobile_RPAsset`), par défaut sur Android : plus d'ombres des lumières secondaires (l'ombre douce de `Light_Bunker_Workbench` coûtait 6 rendus par image), échelle de rendu 0,8. Le niveau PC ne change pas.
+- **Textures** : 15 textures limitées à 1024 px sur Android (dont les 4 du zombie en 4096 px).
+- **Caméras de surveillance** : rendues seulement quand un écran du pupitre est visible ou que la vue plein écran est ouverte (mesuré : 60 rendus sur 60 images vue ouverte, 0 vue fermée).
+- **Caméra du joueur** : portée 60 m au lieu de 1000 m.
+- **Code** : paramètres d'animation lus une fois, texte de statut et horloge CCTV reconstruits seulement quand ils changent, recherche d'ouverture limitée à une fois par seconde.
+- **`.meta` ajoutés** pour les fichiers des PR #79 et #77 (absents des PR).
+- **Occlusion culling essayé puis retiré** : il coupait aussi les lumières de lune placées dehors, les murs du bunker devenaient sombres.
+- **Non fait, choix de l'équipe** : précalculer l'éclairage (26 lumières temps réel, 4 par objet au maximum sur le Quest).
+- Page de wiki non mise à jour : le wiki est sur GitHub, et rien ne doit y être poussé pour l'instant.
+

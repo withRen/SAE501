@@ -9,6 +9,7 @@ public class GameOverUI : MonoBehaviour
     public TextMesh gameOverText;       // optionnel : TextMesh avec ta police (sinon écran noir seul)
     public float fadeDuration = 1.2f;
     public float restartDelay = 6f;     // temps avant rechargement de la scène
+    public bool autoRestart = true;     // faux quand l'écran de fin (EndScreen, 6.5) propose de rejouer
     public string message = "VOUS ÊTES MORT\nLe signal n'a pas été envoyé...";
 
     Renderer black;
@@ -55,6 +56,7 @@ public class GameOverUI : MonoBehaviour
 
         if (gameOverText) gameOverText.GetComponent<MeshRenderer>().enabled = true;
 
+        if (!autoRestart) yield break;
         yield return new WaitForSeconds(restartDelay);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

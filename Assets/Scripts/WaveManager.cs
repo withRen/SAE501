@@ -42,6 +42,9 @@ public class WaveManager : MonoBehaviour
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
     public bool Victory => phase == Phase.Victory;
+    public bool InBreak => phase == Phase.Break;            // pause entre deux vagues (ScoreManager, ScoreBoard)
+    [HideInInspector] public bool waitForStart;             // vrai tant que l'écran de début est affiché (StartScreen)
+    public void BeginGame() => waitForStart = false;
 
     static LevelDef[] DefaultLevels() => new[]
     {
@@ -94,6 +97,7 @@ public class WaveManager : MonoBehaviour
         switch (phase)
         {
             case Phase.Waiting:
+                if (waitForStart) { SetStatus(""); break; }     // écran de début : le compte à rebours n'a pas commencé
                 timer -= Time.deltaTime;
                 SetStatus("Préparez-vous… " + Mathf.CeilToInt(Mathf.Max(0f, timer)) + " s");
                 if (timer <= 0f) StartLevel(startLevel);
@@ -161,7 +165,7 @@ public class WaveManager : MonoBehaviour
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
         Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
-        StartCoroutine(RestartAfter(victoryRestartDelay));
+        if (!EndScreen.Instance) StartCoroutine(RestartAfter(victoryRestartDelay));   // sinon c'est l'écran de fin (6.5) qui propose de rejouer
     }
 
     IEnumerator RestartAfter(float s)

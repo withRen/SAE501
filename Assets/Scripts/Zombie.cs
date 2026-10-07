@@ -36,6 +36,9 @@ public class Zombie : MonoBehaviour
     public Opening target { get; private set; }
     public bool Dead => state == State.Dead;
 
+    /// <summary>Un zombie vient d'être tué par le joueur (zone du tir mortel). Utilisé par ScoreManager (6.4).</summary>
+    public static event System.Action<Zombie, HitZone> Killed;
+
     NavMeshAgent agent;
     ZombieAnimationBridge anim;
     float slowUntil, nextBreak, nextAttack, hitAt = -1f, repath;
@@ -182,10 +185,10 @@ public class Zombie : MonoBehaviour
     public void OnHit(HitZone zone)
     {
         if (Dead) return;
-        if (zone == HitZone.Head) { Health = 0f; Die(); return; }
+        if (zone == HitZone.Head) { Health = 0f; Killed?.Invoke(this, zone); Die(); return; }
 
         Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
-        if (Health <= 0.01f) { Health = 0f; Die(); return; }
+        if (Health <= 0.01f) { Health = 0f; Killed?.Invoke(this, zone); Die(); return; }
         slowUntil = Time.time + (zone == HitZone.Legs ? slowDuration * 1.5f : slowDuration);     // touché : ralenti (plus longtemps aux jambes)
     }
 

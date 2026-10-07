@@ -8,6 +8,8 @@ Toutes les valeurs d'équilibrage sont dans **`Assets/Scripts/ZombieLevels.cs`**
 
 **Le pack gratuit ne contient aucune animation** (0 clip, pas d'Animator Controller) : les animations sont donc faites **par script** (`ZombieBoneAnim`, os tournés à chaque image) : marche traînante, bras tendus devant, buste penché, bras qui s'abattent à l'attaque, chute en arrière à la mort. Ce n'est pas du vrai mocap : si le groupe trouve de vrais clips humanoïdes (marche, attaque, mort), on les met dans un Animator Controller ; `ZombieAnimationBridge` pilote déjà les paramètres `Speed`, `Attack`, `Die`.
 
+**Animations Mixamo (ajoutées) :** 3 clips Mixamo (`Zombie Walk.fbx`, `Zombie Attack.fbx`, `Zombie Death.fbx`) sont dans **`Assets/Animations/Zombie`**. Le script éditeur `ZombieMixamo.cs` les règle en Humanoid (sur place, sans déplacement : c'est le NavMeshAgent qui avance) et crée `Assets/Generated/Zombie_Mixamo.controller` (paramètres `Speed` float, `Attack` trigger, `Die` trigger, pilotés par `ZombieAnimationBridge`). `ZombieBuilder` les utilise automatiquement quand les 3 fichiers sont présents ; sinon il revient à `ZombieBoneAnim`. Menu de contrôle : *SAE501 → Zombie → Régler les animations Mixamo*. Si les pieds glissent pendant la marche, changer `WalkClipSpeed` dans `ZombieMixamo.cs`.
+
 Hitbox : 3 zones, posées **sur les os** (elles suivent l'animation), chacune avec un composant `ZombieHitbox` :
 
 | Zone | Objets (collider) | Os | Part des PV de base retirée par tir | Tirs pour tuer (niveau 1) |

@@ -23,7 +23,7 @@ public class MenuAmbience : MonoBehaviour
         if (mist != null) { mistStart = new Vector3[mist.Length]; for (int i = 0; i < mist.Length; i++) mistStart[i] = mist[i].localPosition; }
 
         rain = gameObject.AddComponent<AudioSource>();
-        rain.clip = RainClip(); rain.loop = true; rain.volume = 0.35f; rain.spatialBlend = 0f; rain.Play();
+        rain.clip = RainClip(); rain.loop = true; rain.volume = 0.18f; rain.spatialBlend = 0f; rain.Play();
         thunder = gameObject.AddComponent<AudioSource>();
         thunder.spatialBlend = 0f; thunder.volume = 0.8f;
         StartCoroutine(Lightning());

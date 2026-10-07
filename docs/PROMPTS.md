@@ -43,6 +43,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [032](#032--zombies-morts-au-dessus-du-sol) | 2026-10-07 | Les zombies meurent 1 m au-dessus du sol | Bug | Hauteur du clip de mort gardée dans la pose |
 | [033](#033--intégration-du-menu-daccueil-pr-81) | 2026-10-07 | Intégrer la PR #81 (menu d'accueil), vérifier conflits et qualité | Revue | Fusion locale ; 2 bugs corrigés (compilation, chute du joueur) |
 | [034](#034--brouillard-du-menu-menu-plus-large-prise-par-clic) | 2026-10-07 | Brouillard du menu trop fort, menu trop étroit ; prise d'objet par clic au lieu de maintenir grip | Menu, interactions | Brouillard allégé, panneau élargi, `ClickGrab` (un clic prend, un clic lâche) |
+| [035](#035--pluie-et-brouillard-réduits-musique-du-menu) | 2026-10-07 | Réduire pluie et brouillard du menu ; musique fournie en musique du menu | Menu, audio | Pluie 450 gouttes/s, brouillard très léger, `Musique_Menu.mp3` en boucle |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -695,4 +696,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Menu** (`MainMenu.cs`) : panneau élargi de 1,04 m à 1,52 m (et agrandi ×1,1) ; libellés, curseurs (segments plus grands) et boutons de choix plus grands, boutons de choix assez larges pour leur texte. Vérifié par capture dans l'éditeur.
 - **Prise par clic** : nouveau `ClickGrab.cs` sur les deux mains (ajouté par `SetupVRScene`) : grip en mode « bascule » (XRI `InputTriggerType.Toggle`), un appui prend l'objet, un 2e appui le lâche. Les écrans de surveillance (simples boutons) sont relâchés aussitôt pour ne pas rester « tenus ». Interrupteur du générateur : un appui le lance, il faut garder la main dessus (`Generator.cs` coupe la sélection si la main s'éloigne).
 - Testé dans l'éditeur en simulant le bouton grip : marteau pris au 1er clic, lâché au 2e ; écran CCTV ouvert puis relâché ; générateur actionné, relâché quand la main s'éloigne. **Pas testé au casque.**
+- Rien poussé.
+
+### 035 — Pluie et brouillard réduits, musique du menu
+
+**Prompt**
+
+> (fichier joint : menu_principale.mp3) Dans le menu d'accueil, réduit l'intensité de la pluie et du brouillard. Et met la musique je te donne en musique de menu d'accueil
+
+**Résultat** (code écrit par l'IA, Claude Code ; musique fournie par l'utilisateur)
+
+- **Pluie** (`MenuBuilder.cs`) : 450 gouttes/s au lieu de 1100 (1000 particules max au lieu de 2500), gouttes plus transparentes (0,35 → 0,22) ; son de la pluie baissé (0,35 → 0,18, `MenuAmbience.cs`) pour laisser la musique devant.
+- **Brouillard** : densité 0,012 → 0,006, nappes 0,09 → 0,05 d'opacité.
+- **Musique** : `Assets/Audio/Music/Musique_Menu.mp3` (1 min 36, via Git LFS), jouée en boucle sans blanc par `MusicPlayer` (le même que dans le jeu), en streaming Vorbis ; son volume suit le curseur Musique des paramètres. Seulement dans le menu : la scène de jeu garde ses deux musiques.
+- Vérifié dans l'éditeur : la musique joue au lancement du menu, ~400 gouttes à l'écran, capture du décor plus dégagée. **Pas testé au casque.**
 - Rien poussé.

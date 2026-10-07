@@ -16,6 +16,7 @@ public static class MenuBuilder
     public const string ScenePath = "Assets/Scenes/Menu.unity";
     const string ImagePath = "Assets/Menu/MenuBackground.png";
     const string Dir = "Assets/Generated/Menu";
+    const string MusicPath = "Assets/Audio/Music/Musique_Menu.mp3";
 
     [MenuItem("SAE501/Build Menu Scene")]
     public static void Build()
@@ -48,7 +49,7 @@ public static class MenuBuilder
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.03f, 0.035f, 0.04f);
-        RenderSettings.fogDensity = 0.012f;                      // léger : la ville et le menu restent lisibles
+        RenderSettings.fogDensity = 0.006f;                      // léger : la ville et le menu restent lisibles
 
         // ---------- décor lointain : l'image sur un écran courbé ----------
         var tex = PrepareImage();
@@ -102,19 +103,19 @@ public static class MenuBuilder
         var rain = new GameObject("Pluie").AddComponent<ParticleSystem>();
         rain.transform.SetPositionAndRotation(new Vector3(0f, 7f, 2f), Quaternion.Euler(90f, 0f, 0f));   // émet vers le bas
         var main = rain.main;
-        main.startLifetime = 0.9f; main.startSpeed = 10f; main.startSize = 0.012f; main.maxParticles = 2500;
+        main.startLifetime = 0.9f; main.startSpeed = 10f; main.startSize = 0.012f; main.maxParticles = 1000;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.startColor = new Color(0.7f, 0.75f, 0.8f, 0.35f);
-        var em = rain.emission; em.rateOverTime = 1100f;
+        main.startColor = new Color(0.7f, 0.75f, 0.8f, 0.22f);
+        var em = rain.emission; em.rateOverTime = 450f;                      // pluie fine (1100 avant : trop dense)
         var sh = rain.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(14f, 12f, 0.1f);
         var pr = rain.GetComponent<ParticleSystemRenderer>();
         pr.renderMode = ParticleSystemRenderMode.Stretch; pr.velocityScale = 0.045f; pr.lengthScale = 1f;
-        pr.sharedMaterial = Mat("Pluie", "Universal Render Pipeline/Particles/Unlit", new Color(0.75f, 0.8f, 0.85f, 0.35f), null);
+        pr.sharedMaterial = Mat("Pluie", "Universal Render Pipeline/Particles/Unlit", new Color(0.75f, 0.8f, 0.85f, 0.22f), null);
         pr.shadowCastingMode = ShadowCastingMode.Off;
 
         // ---------- brouillard qui dérive ----------
         var mistTex = MistTexture();
-        var mistMat = Mat("Brouillard", "Sprites/Default", new Color(0.6f, 0.65f, 0.7f, 0.09f), mistTex);
+        var mistMat = Mat("Brouillard", "Sprites/Default", new Color(0.6f, 0.65f, 0.7f, 0.05f), mistTex);
         var mists = new List<Transform>();
         float[] dist = { 6f, 9f, 12f };
         for (int i = 0; i < dist.Length; i++)
@@ -127,6 +128,21 @@ public static class MenuBuilder
             q.GetComponent<Renderer>().sharedMaterial = mistMat;
             mists.Add(q.transform);
         }
+
+        // ---------- musique du menu (en boucle, volume réglé par GameSettings / curseur Musique) ----------
+        var music = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicPath);
+        if (AssetImporter.GetAtPath(MusicPath) is AudioImporter ai)
+        {
+            var ss = ai.defaultSampleSettings;                    // lue en streaming, compressée en Vorbis (comme les musiques du jeu)
+            if (ss.loadType != AudioClipLoadType.Streaming || ss.compressionFormat != AudioCompressionFormat.Vorbis)
+            {
+                ss.loadType = AudioClipLoadType.Streaming; ss.compressionFormat = AudioCompressionFormat.Vorbis; ss.quality = 0.6f;
+                ai.defaultSampleSettings = ss; ai.SaveAndReimport();
+                music = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicPath);
+            }
+        }
+        if (music) new GameObject("Musique_Menu").AddComponent<MusicPlayer>().tracks = new[] { music };
+        else Debug.LogWarning("Musique du menu introuvable : " + MusicPath);
 
         // ---------- menu et ambiance animée ----------
         new GameObject("Menu").AddComponent<MainMenu>().head = cam.transform;

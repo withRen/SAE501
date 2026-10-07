@@ -2,7 +2,8 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Objectif du jeu : activer le générateur (salle Générateur, déverrouillée au niveau 4).
-// Il faut MAINTENIR le bouton de démarrage (saisir/sélectionner) pendant `holdSeconds` ; si on lâche, la jauge redescend.
+// Il faut actionner l'interrupteur (un appui sur grip, prise par clic : ClickGrab) et garder la main dessus pendant `holdSeconds` ;
+// si on retire la main ou qu'on rappuie, la jauge redescend.
 // À la fin : lumière de la salle rallumée, victoire (WaveManager.GeneratorActivated).
 public class Generator : MonoBehaviour
 {
@@ -41,13 +42,16 @@ public class Generator : MonoBehaviour
 
     void Update()
     {
+        // prise par clic : la sélection ne s'arrête plus en relâchant grip, donc on la coupe si la main s'éloigne
+        if (button != null && button.isSelected && !button.isHovered)
+            button.interactionManager.SelectExit(button.firstInteractorSelecting, button);
         if (on) return;
         bool unlocked = WaveManager.Level >= unlockLevel;
         if (!unlocked) { SetLabel("HORS SERVICE"); return; }
 
         bool held = button != null && button.isSelected;
         progress = Mathf.Clamp(progress + (held ? 1f : -releaseDecay) * Time.deltaTime, 0f, holdSeconds);
-        SetLabel(progress <= 0f ? "MAINTENEZ LE BOUTON\npour démarrer" : "DÉMARRAGE… " + Mathf.RoundToInt(progress / holdSeconds * 100f) + " %");
+        SetLabel(progress <= 0f ? "APPUYEZ SUR L'INTERRUPTEUR\net gardez la main dessus" : "DÉMARRAGE… " + Mathf.RoundToInt(progress / holdSeconds * 100f) + " %");
         SetButtonColor(Color.Lerp(buttonOff, new Color(1f, 0.7f, 0.1f), progress / holdSeconds));
 
         if (progress >= holdSeconds) Activate();

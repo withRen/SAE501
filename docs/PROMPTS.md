@@ -42,6 +42,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [031](#031--planches-visibles-et-pose-sans-tenir) | 2026-10-07 | Planches plus visibles ; poser sans tenir ; sans clou 1 coup, clouée 3 coups | Gameplay | Râtelier au mur sud ; nouvelles règles de planche |
 | [032](#032--zombies-morts-au-dessus-du-sol) | 2026-10-07 | Les zombies meurent 1 m au-dessus du sol | Bug | Hauteur du clip de mort gardée dans la pose |
 | [033](#033--intégration-du-menu-daccueil-pr-81) | 2026-10-07 | Intégrer la PR #81 (menu d'accueil), vérifier conflits et qualité | Revue | Fusion locale ; 2 bugs corrigés (compilation, chute du joueur) |
+| [034](#034--brouillard-du-menu-menu-plus-large-prise-par-clic) | 2026-10-07 | Brouillard du menu trop fort, menu trop étroit ; prise d'objet par clic au lieu de maintenir grip | Menu, interactions | Brouillard allégé, panneau élargi, `ClickGrab` (un clic prend, un clic lâche) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -681,3 +682,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Vérifié dans l'éditeur : décor, 4 boutons, page Paramètres, difficulté « Difficile » appliquée dans le jeu (zombies 5/8/10/13, intervalle 9,6 s, vitesse ×1,15), volume de la musique inchangé, aucune erreur. Build Quest réussi ; **pas encore vu au casque** (performances de la pluie et du brouillard à vérifier).
 - Fusion dans le `main` local, rien poussé.
 
+### 034 — Brouillard du menu, menu plus large, prise par clic
+
+**Prompt**
+
+> Actuellement le brouillard est trop fort au niveau du menu d'accueil et le menu n'est pas assez large pour bien pouvoir lire / selectionner les paramètres
+> Retire le fait qu'il faut forcément gardé enfoncé la touche sur le côté du joystick pour tenir un objet : Une fois on click pour tenir l'objet, une autre fois pour lacher l'objet
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- **Brouillard** (`MenuBuilder.cs`) : densité du brouillard de 0,03 à 0,012 ; nappes 2,5 fois plus transparentes (0,22 → 0,09), plus basses et plus loin (6 / 9 / 12 m au lieu de 5 / 7,5 / 10 m).
+- **Menu** (`MainMenu.cs`) : panneau élargi de 1,04 m à 1,52 m (et agrandi ×1,1) ; libellés, curseurs (segments plus grands) et boutons de choix plus grands, boutons de choix assez larges pour leur texte. Vérifié par capture dans l'éditeur.
+- **Prise par clic** : nouveau `ClickGrab.cs` sur les deux mains (ajouté par `SetupVRScene`) : grip en mode « bascule » (XRI `InputTriggerType.Toggle`), un appui prend l'objet, un 2e appui le lâche. Les écrans de surveillance (simples boutons) sont relâchés aussitôt pour ne pas rester « tenus ». Interrupteur du générateur : un appui le lance, il faut garder la main dessus (`Generator.cs` coupe la sélection si la main s'éloigne).
+- Testé dans l'éditeur en simulant le bouton grip : marteau pris au 1er clic, lâché au 2e ; écran CCTV ouvert puis relâché ; générateur actionné, relâché quand la main s'éloigne. **Pas testé au casque.**
+- Rien poussé.

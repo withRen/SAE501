@@ -11,7 +11,8 @@ public class MainMenu : MonoBehaviour
 {
     public string gameScene = "MainScene";
     public Transform head;
-    public Vector3 position = new Vector3(0.75f, 1.45f, 2.1f);   // devant le joueur, un peu à droite
+    public Vector3 position = new Vector3(0.45f, 1.4f, 2.0f);    // devant le joueur, un peu à droite
+    public float scale = 1.1f;                                   // taille du panneau (1 = 1,52 m de large)
     public string version = "v0.9";
 
     Transform mainPage, settingsPage;
@@ -20,7 +21,8 @@ public class MainMenu : MonoBehaviour
     static readonly Color A = UiKit.Amber;
     static readonly Color Ink = new Color(0.06f, 0.04f, 0.015f);
     static readonly Color PanelCol = new Color(0.045f, 0.033f, 0.02f, 0.84f);
-    static readonly Vector2 PanelSize = new Vector2(1.04f, 1.28f);
+    static readonly Vector2 PanelSize = new Vector2(1.52f, 1.28f);
+    const float HW = 0.68f;                                      // demi-largeur utile du contenu
 
     void Start()
     {
@@ -29,6 +31,7 @@ public class MainMenu : MonoBehaviour
         transform.position = position;
         var flat = position; flat.y = 0f;
         transform.rotation = Quaternion.LookRotation(flat.sqrMagnitude > 0.01f ? flat : Vector3.forward);
+        transform.localScale = Vector3.one * scale;
 
         mainPage = BuildMain();
         settingsPage = BuildSettings();
@@ -54,8 +57,8 @@ public class MainMenu : MonoBehaviour
         BigButton(p, 0.078f, "SOLO", () => StartCoroutine(Play()));
         var multi = BigButton(p, -0.082f, "MULTIJOUEUR", null);
         multi.interactable = false;
-        UiKit.Text(multi.transform, "Bientot", new Vector2(0.39f, 0f), 0.0068f, A, "BIENTÔT", TextAnchor.MiddleRight, true);
-        UiKit.Frame(multi.transform, new Vector2(0.39f - 0.065f, 0f), new Vector2(0.15f, 0.05f), 0.003f, A, -1, 0.004f);
+        UiKit.Text(multi.transform, "Bientot", new Vector2(0.565f, 0f), 0.0075f, A, "BIENTÔT", TextAnchor.MiddleRight, true);
+        UiKit.Frame(multi.transform, new Vector2(0.56f - 0.09f, 0f), new Vector2(0.22f, 0.055f), 0.003f, A, -1, 0.004f);
         BigButton(p, -0.242f, "PARAMÈTRES", () => ShowSettings(true));
         BigButton(p, -0.402f, "QUITTER", Quit);
 
@@ -78,7 +81,7 @@ public class MainMenu : MonoBehaviour
         Section(p, ref y, "JEU");
         Choice(p, ref y, "Difficulté", new[] { "FACILE", "NORMAL", "DIFFICILE" }, () => (int)GameSettings.Difficulty, i => GameSettings.Difficulty = (GameSettings.Level)i);
 
-        var back = MakeButton(p, new Vector2(-0.33f, -0.53f), new Vector2(0.28f, 0.085f), "◂  RETOUR", 0.0085f, () => { PlayerPrefs.Save(); ShowSettings(false); });
+        var back = MakeButton(p, new Vector2(-HW + 0.17f, -0.53f), new Vector2(0.34f, 0.09f), "◂  RETOUR", 0.0095f, () => { PlayerPrefs.Save(); ShowSettings(false); });
         back.textColor = A;
         return p;
     }
@@ -98,16 +101,16 @@ public class MainMenu : MonoBehaviour
         UiKit.Frame(p, Vector2.zero, PanelSize, 0.004f, new Color(A.r, A.g, A.b, 0.4f), -1, 0.006f);
         UiKit.Brackets(p, Vector2.zero, PanelSize + new Vector2(0.03f, 0.03f), 0.07f, 0.008f, A);
         UiKit.Quad(p, "Bande", new Vector2(0f, 0.596f), new Vector2(PanelSize.x, 0.088f), new Color(A.r, A.g, A.b, 0.92f), -1, 0.006f);
-        UiKit.Text(p, "Bande_G", new Vector2(-0.49f, 0.596f), 0.0085f, Ink, header, TextAnchor.MiddleLeft, true);
+        UiKit.Text(p, "Bande_G", new Vector2(-PanelSize.x / 2f + 0.03f, 0.596f), 0.0085f, Ink, header, TextAnchor.MiddleLeft, true);
         if (!string.IsNullOrEmpty(headerRight))
-            UiKit.Text(p, "Bande_D", new Vector2(0.49f, 0.596f), 0.0085f, Ink, headerRight, TextAnchor.MiddleRight, true);
+            UiKit.Text(p, "Bande_D", new Vector2(PanelSize.x / 2f - 0.03f, 0.596f), 0.0085f, Ink, headerRight, TextAnchor.MiddleRight, true);
         return p;
     }
 
     MenuButton BigButton(Transform p, float y, string text, Action click)
     {
-        var b = MakeButton(p, new Vector2(0f, y), new Vector2(0.84f, 0.124f), text, 0.0113f, click, TextAnchor.MiddleLeft);
-        b.arrow = UiKit.Text(b.transform, "Fleche", new Vector2(-0.46f, 0f), 0.009f, A, "▶", TextAnchor.MiddleCenter, true);
+        var b = MakeButton(p, new Vector2(0f, y), new Vector2(1.2f, 0.124f), text, 0.0113f, click, TextAnchor.MiddleLeft);
+        b.arrow = UiKit.Text(b.transform, "Fleche", new Vector2(-0.64f, 0f), 0.009f, A, "▶", TextAnchor.MiddleCenter, true);
         b.arrow.gameObject.SetActive(false);
         return b;
     }
@@ -130,21 +133,21 @@ public class MainMenu : MonoBehaviour
 
     void Section(Transform p, ref float y, string title)
     {
-        UiKit.Text(p, "Section", new Vector2(-0.46f, y), 0.0075f, A, title, TextAnchor.MiddleLeft, true);
-        UiKit.Quad(p, "Trait", new Vector2(0f, y - 0.035f), new Vector2(0.92f, 0.002f), new Color(A.r, A.g, A.b, 0.4f), -1, 0.006f);
+        UiKit.Text(p, "Section", new Vector2(-HW, y), 0.0075f, A, title, TextAnchor.MiddleLeft, true);
+        UiKit.Quad(p, "Trait", new Vector2(0f, y - 0.035f), new Vector2(2f * HW, 0.002f), new Color(A.r, A.g, A.b, 0.4f), -1, 0.006f);
         y -= 0.085f;
     }
 
     // curseur en 10 segments (cliquer un segment règle la valeur)
     void Slider(Transform p, ref float y, string label, Func<float> get, Action<float> set)
     {
-        UiKit.Text(p, "Libelle", new Vector2(-0.46f, y), 0.0088f, UiKit.White, label, TextAnchor.MiddleLeft);
+        UiKit.Text(p, "Libelle", new Vector2(-HW, y), 0.0105f, UiKit.White, label, TextAnchor.MiddleLeft);
         var segs = new List<MenuButton>();
         Action refresh = () => { int n = Mathf.RoundToInt(get() * 10f); for (int i = 0; i < segs.Count; i++) segs[i].selected = i < n; };
         for (int i = 0; i < 10; i++)
         {
             int k = i;
-            var s = MakeButton(p, new Vector2(0.02f + i * 0.044f, y), new Vector2(0.036f, 0.05f), "", 0.005f, null);
+            var s = MakeButton(p, new Vector2(HW - 0.03f - (9 - i) * 0.065f, y), new Vector2(0.055f, 0.065f), "", 0.005f, null);
             s.onClick = () => { set((k + 1) / 10f); refresh(); };
             segs.Add(s);
         }
@@ -154,18 +157,18 @@ public class MainMenu : MonoBehaviour
 
     void Choice(Transform p, ref float y, string label, string[] options, Func<int> get, Action<int> set)
     {
-        UiKit.Text(p, "Libelle", new Vector2(-0.46f, y), 0.0088f, UiKit.White, label, TextAnchor.MiddleLeft);
+        UiKit.Text(p, "Libelle", new Vector2(-HW, y), 0.0105f, UiKit.White, label, TextAnchor.MiddleLeft);
         var buttons = new List<MenuButton>();
         Action refresh = () => { int sel = get(); for (int i = 0; i < buttons.Count; i++) buttons[i].selected = i == sel; };
-        float right = 0.46f;
+        float right = HW;
         for (int i = options.Length - 1; i >= 0; i--)
         {
-            float w = 0.04f + options[i].Length * 0.0175f;
+            float w = 0.07f + options[i].Length * 0.027f;
             int k = i;
-            var b = MakeButton(p, new Vector2(right - w / 2f, y), new Vector2(w, 0.06f), options[i], 0.0065f, null);
+            var b = MakeButton(p, new Vector2(right - w / 2f, y), new Vector2(w, 0.072f), options[i], 0.0078f, null);
             b.onClick = () => { set(k); refresh(); };
             buttons.Insert(0, b);
-            right -= w + 0.015f;
+            right -= w + 0.02f;
         }
         refresh();
         y -= 0.095f;

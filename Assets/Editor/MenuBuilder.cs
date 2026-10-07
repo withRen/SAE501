@@ -48,7 +48,7 @@ public static class MenuBuilder
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.03f, 0.035f, 0.04f);
-        RenderSettings.fogDensity = 0.03f;
+        RenderSettings.fogDensity = 0.012f;                      // léger : la ville et le menu restent lisibles
 
         // ---------- décor lointain : l'image sur un écran courbé ----------
         var tex = PrepareImage();
@@ -114,16 +114,16 @@ public static class MenuBuilder
 
         // ---------- brouillard qui dérive ----------
         var mistTex = MistTexture();
-        var mistMat = Mat("Brouillard", "Sprites/Default", new Color(0.6f, 0.65f, 0.7f, 0.22f), mistTex);
+        var mistMat = Mat("Brouillard", "Sprites/Default", new Color(0.6f, 0.65f, 0.7f, 0.09f), mistTex);
         var mists = new List<Transform>();
-        float[] dist = { 5f, 7.5f, 10f };
+        float[] dist = { 6f, 9f, 12f };
         for (int i = 0; i < dist.Length; i++)
         {
             var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
             q.name = "Brouillard_" + i;
             Object.DestroyImmediate(q.GetComponent<Collider>());
-            q.transform.SetPositionAndRotation(new Vector3(0f, 0.7f + 0.4f * i, dist[i]), Quaternion.identity);
-            q.transform.localScale = new Vector3(16f, 2.5f + i, 1f);
+            q.transform.SetPositionAndRotation(new Vector3(0f, 0.35f + 0.25f * i, dist[i]), Quaternion.identity);
+            q.transform.localScale = new Vector3(18f, 1.4f + 0.5f * i, 1f);
             q.GetComponent<Renderer>().sharedMaterial = mistMat;
             mists.Add(q.transform);
         }

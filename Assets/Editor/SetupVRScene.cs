@@ -77,7 +77,7 @@ public static class SetupVRScene
     //   approche/tourne l'objet tenu) est désactivé ;
     // - à la place, un XRDirectInteractor : sphère de 15 cm autour de la main, point d'accroche dans la paume
     //   (valeurs de My project : sphère centrée en (0 ; -0,05 ; 0,05), accroche en (0 ; -0,07 ; 0,04)).
-    // Les boutons sont repris du Near-Far Interactor (grip = attraper, gâchette = utiliser).
+    // Les boutons sont repris du Near-Far Interactor (grip = attraper, gâchette = utiliser) ; prise par clic (ClickGrab).
     static void UseDirectInteractor(Transform controller, float sideSign)
     {
         var nearFar = controller.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.NearFarInteractor>(true);
@@ -99,6 +99,7 @@ public static class SetupVRScene
         direct.improveAccuracyWithSphereCollider = true;
         direct.physicsTriggerInteraction = QueryTriggerInteraction.Ignore;
         direct.keepSelectedTargetValid = true;
+        go.AddComponent<ClickGrab>();                               // un clic pour prendre, un clic pour lâcher
 
         if (nearFar != null)
         {

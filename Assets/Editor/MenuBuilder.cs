@@ -33,6 +33,9 @@ public static class MenuBuilder
         rig.GetComponent<Unity.XR.CoreUtils.XROrigin>().RequestedTrackingOriginMode = Unity.XR.CoreUtils.XROrigin.TrackingOriginMode.Device;
         foreach (var nf in rig.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.NearFarInteractor>(true))
             nf.gameObject.SetActive(false);                      // les rayons du menu sont ceux de MenuPointer
+        // dans le menu le joueur reste sur place : pas de gravité ni de déplacement (seule la rotation reste)
+        foreach (var t in rig.GetComponentsInChildren<Transform>(true))
+            if (t.parent && t.parent.name == "Locomotion" && t.name != "Turn") t.gameObject.SetActive(false);
         var cam = rig.GetComponentInChildren<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.01f, 0.012f, 0.014f);
@@ -61,8 +64,7 @@ public static class MenuBuilder
 
         // ---------- sol mouillé ----------
         var floor = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        floor.name = "Quai_Mouille";
-        Object.DestroyImmediate(floor.GetComponent<Collider>());
+        floor.name = "Quai_Mouille";                               // garde son collider : le joueur a un sol sous les pieds
         floor.transform.SetPositionAndRotation(new Vector3(0f, 0f, 2f), Quaternion.Euler(90f, 0f, 0f));
         floor.transform.localScale = new Vector3(12f, 10f, 1f);
         var fm = Mat("Quai_Mouille", "Universal Render Pipeline/Lit", new Color(0.05f, 0.05f, 0.055f), null);

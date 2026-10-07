@@ -39,6 +39,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [028](#028--image-noire-au-casque) | 2026-10-07 | Image noire au casque après le niveau Quest | Bug | Quest_RPAsset : copie du pipeline PC sans ombres coûteuses |
 | [029](#029--écran-noir-son-seul) | 2026-10-07 | Toujours écran noir au casque, le son marche | Bug | GPU Resident Drawer qui plantait le pipeline à chaque image ; désactivé pour le Quest |
 | [030](#030--écran-noir-avec-les-textes) | 2026-10-07 | Écran noir mais textes visibles | Bug | Build profile Meta Quest qui citait des niveaux de qualité absents ; rendu fovéal fixe (72 images/s) |
+| [031](#031--planches-visibles-et-pose-sans-tenir) | 2026-10-07 | Planches plus visibles ; poser sans tenir ; sans clou 1 coup, clouée 3 coups | Gameplay | Râtelier au mur sud ; nouvelles règles de planche |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -633,4 +634,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Correction : le profil utilise le niveau « Quest » (`Quest_RPAsset`). Vérifié au casque : bunker, mains, lumières et textes affichés, aucune erreur.
 - GPU alors à 98 % (54 à 64 images/s) : **rendu fovéal fixe** activé au lancement (`QuestFoveation.cs`). Mesuré : 72 images/s, GPU à environ 60 % (vue moins chargée que la mesure précédente : comparaison approximative).
 - Commits locaux, rien poussé. Diagnostic retiré.
+
+### 031 — Planches visibles et pose sans tenir
+
+**Prompt**
+
+> met les planches à un endroit plus visible, et retire le fait que le joueur doit tenir la planche et en même temps taper avec le marteau. Il pose la planche, si les clous ne sont pas posé alors quand un zombi tape la planche elle tombe directement, si elle a les clous alors il lui faut 3 coups pour casser la planche
+
+**Résultat**
+
+- **Râtelier** : les 6 planches de réserve (avant à plat au sol sous les fenêtres) sont sur le mur sud, entre les deux fenêtres, 3 rangées de 2 à 1,0 / 1,32 / 1,64 m, avec des supports métalliques. Elles restent accrochées jusqu'à ce qu'on les prenne.
+- **Pose** : lâchée sur l'emplacement, la planche reste en place (plus de planche qui tombe ou qui pend par un clou, plus de zone « tenir avec l'autre main »). Tant qu'aucun clou n'est enfoncé, on peut la reprendre.
+- **Clous** : se plantent au marteau sans tenir la planche.
+- **Zombie** : planche sans clou = tombe au 1er coup ; planche avec au moins un clou = 3 coups. **Choix de l'IA** : un seul clou suffit pour compter comme clouée ; un coup toutes les 2 s (avant : une planche arrachée toutes les 3 s) ; la planche recule à chaque coup.
+- Vérifié dans l'éditeur : pose sans tenir, 1 coup / 3 coups, zombie qui casse 1 planche clouée + 1 non clouée puis entre ; râtelier immobile. **Pas testé au casque.**
+- **Conflits à prévoir** avec les PR #78 (dégradation des barricades : `Plank.cs`, `Opening.cs`, `Nail.cs`, `Zombie.cs`) et #67 (approvisionnement en planches : `Plank.cs`, `RoomBuilder.cs`).
 

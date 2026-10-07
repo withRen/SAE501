@@ -1,10 +1,10 @@
 using UnityEngine;
 
-// Fait apparaître des zombies aux points du prefab ZombieSpawnPoints (bouts des couloirs, fenêtre Nord).
+// Fait apparaître des zombies aux points du prefab ZombieSpawnPoints (bouts des couloirs, extérieur sud du bunker).
 // Chaque zombie reçoit PV et dégâts de son niveau (ZombieLevels). Le chemin NavMesh de chaque zombie part de son point d'apparition.
 public class ZombieSpawner : MonoBehaviour
 {
-    public enum Point { CouloirGauche, CouloirDroit, FenetreNord }
+    public enum Point { CouloirGauche, CouloirDroit, Exterieur }
 
     public GameObject zombiePrefab;
     public ZombieSpawnPoints points;
@@ -36,7 +36,7 @@ public class ZombieSpawner : MonoBehaviour
     {
         Transform p = where == Point.CouloirGauche ? points.leftCorridorEnd
                     : where == Point.CouloirDroit ? points.rightCorridorEnd
-                    : points.northWindow;
+                    : points.exterior;
         var go = Instantiate(zombiePrefab, p.position, p.rotation);
         var z = go.GetComponent<Zombie>();
         z.ApplyLevel(level);

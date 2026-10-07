@@ -4,23 +4,25 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-// Importe la salle "LastBoardStanding_Kitchen.blend" (exportée en FBX par Blender) avec des matériaux URP.
+// Importe la carte "LastBoardStanding_Kitchen.blend" (exportée par Tools/blender/export_map.py) avec des matériaux URP.
 public static class RoomImport
 {
     const string Dir = "Assets/Room";
     const string TexDir = Dir + "/Textures";
     const string MatDir = Dir + "/Materials";
-    public const string FbxPath = Dir + "/LastBoardStanding_Room.fbx";
+    public const string FbxPath = Dir + "/LastBoardStanding_Map.fbx";
+    public const string MetaPath = Dir + "/map_meta.json";
 
     [System.Serializable] class MatInfo
     {
         public float[] base_color; public float rough, metal, alpha; public string blend;
-        public float[] tiling; public string base_tex, normal_tex, emission_tex; public float emission_strength; public bool alpha_linked;
+        public float[] tiling; public string base_tex, normal_tex, emission_tex; public float[] emission_color; public float emission_strength; public bool alpha_linked;
     }
 
-    [MenuItem("SAE501/Salle/1 - Importer la salle (textures + matériaux)")]
+    [MenuItem("SAE501/Salle/1 - Importer la carte (textures + matériaux)")]
     public static void Import()
     {
+        AssetDatabase.Refresh();   // les fichiers viennent d'être écrits par le script Blender
         var json = File.ReadAllText(Dir + "/materials.json");
         var mats = MiniJson.ParseDict<MatInfo>(json);
 
@@ -28,10 +30,11 @@ public static class RoomImport
         var normals = new HashSet<string>();
         foreach (var kv in mats) if (!string.IsNullOrEmpty(kv.Value.normal_tex)) normals.Add(kv.Value.normal_tex);
         AssetDatabase.StartAssetEditing();
-        foreach (var f in Directory.GetFiles(TexDir, "*.png"))
+        foreach (var f in Directory.GetFiles(TexDir))
         {
             var p = f.Replace("\\", "/");
-            var ti = (TextureImporter)AssetImporter.GetAtPath(p);
+            if (p.EndsWith(".meta")) continue;
+            var ti = AssetImporter.GetAtPath(p) as TextureImporter;
             if (ti == null) continue;
             bool isNormal = normals.Contains(Path.GetFileName(p));
             ti.textureType = isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
@@ -43,8 +46,9 @@ public static class RoomImport
         AssetDatabase.StopAssetEditing();
         AssetDatabase.Refresh();
 
-        // 2) matériaux URP
-        if (!AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.CreateFolder(Dir, "Materials");
+        // 2) matériaux URP (le dossier est vidé : les matériaux de l'ancienne salle disparaissent)
+        if (AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.DeleteAsset(MatDir);
+        AssetDatabase.CreateFolder(Dir, "Materials");
         var made = new Dictionary<string, Material>();
         foreach (var kv in mats)
         {
@@ -78,14 +82,16 @@ public static class RoomImport
                 if (!i.alpha_linked) m.SetColor("_BaseColor", new Color(bc[0], bc[1], bc[2], i.alpha));
             }
             var et = Tex(i.emission_tex);
-            if (et && i.emission_strength > 0f)
+            var ec = i.emission_color != null && i.emission_color.Length >= 3 ? new Color(i.emission_color[0], i.emission_color[1], i.emission_color[2]) : Color.black;
+            if (i.emission_strength > 0f && (et || ec.maxColorComponent > 0.01f))
             {
-                m.SetTexture("_EmissionMap", et);
-                m.SetColor("_EmissionColor", Color.white * i.emission_strength);
+                if (et) m.SetTexture("_EmissionMap", et);
+                // les écrans, LED et ampoules du fichier brillent (force plafonnée pour rester sombre)
+                m.SetColor("_EmissionColor", (et ? Color.white : ec) * Mathf.Min(i.emission_strength, 4f));
                 m.EnableKeyword("_EMISSION");
                 m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             }
-            AssetDatabase.CreateAsset(m, $"{MatDir}/{kv.Key}.mat");
+            AssetDatabase.CreateAsset(m, $"{MatDir}/{Safe(kv.Key)}.mat");
             made[kv.Key] = m;
         }
         AssetDatabase.SaveAssets();
@@ -102,6 +108,8 @@ public static class RoomImport
         mi.SaveAndReimport();
         Debug.Log($"[RoomImport] {made.Count} matériaux, FBX réimporté");
     }
+
+    static string Safe(string n) { foreach (var c in Path.GetInvalidFileNameChars()) n = n.Replace(c, '_'); return n; }
 
     static Texture2D Tex(string file) => string.IsNullOrEmpty(file) ? null : AssetDatabase.LoadAssetAtPath<Texture2D>($"{TexDir}/{file}");
 }

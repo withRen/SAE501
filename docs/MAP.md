@@ -1,64 +1,80 @@
 # Carte — THE LAST ESCAPOR
 
-Le joueur reste dans le **bunker**. Les couloirs et les 3 pièces sont des **décors vus par les caméras** (le joueur n'y va pas) ; les zombies en sortent et arrivent vers le bunker.
+La carte vient du fichier Blender de l'équipe **`LastBoardStanding_Kitchen.blend`** (version du 7 octobre 2026). Elle remplace l'ancienne carte en boîtes grises.
 
 ```
-              (haut de la carte = +Z)
+                       (haut = nord = +y Blender = -z Unity)
 
-   ┌──────────────┐ ║        ║                    ║        ║
-   │ GÉNÉRATEUR   ├─╢        ║                    ║        ╟─┌────────────┐
-   └──────────────┘ ║ couloir║                    ║couloir ║ │ STOCKAGE   │
-   ┌──────────────┐ ║ gauche ║                    ║ droit  ╟─└────────────┘
-   │ CUISINE      ├─╢        ║                    ║        ║
-   └──────────────┘ ║        ║                    ║        ║
-              Spawn ▲        ║        BUNKER       ║        ▲ Spawn
-                    ║        ╠═╗   (6 x 5 m)    ╔═╣        ║
-                    ╚════════╝ ║                ║ ╚════════╝
-                       porte   ╚════════════════╝  porte (couloir
-                       gauche                      existant du fichier Blender)
+   ┌────────────┐                                         ┌────────────┐
+   │ GÉNÉRATEUR │═╗                                   ╔═══│  STOCKAGE  │
+   └────────────┘ ║ couloir                   couloir ║   └────────────┘
+   ┌────────────┐ ║ gauche                     droit  ║
+   │  CUISINE   │═╣                                   ║
+   └────────────┘ ║                                   ║
+                  ╚══╗  ┌──────────────────────┐  ╔═══╝
+                 porte ═│        BUNKER        │═ porte
+                 ouest  │  (11,3 m x 8 m)      │  est
+                        └──┬───────────────┬───┘
+                      fenêtre SW       fenêtre SE
+                         ── extérieur (terrain) ──
 ```
 
-| Zone | Rôle prévu | Position (repère final, X = droite, Z = haut) |
+## Pièces (repère Blender, X droite, Y nord)
+
+| Zone | Contenu | Étendue Blender |
 |---|---|---|
-| Bunker | Salle du joueur en boîtes grises : établi, pupitre, 4 ouvertures (2 portes, 2 fenêtres) | x ±2,6 · z ±3,1 |
-| Couloir gauche | Les zombies arrivent par le haut (z = 13) | x −5,5 à −3,9 · z −2 à 14 |
-| Cuisine | **La salle complète du fichier Blender** (murs, fenêtres, mobilier de cuisine, établi), tournée de 90° ; son petit couloir d'origine s'ouvre sur le couloir gauche | centre x −10,2 · z 3,4 |
-| Générateur | Au bout du couloir gauche : lumières, piège électrique | x −10 à −5,7 · z 8,4 à 12,4 |
-| Couloir droit | Petit couloir depuis la porte droite du bunker | x 3,9 à 5,5 · z −0,6 à 14 |
-| Stockage | Planches, piles, chargeurs | x 5,7 à 9,7 · z 5 à 9 |
+| **Bunker** | Pupitre de surveillance (4 écrans), établi avec marteau, poêle-baril, lits, étagères, caisses. 2 portes (ouest, est) et 2 fenêtres au sud | x −7,5..3,8 · y −14,1..−6,1 |
+| **Couloir gauche** | En L : part de la porte ouest du bunker, puis monte vers le nord ; s'ouvre sur la cuisine et sur le générateur | x −14,5..−7,35 · y −11,2..4,2 |
+| **Cuisine** | La salle d'origine (établi, cuisinière, frigo, planches) | x −22..−16,65 · y −8..−1,65 |
+| **Générateur** | Générateur à démarrer (objectif), bidons, établi | x −19,7..−14,5 · y 0,35..4,65 |
+| **Couloir droit** | En L : part de la porte est du bunker vers l'est, monte vers le nord, puis tourne vers le stockage | x 3,65..10,5 · y −11,2..7,6 |
+| **Stockage** | Étagères, casiers, planches de rechange | x 10,5..16,8 · y 3,85..9,15 |
+| **Extérieur sud** | Terrain ajouté par le jeu (le fichier n'en a pas) : les zombies y apparaissent et attaquent les fenêtres | y −14..−19 |
 
-**Ouvertures du bunker** : porte gauche (vers le couloir gauche), porte droite (vers le couloir droit), 2 fenêtres (devant et derrière le joueur). 3 emplacements de planches par ouverture.
+Repère Unity : `(x, y, z)` Blender devient `(−x, z, −y)` dans Unity.
 
-**Caméras** (3 écrans du pupitre) : couloir gauche, couloir droit, générateur. Elles regardent depuis le bunker vers le haut des couloirs.
+## Ouvertures du bunker (attaquées par les zombies)
 
-**Points d'apparition des zombies** : prefab `ZombieSpawnPoints` (bout du couloir gauche, bout du couloir droit, fenêtre Nord dans la cour). Détail et NavMesh : [ZOMBIES.md](ZOMBIES.md).
+Chaque ouverture a **3 emplacements de planches** et démarre **sans barricade** : c'est au joueur de clouer.
 
-## Zones débloquées par niveau
+| Ouverture | Largeur | Côté zombie | Passage des zombies |
+|---|---|---|---|
+| Porte ouest | 1,4 m | Couloir gauche | À pied (le NavMesh traverse la porte) |
+| Porte est | 1,8 m | Couloir droit | À pied |
+| Fenêtre sud-ouest | 1,8 m | Extérieur | **Lien NavMesh** : le zombie enjambe la fenêtre |
+| Fenêtre sud-est | 1,8 m | Extérieur | **Lien NavMesh** |
 
-Le joueur peut marcher (rig avec `CharacterController`). Des **portes verrouillées** ferment les zones jusqu'au bon niveau (détail : wiki « Niveaux et vagues »).
+Les emplacements des fenêtres viennent des repères du fichier (`Bunker_PlankSlot_*`) ; ceux des portes sont ajoutés par le jeu.
 
-| Niveau | Zone accessible | Porte (repère carte) |
+## Zones par niveau
+
+| Niveau | Accès du joueur | Porte qui s'ouvre (Blender) |
 |---|---|---|
 | 1 | Bunker seul | — |
-| 2 | + couloirs gauche et droit, + Cuisine | x −3,9 · z −1,0 (gauche) ; x 3,9 · z 0,8 (droit) |
-| 3 | + Stockage | x 5,5 · z 7,0 |
-| 4 | + Générateur (objectif : l'activer) | x −5,5 · z 10,4 |
+| 2 | + couloirs, cuisine | porte ouest (x −7,43) et porte est (x 3,72) du bunker |
+| 3 | + stockage | entrée du stockage (x 10,58 · y 6,5) |
+| 4 | + générateur | entrée de la salle du générateur (x −14,58 · y 2,5) |
 
-## Bunker et Cuisine
+## Points de départ des zombies
 
-La salle du fichier Blender (`Assets/Room`) est une cuisine complète : elle est placée **telle quelle** comme pièce Cuisine (objet `Cuisine (salle Blender)`).
-Le bunker est une salle neuve en boîtes grises (`Bunker`, construite par `BuildBunkerShell`). Il reprend de la salle d'origine l'établi, la lampe suspendue, la lampe à huile, la radio, les chaises et les cadres de fenêtres/portes (objet `Bunker_Decor`), plus des casiers et des caisses (`Bunker_Materiel`). Les planches et le marteau interactifs sont dans le bunker.
+| Point | Blender | Chemin mesuré jusqu'au bunker |
+|---|---|---|
+| Bout du couloir gauche | (−12 ; 3,7) | 16,3 m jusqu'à la porte ouest |
+| Bout du couloir droit | (7,1 ; 7) | 18,7 m jusqu'à la porte est |
+| Extérieur sud | (−1,85 ; −17,6) | 3,7 m jusqu'à chaque fenêtre |
 
-## Analyse pour les zombies (NavMesh)
+## NavMesh
 
-Forme de la carte : un « U » ouvert vers le haut. Le bunker est en bas, les deux couloirs montent de chaque côté (gauche : 14,9 m jusqu'à la porte ; droite : 13,2 m), et les zombies apparaissent tout en haut (`Spawn_Gauche`, `Spawn_Droit`, à z = 13,3).
+- Construit sur les **collisions** de la carte : murs, sols et plinthes ont un collider exact (murs percés, sols en L), les meubles une boîte.
+- Sans collision : décor plat ou suspendu (tapis, papiers, débris, cadres, câbles, plantes, tuyaux qui longent les couloirs, plafonds).
+- **Rayon des zombies : 0,2 m.** Avec 0,3 m, les couloirs étaient bouchés par des objets posés en chicane (caisses dans la branche du couloir gauche, baril renversé et sac poubelle dans le couloir droit).
+- Les **déchets mous** (sacs poubelle, cartons, papiers) ne bloquent pas le NavMesh : les zombies les piétinent.
+- Les portes de niveau sont ignorées par le NavMesh : ce sont les points d'apparition autorisés par niveau qui empêchent les zombies d'arriver par une zone fermée.
 
-- **Chemins :** chaque bout de couloir a un chemin complet jusqu'à la porte de son côté et jusqu'à l'intérieur du bunker (environ 16 à 20 m). Les deux couloirs ne sont **pas reliés** entre eux : un zombie de gauche ne peut aller qu'à la porte gauche, et inversement.
-- **Portes :** 1 m de large. L'agent des zombies fait donc 0,3 m de rayon (réglage du projet, `NavMeshAreas`), sinon il ne passe pas.
-- **Fenêtres :** la fenêtre **Nord** (devant le joueur) est accessible : une cour fermée (`Cour_Nord`, z 3 à 8) a été ajoutée entre les deux couloirs, et les zombies y apparaissent. La fenêtre **Sud** (derrière le joueur) reste inaccessible (`zombiesCanUse = false`) : il faudrait un passage au sud.
-- **Obstacles :** l'établi et le pupitre bloquent le centre du bunker ; les chaises renversées et les cadres de porte n'ont plus de collision (ils bloquaient le passage).
-- **Barricades :** chaque ouverture démarre avec ses 3 planches clouées. Les zombies s'arrêtent au point d'approche devant l'ouverture, arrachent une planche toutes les 3 s, puis entrent.
+## Mettre à jour la carte
 
-## État
+1. Exporter le `.blend` : `/Applications/Blender.app/Contents/MacOS/Blender -b carte.blend --python Tools/blender/export_map.py`
+   (FBX, matériaux, textures en JPG, lumières et caméras ; les objets de décor de plus de 6 000 triangles sont simplifiés à l'export).
+2. Dans Unity : **SAE501 → Salle → 1 - Importer la carte**, puis **SAE501 → Build VR Scene**.
 
-Blockout en boîtes grises (sans décor) dans `MainScene`, objet `Map`. Reconstruit par **SAE501 → Build VR Scene** (`RoomBuilder.BuildMap`). À faire : habillage des pièces, NavMesh, ouverture de la porte au bout du couloir droit.
+Les noms des objets comptent : le jeu cherche notamment `Bunker_PlankSlot_*`, `Plank_*`, `Stockage_Plank_*`, `Bunker_Hammer_Workbench`, `CCTV_Screen_0X_*`, `CCTV_Camera_0X_*`, `Generator_Switch`, `Light_GeneratorBulb`, `Light_Bunker_Workbench`.

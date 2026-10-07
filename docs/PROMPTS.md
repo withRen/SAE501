@@ -23,6 +23,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [012](#012--wiki-github) | 2026-10-06 | Wiki GitHub : une page par fonctionnalité (zombies, vignettage, planches et clous) | Documentation | 3 pages + accueil + barre latérale publiés |
 | [013](#013--niveaux-par-vagues-et-générateur) | 2026-10-06 | Système de niveaux par vagues (4), zones débloquées, objectif générateur | Gameplay | WaveManager, portes verrouillées, générateur |
 | [014](#014--pistolet-modern-guns-handgun) | 2026-10-06 | Utiliser le pack Modern Guns : Handgun (analyse, animations, chargeur, balle) | Gameplay | M1911 intégré, tir animé, douille, flash, fumée, haptique |
+| [015](#015--nouvelle-carte-blender-et-navmesh) | 2026-10-07 | Remplacer la carte par le nouveau fichier Blender, corriger le NavMesh ; retirer les planches déjà posées | Carte | Carte complète importée, NavMesh corrigé, ouvertures sans barricade |
+| [016](#016--animations-mixamo-de-la-pr-68) | 2026-10-07 | Reprendre l'animation des zombies de la pull request (Mixamo) sur la nouvelle carte | Gameplay | PR #68 fusionnée, attaque synchronisée avec les dégâts |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -303,3 +305,48 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Problèmes du pack** corrigés sans le modifier : matériaux Standard (paquet URP importé), matériaux URP du chargeur et de la balle **sans texture** (refaits), flash en shaders anciens (refait), `SimpleShoot` inutilisable (retiré), événements d'animation non livrés après un départ décalé (minuteur).
 - Test dans l'éditeur : 12 tirs, compteur, douille (apparaît puis disparaît), glissière bloquée puis libérée au rechargement, captures du flash et du chargeur texturé. **Non testé : au casque.**
 - Le dossier du pack (`Assets/Nokobot`) n'est pas ajouté au dépôt.
+
+---
+
+### 015 — Nouvelle carte Blender et NavMesh
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Carte |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> @LastBoardStanding_Kitchen (1).blend — Voici le fichier de la map, remplace la carte actuelle unity par celle-ci, corrige le NavMesh
+> (pendant le travail) Y a des planches déjà placés sur les portes et fenêtres, retire les
+
+**Résultat**
+
+- **Analyse du fichier** : carte complète (bunker, couloirs gauche et droit en L, cuisine, générateur, stockage, pupitre de 4 écrans), 26 lumières, 4 caméras de surveillance, repères des planches ; 895 000 triangles.
+- **Export** (`Tools/blender/export_map.py`, écrit par l'IA, à relancer à chaque nouvelle version du `.blend`) : FBX, matériaux, textures en JPG (25 Mo), lumières, caméras ; les objets de décor de plus de 6 000 triangles sont simplifiés (≈ 444 000 triangles au total).
+- **Scène** (`RoomBuilder` réécrit) : l'ancienne carte en boîtes grises est remplacée ; lumières et caméras du fichier ; écrans du pupitre branchés sur les caméras (rendu à tour de rôle) ; ouvertures du bunker (2 portes, 2 fenêtres) ; portes de niveau et générateur replacés ; planches de la cuisine et du stockage interactives ; terrain extérieur ajouté au sud.
+- **NavMesh corrigé** : colliders exacts pour murs et sols, décor plat sans collision, rayon des zombies 0,3 → 0,2 m (des objets en chicane bouchaient les deux couloirs), déchets mous ignorés, liens NavMesh pour enjamber les fenêtres. Chemins mesurés : 16,3 m, 18,7 m, 3,7 m.
+- **Planches** : plus aucune barricade au départ (portes, fenêtres et porte condamnée du couloir) ; planches de jeu à la taille de celles du fichier (1,84 m × 28 cm).
+- Test dans l'éditeur : un zombie casse une fenêtre, l'enjambe et attaque ; un autre traverse le couloir droit jusqu'à la porte est ; captures du bunker, des écrans, du couloir, du générateur. **Non testé : au casque (performances).**
+- Page de wiki : Carte (et mises à jour : Zombies, Niveaux et vagues, Planches et clous).
+
+---
+
+### 016 — Animations Mixamo de la PR #68
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> Il y a une pull request sur github concernant l'animation des zombis, récupère la façon dont sont animés les zombis dans cette pullrequest et utilise l'animation en question dans le projet actuelle avec la nouvelle map le navmesh etc
+
+**Résultat**
+
+- PR withRen/SAE501#68 (alamine01) : 3 clips Mixamo (marche, attaque, mort) + `ZombieMixamo.cs` (réglage Humanoid, Animator Controller `Speed` / `Attack` / `Die`). **Fusionnée** dans `main` (commits de l'auteur conservés), sans conflit avec la nouvelle carte (rayon NavMesh 0,2 m conservé).
+- Ajout de l'IA : l'attaque du clip (2,63 s, main qui frappe à 1,05 s) est jouée ×1,5 et les dégâts / l'arrachage de planche sont calés sur ce coup (0,7 s au lieu de 0,45 s) ; mesure faite en échantillonnant le clip.
+- Test dans l'éditeur sur la nouvelle carte : marche bras tendus, passage par la fenêtre (lien NavMesh), attaque (joueur 100 → 80 PV), mort au sol. **Non testé : au casque.** Glissement des pieds non vérifié (réglage `WalkClipSpeed`).

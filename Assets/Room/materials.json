@@ -1,4 +1,160 @@
 {
+ "ammo_box": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 1.0,
+  "metal": 1.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "ammo_box_diff.jpg",
+  "normal_tex": "ammo_box_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "ApocalypseMoss": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": "dirty_carpet_nor_gl_1k.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "ApocalypsePuddle": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.029999999329447746,
+  "metal": 0.15000000596046448,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": "worn_plaster_wall_nor_gl_1k.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "ApocalypseRustPipe": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6499999761581421,
+  "metal": 0.75,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": "decrepit_wallpaper_nor_gl_1k.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Barrel_01": {
+  "base_color": [
+   0.5882353186607361,
+   0.5882353186607361,
+   0.5882353186607361,
+   1.0
+  ],
+  "rough": 0.44217509031295776,
+  "metal": 0.09233666956424713,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Barrel_01_explosive_diff.jpg",
+  "normal_tex": "Barrel_01_explosive_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "barrel_stove": {
+  "base_color": [
+   0.0,
+   0.0,
+   0.0,
+   1.0
+  ],
+  "rough": 0.5603154897689819,
+  "metal": 0.12217339873313904,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "barrel_stove_diff.jpg",
+  "normal_tex": "barrel_stove_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "BottleGlass": {
   "base_color": [
    0.05999999865889549,
@@ -17,9 +173,13 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "brass_pan_01": {
   "base_color": [
@@ -36,12 +196,16 @@
    1,
    1
   ],
-  "base_tex": "brass_pan_01_diff.png",
-  "normal_tex": "brass_pan_01_nor_gl.png",
+  "base_tex": "brass_pan_01_diff.jpg",
+  "normal_tex": "brass_pan_01_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "BrickMat": {
   "base_color": [
@@ -58,12 +222,42 @@
    1,
    1
   ],
-  "base_tex": "brick_wall_001_diffuse_1k.png",
-  "normal_tex": "brick_wall_001_nor_gl_1k.png",
+  "base_tex": "brick_wall_001_diffuse_1k.jpg",
+  "normal_tex": "brick_wall_001_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "BrickMat.001": {
+  "base_color": [
+   0.41999998688697815,
+   0.1599999964237213,
+   0.10000000149011612,
+   1.0
+  ],
+  "rough": 0.9105260372161865,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "brick_wall_001_diffuse_1k_jpg.jpg",
+  "normal_tex": "brick_wall_001_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "BulbOff": {
   "base_color": [
@@ -83,9 +277,65 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "BulbOff.001": {
+  "base_color": [
+   0.75,
+   0.7200000286102295,
+   0.6000000238418579,
+   1.0
+  ],
+  "rough": 0.20000000298023224,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "BulbOn": {
+  "base_color": [
+   1.0,
+   0.800000011920929,
+   0.5,
+   1.0
+  ],
+  "rough": 0.30000001192092896,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 6.0,
+  "emission_color": [
+   1.0,
+   0.75,
+   0.44999998807907104
+  ]
  },
  "CabinetWood": {
   "base_color": [
@@ -102,12 +352,68 @@
    1,
    1
   ],
-  "base_tex": "kitchen_wood_diff_1k.png",
-  "normal_tex": "kitchen_wood_nor_gl_1k.png",
+  "base_tex": "kitchen_wood_diff_1k.jpg",
+  "normal_tex": "kitchen_wood_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "CabinetWood.001": {
+  "base_color": [
+   0.41999998688697815,
+   0.2800000011920929,
+   0.15000000596046448,
+   1.0
+  ],
+  "rough": 0.5614044070243835,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "kitchen_wood_diff_1k_jpg.jpg",
+  "normal_tex": "kitchen_wood_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "cardboard_box_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5845414996147156,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "cardboard_box_01_diff.jpg",
+  "normal_tex": "cardboard_box_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
  },
  "CeilingPlaster": {
   "base_color": [
@@ -124,12 +430,42 @@
    1,
    1
   ],
-  "base_tex": "grey_plaster_diff_1k.png",
-  "normal_tex": "grey_plaster_nor_gl_1k.png",
+  "base_tex": "grey_plaster_diff_1k.jpg",
+  "normal_tex": "grey_plaster_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "CeilingPlaster.001": {
+  "base_color": [
+   0.6200000047683716,
+   0.6200000047683716,
+   0.6000000238418579,
+   1.0
+  ],
+  "rough": 0.7692046165466309,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "grey_plaster_diff_1k_jpg.jpg",
+  "normal_tex": "grey_plaster_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "Chrome": {
   "base_color": [
@@ -149,9 +485,39 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Chrome.001": {
+  "base_color": [
+   0.6000000238418579,
+   0.6000000238418579,
+   0.6000000238418579,
+   1.0
+  ],
+  "rough": 0.25,
+  "metal": 1.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "CorridorDoor": {
   "base_color": [
@@ -168,12 +534,16 @@
    1,
    1
   ],
-  "base_tex": "distressed_painted_planks_diff_1k.png",
-  "normal_tex": "distressed_painted_planks_nor_gl_1k.png",
+  "base_tex": "distressed_painted_planks_diff_1k.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "CorridorPlaster": {
   "base_color": [
@@ -190,12 +560,16 @@
    1,
    1
   ],
-  "base_tex": "worn_plaster_wall_diff_1k.png",
-  "normal_tex": "worn_plaster_wall_nor_gl_1k.png",
+  "base_tex": "worn_plaster_wall_diff_1k.jpg",
+  "normal_tex": "worn_plaster_wall_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "Countertop": {
   "base_color": [
@@ -215,9 +589,13 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "cross_pein_hammer": {
   "base_color": [
@@ -234,12 +612,42 @@
    1,
    1
   ],
-  "base_tex": "cross_pein_hammer_diff.png",
-  "normal_tex": "cross_pein_hammer_nor_gl.png",
+  "base_tex": "cross_pein_hammer_diff.jpg",
+  "normal_tex": "cross_pein_hammer_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "crowbar_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6129670739173889,
+  "metal": 0.5209829807281494,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "crowbar_01_diff.jpg",
+  "normal_tex": "crowbar_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
  },
  "DoorMetal": {
   "base_color": [
@@ -259,9 +667,39 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "DoorMetal.001": {
+  "base_color": [
+   0.25,
+   0.2199999988079071,
+   0.18000000715255737,
+   1.0
+  ],
+  "rough": 0.4000000059604645,
+  "metal": 1.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "DoorPaint": {
   "base_color": [
@@ -278,12 +716,42 @@
    1,
    1
   ],
-  "base_tex": "distressed_painted_planks_diff_1k.png",
-  "normal_tex": "distressed_painted_planks_nor_gl_1k.png",
+  "base_tex": "distressed_painted_planks_diff_1k.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "DoorPaint.001": {
+  "base_color": [
+   0.550000011920929,
+   0.6000000238418579,
+   0.550000011920929,
+   1.0
+  ],
+  "rough": 0.8572043776512146,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "distressed_painted_planks_diff_1k_jpg.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "electric_stove": {
   "base_color": [
@@ -300,12 +768,16 @@
    1,
    1
   ],
-  "base_tex": "electric_stove_diff.png",
-  "normal_tex": "electric_stove_nor_gl.png",
+  "base_tex": "electric_stove_diff.jpg",
+  "normal_tex": "electric_stove_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "electric_stove_glass": {
   "base_color": [
@@ -323,11 +795,15 @@
    1
   ],
   "base_tex": "electric_stove_diff.png",
-  "normal_tex": "electric_stove_nor_gl.png",
+  "normal_tex": "electric_stove_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": true,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "FloorWood": {
   "base_color": [
@@ -344,12 +820,42 @@
    1,
    1
   ],
-  "base_tex": "old_wood_floor_diff_1k.png",
-  "normal_tex": "old_wood_floor_nor_gl_1k.png",
+  "base_tex": "old_wood_floor_diff_1k.jpg",
+  "normal_tex": "old_wood_floor_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "FloorWood.001": {
+  "base_color": [
+   0.2199999988079071,
+   0.15000000596046448,
+   0.09000000357627869,
+   1.0
+  ],
+  "rough": 0.8140472173690796,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "old_wood_floor_diff_1k_jpg.jpg",
+  "normal_tex": "old_wood_floor_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "FramePaint": {
   "base_color": [
@@ -366,12 +872,42 @@
    1,
    1
   ],
-  "base_tex": "distressed_painted_planks_diff_1k.png",
-  "normal_tex": "distressed_painted_planks_nor_gl_1k.png",
+  "base_tex": "distressed_painted_planks_diff_1k.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "FramePaint.001": {
+  "base_color": [
+   0.7799999713897705,
+   0.7599999904632568,
+   0.699999988079071,
+   1.0
+  ],
+  "rough": 0.8572043776512146,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "distressed_painted_planks_diff_1k_jpg.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "FridgeEnamel": {
   "base_color": [
@@ -391,9 +927,65 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "FuelRed": {
+  "base_color": [
+   0.41999998688697815,
+   0.05999999865889549,
+   0.03999999910593033,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.20000000298023224,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "GeneratorPaint": {
+  "base_color": [
+   0.20000000298023224,
+   0.27000001072883606,
+   0.1599999964237213,
+   1.0
+  ],
+  "rough": 0.550000011920929,
+  "metal": 0.30000001192092896,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "HammerSteel": {
   "base_color": [
@@ -413,9 +1005,13 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "hanging_picture_frame_01": {
   "base_color": [
@@ -432,12 +1028,68 @@
    1,
    1
   ],
-  "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.png",
-  "normal_tex": "hanging_picture_frame_01_nor_gl.png",
+  "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.jpg",
+  "normal_tex": "hanging_picture_frame_01_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hanging_picture_frame_01.001": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.jpg",
+  "normal_tex": "hanging_picture_frame_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hanging_picture_frame_01.002": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.jpg",
+  "normal_tex": "hanging_picture_frame_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "hanging_picture_frame_01_artwork": {
   "base_color": [
@@ -454,12 +1106,68 @@
    1,
    1
   ],
-  "base_tex": "hanging_picture_frame_01_artwork_diff.png",
+  "base_tex": "hanging_picture_frame_01_artwork_diff.jpg",
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hanging_picture_frame_01_artwork.001": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hanging_picture_frame_01_artwork_diff.jpg",
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hanging_picture_frame_01_artwork.002": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hanging_picture_frame_01_artwork_diff.jpg",
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "hanging_picture_frame_01_glass": {
   "base_color": [
@@ -477,11 +1185,145 @@
    1
   ],
   "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.png",
-  "normal_tex": "hanging_picture_frame_01_artwork_nor_gl.png",
+  "normal_tex": "hanging_picture_frame_01_artwork_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": true,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hanging_picture_frame_01_glass.001": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.png",
+  "normal_tex": "hanging_picture_frame_01_artwork_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hanging_picture_frame_01_glass.002": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hanging_picture_frame_01_diff-hanging_picture_frame_01_opacity.png",
+  "normal_tex": "hanging_picture_frame_01_artwork_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "korean_fire_extinguisher_01_body": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.2932766079902649,
+  "metal": 0.13701218366622925,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "korean_fire_extinguisher_01_body_diff_png.jpg",
+  "normal_tex": "korean_fire_extinguisher_01_body_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "korean_fire_extinguisher_01_glass": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.0638447105884552,
+  "metal": 0.9891496896743774,
+  "alpha": 0.30000001192092896,
+  "blend": "BLEND",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "korean_fire_extinguisher_01_glass_diff.jpg",
+  "normal_tex": "korean_fire_extinguisher_01_glass_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "korean_fire_extinguisher_01_paper": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.4337632954120636,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "BLEND",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "korean_fire_extinguisher_01_paper_diff.png",
+  "normal_tex": "korean_fire_extinguisher_01_paper_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
  },
  "LampShade": {
   "base_color": [
@@ -501,9 +1343,455 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "LampShade.001": {
+  "base_color": [
+   0.11999999731779099,
+   0.14000000059604645,
+   0.11999999731779099,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.6000000238418579,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Lantern_01_brass": {
+  "base_color": [
+   0.32156863808631897,
+   0.32156863808631897,
+   0.32156863808631897,
+   1.0
+  ],
+  "rough": 0.36383384466171265,
+  "metal": 0.6321460604667664,
+  "alpha": 1.0,
+  "blend": "BLEND",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Lantern_01_brass_diff.jpg",
+  "normal_tex": "Lantern_01_brass_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "Lantern_01_glass": {
+  "base_color": [
+   0.32156863808631897,
+   0.32156863808631897,
+   0.32156863808631897,
+   1.0
+  ],
+  "rough": 0.36383384466171265,
+  "metal": 0.6321460604667664,
+  "alpha": 1.0,
+  "blend": "BLEND",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Lantern_01_brass_diff.png",
+  "normal_tex": "Lantern_01_brass_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "Mat_CCTV_CameraBody": {
+  "base_color": [
+   0.1599999964237213,
+   0.17000000178813934,
+   0.18000000715255737,
+   1.0
+  ],
+  "rough": 0.4000000059604645,
+  "metal": 0.699999988079071,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_CCTV_LED_Green": {
+  "base_color": [
+   0.05000000074505806,
+   1.0,
+   0.15000000596046448,
+   1.0
+  ],
+  "rough": 0.20000000298023224,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 5.0,
+  "emission_color": [
+   0.10000000149011612,
+   1.0,
+   0.20000000298023224
+  ]
+ },
+ "Mat_CCTV_LED_Red": {
+  "base_color": [
+   1.0,
+   0.05000000074505806,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.20000000298023224,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 6.0,
+  "emission_color": [
+   1.0,
+   0.10000000149011612,
+   0.05000000074505806
+  ]
+ },
+ "Mat_CCTV_Lens": {
+  "base_color": [
+   0.019999999552965164,
+   0.029999999329447746,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.10000000149011612,
+  "metal": 0.8999999761581421,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Screen_CAM01_Corridor_Left": {
+  "base_color": [
+   0.03999999910593033,
+   0.18000000715255737,
+   0.11999999731779099,
+   1.0
+  ],
+  "rough": 0.15000000596046448,
+  "metal": 0.10000000149011612,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 2.0,
+  "emission_color": [
+   0.07999999821186066,
+   0.3799999952316284,
+   0.23999999463558197
+  ]
+ },
+ "Mat_Screen_CAM02_Corridor_Right": {
+  "base_color": [
+   0.03999999910593033,
+   0.1599999964237213,
+   0.18000000715255737,
+   1.0
+  ],
+  "rough": 0.15000000596046448,
+  "metal": 0.10000000149011612,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 2.0,
+  "emission_color": [
+   0.07999999821186066,
+   0.3400000035762787,
+   0.3799999952316284
+  ]
+ },
+ "Mat_Screen_CAM03_Cuisine": {
+  "base_color": [
+   0.05000000074505806,
+   0.1899999976158142,
+   0.10999999940395355,
+   1.0
+  ],
+  "rough": 0.15000000596046448,
+  "metal": 0.10000000149011612,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 2.0,
+  "emission_color": [
+   0.10000000149011612,
+   0.4000000059604645,
+   0.2199999988079071
+  ]
+ },
+ "Mat_Screen_CAM04_Stockage": {
+  "base_color": [
+   0.05999999865889549,
+   0.17000000178813934,
+   0.14000000059604645,
+   1.0
+  ],
+  "rough": 0.15000000596046448,
+  "metal": 0.10000000149011612,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 2.0,
+  "emission_color": [
+   0.11999999731779099,
+   0.36000001430511475,
+   0.2800000011920929
+  ]
+ },
+ "metal_jerrycan_green": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5769644975662231,
+  "metal": 0.09145823121070862,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "metal_jerrycan_green_diff.jpg",
+  "normal_tex": "metal_jerrycan_green_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "metal_office_desk": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.2681477665901184,
+  "metal": 0.09505575895309448,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "metal_office_desk_diff.jpg",
+  "normal_tex": "metal_office_desk_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "metal_stool_03": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5117955803871155,
+  "metal": 0.07765462249517441,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "metal_stool_03_diff.jpg",
+  "normal_tex": "metal_stool_03_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "metal_tool_chest": {
+  "base_color": [
+   0.24654006958007812,
+   0.03060130961239338,
+   0.031936731189489365,
+   1.0
+  ],
+  "rough": 0.6437113285064697,
+  "metal": 0.06533487141132355,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "metal_tool_chest_diff.jpg",
+  "normal_tex": "metal_tool_chest_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "MetalDark": {
+  "base_color": [
+   0.10000000149011612,
+   0.10000000149011612,
+   0.10000000149011612,
+   1.0
+  ],
+  "rough": 0.550000011920929,
+  "metal": 0.800000011920929,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "MetalPlate": {
+  "base_color": [
+   0.30000001192092896,
+   0.30000001192092896,
+   0.30000001192092896,
+   1.0
+  ],
+  "rough": 0.5892353057861328,
+  "metal": 0.800000011920929,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "metal_plate_diff_1k.jpg",
+  "normal_tex": "metal_plate_nor_gl_1k.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "Paper": {
   "base_color": [
@@ -523,9 +1811,39 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Paper.001": {
+  "base_color": [
+   0.75,
+   0.7200000286102295,
+   0.6000000238418579,
+   1.0
+  ],
+  "rough": 0.8999999761581421,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "PlasterChunk": {
   "base_color": [
@@ -542,12 +1860,42 @@
    1,
    1
   ],
-  "base_tex": "grey_plaster_diff_1k.png",
-  "normal_tex": "grey_plaster_nor_gl_1k.png",
+  "base_tex": "grey_plaster_diff_1k.jpg",
+  "normal_tex": "grey_plaster_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "PlasterChunk.001": {
+  "base_color": [
+   0.550000011920929,
+   0.5299999713897705,
+   0.5,
+   1.0
+  ],
+  "rough": 0.7692046165466309,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "grey_plaster_diff_1k_jpg.jpg",
+  "normal_tex": "grey_plaster_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "pot_enamel_01": {
   "base_color": [
@@ -564,12 +1912,42 @@
    1,
    1
   ],
-  "base_tex": "pot_enamel_01_diff.png",
-  "normal_tex": "pot_enamel_01_nor_gl.png",
+  "base_tex": "pot_enamel_01_diff.jpg",
+  "normal_tex": "pot_enamel_01_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "power_box_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.37188097834587097,
+  "metal": 0.05374162644147873,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "power_box_01_diff.jpg",
+  "normal_tex": "power_box_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
  },
  "RadioBlack": {
   "base_color": [
@@ -589,9 +1967,13 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "RadioBody": {
   "base_color": [
@@ -611,9 +1993,13 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "RawPlank": {
   "base_color": [
@@ -630,12 +2016,42 @@
    1,
    1
   ],
-  "base_tex": "raw_plank_wall_diff_1k.png",
-  "normal_tex": "raw_plank_wall_nor_gl_1k.png",
+  "base_tex": "raw_plank_wall_diff_1k.jpg",
+  "normal_tex": "raw_plank_wall_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "RawPlank.001": {
+  "base_color": [
+   0.550000011920929,
+   0.41999998688697815,
+   0.2800000011920929,
+   1.0
+  ],
+  "rough": 0.7171528339385986,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "raw_plank_wall_diff_1k_jpg.jpg",
+  "normal_tex": "raw_plank_wall_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "Rubber": {
   "base_color": [
@@ -655,9 +2071,39 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Rubber.001": {
+  "base_color": [
+   0.05000000074505806,
+   0.05000000074505806,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.800000011920929,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "Rug": {
   "base_color": [
@@ -674,12 +2120,42 @@
    1,
    1
   ],
-  "base_tex": "dirty_carpet_diff_1k.png",
-  "normal_tex": "dirty_carpet_nor_gl_1k.png",
+  "base_tex": "dirty_carpet_diff_1k.jpg",
+  "normal_tex": "dirty_carpet_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Rug.001": {
+  "base_color": [
+   0.3499999940395355,
+   0.2199999988079071,
+   0.15000000596046448,
+   1.0
+  ],
+  "rough": 0.8126131296157837,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "dirty_carpet_diff_1k_jpg.jpg",
+  "normal_tex": "dirty_carpet_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "SinkEnamel": {
   "base_color": [
@@ -699,9 +2175,13 @@
   "base_tex": null,
   "normal_tex": null,
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "TableWood": {
   "base_color": [
@@ -718,12 +2198,120 @@
    1,
    1
   ],
-  "base_tex": "dark_wooden_planks_diff_1k.png",
-  "normal_tex": "dark_wooden_planks_nor_gl_1k.png",
+  "base_tex": "dark_wooden_planks_diff_1k.jpg",
+  "normal_tex": "dark_wooden_planks_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "TableWood.001": {
+  "base_color": [
+   0.25,
+   0.1599999964237213,
+   0.09000000357627869,
+   1.0
+  ],
+  "rough": 0.660780668258667,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "dark_wooden_planks_diff_1k_jpg.jpg",
+  "normal_tex": "dark_wooden_planks_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Television_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.4503280520439148,
+  "metal": 0.08893083781003952,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Television_01_diff.jpg",
+  "normal_tex": "Television_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "tool_cart": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6231260299682617,
+  "metal": 0.036806605756282806,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "tool_cart_diff.jpg",
+  "normal_tex": "tool_cart_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "trashbag": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.17755910754203796,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "trashbag_diff.jpg",
+  "normal_tex": "trashbag_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "TrimPaint": {
   "base_color": [
@@ -740,12 +2328,68 @@
    1,
    1
   ],
-  "base_tex": "distressed_painted_planks_diff_1k.png",
-  "normal_tex": "distressed_painted_planks_nor_gl_1k.png",
+  "base_tex": "distressed_painted_planks_diff_1k.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "TrimPaint.001": {
+  "base_color": [
+   0.75,
+   0.7300000190734863,
+   0.6800000071525574,
+   1.0
+  ],
+  "rough": 0.8572043776512146,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "distressed_painted_planks_diff_1k_jpg.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "vintage_day_bed": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6599141955375671,
+  "metal": 0.03654518723487854,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "vintage_day_bed_diff.jpg",
+  "normal_tex": "vintage_day_bed_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "vintage_electric_kettle": {
   "base_color": [
@@ -762,12 +2406,16 @@
    1,
    1
   ],
-  "base_tex": "vintage_electric_kettle_diff.png",
-  "normal_tex": "vintage_electric_kettle_nor_gl.png",
+  "base_tex": "vintage_electric_kettle_diff.jpg",
+  "normal_tex": "vintage_electric_kettle_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "vintage_electric_kettle_glass": {
   "base_color": [
@@ -785,11 +2433,15 @@
    1
   ],
   "base_tex": "vintage_electric_kettle_diff.png",
-  "normal_tex": "vintage_electric_kettle_nor_gl.png",
+  "normal_tex": "vintage_electric_kettle_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": true,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "vintage_oil_lamp": {
   "base_color": [
@@ -806,12 +2458,42 @@
    1,
    1
   ],
-  "base_tex": "vintage_oil_lamp_diff.png",
-  "normal_tex": "vintage_oil_lamp_nor_gl.png",
+  "base_tex": "vintage_oil_lamp_diff.jpg",
+  "normal_tex": "vintage_oil_lamp_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "vintage_oil_lamp.001": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "vintage_oil_lamp_diff.jpg",
+  "normal_tex": "vintage_oil_lamp_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "vintage_oil_lamp_flame": {
   "base_color": [
@@ -830,10 +2512,40 @@
   ],
   "base_tex": "vintage_oil_lamp_flame_diff.png",
   "normal_tex": null,
-  "emission_tex": "vintage_oil_lamp_flame_diff.png",
-  "emission_color": null,
+  "emission_tex": "vintage_oil_lamp_flame_diff.jpg",
   "alpha_linked": true,
-  "emission_strength": 1.0
+  "emission_strength": 1.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "vintage_oil_lamp_flame.001": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.0,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "vintage_oil_lamp_flame_diff.png",
+  "normal_tex": null,
+  "emission_tex": "vintage_oil_lamp_flame_diff.jpg",
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "vintage_oil_lamp_glass": {
   "base_color": [
@@ -851,11 +2563,41 @@
    1
   ],
   "base_tex": "vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png",
-  "normal_tex": "vintage_oil_lamp_glass_nor_gl.png",
+  "normal_tex": "vintage_oil_lamp_glass_nor_gl.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": true,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "vintage_oil_lamp_glass.001": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png",
+  "normal_tex": "vintage_oil_lamp_glass_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "WainscotPaint": {
   "base_color": [
@@ -872,12 +2614,42 @@
    1,
    1
   ],
-  "base_tex": "distressed_painted_planks_diff_1k.png",
-  "normal_tex": "distressed_painted_planks_nor_gl_1k.png",
+  "base_tex": "distressed_painted_planks_diff_1k.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "WainscotPaint.001": {
+  "base_color": [
+   0.7200000286102295,
+   0.699999988079071,
+   0.6399999856948853,
+   1.0
+  ],
+  "rough": 0.8572043776512146,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "distressed_painted_planks_diff_1k_jpg.jpg",
+  "normal_tex": "distressed_painted_planks_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  },
  "Wallpaper": {
   "base_color": [
@@ -894,11 +2666,145 @@
    1,
    1
   ],
-  "base_tex": "decrepit_wallpaper_diff_1k.png",
-  "normal_tex": "decrepit_wallpaper_nor_gl_1k.png",
+  "base_tex": "decrepit_wallpaper_diff_1k.jpg",
+  "normal_tex": "decrepit_wallpaper_nor_gl_1k.jpg",
   "emission_tex": null,
-  "emission_color": null,
   "alpha_linked": false,
-  "emission_strength": 0.0
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Wallpaper.001": {
+  "base_color": [
+   0.44999998807907104,
+   0.41999998688697815,
+   0.33000001311302185,
+   1.0
+  ],
+  "rough": 0.9271705150604248,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "decrepit_wallpaper_diff_1k_jpg.jpg",
+  "normal_tex": "decrepit_wallpaper_nor_gl_1k_jpg.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "wooden_axe": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.55379319190979,
+  "metal": 0.0250872652977705,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_axe_diff.jpg",
+  "normal_tex": "wooden_axe_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "wooden_ladder": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6498714089393616,
+  "metal": 0.0368332602083683,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_ladder_diff.jpg",
+  "normal_tex": "wooden_ladder_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "wooden_military_crate": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7158169746398926,
+  "metal": 0.05422695726156235,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_military_crate_diff.jpg",
+  "normal_tex": "wooden_military_crate_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "worn_metal_rack": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6849503517150879,
+  "metal": 0.16667655110359192,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "worn_metal_rack_diff.jpg",
+  "normal_tex": "worn_metal_rack_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
  }
 }

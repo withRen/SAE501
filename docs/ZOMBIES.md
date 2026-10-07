@@ -6,7 +6,15 @@ Toutes les valeurs d'équilibrage sont dans **`Assets/Scripts/ZombieLevels.cs`**
 
 **Modèle :** *Free Shirtless Zombie* (Asset Store, dossier `Assets/NewPunch/ShirtlessZombieFree`). Prefab utilisé : `ShirtlessZombie_FREE_URP`. Il fait 1,76 m de haut, a 3 niveaux de détail (LOD) et un rig **humanoïde** (squelette de type Unreal : `pelvis`, `spine_01` à `spine_03`, `clavicle`, `upperarm`, `lowerarm`, `hand` + doigts, `neck_01`, `head`, `thigh`, `calf`, `foot`, `ball`).
 
-**Le pack gratuit ne contient aucune animation** (0 clip, pas d'Animator Controller) : les animations sont donc faites **par script** (`ZombieBoneAnim`, os tournés à chaque image) : marche traînante, bras tendus devant, buste penché, bras qui s'abattent à l'attaque, chute en arrière à la mort. Ce n'est pas du vrai mocap : si le groupe trouve de vrais clips humanoïdes (marche, attaque, mort), on les met dans un Animator Controller ; `ZombieAnimationBridge` pilote déjà les paramètres `Speed`, `Attack`, `Die`.
+**Animations : clips Mixamo** (PR withRen/SAE501#68 d'alamine01, fusionnée le 7 octobre 2026). Le pack gratuit n'a aucune animation ; 3 clips Mixamo (`Zombie Walk.fbx`, `Zombie Attack.fbx`, `Zombie Death.fbx`, dans **`Assets/Animations/Zombie`**) sont réglés en Humanoid par `ZombieMixamo.cs` (sur place : c'est le NavMeshAgent qui déplace le zombie) et rangés dans `Assets/Generated/Zombie_Mixamo.controller` (paramètres `Speed`, `Attack`, `Die`, pilotés par `ZombieAnimationBridge`).
+
+| Clip | Durée | Réglage |
+|---|---|---|
+| Marche | 4,03 s, en boucle | Vitesse du clip = vitesse réelle du zombie / 0,55 m/s (`WalkClipSpeed`) |
+| Attaque | 2,63 s | Jouée ×1,5 : la main frappe à 1,05 s du clip, donc **0,7 s** après le début ; les dégâts au joueur et l'arrachage de planche tombent à ce moment (`attackHitDelay` = 0,7 s) |
+| Mort | 2,97 s | Le corps descend jusqu'au sol |
+
+Si les 3 fichiers sont absents, `ZombieBuilder` revient à l'animation par script (`ZombieBoneAnim`). Testé dans l'éditeur sur la nouvelle carte : marche, passage de fenêtre, attaque (le joueur perd 20 %), mort.
 
 Hitbox : 3 zones, posées **sur les os** (elles suivent l'animation), chacune avec un composant `ZombieHitbox` :
 
@@ -43,16 +51,15 @@ La santé du joueur passe de « 4 PV » à **100 PV (= 100 %)**, pour pouvoir re
 
 ## 4. Points de départ et NavMesh
 
-Le prefab **`Assets/Prefabs/ZombieSpawnPoints.prefab`** (composant `ZombieSpawnPoints`) regroupe les points de départ des chemins NavMesh. Le prefab **`Assets/Prefabs/Zombie.prefab`** contient le zombie complet (NavMeshAgent rayon 0,3 m / hauteur 1,8 m, hitbox, animation). Les deux sont reconstruits par **SAE501 → Zombie** ; les modifier à la main dans les prefabs est possible, mais « Build VR Scene » les regénère.
+Le prefab **`Assets/Prefabs/ZombieSpawnPoints.prefab`** regroupe les points de départ ; **`Assets/Prefabs/Zombie.prefab`** contient le zombie (NavMeshAgent **rayon 0,2 m** / hauteur 1,8 m). Détail de la carte et du NavMesh : [MAP.md](MAP.md).
 
-| Point | Position (repère carte) | Chemin vers… | Longueur du chemin |
+| Point | Position (Blender) | Chemin vers… | Longueur (mesurée) |
 |---|---|---|---|
-| `Spawn_Couloir_Gauche` | x −4,7 · z 13,3 (bout du couloir gauche) | porte gauche | 14,9 m |
-| `Spawn_Couloir_Droit` | x 4,7 · z 13,3 (bout du couloir droit) | porte droite | 13,2 m |
-| `Spawn_Fenetre_Nord` | x −0,3 · z 7,0 (cour au nord du bunker) | fenêtre Nord | 2,8 m |
+| `Spawn_Couloir_Gauche` | (−12 ; 3,7) | porte ouest du bunker | 16,3 m |
+| `Spawn_Couloir_Droit` | (7,1 ; 7) | porte est du bunker | 18,7 m |
+| `Spawn_Exterieur_Sud` | (−1,85 ; −17,6) | fenêtres sud-ouest et sud-est | 3,7 m |
 
-- La **cour Nord** (`Cour_Nord`, sol, plafond et mur nord, entre les deux couloirs) est nouvelle : sans sol à l'extérieur, aucun zombie ne pouvait atteindre une fenêtre. La fenêtre Nord est donc maintenant utilisable par les zombies ; la fenêtre Sud reste fermée (pas d'extérieur de ce côté).
-- La cour n'est reliée à aucun couloir : un zombie qui part de la fenêtre ne passe que par la fenêtre. Il n'y a pas de caméra sur la cour pour l'instant.
-- Chaque zombie choisit l'ouverture la plus proche **par le chemin réel** à partir de son point de départ.
+- Les fenêtres sont franchies par des **liens NavMesh** (extérieur → intérieur).
+- Chaque zombie choisit l'ouverture la plus proche **par le chemin réel**.
 
-Test dans l'éditeur : zombie niveau 3 parti de la fenêtre → marche jusqu'à la fenêtre (2,8 m), passe en état « casse » et commence à arracher les planches.
+Test dans l'éditeur (nouvelle carte) : zombie de l'extérieur → fenêtre sud-est, 3 planches arrachées, fenêtre enjambée, attaque du joueur ; zombie du couloir droit → porte est (18 m).

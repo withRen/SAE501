@@ -19,7 +19,7 @@ public class WaveManager : MonoBehaviour
     {
         public int zombies = 4;                                         // zombies de la vague
         public float spawnInterval = 12f;                               // secondes entre deux apparitions
-        public ZombieSpawner.Point[] points = { ZombieSpawner.Point.FenetreNord };
+        public ZombieSpawner.Point[] points = { ZombieSpawner.Point.Exterieur };
         [TextArea] public string banner;                                // annonce au début du niveau
     }
 
@@ -27,7 +27,7 @@ public class WaveManager : MonoBehaviour
     public LevelDef[] levels = DefaultLevels();
     public int startLevel = 1;                 // test : commencer à un autre niveau
     public float firstDelay = 15f;             // temps pour se préparer avant la 1re vague
-    public float breakBetweenLevels = 45f;     // pause entre deux vagues : réparer + aller chercher les planches dans la pièce débloquée (4.5)
+    public float breakBetweenLevels = 45f;     // pause entre deux vagues : aller chercher des planches dans la zone qui vient de s'ouvrir, puis réparer (4.5)
     public float lastLevelReinforcementEvery = 15f;   // niveau 4 : un renfort tant que le générateur n'est pas actif
     public int lastLevelMaxAlive = 6;
     public float victoryRestartDelay = 12f;
@@ -42,17 +42,16 @@ public class WaveManager : MonoBehaviour
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
     public bool Victory => phase == Phase.Victory;
-    public bool InBreak => phase == Phase.Break;           // pause entre deux vagues (PlankSupply y livre des planches)
 
     static LevelDef[] DefaultLevels() => new[]
     {
-        new LevelDef { zombies = 4, spawnInterval = 12f, points = new[] { ZombieSpawner.Point.FenetreNord },
+        new LevelDef { zombies = 4, spawnInterval = 12f, points = new[] { ZombieSpawner.Point.Exterieur },
             banner = "NIVEAU 1\nRestez dans le bunker : les couloirs sont verrouillés.\nObjectif : survivre, puis activer le générateur." },
-        new LevelDef { zombies = 6, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.FenetreNord, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
+        new LevelDef { zombies = 6, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 2\nCouloirs et cuisine déverrouillés." },
-        new LevelDef { zombies = 8, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.FenetreNord, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
+        new LevelDef { zombies = 8, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 3\nStockage déverrouillé." },
-        new LevelDef { zombies = 10, spawnInterval = 7f, points = new[] { ZombieSpawner.Point.FenetreNord, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
+        new LevelDef { zombies = 10, spawnInterval = 7f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 4\nGénérateur déverrouillé.\nObjectif : l'ACTIVER !" },
     };
 
@@ -140,7 +139,14 @@ public class WaveManager : MonoBehaviour
         {
             phase = Phase.Break;
             timer = breakBetweenLevels;
-            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.", 5f);
+            // [4.5] la zone du niveau suivant s'ouvre dès la pause : on peut aller y chercher des planches
+            //       (sauf le générateur : il ne s'ouvre qu'au début du dernier niveau, sinon on gagnerait pendant la pause)
+            if (Level + 1 < levels.Length)
+            {
+                ZoneGate.UpdateAll(Level + 1);
+                Announce("VAGUE " + Level + " TERMINÉE\nNouvelle zone ouverte : allez chercher des planches,\npuis réparez les barricades.", 7f);
+            }
+            else Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.", 5f);
             return;
         }
 
@@ -170,9 +176,6 @@ public class WaveManager : MonoBehaviour
         yield return new WaitForSeconds(s);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-
-    // annonce affichée devant le joueur (utilisée par PlankSupply)
-    public void Say(string text, float seconds) => Announce(text, seconds);
 
     // pour les tests / le debug : saute directement à un niveau
     public void SkipToLevel(int lvl) => StartLevel(lvl);

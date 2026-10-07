@@ -504,7 +504,7 @@ public static class RoomBuilder
 
     static readonly List<Pose> benchSpots = new List<Pose>();
 
-    // [4.5] réserve de planches : les emplacements de l'établi se remplissent tout seuls tant qu'il reste des planches en réserve
+    // [4.5] approvisionnement : planche modèle, panneau sur l'établi, et caches de planches livrées dans les pièces débloquées
     static void BuildPlankSupply()
     {
         if (benchSpots.Count == 0) return;
@@ -512,27 +512,36 @@ public static class RoomBuilder
         root.transform.SetParent(items, false);
         var sup = root.AddComponent<PlankSupply>();
 
-        var spots = new List<Transform>();
         var center = Vector3.zero;
-        foreach (var b in benchSpots)
-        {
-            var t = new GameObject("Spot_" + b.name).transform;
-            t.SetParent(root.transform, false);
-            t.SetPositionAndRotation(b.pos + Vector3.up * 0.01f, b.rot);
-            spots.Add(t);
-            center += b.pos;
-        }
+        foreach (var b in benchSpots) center += b.pos;
         center /= benchSpots.Count;
-        sup.spots = spots.ToArray();
+        var bench = new GameObject("Etabli").transform;
+        bench.SetParent(root.transform, false);
+        bench.SetPositionAndRotation(benchSpots[benchSpots.Count - 1].pos, benchSpots[benchSpots.Count - 1].rot);
+        sup.benchPoint = bench;
 
-        // planche modèle (désactivée) : copiée à chaque réapparition
+        // planche modèle (désactivée) : copiée pour chaque planche livrée
         var tpl = MakePlank(benchSpots[0].pos, benchSpots[0].rot, plankMesh, plankMats);
         tpl.name = "Planche_Modele";
         tpl.SetActive(false);
         sup.template = tpl.GetComponent<Plank>();
 
+        // caches (repère final de la carte, voir docs/MAP.md) : à déplacer dans la scène si besoin
+        Transform CachePoint(string n, Vector3 pos)
+        {
+            var t = new GameObject(n).transform;
+            t.SetParent(mapRoot, false);
+            t.position = pos;
+            return t;
+        }
+        sup.caches = new[]
+        {
+            new PlankSupply.Cache { roomName = "Cuisine",  afterWave = 1, planks = 3, point = CachePoint("Planches_Cuisine",  new Vector3(-10.2f, 0f, 3.4f)) },
+            new PlankSupply.Cache { roomName = "Stockage", afterWave = 2, planks = 6, point = CachePoint("Planches_Stockage", new Vector3(7.7f, 0f, 7.0f)) },
+        };
+
         // panneau au-dessus de l'établi
-        var lg = new GameObject("Panneau_Reserve");
+        var lg = new GameObject("Panneau_Planches");
         lg.transform.SetParent(root.transform, false);
         lg.transform.position = new Vector3(center.x, 1.45f, center.z);
         var tm = lg.AddComponent<TextMesh>();
@@ -540,7 +549,7 @@ public static class RoomBuilder
         tm.fontSize = 64; tm.characterSize = 0.004f;
         tm.anchor = TextAnchor.MiddleCenter; tm.alignment = TextAlignment.Center;
         tm.color = new Color(1f, 0.85f, 0.4f);
-        tm.text = "RÉSERVE";
+        tm.text = "Planches libres";
         lg.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
         sup.label = tm;
     }

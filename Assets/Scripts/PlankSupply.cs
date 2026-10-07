@@ -1,40 +1,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// [4.5] Approvisionnement en planches (décision du groupe : réserve LIMITÉE qui se renouvelle à chaque vague).
-//   - L'établi a des emplacements (spots) : dès qu'un emplacement est vide, une planche de la réserve y réapparaît.
-//   - La réserve gagne `perWave` planches au début de chaque pause entre deux vagues (pour réparer), sans dépasser `maxStock`.
-//   - Une planche arrachée par un zombie retombe dans le bunker : on la ramasse et on la remet (Plank.Break).
-//   - Une planche perdue (tombée hors du bunker, ou sous le sol) disparaît après `lostAfter` s et retourne dans la réserve.
-//   - Un panneau au-dessus de l'établi affiche la réserve.
-// Construit par RoomBuilder (BuildPlankSupply). Réglages dans l'Inspector de l'objet « ReserveDePlanches ».
+// [4.5] Approvisionnement en planches (décision du groupe : réserve limitée, renouvelée à chaque vague).
+//   - Au départ : 8 planches libres dans le bunker (5 sur l'établi, 3 au sol) + les planches déjà clouées.
+//   - L'établi ne se remplit PAS tout seul : il faut aller chercher les nouvelles planches.
+//   - À la fin d'une vague, des planches apparaissent dans la pièce qui vient d'être débloquée
+//     (fin de la vague 1 -> 3 dans la Cuisine ; fin de la vague 2 -> 6 dans le Stockage). Une annonce le dit au joueur.
+//   - Une planche arrachée par un zombie retombe dans le bunker : on la ramasse et on la recloue (Plank.Break).
+//   - Une planche tombée sous le sol réapparaît sur l'établi.
+//   - Un panneau au-dessus de l'établi affiche les planches libres.
+// Construit par RoomBuilder (BuildPlankSupply). Les caches se déplacent dans la scène (objets « Planches_Cuisine », « Planches_Stockage »).
 public class PlankSupply : MonoBehaviour
 {
     public static PlankSupply Instance { get; private set; }
 
-    [Header("Planches")]
+    [System.Serializable]
+    public class Cache
+    {
+        public string roomName = "Cuisine";
+        public int afterWave = 1;          // livrées à la fin de cette vague
+        public int planks = 3;
+        public Transform point;            // centre de la pile (au sol de la pièce)
+        [HideInInspector] public bool delivered;
+    }
+
     public Plank template;                 // planche modèle, désactivée (copiée pour chaque nouvelle planche)
-    public Transform[] spots;              // emplacements sur l'établi
-
-    [Header("Réserve")]
-    public int stock = 3;                  // planches en réserve en plus de celles posées sur l'établi
-    public int perWave = 4;                // ajoutées à chaque pause entre deux vagues
-    public int maxStock = 8;
-
-    [Header("Planches perdues")]
-    public Vector2 bunkerHalfSize = new Vector2(2.7f, 3.2f);   // demi-taille du bunker (repère du monde, centré en 0,0)
-    public float lostAfter = 8f;           // secondes hors du bunker avant de revenir dans la réserve
-
-    [Header("Affichage")]
+    public Transform benchPoint;           // établi du bunker (planches tombées sous le sol)
+    public Cache[] caches;
     public TextMesh label;
 
-    readonly Dictionary<Plank, float> outsideSince = new Dictionary<Plank, float>();
-    readonly List<Plank> toRecycle = new List<Plank>();
     bool wasInBreak;
+    int pendingWave;                       // livraison en attente (le joueur tenait une planche)
     float nextCheck, flashUntil;
     string flashText;
-
-    public int Stock => stock;
 
     void Awake() => Instance = this;
     void OnDestroy() { if (Instance == this) Instance = null; }
@@ -47,107 +45,82 @@ public class PlankSupply : MonoBehaviour
 
     void Update()
     {
-        // nouvelle pause entre deux vagues -> livraison de planches
-        bool inBreak = WaveManager.Instance && WaveManager.Instance.InBreak;
-        if (inBreak && !wasInBreak) AddStock(perWave, "+" + perWave + " planches !");
+        var wm = WaveManager.Instance;
+        bool inBreak = wm && wm.InBreak;
+        if (inBreak && !wasInBreak) pendingWave = WaveManager.Level;   // la vague qui vient de se terminer
         wasInBreak = inBreak;
+
+        // une seule planche attrapable à la fois : on livre quand le joueur n'en tient pas
+        if (pendingWave > 0 && Plank.Held == null) { Deliver(pendingWave); pendingWave = 0; }
 
         if (Time.time >= nextCheck)
         {
             nextCheck = Time.time + 0.5f;
-            RecycleLostPlanks();
-            RefillBench();
-        }
-
-        if (label)
-        {
-            var cam = Camera.main;
-            if (cam) label.transform.rotation = Quaternion.LookRotation(label.transform.position - cam.transform.position);
-            if (flashText != null && Time.time >= flashUntil) { flashText = null; UpdateLabel(); }
-        }
-    }
-
-    public void AddStock(int n, string message = null)
-    {
-        stock = Mathf.Min(maxStock, stock + n);
-        if (message != null) { flashText = message; flashUntil = Time.time + 3f; }
-        UpdateLabel();
-    }
-
-    // il manque des planches sur l'établi + planche en réserve -> une planche réapparaît (la pile se reconstruit par le bas)
-    void RefillBench()
-    {
-        if (template == null || spots == null || spots.Length == 0 || stock <= 0) return;
-        if (Plank.Held != null) return;   // une seule planche attrapable à la fois : on attend que le joueur la lâche
-
-        int onBench = 0;
-        foreach (var p in Plank.All) if (p && !p.Placed && OnBench(p.transform.position)) onBench++;
-
-        foreach (var s in spots)
-        {
-            if (stock <= 0 || onBench >= spots.Length) break;
-            if (s == null || SpotTaken(s.position)) continue;
-            var p = Instantiate(template, s.position, s.rotation, template.transform.parent);
-            p.name = "Planche_Reserve";
-            p.gameObject.SetActive(true);
-            stock--;
-            onBench++;
+            RescueFallenPlanks();
+            if (flashText != null && Time.time >= flashUntil) flashText = null;
             UpdateLabel();
         }
+
+        if (label && Camera.main)
+            label.transform.rotation = Quaternion.LookRotation(label.transform.position - Camera.main.transform.position);
     }
 
-    // zone de l'établi : autour des emplacements
-    bool OnBench(Vector3 pos)
+    void Deliver(int wave)
     {
-        foreach (var s in spots)
+        if (caches == null) return;
+        foreach (var c in caches)
         {
-            if (!s) continue;
-            var d = pos - s.position;
-            if (d.y > -0.25f && d.y < 0.4f && new Vector2(d.x, d.z).magnitude < 0.6f) return true;
+            if (c.delivered || c.afterWave != wave || c.point == null) continue;
+            c.delivered = true;
+            for (int i = 0; i < c.planks; i++) Spawn(c.point, i);
+            string msg = "+" + c.planks + " planches dans la " + c.roomName.ToUpper() + " !";
+            flashText = msg; flashUntil = Time.time + 10f;
+            if (WaveManager.Instance) WaveManager.Instance.Say("VAGUE " + wave + " TERMINÉE\n" + msg + "\nAllez les chercher, puis réparez.", 7f);
         }
-        return false;
     }
 
-    // une planche occupe déjà cet emplacement (même hauteur, à peu près au même endroit)
-    static bool SpotTaken(Vector3 pos)
+    // pile : 3 planches côte à côte par couche, posées à plat, lâchées un peu au-dessus du sol
+    Plank Spawn(Transform at, int i)
     {
+        if (!template) return null;
+        float side = (i % 3 - 1) * 0.2f;
+        float up = 0.6f + (i / 3) * 0.08f;
+        var pos = at.position + at.forward * side + Vector3.up * up;
+        var rot = at.rotation * Quaternion.Euler(-90f, 0f, 0f);   // à plat (même convention que RoomBuilder.BuildPlanks)
+        var p = Instantiate(template, pos, rot, template.transform.parent);
+        p.name = "Planche_Livree";
+        p.gameObject.SetActive(true);
+        return p;
+    }
+
+    void RescueFallenPlanks()
+    {
+        if (!benchPoint) return;
         foreach (var p in Plank.All)
         {
-            if (!p) continue;
-            var d = p.transform.position - pos;
-            if (Mathf.Abs(d.y) < 0.025f && new Vector2(d.x, d.z).magnitude < 0.12f) return true;
+            if (!p || p.Placed || Plank.Held == p || p.transform.position.y > -2f) continue;
+            var rb = p.GetComponent<Rigidbody>();
+            if (rb) { rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+            p.transform.SetPositionAndRotation(benchPoint.position + Vector3.up * 0.3f, benchPoint.rotation);
         }
-        return false;
     }
 
-    // planche libre, non tenue, hors du bunker depuis trop longtemps -> retour dans la réserve
-    void RecycleLostPlanks()
+    int FreePlanks()
     {
-        toRecycle.Clear();
-        foreach (var p in Plank.All)
-        {
-            if (!p || p.Placed || Plank.Held == p) { if (p) outsideSince.Remove(p); continue; }
-            var pos = p.transform.position;
-            bool lost = pos.y < -2f || Mathf.Abs(pos.x) > bunkerHalfSize.x || Mathf.Abs(pos.z) > bunkerHalfSize.y;
-            if (!lost) { outsideSince.Remove(p); continue; }
-            if (!outsideSince.TryGetValue(p, out float since)) { outsideSince[p] = Time.time; continue; }
-            if (Time.time - since >= lostAfter || pos.y < -2f) toRecycle.Add(p);
-        }
-        foreach (var p in toRecycle)
-        {
-            outsideSince.Remove(p);
-            Destroy(p.gameObject);
-            AddStock(1);
-        }
+        int n = 0;
+        foreach (var p in Plank.All) if (p && !p.Placed) n++;
+        return n;
     }
 
     void UpdateLabel()
     {
         if (!label) return;
-        label.text = flashText ?? ("RÉSERVE : " + stock + (stock > 1 ? " planches" : " planche"));
-        label.color = flashText != null ? new Color(0.5f, 1f, 0.5f) : stock > 0 ? new Color(1f, 0.85f, 0.4f) : new Color(1f, 0.35f, 0.3f);
+        int n = FreePlanks();
+        string t = flashText ?? ("Planches libres : " + n);
+        if (label.text != t) label.text = t;
+        label.color = flashText != null ? new Color(0.5f, 1f, 0.5f) : n > 0 ? new Color(1f, 0.85f, 0.4f) : new Color(1f, 0.35f, 0.3f);
     }
 
-    [ContextMenu("Test : livraison de fin de vague")]
-    void TestDelivery() => AddStock(perWave, "+" + perWave + " planches !");
+    [ContextMenu("Test : livrer la Cuisine (fin de vague 1)")] void TestKitchen() => Deliver(1);
+    [ContextMenu("Test : livrer le Stockage (fin de vague 2)")] void TestStorage() => Deliver(2);
 }

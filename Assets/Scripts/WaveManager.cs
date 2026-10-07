@@ -27,7 +27,7 @@ public class WaveManager : MonoBehaviour
     public LevelDef[] levels = DefaultLevels();
     public int startLevel = 1;                 // test : commencer à un autre niveau
     public float firstDelay = 15f;             // temps pour se préparer avant la 1re vague
-    public float breakBetweenLevels = 20f;     // pause entre deux vagues (réparer les barricades)
+    public float breakBetweenLevels = 45f;     // pause entre deux vagues : réparer + aller chercher les planches dans la pièce débloquée (4.5)
     public float lastLevelReinforcementEvery = 15f;   // niveau 4 : un renfort tant que le générateur n'est pas actif
     public int lastLevelMaxAlive = 6;
     public float victoryRestartDelay = 12f;
@@ -170,6 +170,9 @@ public class WaveManager : MonoBehaviour
         yield return new WaitForSeconds(s);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+
+    // annonce affichée devant le joueur (utilisée par PlankSupply)
+    public void Say(string text, float seconds) => Announce(text, seconds);
 
     // pour les tests / le debug : saute directement à un niveau
     public void SkipToLevel(int lvl) => StartLevel(lvl);

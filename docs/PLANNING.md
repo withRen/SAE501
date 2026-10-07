@@ -86,7 +86,7 @@
 | 4.2 | Snap + overlay | Aimant au slot ; overlay vert seulement quand on tient une planche | — | — | ✅ |
 | 4.3 | Marteau et clous | 3 coups ; détection de vélocité ; l'autre main tient la planche | — | — | ✅ |
 | 4.4 | **Dégradation des barricades** | État par planche (intacte, cassée) ; un zombie arrache une planche en **3 s** ; la planche arrachée tombe / disparaît ; slot libre pour une nouvelle planche | 5 h | 4.3, 5.4 | ⬜ |
-| 4.5 | Approvisionnement en planches | Réserve **limitée** (3 au départ, +4 à chaque pause entre deux vagues, 8 max) ; réapparition sur l'établi dès qu'il y a de la place ; planche arrachée récupérable (elle tombe dans le bunker) ; planche perdue hors du bunker → retour dans la réserve après 8 s ; panneau « RÉSERVE » au-dessus de l'établi (`PlankSupply.cs`) | 3 h | 4.4 | 🟡 à tester |
+| 4.5 | Approvisionnement en planches | Réserve **limitée** : 8 planches libres au départ dans le bunker, l'établi ne se remplit pas tout seul ; à la fin de la vague 1, **3 planches dans la Cuisine**, à la fin de la vague 2, **6 dans le Stockage** (annonce au joueur) ; pause entre deux vagues portée à **45 s** pour aller les chercher ; planche arrachée récupérable (elle tombe dans le bunker) ; panneau « Planches libres » au-dessus de l'établi (`PlankSupply.cs`) | 3 h | 4.4 | 🟡 à tester |
 | 4.6 | Réglage du geste | Seuil de vélocité ; test avec plusieurs joueurs ; retour visuel (étincelle) et haptique | 3 h | 4.3 | 🟡 |
 
 ### O5 — Zombies (DOIT)

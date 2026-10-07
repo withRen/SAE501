@@ -19,15 +19,42 @@ public class Opening : MonoBehaviour
     void OnEnable() => All.Add(this);
     void OnDisable() => All.Remove(this);
 
-    public int PlankCount => slots.Count(s => s.Plank != null && (s.Plank.state == Plank.State.Nailed || s.Plank.state == Plank.State.Fixed));
-    public bool IsBarricaded => PlankCount > 0;
+    // [4.4] boucles simples au lieu de LINQ : aucune allocation (appelé souvent par les zombies)
+    static bool Holds(BarricadeSlot s) => s && s.Plank != null && (s.Plank.state == Plank.State.Nailed || s.Plank.state == Plank.State.Fixed);
 
-    // planche à arracher : la plus haute
+    public int PlankCount
+    {
+        get
+        {
+            int n = 0;
+            for (int i = 0; i < slots.Length; i++) if (Holds(slots[i])) n++;
+            return n;
+        }
+    }
+
+    public bool IsBarricaded
+    {
+        get
+        {
+            for (int i = 0; i < slots.Length; i++) if (Holds(slots[i])) return true;
+            return false;
+        }
+    }
+
+    // planche à attaquer : d'abord celle qui est déjà abîmée (on finit ce qu'on a commencé), sinon la plus haute
     public Plank NextPlankToBreak()
     {
-        return slots.Where(s => s.Plank != null && (s.Plank.state == Plank.State.Nailed || s.Plank.state == Plank.State.Fixed))
-                    .OrderByDescending(s => s.transform.position.y)
-                    .Select(s => s.Plank)
-                    .FirstOrDefault();
+        Plank best = null;
+        float bestY = float.MinValue;
+        int bestDamage = -1;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            var s = slots[i];
+            if (!Holds(s)) continue;
+            int d = s.Plank.Damage;
+            float y = s.transform.position.y;
+            if (d > bestDamage || (d == bestDamage && y > bestY)) { best = s.Plank; bestDamage = d; bestY = y; }
+        }
+        return best;
     }
 }

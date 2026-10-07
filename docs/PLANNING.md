@@ -85,7 +85,7 @@
 | 4.1 | Planche attrapable (1 seule à la fois) | | — | — | ✅ |
 | 4.2 | Snap + overlay | Aimant au slot ; overlay vert seulement quand on tient une planche | — | — | ✅ |
 | 4.3 | Marteau et clous | 3 coups ; détection de vélocité ; l'autre main tient la planche | — | — | ✅ |
-| 4.4 | **Dégradation des barricades** | État par planche (intacte, cassée) ; un zombie arrache une planche en **3 s** ; la planche arrachée tombe / disparaît ; slot libre pour une nouvelle planche | 5 h | 4.3, 5.4 | ⬜ |
+| 4.4 | **Dégradation des barricades** | Dégradation progressive : 1 coup de zombie par seconde ; 1er coup = la planche tremble + craquement ; 2e coup = un clou saute, la planche pend par l'autre ; 3e coup = elle tombe vers l'intérieur (chute adoucie). Planche à 1 clou : 2 coups. Reclouer le clou sauté avant le 3e coup répare la planche. Les zombies finissent d'abord la planche déjà abîmée. Recherches d'`Opening` sans LINQ (`Plank.Hit`, `Nail.Pop`, `BarricadeFx.cs`) | 5 h | 4.3, 5.4 | 🟡 à tester |
 | 4.5 | Approvisionnement en planches | Décider : réserve infinie ou limitée ; réapparition sur l'établi ; planche arrachée récupérable | 3 h | 4.4 | ⬜ |
 | 4.6 | Réglage du geste | Seuil de vélocité ; test avec plusieurs joueurs ; retour visuel (étincelle) et haptique | 3 h | 4.3 | 🟡 |
 

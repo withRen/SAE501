@@ -55,6 +55,41 @@ public class Plank : MonoBehaviour
 
     void OnDestroy() => All.Remove(this);
 
+    // ---------- [4.4] dégradation : un zombie frappe la planche ----------
+    // Planche clouée de 2 clous : 1er coup = elle tremble ; 2e coup = un clou saute, elle pend par l'autre ; 3e coup = elle tombe.
+    // Planche tenue par 1 seul clou : 2 coups suffisent. Si le joueur recloue le clou sauté avant, les dégâts repartent de zéro.
+    int damage;
+    bool popped;                           // un clou a sauté (planche réparable en le reclouant)
+    public int Damage => damage;
+
+    /// <summary>Un coup de zombie. Renvoie vrai si la planche est tombée.</summary>
+    public bool Hit(Vector3 inward)
+    {
+        if (state != State.Nailed && state != State.Fixed) return false;
+        int driven = DrivenCount();
+        if (popped && driven >= 2) { damage = 0; popped = false; }      // réparée par le joueur entre deux coups
+        damage++;
+        vel += (Random.value < 0.5f ? -1f : 1f) * (25f + 15f * damage);  // elle tremble (ressort de LateUpdate)
+
+        if (damage >= driven + 1)
+        {
+            BarricadeFx.Play(BarricadeFx.Break, transform.position);
+            damage = 0; popped = false;
+            Break(inward);
+            return true;
+        }
+        if (state == State.Fixed && damage >= 2)
+        {
+            // un clou saute : la planche pend par l'autre clou
+            foreach (var n in nails) if (n.Driven) { n.Pop(); break; }
+            state = State.Nailed;
+            popped = true;
+            BarricadeFx.Play(BarricadeFx.Pop, transform.position);
+        }
+        else BarricadeFx.Play(BarricadeFx.Crack, transform.position);
+        return false;
+    }
+
     // planche déjà clouée (état de départ d'une barricade)
     public void PlaceFixed(BarricadeSlot s)
     {
@@ -84,8 +119,8 @@ public class Plank : MonoBehaviour
         holdZone.gameObject.SetActive(false);
         grab.enabled = true;
         rb.isKinematic = false;
-        rb.AddForce(pushDirection.normalized * 3f + Vector3.up * 1.5f, ForceMode.Impulse);
-        rb.AddTorque(Random.onUnitSphere * 2f, ForceMode.Impulse);
+        rb.AddForce(pushDirection.normalized * 1.2f + Vector3.up * 0.8f, ForceMode.Impulse);   // elle tombe vers l'intérieur sans voler à travers la pièce
+        rb.AddTorque(Random.onUnitSphere * 0.6f, ForceMode.Impulse);
     }
 
     // une seule planche attrapable à la fois

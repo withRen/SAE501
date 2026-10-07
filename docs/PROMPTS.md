@@ -47,6 +47,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [036](#036--musique-du-menu-en-boucle) | 2026-10-07 | Menu bugué ; musique du menu en boucle tant que la scène est active | Menu, audio | Musique à une piste : boucle simple sur une seule source ; bug du menu non identifié (question restée sans réponse) |
 | [037](#037--contour-des-objets-interactifs) | 2026-10-07 | Contour autour des objets avec lesquels on peut interagir | Interactions, rendu | `InteractableOutline` + `Outline.shader` : liseré discret au repos, épais au survol de la main, masqué en main |
 | [038](#038--test-du-décor-extérieur-dalban-branche-features_exterieur) | 2026-10-07 | Ajouter pour test le décor extérieur de la branche `features_exterieur` | Décor, revue | Branche locale `test/exterieur` : décor extrait en prefab, placé par le générateur, ciel en skybox, brouillard 0,03 |
+| [039](#039--sphère-de-ciel-dalban-seule) | 2026-10-07 | Retirer la forêt, garder seulement la sphère de ciel d'Alban | Décor | Forêt, montagnes, pins et lune retirés ; sphère de ciel sans brouillard qui suit la tête ; brouillard d'origine (0,12) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -757,3 +758,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Vérifié dans l'éditeur par captures : extérieur (ciel étoilé, relief, pins, montagnes), intérieur du bunker, portes. **Pas testé au casque.**
 - **Points à surveiller** : 395 maillages et 44 000 triangles en plus (marqués statiques pour le regroupement), lune avec ombres douces sur tout le décor : coût GPU à mesurer au Quest ; pins faits de cylindres empilés ; la plaque « SECTEUR CONFINÉ » est derrière le panneau rouge du niveau (chevauchement).
 - Rien poussé.
+
+### 039 — Sphère de ciel d'Alban seule
+
+**Prompt**
+
+> retire l'espèce de foret que tu as généré, juste garde la sphère de skybox de Alban
+
+**Résultat** (code écrit par l'IA, Claude Code ; sphère et panorama faits par Alban)
+
+- Précision : la forêt (terrain en relief, montagnes, pins) venait de la branche d'Alban, elle n'avait pas été générée par l'IA ; elle est retirée du prefab, ainsi que sa lumière de lune (qui servait à éclairer la forêt). Assets inutilisés supprimés (sol, roche, pins, maillage du terrain, skybox, texture de porte métallique).
+- **Sphère de ciel gardée** : `Assets/Environment/Shaders/SkySphere.shader` (non éclairé, sans brouillard, dessiné derrière tout le reste) et `Assets/Scripts/SkyFollow.cs` (la sphère suit la tête du joueur, rayon ramené à 50 m pour rester sous la distance d'affichage de 60 m). Sans ça, notre brouillard dense la rendait noire.
+- **Brouillard d'origine** remis (0,12), pas de skybox : l'ambiance de l'intérieur redevient celle d'avant.
+- Gardé aussi : cadres, plaques et voyants des portes de niveau (pas liés à la forêt).
+- Vérifié dans l'éditeur : ciel visible dehors, par la fenêtre et par le trou du toit ; la sphère suit la tête en mode Play ; aucune erreur. **Pas testé au casque.**
+- Toujours sur la branche locale `test/exterieur`, rien poussé.

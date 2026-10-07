@@ -91,7 +91,7 @@ public static class RoomBuilder
         BuildBelt(rig, cam);
         BuildBunkerOpenings(slots);
         BuildGatesAndGenerator();
-        BuildExteriorDecor(cam);
+        BuildExteriorDecor();
         BuildZombieSetup(rig);
         BuildMusic();
 
@@ -213,27 +213,41 @@ public static class RoomBuilder
         Box("Sol", ext, c, new Vector3(13f, 0.1f, 5.2f), blockM);
     }
 
-    // ---------- décor extérieur d'Alban (branche features_exterieur) : terrain en relief, montagnes, pins, ciel, lune ----------
-    // Le prefab est extrait de sa scène ; les cadres, plaques et voyants des portes de niveau sont rattachés au battant
-    // de chaque porte (ils bougent avec elle quand elle s'ouvre).
+    // ---------- décor d'Alban (branche features_exterieur) : sphère de ciel (panorama de forêt de nuit) ----------
+    // Le prefab est extrait de sa scène (la forêt en relief n'est pas reprise). La sphère passe sur un shader sans brouillard
+    // (sinon notre brouillard dense la rendait noire), rétrécie à 50 m et collée à la tête du joueur (SkyFollow) pour rester
+    // sous la distance d'affichage de la caméra (60 m). Les cadres, plaques et voyants des portes de niveau sont rattachés
+    // au battant de chaque porte (ils bougent avec elle quand elle s'ouvre).
     const string ExteriorPrefab = "Assets/Environment/Exterieur_Alban.prefab";
-    // Le ciel : la sphère d'Alban (240 m) disparaissait dans le brouillard, on utilise à la place son matériau skybox
-    // (panorama de forêt de nuit), que le brouillard ne voile pas. Brouillard allégé (0,12 -> 0,03) pour voir le relief.
-    static void BuildExteriorDecor(Camera cam)
+    const string SkyMatPath = "Assets/Environment/Materials/M_NightForest_SkySphere_SansBrouillard.mat";
+    static void BuildExteriorDecor()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ExteriorPrefab);
         if (prefab == null) return;
         var ext = (GameObject)PrefabUtility.InstantiatePrefab(prefab, mapRoot);
         PrefabUtility.UnpackPrefabInstance(ext, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-        var sky = AssetDatabase.LoadAssetAtPath<Material>("Assets/Environment/Materials/M_NightForest_Skybox.mat");
+
         var sphere = ext.transform.Find("Environment_Skysphere");
-        if (sky != null)
+        if (sphere != null)
         {
-            RenderSettings.skybox = sky;
-            cam.clearFlags = CameraClearFlags.Skybox;
-            if (sphere != null) Object.DestroyImmediate(sphere.gameObject);
+            var r = sphere.GetComponent<Renderer>();
+            var src = r.sharedMaterial;
+            var m = AssetDatabase.LoadAssetAtPath<Material>(SkyMatPath);
+            if (m == null) { m = new Material(Shader.Find("SAE501/SkySphere")); AssetDatabase.CreateAsset(m, SkyMatPath); }
+            m.shader = Shader.Find("SAE501/SkySphere");
+            m.SetTexture("_BaseMap", src.GetTexture("_BaseMap"));
+            m.SetTextureScale("_BaseMap", src.GetTextureScale("_BaseMap"));
+            m.SetTextureOffset("_BaseMap", src.GetTextureOffset("_BaseMap"));
+            m.SetColor("_BaseColor", src.GetColor("_BaseColor"));
+            EditorUtility.SetDirty(m);
+            r.sharedMaterial = m;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            GameObjectUtility.SetStaticEditorFlags(sphere.gameObject, 0);   // elle bouge avec la tête
+            sphere.localScale = Vector3.one * 50f;
+            sphere.gameObject.AddComponent<SkyFollow>();
         }
-        RenderSettings.fogDensity = 0.03f;
+
         var portes = ext.transform.Find("Portes");
         if (portes != null && gatesRoot != null)
         {

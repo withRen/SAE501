@@ -74,8 +74,8 @@ Shader "SAE501/CCTV"
                 lum += n * _Noise;
 
                 // lignes de balayage
-                float line = 1.0 - _LineStrength * step(0.5, frac(uv.y * _Lines));
-                lum *= line;
+                float scan = 1.0 - _LineStrength * step(0.5, frac(uv.y * _Lines));
+                lum *= scan;
 
                 // bande plus claire + scintillement général
                 lum += band * _Roll;

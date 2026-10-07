@@ -40,6 +40,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [029](#029--écran-noir-son-seul) | 2026-10-07 | Toujours écran noir au casque, le son marche | Bug | GPU Resident Drawer qui plantait le pipeline à chaque image ; désactivé pour le Quest |
 | [030](#030--écran-noir-avec-les-textes) | 2026-10-07 | Écran noir mais textes visibles | Bug | Build profile Meta Quest qui citait des niveaux de qualité absents ; rendu fovéal fixe (72 images/s) |
 | [031](#031--planches-visibles-et-pose-sans-tenir) | 2026-10-07 | Planches plus visibles ; poser sans tenir ; sans clou 1 coup, clouée 3 coups | Gameplay | Râtelier au mur sud ; nouvelles règles de planche |
+| [032](#032--zombies-morts-au-dessus-du-sol) | 2026-10-07 | Les zombies meurent 1 m au-dessus du sol | Bug | Hauteur du clip de mort gardée dans la pose |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -649,4 +650,16 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Zombie** : planche sans clou = tombe au 1er coup ; planche avec au moins un clou = 3 coups. **Choix de l'IA** : un seul clou suffit pour compter comme clouée ; un coup toutes les 2 s (avant : une planche arrachée toutes les 3 s) ; la planche recule à chaque coup.
 - Vérifié dans l'éditeur : pose sans tenir, 1 coup / 3 coups, zombie qui casse 1 planche clouée + 1 non clouée puis entre ; râtelier immobile. **Pas testé au casque.**
 - **Conflits à prévoir** avec les PR #78 (dégradation des barricades : `Plank.cs`, `Opening.cs`, `Nail.cs`, `Zombie.cs`) et #67 (approvisionnement en planches : `Plank.cs`, `RoomBuilder.cs`).
+
+### 032 — Zombies morts au-dessus du sol
+
+**Prompt**
+
+> Les zombis meurent 1m au desus du sol, patch ça ils sont senser tomber au sol
+
+**Résultat**
+
+- Mesuré avant : corps couché mais bassin à 0,92 m, tête à 0,84 m après l'animation de mort.
+- Cause : le clip Mixamo de mort était importé avec la hauteur extraite en *root motion* (`lockRootHeightY = false`), que l'Animator ignore (`applyRootMotion = false`) : la descente vers le sol était perdue. Corrigé dans `ZombieMixamo.cs` : hauteur gardée dans la pose pour les 3 clips.
+- Mesuré après : bassin à 0,17 m, tête à 0,08 m (tué en marchant et tué pendant l'escalade de la fenêtre). Dans l'éditeur seulement.
 

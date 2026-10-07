@@ -24,6 +24,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [013](#013--niveaux-par-vagues-et-générateur) | 2026-10-06 | Système de niveaux par vagues (4), zones débloquées, objectif générateur | Gameplay | WaveManager, portes verrouillées, générateur |
 | [014](#014--pistolet-modern-guns-handgun) | 2026-10-06 | Utiliser le pack Modern Guns : Handgun (analyse, animations, chargeur, balle) | Gameplay | M1911 intégré, tir animé, douille, flash, fumée, haptique |
 | [015](#015--nouvelle-carte-blender-et-navmesh) | 2026-10-07 | Remplacer la carte par le nouveau fichier Blender, corriger le NavMesh ; retirer les planches déjà posées | Carte | Carte complète importée, NavMesh corrigé, ouvertures sans barricade |
+| [016](#016--animations-mixamo-de-la-pr-68) | 2026-10-07 | Reprendre l'animation des zombies de la pull request (Mixamo) sur la nouvelle carte | Gameplay | PR #68 fusionnée, attaque synchronisée avec les dégâts |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -329,3 +330,23 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Planches** : plus aucune barricade au départ (portes, fenêtres et porte condamnée du couloir) ; planches de jeu à la taille de celles du fichier (1,84 m × 28 cm).
 - Test dans l'éditeur : un zombie casse une fenêtre, l'enjambe et attaque ; un autre traverse le couloir droit jusqu'à la porte est ; captures du bunker, des écrans, du couloir, du générateur. **Non testé : au casque (performances).**
 - Page de wiki : Carte (et mises à jour : Zombies, Niveaux et vagues, Planches et clous).
+
+---
+
+### 016 — Animations Mixamo de la PR #68
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> Il y a une pull request sur github concernant l'animation des zombis, récupère la façon dont sont animés les zombis dans cette pullrequest et utilise l'animation en question dans le projet actuelle avec la nouvelle map le navmesh etc
+
+**Résultat**
+
+- PR withRen/SAE501#68 (alamine01) : 3 clips Mixamo (marche, attaque, mort) + `ZombieMixamo.cs` (réglage Humanoid, Animator Controller `Speed` / `Attack` / `Die`). **Fusionnée** dans `main` (commits de l'auteur conservés), sans conflit avec la nouvelle carte (rayon NavMesh 0,2 m conservé).
+- Ajout de l'IA : l'attaque du clip (2,63 s, main qui frappe à 1,05 s) est jouée ×1,5 et les dégâts / l'arrachage de planche sont calés sur ce coup (0,7 s au lieu de 0,45 s) ; mesure faite en échantillonnant le clip.
+- Test dans l'éditeur sur la nouvelle carte : marche bras tendus, passage par la fenêtre (lien NavMesh), attaque (joueur 100 → 80 PV), mort au sol. **Non testé : au casque.** Glissement des pieds non vérifié (réglage `WalkClipSpeed`).

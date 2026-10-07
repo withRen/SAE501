@@ -61,7 +61,8 @@ public static class ZombieBuilder
 
     const string ModelPrefab = "Assets/NewPunch/ShirtlessZombieFree/Prefabs/ShirtlessZombie_FREE_URP.prefab";
 
-    // Zombie avec le modèle « Shirtless Zombie FREE » (rig humanoïde, sans animation : os animés par ZombieBoneAnim).
+    // Zombie avec le modèle « Shirtless Zombie FREE » (rig humanoïde).
+    // Animations : clips Mixamo si présents (ZombieMixamo), sinon os animés par ZombieBoneAnim.
     [MenuItem("SAE501/Zombie/Reconstruire le prefab (modèle Shirtless Zombie)")]
     public static GameObject BuildShirtless()
     {
@@ -78,7 +79,16 @@ public static class ZombieBuilder
         m.transform.localPosition = Vector3.zero; m.transform.localRotation = Quaternion.identity;
         foreach (var e in m.GetComponentsInChildren<FreeZombie_EyesGlow>(true)) Object.DestroyImmediate(e);   // script HDRP du pack, inutile
         var anim = m.GetComponent<Animator>();
-        if (anim) anim.enabled = false;                    // aucun clip : on pilote les os par script
+        // vraies animations Mixamo si elles sont dans le projet (voir ZombieMixamo), sinon os pilotés par script
+        var mixamo = anim ? ZombieMixamo.EnsureController() : null;
+        if (mixamo)
+        {
+            anim.enabled = true;
+            anim.runtimeAnimatorController = mixamo;
+            anim.applyRootMotion = false;                  // c'est le NavMeshAgent qui déplace le zombie
+            anim.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+        }
+        else if (anim) anim.enabled = false;               // aucun clip : on pilote les os par script
 
         Transform B(string n) { foreach (var t in m.GetComponentsInChildren<Transform>(true)) if (t.name == n) return t; Debug.LogError("os introuvable : " + n); return null; }
         var head = B("head");
@@ -126,13 +136,21 @@ public static class ZombieBuilder
         agent.radius = NavBuilder.AgentRadius; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
         var rb = root.AddComponent<Rigidbody>(); rb.isKinematic = true;
 
-        var bone = root.AddComponent<ZombieBoneAnim>();
-        bone.visual = visual;
-        bone.spine = B("spine_01"); bone.neck = neck; bone.head = head;
-        bone.thighL = B("thigh_l"); bone.thighR = B("thigh_r"); bone.calfL = B("calf_l"); bone.calfR = B("calf_r");
-        bone.armL = B("upperarm_l"); bone.armR = B("upperarm_r"); bone.foreL = B("lowerarm_l"); bone.foreR = B("lowerarm_r");
         var bridge = root.AddComponent<ZombieAnimationBridge>();
-        bridge.boneAnim = bone;
+        if (mixamo)
+        {
+            bridge.animator = anim;                         // Speed / Attack / Die -> Animator
+            z.attackHitDelay = ZombieMixamo.AttackHitDelay;  // dégâts et planche arrachée au moment où la main frappe dans le clip
+        }
+        else
+        {
+            var bone = root.AddComponent<ZombieBoneAnim>();
+            bone.visual = visual;
+            bone.spine = B("spine_01"); bone.neck = neck; bone.head = head;
+            bone.thighL = B("thigh_l"); bone.thighR = B("thigh_r"); bone.calfL = B("calf_l"); bone.calfR = B("calf_r");
+            bone.armL = B("upperarm_l"); bone.armR = B("upperarm_r"); bone.foreL = B("lowerarm_l"); bone.foreR = B("lowerarm_r");
+            bridge.boneAnim = bone;
+        }
 
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         Object.DestroyImmediate(root);

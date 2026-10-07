@@ -6,7 +6,15 @@ Toutes les valeurs d'équilibrage sont dans **`Assets/Scripts/ZombieLevels.cs`**
 
 **Modèle :** *Free Shirtless Zombie* (Asset Store, dossier `Assets/NewPunch/ShirtlessZombieFree`). Prefab utilisé : `ShirtlessZombie_FREE_URP`. Il fait 1,76 m de haut, a 3 niveaux de détail (LOD) et un rig **humanoïde** (squelette de type Unreal : `pelvis`, `spine_01` à `spine_03`, `clavicle`, `upperarm`, `lowerarm`, `hand` + doigts, `neck_01`, `head`, `thigh`, `calf`, `foot`, `ball`).
 
-**Le pack gratuit ne contient aucune animation** (0 clip, pas d'Animator Controller) : les animations sont donc faites **par script** (`ZombieBoneAnim`, os tournés à chaque image) : marche traînante, bras tendus devant, buste penché, bras qui s'abattent à l'attaque, chute en arrière à la mort. Ce n'est pas du vrai mocap : si le groupe trouve de vrais clips humanoïdes (marche, attaque, mort), on les met dans un Animator Controller ; `ZombieAnimationBridge` pilote déjà les paramètres `Speed`, `Attack`, `Die`.
+**Animations : clips Mixamo** (PR withRen/SAE501#68 d'alamine01, fusionnée le 7 octobre 2026). Le pack gratuit n'a aucune animation ; 3 clips Mixamo (`Zombie Walk.fbx`, `Zombie Attack.fbx`, `Zombie Death.fbx`, dans **`Assets/Animations/Zombie`**) sont réglés en Humanoid par `ZombieMixamo.cs` (sur place : c'est le NavMeshAgent qui déplace le zombie) et rangés dans `Assets/Generated/Zombie_Mixamo.controller` (paramètres `Speed`, `Attack`, `Die`, pilotés par `ZombieAnimationBridge`).
+
+| Clip | Durée | Réglage |
+|---|---|---|
+| Marche | 4,03 s, en boucle | Vitesse du clip = vitesse réelle du zombie / 0,55 m/s (`WalkClipSpeed`) |
+| Attaque | 2,63 s | Jouée ×1,5 : la main frappe à 1,05 s du clip, donc **0,7 s** après le début ; les dégâts au joueur et l'arrachage de planche tombent à ce moment (`attackHitDelay` = 0,7 s) |
+| Mort | 2,97 s | Le corps descend jusqu'au sol |
+
+Si les 3 fichiers sont absents, `ZombieBuilder` revient à l'animation par script (`ZombieBoneAnim`). Testé dans l'éditeur sur la nouvelle carte : marche, passage de fenêtre, attaque (le joueur perd 20 %), mort.
 
 Hitbox : 3 zones, posées **sur les os** (elles suivent l'animation), chacune avec un composant `ZombieHitbox` :
 

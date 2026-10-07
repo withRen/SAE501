@@ -3211,7 +3211,6 @@ GameObject:
   - component: {fileID: 99386021874001072}
   - component: {fileID: 8847693506991553387}
   - component: {fileID: 2022766816865418597}
-  - component: {fileID: 4275415336438483481}
   - component: {fileID: 5918886184603064916}
   m_Layer: 0
   m_Name: Zombie
@@ -3277,7 +3276,7 @@ MonoBehaviour:
   attackRange: 1.15
   attackCooldown: 1.5
   attackDamage: 0.2
-  attackHitDelay: 0.45
+  attackHitDelay: 0.7
   level: 1
 --- !u!54 &2022766816865418597
 Rigidbody:
@@ -3306,33 +3305,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &4275415336438483481
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8098143063374109313}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 595f6a4f734754f089afcd30c5d69943, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ZombieBoneAnim
-  visual: {fileID: 4502560161287277117}
-  spine: {fileID: 6202596901779291560}
-  neck: {fileID: 2021102972962809599}
-  head: {fileID: 6541711330649099955}
-  thighL: {fileID: 8817850967884515467}
-  thighR: {fileID: 8600636172321638879}
-  calfL: {fileID: 5188087528139882874}
-  calfR: {fileID: 3964034210609063570}
-  armL: {fileID: 5156955553577325469}
-  armR: {fileID: 735580879474785204}
-  foreL: {fileID: 196032767600304562}
-  foreR: {fileID: 4298692021900754180}
-  moveSpeed: 0
-  stepsPerMeter: 0.9
-  leanDegrees: 14
 --- !u!114 &5918886184603064916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3345,9 +3317,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6dfae0037ed24de3a8778de5a11e98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombieAnimationBridge
-  animator: {fileID: 0}
+  animator: {fileID: 573356872990611251}
   procedural: {fileID: 0}
-  boneAnim: {fileID: 4275415336438483481}
+  boneAnim: {fileID: 0}
   speedParam: Speed
   attackTrigger: Attack
   dieTrigger: Die
@@ -3879,12 +3851,12 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8624070626432397171}
-  m_Enabled: 0
+  m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: e2c1c24aec0aaa94eb4cb7a2aae271a0, type: 3}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a808713a4ee9b478eaa45bbbdb2ae1fc, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0

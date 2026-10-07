@@ -107,7 +107,8 @@ public class WaveManager : MonoBehaviour
         {
             case Phase.Waiting:
                 timer -= Time.deltaTime;
-                SetStatus("Préparez-vous… " + Mathf.CeilToInt(Mathf.Max(0f, timer)) + " s");
+                if (StatusChanged(0, Mathf.CeilToInt(Mathf.Max(0f, timer))))
+                    SetStatus("Préparez-vous… " + statusValue + " s");
                 if (timer <= 0f) StartLevel(startLevel);
                 break;
 
@@ -115,7 +116,8 @@ public class WaveManager : MonoBehaviour
 
             case Phase.Break:
                 timer -= Time.deltaTime;
-                SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + Mathf.CeilToInt(Mathf.Max(0f, timer)) + " s : réparez !");
+                if (StatusChanged(1000 + Level, Mathf.CeilToInt(Mathf.Max(0f, timer))))
+                    SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !");
                 if (timer <= 0f) StartLevel(Level + 1);
                 break;
         }
@@ -155,7 +157,8 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + (Alive + Mathf.Max(0, def.zombies - spawned)) + (last ? " · objectif : le générateur" : ""));
+        if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned)))
+            SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
     }
 
     void SpawnOne(LevelDef def)
@@ -186,6 +189,15 @@ public class WaveManager : MonoBehaviour
     public void SkipToLevel(int lvl) => StartLevel(lvl);
 
     void SetStatus(string s) { if (status && status.text != s) status.text = s; }
+
+    // le texte de statut n'est reconstruit que si ce qu'il affiche a changé (évite une chaîne neuve à chaque image)
+    int statusKey = -1, statusValue = -1;
+    bool StatusChanged(int key, int value)
+    {
+        if (key == statusKey && value == statusValue) return false;
+        statusKey = key; statusValue = value;
+        return true;
+    }
 
     void Announce(string text, float seconds)
     {

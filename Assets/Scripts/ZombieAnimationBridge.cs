@@ -16,31 +16,47 @@ public class ZombieAnimationBridge : MonoBehaviour
 
     public float LastSpeed { get; private set; }
 
-    bool Has(string p)
+    // paramètres présents dans le contrôleur, lus une seule fois (animator.parameters renvoie une copie à chaque appel)
+    bool cached, hasSpeed, hasAttack, hasDie;
+    int speedId, attackId, dieId;
+
+    void Cache()
     {
-        if (animator == null || string.IsNullOrEmpty(p)) return false;
-        foreach (var x in animator.parameters) if (x.name == p) return true;
-        return false;
+        if (animator == null) { cached = true; return; }
+        var ps = animator.parameters;
+        cached = ps.Length > 0;                 // contrôleur pas encore prêt : on relira au prochain appel
+        foreach (var x in ps)
+        {
+            if (x.name == speedParam) hasSpeed = true;
+            else if (x.name == attackTrigger) hasAttack = true;
+            else if (x.name == dieTrigger) hasDie = true;
+        }
+        speedId = Animator.StringToHash(speedParam);
+        attackId = Animator.StringToHash(attackTrigger);
+        dieId = Animator.StringToHash(dieTrigger);
     }
 
     public void SetMoveSpeed(float s)
     {
+        if (!cached) Cache();
         LastSpeed = s;
-        if (animator != null && Has(speedParam)) animator.SetFloat(speedParam, s);
+        if (animator != null && hasSpeed) animator.SetFloat(speedId, s);
         if (procedural != null) procedural.moveSpeed = s;
         if (boneAnim != null) boneAnim.moveSpeed = s;
     }
 
     public void Attack()
     {
-        if (animator != null && Has(attackTrigger)) animator.SetTrigger(attackTrigger);
+        if (!cached) Cache();
+        if (animator != null && hasAttack) animator.SetTrigger(attackId);
         if (procedural != null) procedural.PlayAttack();
         if (boneAnim != null) boneAnim.PlayAttack();
     }
 
     public void Die()
     {
-        if (animator != null && Has(dieTrigger)) animator.SetTrigger(dieTrigger);
+        if (!cached) Cache();
+        if (animator != null && hasDie) animator.SetTrigger(dieId);
         if (procedural != null) procedural.PlayDie();
         if (boneAnim != null) boneAnim.PlayDie();
     }

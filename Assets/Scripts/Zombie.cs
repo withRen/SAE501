@@ -38,7 +38,7 @@ public class Zombie : MonoBehaviour
 
     NavMeshAgent agent;
     ZombieAnimationBridge anim;
-    float slowUntil, nextBreak, nextAttack, hitAt = -1f, repath;
+    float slowUntil, nextBreak, nextAttack, hitAt = -1f, repath, nextChoose;
     Plank pendingPlank;
     PlayerHealth player;
 
@@ -101,7 +101,12 @@ public class Zombie : MonoBehaviour
 
     void UpdateWalking()
     {
-        if (target == null) { ChooseOpening(); return; }
+        if (target == null)
+        {
+            // aucune ouverture accessible : on réessaie une fois par seconde (pas à chaque image)
+            if (Time.time >= nextChoose) { nextChoose = Time.time + 1f; ChooseOpening(); }
+            return;
+        }
         if (!Arrived()) return;
         agent.isStopped = true;
         if (target.IsBarricaded) { state = State.Breaking; nextBreak = Time.time + 0.5f; }

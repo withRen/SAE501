@@ -13,6 +13,7 @@ public class CctvOverlay : MonoBehaviour
 
     TextMesh rec, clock;
     float nextBlink;
+    int shownSecond = -1;
 
     void Start()
     {
@@ -51,8 +52,9 @@ public class CctvOverlay : MonoBehaviour
         if (!clock) return;
         if (Time.time >= nextBlink) { nextBlink = Time.time + 0.6f; rec.gameObject.SetActive(!rec.gameObject.activeSelf); }
         int s = startHour * 3600 + startMinute * 60 + (int)Time.time;
-        string tx = date + "  " + (s / 3600 % 24).ToString("00") + ":" + (s / 60 % 60).ToString("00") + ":" + (s % 60).ToString("00");
-        if (clock.text != tx) clock.text = tx;
+        if (s == shownSecond) return;               // l'heure n'est reconstruite qu'une fois par seconde
+        shownSecond = s;
+        clock.text = date + "  " + (s / 3600 % 24).ToString("00") + ":" + (s / 60 % 60).ToString("00") + ":" + (s % 60).ToString("00");
     }
 
     /// <summary>« CCTV_Camera_01_Corridor_Left » -> « CAM 01  COULOIR GAUCHE ».</summary>

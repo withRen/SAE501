@@ -99,7 +99,7 @@
 | 5.4 | États **Marche** et **Casse** | Aller en ligne droite vers l'ouverture la plus proche ; animation de frappe ; retire une planche toutes les 3 s | 5 h | 5.2, 4.4 | ⬜ |
 | 5.5 | État **Attaque** | Quand toutes les planches sont tombées : avance vers le joueur, inflige des dégâts à portée | 4 h | 5.4 | ⬜ |
 | 5.6 | Mort | Mort sur tir à la tête ; animation ; disparition ; compte de points | 3 h | 3.3 | ⬜ |
-| 5.7 | Animation du zombie qui passe la tête par la fenêtre | | 6 h | 5.5 | ⬜ DEVRAIT |
+| 5.7 | Animation du zombie qui passe par la fenêtre (#74) | Le zombie enjambe la fenêtre au lieu de glisser à travers le mur : approche, se hisse sur le rebord penché en avant (bras tendus), bascule, retombe à l'intérieur, se redresse ; hauteur du rebord déduite des planches ; mort pendant l'escalade = il retombe (`ZombieWindowClimb.cs`) | 6 h | 5.5 | 🟡 à tester |
 | 5.8 | Modèles et animations | Récupérer ou créer un modèle low poly + animations (marche, frappe, mort) | 6 h | — | ⬜ |
 
 ### O6 — Vagues et score (DOIT base / DEVRAIT)

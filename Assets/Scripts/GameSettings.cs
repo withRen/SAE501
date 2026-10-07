@@ -23,11 +23,11 @@ public static class GameSettings
         OnLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
-    static readonly HashSet<int> applied = new HashSet<int>();
+    static readonly HashSet<Scene> applied = new HashSet<Scene>();
 
     static void OnLoaded(Scene s, LoadSceneMode m)
     {
-        if (!applied.Add(s.handle)) return;      // une seule fois par scène chargée
+        if (!applied.Add(s)) return;      // une seule fois par scène chargée
         Apply();
         ApplyDifficulty();
     }

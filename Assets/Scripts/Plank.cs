@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Cycle d'une planche :
@@ -8,6 +9,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 //             Lâchée sans clou enfoncé -> elle tombe. Lâchée avec au moins 1 clou -> Nailed.
 //   Nailed  : 1 clou enfoncé : elle PEND par ce clou (sauf si on la tient avec l'autre main). 2 clous -> Fixed.
 //   Fixed   : solidement clouée.
+// Retrait par le joueur (4.5) : attraper une planche clouée (zone de maintien) et TIRER fort vers soi (plus de 30 cm)
+//   -> les clous sautent, la planche se détache et retombe : on peut la ramasser. Sert à ressortir du bunker.
 public class Plank : MonoBehaviour
 {
     public enum State { Free, Snapped, Nailed, Fixed }
@@ -19,6 +22,7 @@ public class Plank : MonoBehaviour
     public Nail[] nails;
     public float unsnapRadius = 0.35f;     // si la main s'éloigne de plus de 35 cm de l'ouverture, la planche se décale
     public BarricadeSlot startSlot;        // si renseigné : la planche est déjà clouée sur cet emplacement au début de la partie
+    public float pullToRemove = 0.3f;      // distance (m) dont il faut tirer une planche clouée pour l'arracher soi-même
 
     public State state { get; private set; }
     public bool Placed => state != State.Free;
@@ -33,6 +37,8 @@ public class Plank : MonoBehaviour
     BarricadeSlot slot;
     float angle, vel;
     Vector3 pivot;
+    Vector3 pullStart;                     // position de la main au moment où elle attrape la planche clouée
+    static AudioClip pullClip;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Held = null; All.Clear(); }
@@ -46,6 +52,7 @@ public class Plank : MonoBehaviour
         grab.selectExited.AddListener(_ => OnRelease());
         foreach (var n in nails) { n.plank = this; n.Refresh(false); }
         holdZone.gameObject.SetActive(false);
+        holdZone.selectEntered.AddListener(a => pullStart = a.interactorObject.GetAttachTransform(holdZone).position);
     }
 
     void Start()
@@ -86,6 +93,18 @@ public class Plank : MonoBehaviour
         rb.isKinematic = false;
         rb.AddForce(pushDirection.normalized * 3f + Vector3.up * 1.5f, ForceMode.Impulse);
         rb.AddTorque(Random.onUnitSphere * 2f, ForceMode.Impulse);
+    }
+
+    // le joueur tient la planche clouée et tire fort : elle se détache (même effet qu'un zombie, mais vers le joueur et sans la projeter)
+    void CheckPullOff()
+    {
+        if (!holdZone || !holdZone.gameObject.activeSelf || !holdZone.isSelected) return;
+        var hand = holdZone.firstInteractorSelecting.GetAttachTransform(holdZone).position;
+        var pull = hand - pullStart;
+        if (pull.magnitude < pullToRemove) return;
+        if (!pullClip) pullClip = ProcAudio.Hit();
+        AudioSource.PlayClipAtPoint(pullClip, transform.position, 0.8f);
+        Break(pull);    // la planche part vers la main du joueur et retombe devant lui
     }
 
     // une seule planche attrapable à la fois
@@ -133,6 +152,11 @@ public class Plank : MonoBehaviour
 
             case State.Nailed:
                 if (DrivenCount() >= 2) state = State.Fixed;
+                CheckPullOff();
+                break;
+
+            case State.Fixed:
+                CheckPullOff();
                 break;
         }
 

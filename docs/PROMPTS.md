@@ -41,6 +41,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [030](#030--écran-noir-avec-les-textes) | 2026-10-07 | Écran noir mais textes visibles | Bug | Build profile Meta Quest qui citait des niveaux de qualité absents ; rendu fovéal fixe (72 images/s) |
 | [031](#031--planches-visibles-et-pose-sans-tenir) | 2026-10-07 | Planches plus visibles ; poser sans tenir ; sans clou 1 coup, clouée 3 coups | Gameplay | Râtelier au mur sud ; nouvelles règles de planche |
 | [032](#032--zombies-morts-au-dessus-du-sol) | 2026-10-07 | Les zombies meurent 1 m au-dessus du sol | Bug | Hauteur du clip de mort gardée dans la pose |
+| [033](#033--intégration-du-menu-daccueil-pr-81) | 2026-10-07 | Intégrer la PR #81 (menu d'accueil), vérifier conflits et qualité | Revue | Fusion locale ; 2 bugs corrigés (compilation, chute du joueur) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -662,4 +663,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Mesuré avant : corps couché mais bassin à 0,92 m, tête à 0,84 m après l'animation de mort.
 - Cause : le clip Mixamo de mort était importé avec la hauteur extraite en *root motion* (`lockRootHeightY = false`), que l'Animator ignore (`applyRootMotion = false`) : la descente vers le sol était perdue. Corrigé dans `ZombieMixamo.cs` : hauteur gardée dans la pose pour les 3 clips.
 - Mesuré après : bassin à 0,17 m, tête à 0,08 m (tué en marchant et tué pendant l'escalade de la fenêtre). Dans l'éditeur seulement.
+
+### 033 — Intégration du menu d'accueil (PR #81)
+
+**Prompt**
+
+> On va intégrer la toute dernière pull request : Menu d'accueil : décor animé (pluie, brouillard, éclairs, néon), Solo. De Al Amine. Vérifie les conflicts, vérifie si tout est bien fait
+> (puis) Dès mon apparition dans le menu home je suis tombé, c'est bien genre une scène à part de la map avec les zombis etc ?
+
+**Résultat**
+
+- **Conflits** : aucun avec le `main` local ni avec #69 et #78 (`UiKit.cs` et `VRInput.cs` identiques à ceux de #69, `VRInput` déjà corrigé pour l'Input System).
+- **Bug 1, bloquant** : `GameSettings.cs` ne compilait pas sous Unity 6000.6 (`Scene.handle` n'est plus convertible en `int`) : tout le projet ne compilait plus. Corrigé (`HashSet<Scene>`).
+- **Bug 2** : le joueur tombait dès l'arrivée dans le menu (collider du sol supprimé, gravité du rig XR active). Corrigé : sol avec collision, gravité et déplacements coupés dans le menu (rotation gardée). Vérifié : le rig reste à y = 0.
+- **`.meta`** des 8 nouveaux fichiers absents de la PR : ajoutés.
+- Le menu est une **scène séparée** (`Menu.unity`, 1re du build) ; SOLO charge `MainScene`.
+- Vérifié dans l'éditeur : décor, 4 boutons, page Paramètres, difficulté « Difficile » appliquée dans le jeu (zombies 5/8/10/13, intervalle 9,6 s, vitesse ×1,15), volume de la musique inchangé, aucune erreur. Build Quest réussi ; **pas encore vu au casque** (performances de la pluie et du brouillard à vérifier).
+- Fusion dans le `main` local, rien poussé.
 

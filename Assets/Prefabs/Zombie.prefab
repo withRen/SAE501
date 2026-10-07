@@ -3274,7 +3274,7 @@ MonoBehaviour:
   walkSpeed: 0.9
   slowFactor: 0.5
   slowDuration: 1.8
-  breakInterval: 3
+  breakInterval: 2
   attackRange: 1.15
   attackCooldown: 1.5
   attackDamage: 0.2

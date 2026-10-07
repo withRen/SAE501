@@ -275,10 +275,24 @@ public static class RoomBuilder
     {
         // planches de la cuisine et du stockage, là où elles sont dans la carte
         foreach (var p in planks) MakePlank(p.pos, p.rot, plankMesh, plankMats).name = "Planche_" + p.name;
-        // réserve du bunker : une pile de 3 planches au sol sous chaque fenêtre sud (bien visibles, à portée de la fenêtre à barricader)
-        var flat = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-        for (int i = 0; i < 3; i++) MakePlank(B(-4.4f, -12.75f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_SW_" + (i + 1);
-        for (int i = 0; i < 3; i++) MakePlank(B(1.15f, -12.2f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_SE_" + (i + 1);
+        // réserve du bunker : râtelier sur le mur sud, entre les deux fenêtres (face au joueur, à hauteur de main).
+        // 3 rangées de 2 planches, à plat contre le mur ; elles restent accrochées jusqu'à ce qu'on les prenne.
+        var rack = new GameObject("Ratelier_Planches").transform;
+        rack.SetParent(bunkerRoot, false);
+        var faceRoom = Quaternion.LookRotation(Vector3.back, Vector3.up);       // comme sur une fenêtre : longueur le long du mur
+        float[] rows = { 1.0f, 1.32f, 1.64f };
+        for (int r = 0; r < rows.Length; r++)
+        {
+            for (int d = 0; d < 2; d++)
+            {
+                var pl = MakePlank(B(-1.85f, -13.835f + 0.035f * d, rows[r]), faceRoom, plankMesh, plankMats);
+                pl.name = $"Planche_Ratelier_{r + 1}_{d + 1}";
+                pl.GetComponent<Plank>().stored = true;
+            }
+            // deux supports métalliques sous chaque rangée
+            foreach (float dx in new[] { -0.7f, 0.7f })
+                Box("Support", rack, B(-1.85f + dx, -13.82f, rows[r] - PlankWidth / 2f - 0.015f), new Vector3(0.05f, 0.03f, 0.1f), metalM, false);
+        }
     }
 
     // ---------- caméras de surveillance : celles du fichier (couloir gauche, couloir droit, cuisine, stockage) ----------
@@ -654,7 +668,7 @@ public static class RoomBuilder
         rb.mass = 2f;
         var plankGrab = MakeGrab(p);
         plankGrab.useDynamicAttach = true;      // prise là où la main la touche (pas de saut au centre de la planche)
-        // la planche ne doit utiliser que son propre collider (sinon elle "vole" celui de la zone de maintien)
+        // la planche n'utilise que son propre collider (pas ceux des clous)
         plankGrab.colliders.Clear();
         plankGrab.colliders.Add(bc);
 
@@ -679,16 +693,9 @@ public static class RoomBuilder
             nails[i] = nail;
         }
 
-        // zone pour tenir la planche avec l'autre main
-        var hz = new GameObject("HoldZone");
-        hz.transform.SetParent(p.transform, false);
-        var hcol = hz.AddComponent<BoxCollider>();
-        hcol.size = new Vector3(PlankLength + 0.1f, PlankWidth + 0.1f, 0.16f);
-        var hold = hz.AddComponent<XRSimpleInteractable>();
 
         var pl = p.AddComponent<Plank>();
         pl.nails = nails;
-        pl.holdZone = hold;
         return p;
     }
 

@@ -164,7 +164,7 @@ public class WaveManager : MonoBehaviour
         phase = Phase.Victory;
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
-        Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
+        Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", EndScreen.Instance ? 3f : victoryRestartDelay);   // court si l'écran de fin prend le relais
         if (!EndScreen.Instance) StartCoroutine(RestartAfter(victoryRestartDelay));   // sinon c'est l'écran de fin (6.5) qui propose de rejouer
     }
 

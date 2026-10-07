@@ -110,7 +110,7 @@
 | 6.2 | Gestionnaire de vagues | 5 vagues : liste de zombies, côté(s), vitesse ; passage à la vague suivante quand tous sont morts | 5 h | 6.1 | ⬜ |
 | 6.3 | Courbe de difficulté | V1 lente et d'un seul côté ; V2 à V4 de plusieurs côtés ; V5 plus nombreux et plus rapides | 3 h | 6.2 | ⬜ |
 | 6.4 | Points | +10 par zombie tué (+5 si tir à la tête) ; +50 par vague terminée ; +200 générateur activé (`ScoreManager.cs`) | 2 h | 6.2 | 🟡 à tester |
-| 6.5 | Écran de fin | Victoire (générateur activé) ou défaite (mort) : titre, score, vague atteinte, zombies tués, durée ; « gâchette pour rejouer » (relance auto après 45 s) (`EndScreen.cs`). + Écran de début : titre, règles, « gâchette pour commencer » (`StartScreen.cs`) | 3 h | 6.2, 8.1 | 🟡 à tester |
+| 6.5 | Écran de fin | Style « terminal de bunker » : défaite (rouge) ou victoire (vert), titre, bilan en tableau (score, vague, zombies abattus dont tête, temps), bouton « gâchette pour rejouer » (relance auto après 45 s) (`EndScreen.cs`). + Écran de début ambre : titre, accroche, 3 règles numérotées, « gâchette pour commencer » (`StartScreen.cs`) | 3 h | 6.2, 8.1 | 🟡 à tester |
 
 ### O7 — Caméras et pupitre (DEVRAIT)
 
@@ -119,7 +119,7 @@
 | 7.1 | Caméras Render Texture | 2 couloirs (1 par couloir) ; positions utiles | 2 h | 2.6 | 🟡 |
 | 7.2 | Effet CCTV | Bruit, scanlines, teinte verte ; fréquence réduite pour la perf | 3 h | 7.1 | ⬜ |
 | 7.3 | Vue plein écran d'un écran | | — | — | ✅ (hors GDD, à garder si utile) |
-| 7.4 | Écran de score digital | Afficheur LED au mur sud du bunker : « VAGUE n/4 » et « SCORE 00000 » qui défile (`ScoreBoard.cs`) | 3 h | 6.4 | 🟡 à tester |
+| 7.4 | Écran de score digital | Afficheur LED au mur sud du bunker (style « terminal de bunker ») : VAGUE n/4 + 4 voyants, SCORE 00000 qui défile, dernier gain (« +10 ZOMBIE ABATTU ») (`ScoreBoard.cs`, `UiKit.cs`) | 3 h | 6.4 | 🟡 à tester |
 
 ### O8 — Santé et interface diégétique (DEVRAIT)
 

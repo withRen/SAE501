@@ -665,13 +665,12 @@ public static class RoomBuilder
         ui.AddComponent<EndScreen>().head = head;
 
         // afficheur au mur sud du bunker, entre les deux fenêtres, face au joueur (position à ajuster dans la scène si besoin)
+        // lu à ~4,5 m : chiffres de ~15 cm de haut pour rester lisibles dans le casque
         var board = new GameObject("EcranScore");
         board.transform.SetParent(mapRoot, false);
-        board.transform.SetPositionAndRotation(B(-1.85f, -14.0f, 2.15f), Quaternion.LookRotation(Vector3.forward));
-        Box("Fond", board.transform, Vector3.zero, new Vector3(1.0f, 0.36f, 0.04f), darkM, false).transform.localPosition = new Vector3(0f, 0f, 0.025f);
-        var sb = board.AddComponent<ScoreBoard>();
-        sb.waveText = MakeLabel("Vague", board.transform, board.transform.TransformPoint(new Vector3(0f, 0.08f, 0f)), board.transform.rotation, 0.0045f, new Color(1f, 0.6f, 0.2f));
-        sb.scoreText = MakeLabel("Score", board.transform, board.transform.TransformPoint(new Vector3(0f, -0.07f, 0f)), board.transform.rotation, 0.0075f, new Color(0.2f, 1f, 0.35f));
+        board.transform.SetPositionAndRotation(B(-1.85f, -14.0f, 2.05f), Quaternion.LookRotation(Vector3.forward));
+        Box("Cadre", board.transform, Vector3.zero, new Vector3(1.9f, 0.72f, 0.04f), darkM, false).transform.localPosition = new Vector3(0f, 0f, 0.025f);
+        board.AddComponent<ScoreBoard>();      // l'affichage LED (textes, voyants) est construit au lancement par ScoreBoard
     }
 
     static TextMesh MakeLabel(string name, Transform parent, Vector3 pos, Quaternion rot, float charSize, Color c)

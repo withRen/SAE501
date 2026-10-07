@@ -8,6 +8,7 @@ public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
     public static event Action<int> Changed;             // nouveau score
+    public static event Action<int, string> Gained;      // points gagnés + raison (affichée sur l'écran de score)
 
     public int perKill = 10;
     public int headshotBonus = 5;
@@ -32,28 +33,29 @@ public class ScoreManager : MonoBehaviour
         Kills++;
         int pts = perKill;
         if (zone == HitZone.Head) { Headshots++; pts += headshotBonus; }
-        Add(pts);
+        Add(pts, zone == HitZone.Head ? "TIR À LA TÊTE" : "ZOMBIE ABATTU");
     }
 
     void Update()
     {
         var wm = WaveManager.Instance;
         if (!wm) return;
-        if (wm.InBreak && !wasInBreak) Add(perWave);      // vague terminée
+        if (wm.InBreak && !wasInBreak) Add(perWave, "VAGUE TERMINÉE");      // vague terminée
         wasInBreak = wm.InBreak;
-        if (wm.Victory && !wasVictory) { Add(victoryBonus); Stop(); }
+        if (wm.Victory && !wasVictory) { Add(victoryBonus, "GÉNÉRATEUR ACTIVÉ"); Stop(); }
         wasVictory = wm.Victory;
     }
 
-    public void Add(int pts)
+    public void Add(int pts, string reason = null)
     {
         if (endTime > 0f) return;                          // partie finie : le score ne bouge plus
         Score += pts;
         Changed?.Invoke(Score);
+        Gained?.Invoke(pts, reason);
     }
 
     public void Stop() { if (endTime < 0f) endTime = Time.time; }
     public void ResetClock() => startTime = Time.time;     // la durée compte à partir de l'écran de début
 
-    [ContextMenu("Test : +10 points")] void Test() => Add(10);
+    [ContextMenu("Test : +10 points")] void Test() => Add(10, "TEST");
 }

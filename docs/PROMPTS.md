@@ -50,6 +50,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [039](#039--sphère-de-ciel-dalban-seule) | 2026-10-07 | Retirer la forêt, garder seulement la sphère de ciel d'Alban | Décor | Forêt, montagnes, pins et lune retirés ; sphère de ciel sans brouillard qui suit la tête ; brouillard d'origine (0,12) |
 | [040](#040--nouvelle-carte-liaisons-ambiance-plus-sombre) | 2026-10-07 | Remplacer la carte par nouvellemap.blend, vérifier les liaisons, assombrir l'ambiance | Carte, lumière | Fichier identique à la carte déjà importée ; liaisons vérifiées ; lumières ×0,6, ciel ×0,4 |
 | [041](#041--chargeurs-tir-dans-la-tête-pied-de-biche-et-hache) | 2026-10-07 | 12 chargeurs dans la carte, se tirer une balle dans la tête, pied de biche et hache utilisables comme armes | Gameplay | `BuildMagazines`, `Pistol.AimedAtOwnHead` + `PlayerHealth.Kill`, `MeleeWeapon` |
+| [042](#042--menu-pause) | 2026-10-08 | Menu pause sur le bouton menu de la manette gauche, style du menu d'accueil : Reprendre, Paramètres, Menu | Menu | `PauseMenu` + base commune `AmberMenu` ; temps figé, son en pause |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -802,4 +803,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Tir dans la tête** (`Pistol.AimedAtOwnHead`, `PlayerHealth.Kill`) : si le canon est à moins de 35 cm de la tête et pointé vers elle (angle < 35°) au moment du tir, le joueur meurt (écran de fin habituel). Testé : tir devant soi et arme près du visage pointée devant = pas de mort ; canon contre la tempe = mort (PV 0).
 - **Armes de corps à corps** (`MeleeWeapon.cs`, `RoomBuilder.BuildMelee`) : le pied de biche de l'établi du bunker et la hache du stockage deviennent des objets à prendre (contour, prise par clic). Un coup compte si l'extrémité (crochet, fer) touche une zone du zombie à plus de 1,6 m/s ; une fois par coup et par zombie (0,45 s). Dégâts en part des PV de base : pied de biche tête 50 % / torse 25 % / jambes 15 % ; hache tête 100 % / torse 50 % / jambes 33 %. Son de choc et vibration de la manette. Testé : pied de biche au torse 100 → 75 PV ; hache à la tête = mort ; arme poussée lentement contre le zombie = pas de dégât.
 - Scène reconstruite (avec l'ambiance à 60 % de l'entrée 040), aucun avertissement. **Pas testé au casque** (force réelle d'un coup, prise en main des armes).
+- Sur la branche locale `test/exterieur`, rien poussé.
+
+### 042 — Menu pause
+
+**Prompt**
+
+> Créer un menu pause réglé sur le bouton menu de la manette gauche, pour le style reprend ce qui est fait pour le menu d'accueil du jeu, et les boutons c'est : Reprendre, Paramètre, Menu
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- `Assets/Scripts/PauseMenu.cs` (ajouté à la scène de jeu par `RoomBuilder`) : bouton menu (☰) de la manette gauche (Échap dans l'éditeur) pour ouvrir / fermer. Panneau ambre « BUNKER-OS // PAUSE » : REPRENDRE, PARAMÈTRES (même page que l'accueil : son, confort VR, difficulté), MENU (retour à la scène d'accueil). Rayon de la manette + gâchette, comme l'accueil.
+- Pendant la pause : temps figé (`Time.timeScale = 0` : zombies, vagues, physique), son en pause, tir, coups d'arme et clous bloqués. Le panneau apparaît devant le joueur, dans la direction regardée, et passe devant le décor et les zombies.
+- `Assets/Scripts/AmberMenu.cs` : base commune extraite de `MainMenu` (panneau, gros boutons, page Paramètres, curseurs, choix) pour que les deux menus aient exactement le même style. `MenuPointer` : le rayon ignore ce qui n'est pas un bouton (arme tenue, mur proche).
+- Corrigé au passage : le titre de la bande du haut du menu d'accueil (« BUNKER-OS // MENU », « v0.9 ») était caché par la bande (ordre d'affichage) ; il s'affiche.
+- Testé dans l'éditeur : pause (temps 0, son en pause, zombie immobile sur 120 images), rayon qui atteint REPRENDRE, PARAMÈTRES puis RETOUR, REPRENDRE (le zombie repart), MENU (scène d'accueil chargée, temps et son rétablis) ; captures. **Pas testé au casque** (bouton ☰ réel de la manette gauche).
+- Limite : changer la difficulté en pleine partie ne s'applique qu'à la partie suivante.
 - Sur la branche locale `test/exterieur`, rien poussé.

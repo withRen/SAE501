@@ -43,6 +43,7 @@ public class MeleeWeapon : MonoBehaviour
     void Update()
     {
         if (!striker) return;
+        if (PauseMenu.Paused) { lastPos = striker.position; speed = 0f; return; }   // pause : temps figé, pas de coup
         float dt = Mathf.Max(Time.deltaTime, 1e-4f);
         var p = striker.position;
         speed = Mathf.Max((p - lastPos).magnitude / dt, speed * 0.8f);   // vitesse lissée : reste « chaude » le temps du contact

@@ -85,7 +85,7 @@ public class Pistol : MonoBehaviour
 
     void OnActivate(ActivateEventArgs a)
     {
-        if (!BeltItem.InHand(grab)) return;
+        if (!BeltItem.InHand(grab) || PauseMenu.Paused) return;
         Fire(a.interactorObject);
     }
 

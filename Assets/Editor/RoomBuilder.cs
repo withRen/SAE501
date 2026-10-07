@@ -101,6 +101,7 @@ public static class RoomBuilder
         BuildZombieSetup(rig);
         BuildMusic();
 
+        new GameObject("Menu_Pause").AddComponent<PauseMenu>();          // bouton menu de la manette gauche
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
     }

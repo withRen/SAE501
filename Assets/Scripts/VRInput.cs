@@ -24,6 +24,15 @@ public static class VRInput
         return d.isValid && d.TryGetFeatureValue(CommonUsages.triggerButton, out bool b) && b;
     }
 
+    /// <summary>Bouton menu (☰) de la manette gauche ; dans l'éditeur sans casque : touche Échap.</summary>
+    public static bool LeftMenu()
+    {
+        var d = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+        if (d.isValid && d.TryGetFeatureValue(CommonUsages.menuButton, out bool b) && b) return true;
+        var k = UnityEngine.InputSystem.Keyboard.current;
+        return k != null && k.escapeKey.isPressed;
+    }
+
     public static void Haptic(XRNode hand, float amplitude = 0.25f, float duration = 0.03f)
     {
         var d = InputDevices.GetDeviceAtXRNode(hand);

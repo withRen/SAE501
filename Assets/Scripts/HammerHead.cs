@@ -26,6 +26,7 @@ public class HammerHead : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenu.Paused) { PreviousPosition = Position = transform.position; Velocity = Vector3.zero; Speed = 0f; return; }   // pause : pas de clou enfoncé
         float dt = Mathf.Max(Time.deltaTime, 1e-4f);
         PreviousPosition = Position;
         Position = transform.position;

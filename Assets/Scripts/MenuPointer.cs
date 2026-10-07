@@ -82,9 +82,17 @@ public class MenuPointer : MonoBehaviour
 
     MenuButton Cast(Ray ray, out float dist)
     {
+        // premier bouton sur le rayon : on ignore ce qui n'est pas un bouton (objet tenu en main, mur proche en jeu)
         dist = 0f;
-        if (!Physics.Raycast(ray, out var hit, maxDistance, ~0, QueryTriggerInteraction.Collide)) return null;
-        dist = hit.distance;
-        return hit.collider.GetComponentInParent<MenuButton>();
+        MenuButton best = null;
+        float bestD = float.MaxValue;
+        foreach (var hit in Physics.RaycastAll(ray, maxDistance, ~0, QueryTriggerInteraction.Collide))
+        {
+            if (hit.distance >= bestD) continue;
+            var b = hit.collider.GetComponentInParent<MenuButton>();
+            if (b) { best = b; bestD = hit.distance; }
+        }
+        if (best) dist = bestD;
+        return best;
     }
 }

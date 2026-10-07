@@ -10,25 +10,25 @@ public static class ZombieBuilder
     public const string PrefabPath = "Assets/Prefabs/Zombie.prefab";
     public const string SpawnPointsPath = "Assets/Prefabs/ZombieSpawnPoints.prefab";
 
-    // Prefab à part : les 3 points de départ des chemins NavMesh des zombies (repère de la carte, final).
-    //   bout du couloir gauche, bout du couloir droit, fenêtre Nord (cour au nord du bunker).
+    // Prefab à part : les 3 points de départ des chemins NavMesh des zombies (carte Blender, repère Unity = (-x, z, -y) de Blender).
+    //   bout nord du couloir gauche, bout nord du couloir droit, extérieur au sud du bunker (devant les deux fenêtres).
     [MenuItem("SAE501/Zombie/Reconstruire le prefab des points de départ")]
     public static GameObject BuildSpawnPoints()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
         var root = new GameObject("ZombieSpawnPoints");
         var sp = root.AddComponent<ZombieSpawnPoints>();
-        Transform P(string n, Vector3 pos)
+        Transform P(string n, Vector3 pos, Vector3 look)
         {
             var t = new GameObject(n).transform;
             t.SetParent(root.transform, false);
             t.position = pos;
-            t.rotation = Quaternion.LookRotation(Vector3.back);     // les zombies regardent vers le bunker
+            t.rotation = Quaternion.LookRotation(look);     // les zombies regardent vers le bunker
             return t;
         }
-        sp.leftCorridorEnd = P("Spawn_Couloir_Gauche", new Vector3(-4.7f, 0f, 13.3f));
-        sp.rightCorridorEnd = P("Spawn_Couloir_Droit", new Vector3(4.7f, 0f, 13.3f));
-        sp.northWindow = P("Spawn_Fenetre_Nord", new Vector3(-0.3f, 0f, 7.0f));
+        sp.leftCorridorEnd = P("Spawn_Couloir_Gauche", new Vector3(12.0f, 0f, -3.7f), Vector3.forward);    // Blender (-12, 3,7)
+        sp.rightCorridorEnd = P("Spawn_Couloir_Droit", new Vector3(-7.1f, 0f, -7.0f), Vector3.forward);    // Blender (7,1, 7)
+        sp.exterior = P("Spawn_Exterieur_Sud", new Vector3(1.85f, 0f, 17.6f), Vector3.back);               // Blender (-1,85, -17,6)
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, SpawnPointsPath);
         Object.DestroyImmediate(root);
         AssetDatabase.SaveAssets();
@@ -123,7 +123,7 @@ public static class ZombieBuilder
         }
 
         var agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
-        agent.radius = 0.3f; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
+        agent.radius = NavBuilder.AgentRadius; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
         var rb = root.AddComponent<Rigidbody>(); rb.isKinematic = true;
 
         var bone = root.AddComponent<ZombieBoneAnim>();
@@ -204,7 +204,7 @@ public static class ZombieBuilder
         Zone("Hitbox_Jambes", HitZone.Legs, lc);
 
         var agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
-        agent.radius = 0.3f; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
+        agent.radius = NavBuilder.AgentRadius; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
 
         var rb = root.AddComponent<Rigidbody>();
         rb.isKinematic = true;

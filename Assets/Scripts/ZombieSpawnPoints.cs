@@ -1,15 +1,15 @@
 using UnityEngine;
 
-// Points de départ des zombies (prefab ZombieSpawnPoints) : les deux bouts de couloirs et la fenêtre Nord.
+// Points de départ des zombies (prefab ZombieSpawnPoints) : les deux bouts de couloirs et l'extérieur sud du bunker (devant ses fenêtres).
 // Chaque point est un objet vide dont la position est le point de départ du chemin NavMesh du zombie ;
 // son orientation (Z bleu) est celle du zombie à l'apparition.
 public class ZombieSpawnPoints : MonoBehaviour
 {
     public Transform leftCorridorEnd;
     public Transform rightCorridorEnd;
-    public Transform northWindow;
+    [UnityEngine.Serialization.FormerlySerializedAs("northWindow")] public Transform exterior;
 
-    public Transform[] All => new[] { leftCorridorEnd, rightCorridorEnd, northWindow };
+    public Transform[] All => new[] { leftCorridorEnd, rightCorridorEnd, exterior };
 
     void OnDrawGizmos()
     {

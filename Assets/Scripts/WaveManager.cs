@@ -19,7 +19,7 @@ public class WaveManager : MonoBehaviour
     {
         public int zombies = 4;                                         // zombies de la vague
         public float spawnInterval = 12f;                               // secondes entre deux apparitions
-        public ZombieSpawner.Point[] points = { ZombieSpawner.Point.FenetreNord };
+        public ZombieSpawner.Point[] points = { ZombieSpawner.Point.Exterieur };
         [TextArea] public string banner;                                // annonce au début du niveau
     }
 
@@ -45,13 +45,13 @@ public class WaveManager : MonoBehaviour
 
     static LevelDef[] DefaultLevels() => new[]
     {
-        new LevelDef { zombies = 4, spawnInterval = 12f, points = new[] { ZombieSpawner.Point.FenetreNord },
+        new LevelDef { zombies = 4, spawnInterval = 12f, points = new[] { ZombieSpawner.Point.Exterieur },
             banner = "NIVEAU 1\nRestez dans le bunker : les couloirs sont verrouillés.\nObjectif : survivre, puis activer le générateur." },
-        new LevelDef { zombies = 6, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.FenetreNord, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
+        new LevelDef { zombies = 6, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 2\nCouloirs et cuisine déverrouillés." },
-        new LevelDef { zombies = 8, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.FenetreNord, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
+        new LevelDef { zombies = 8, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 3\nStockage déverrouillé." },
-        new LevelDef { zombies = 10, spawnInterval = 7f, points = new[] { ZombieSpawner.Point.FenetreNord, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
+        new LevelDef { zombies = 10, spawnInterval = 7f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 4\nGénérateur déverrouillé.\nObjectif : l'ACTIVER !" },
     };
 

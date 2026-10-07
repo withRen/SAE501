@@ -42,6 +42,7 @@ public class WaveManager : MonoBehaviour
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
     public bool Victory => phase == Phase.Victory;
+    public bool InBreak => phase == Phase.Break;           // pause entre deux vagues (PlankSupply y livre des planches)
 
     static LevelDef[] DefaultLevels() => new[]
     {

@@ -28,6 +28,7 @@ public static class RoomBuilder
 
         // Tout le bunker est construit dans le repère du fichier Blender, puis tourné de 90° à la fin
         // pour que ses 2 portes donnent à gauche et à droite (voir la carte dans docs/MAP.md).
+        benchSpots.Clear();
         bunkerRoot = new GameObject("Bunker").transform;
         mapRoot = new GameObject("Map").transform;
         env = new GameObject("Environment").transform;
@@ -72,6 +73,7 @@ public static class RoomBuilder
         MakeRoomColliders(decorRoot);
         BuildBunkerProps();
         BuildPlanks(planks);
+        BuildPlankSupply();
         BuildHammer(hammerNode);
         var feeds = BuildCameras();
         BuildMonitors(rig, cam, feeds);
@@ -496,7 +498,51 @@ public static class RoomBuilder
                 rot = flat;
             }
             MakePlank(pos, rot, p.mesh, p.mats);
+            if (i < 5) benchSpots.Add(new Pose { name = "Etabli_" + i, pos = pos, rot = rot });
         }
+    }
+
+    static readonly List<Pose> benchSpots = new List<Pose>();
+
+    // [4.5] réserve de planches : les emplacements de l'établi se remplissent tout seuls tant qu'il reste des planches en réserve
+    static void BuildPlankSupply()
+    {
+        if (benchSpots.Count == 0) return;
+        var root = new GameObject("ReserveDePlanches");
+        root.transform.SetParent(items, false);
+        var sup = root.AddComponent<PlankSupply>();
+
+        var spots = new List<Transform>();
+        var center = Vector3.zero;
+        foreach (var b in benchSpots)
+        {
+            var t = new GameObject("Spot_" + b.name).transform;
+            t.SetParent(root.transform, false);
+            t.SetPositionAndRotation(b.pos + Vector3.up * 0.01f, b.rot);
+            spots.Add(t);
+            center += b.pos;
+        }
+        center /= benchSpots.Count;
+        sup.spots = spots.ToArray();
+
+        // planche modèle (désactivée) : copiée à chaque réapparition
+        var tpl = MakePlank(benchSpots[0].pos, benchSpots[0].rot, plankMesh, plankMats);
+        tpl.name = "Planche_Modele";
+        tpl.SetActive(false);
+        sup.template = tpl.GetComponent<Plank>();
+
+        // panneau au-dessus de l'établi
+        var lg = new GameObject("Panneau_Reserve");
+        lg.transform.SetParent(root.transform, false);
+        lg.transform.position = new Vector3(center.x, 1.45f, center.z);
+        var tm = lg.AddComponent<TextMesh>();
+        tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        tm.fontSize = 64; tm.characterSize = 0.004f;
+        tm.anchor = TextAnchor.MiddleCenter; tm.alignment = TextAlignment.Center;
+        tm.color = new Color(1f, 0.85f, 0.4f);
+        tm.text = "RÉSERVE";
+        lg.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
+        sup.label = tm;
     }
 
     static void BuildHammer(Transform node)

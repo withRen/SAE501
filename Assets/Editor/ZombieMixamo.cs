@@ -44,9 +44,9 @@ public static class ZombieMixamo
         string walk = FindModel("Zombie Walk"), attack = FindModel("Zombie Attack"), death = FindModel("Zombie Death");
         if (walk == null || attack == null || death == null) return null;
 
-        SetupClip(walk, "Zombie_Walk", loop: true, canFall: false);
-        SetupClip(attack, "Zombie_Attack", loop: false, canFall: false);
-        SetupClip(death, "Zombie_Death", loop: false, canFall: true);
+        SetupClip(walk, "Zombie_Walk", loop: true);
+        SetupClip(attack, "Zombie_Attack", loop: false);
+        SetupClip(death, "Zombie_Death", loop: false);
 
         return BuildController(LoadClip(walk), LoadClip(attack), LoadClip(death));
     }
@@ -55,7 +55,7 @@ public static class ZombieMixamo
         AssetDatabase.FindAssets("t:Model").Select(AssetDatabase.GUIDToAssetPath)
             .FirstOrDefault(p => Path.GetFileNameWithoutExtension(p).Equals(fileName, StringComparison.OrdinalIgnoreCase));
 
-    static void SetupClip(string path, string clipName, bool loop, bool canFall)
+    static void SetupClip(string path, string clipName, bool loop)
     {
         var imp = (ModelImporter)AssetImporter.GetAtPath(path);
         if (imp.animationType != ModelImporterAnimationType.Human)
@@ -75,13 +75,14 @@ public static class ZombieMixamo
             // Si ce déplacement est intégré à la pose (lockRootPositionXZ = vrai), le corps s'éloigne pendant le cycle
             // puis revient d'un coup au début de la boucle (la marche « se recharge »). On l'extrait donc en root motion,
             // que l'Animator ignore (applyRootMotion = faux) : le zombie marche sur place, c'est le NavMeshAgent qui avance.
-            dirty |= c.name != clipName || c.loopTime != loop || !c.lockRootRotation || c.lockRootPositionXZ || c.lockRootHeightY != !canFall
+            dirty |= c.name != clipName || c.loopTime != loop || !c.lockRootRotation || c.lockRootPositionXZ || !c.lockRootHeightY
                      || !c.keepOriginalOrientation || !c.keepOriginalPositionY || c.keepOriginalPositionXZ;
             c.name = clipName;
             c.loopTime = loop;
             c.lockRootRotation = true;      // l'orientation reste dans la pose : le zombie ne tourne pas tout seul
             c.lockRootPositionXZ = false;   // déplacement horizontal extrait (puis ignoré) : pas de saut en fin de boucle
-            c.lockRootHeightY = !canFall;   // la mort peut descendre jusqu'au sol
+            c.lockRootHeightY = true;       // hauteur gardée dans la pose : à la mort le corps descend vraiment jusqu'au sol
+                                            // (extraite en root motion, elle serait ignorée et le corps resterait à hauteur de hanche)
             c.keepOriginalOrientation = true;
             c.keepOriginalPositionY = true;
             c.keepOriginalPositionXZ = false;

@@ -30,6 +30,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [019](#019--retours-casque-planches-lampe-rotation-arme) | 2026-10-07 | Retours casque : planches du bunker, lampe, rotation fluide, arme au-dessus du poing | Interaction | Planches sous les fenêtres, objets qui ne traversent plus le sol, rotation fluide, accroche dans le poing |
 | [020](#020--pause-plus-longue-entre-les-vagues) | 2026-10-07 | Plus de temps entre les vagues | Gameplay | Pause 20 → 35 s |
 | [021](#021--musiques-de-fond-et-sons-du-pistolet) | 2026-10-07 | Deux musiques de fond en alternance, sons du pistolet (tir, rechargement), clic à vide | Audio | MusicPlayer, sons du pistolet, clic de culasse vide |
+| [022](#022--commit-propre-des-packs-dassets) | 2026-10-07 | Commiter proprement dans main | Dépôt | 3 commits : pack pistolet, pack zombie, NavMesh ; bruit de régénération laissé de côté |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -471,3 +472,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Bug trouvé en vérifiant** : la première version démarrait la piste 1 avec `PlayScheduled`. Le projet a « Enable Output Suspension » : sans son, Unity coupe l'audio et fige son horloge, donc rien ne démarrait. Corrigé (premier `Play()` normal, les suivantes programmées). À l'origine de plusieurs « blocages » constatés : l'éditeur gelait aussi pendant un « Build And Run » lancé à 11 h 46, et l'horloge audio de l'éditeur est restée bloquée jusqu'à son redémarrage.
 - **Vérifié dans l'éditeur (vraies pistes)** : piste 1 → piste 2 à 124 s, piste 2 → piste 1 à 240 s, sans blanc ; durées de lecture mesurées : tir 2,02 s, rechargement 1,00 s, clic 0,12 s. **Non écouté** à l'oreille ni au casque (volume à régler).
 - Pages de wiki : Musique (nouvelle), Pistolet (section Sons).
+
+---
+
+### 022 — Commit propre des packs d'assets
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Dépôt |
+| **Statut** | Fait |
+
+**Prompt**
+
+> commit ça dans le main proprement déjà
+
+**Résultat**
+
+- Tout le travail de code était déjà commité ; restaient les **deux packs Asset Store** (`Assets/Nokobot`, `Assets/NewPunch`) et le NavMesh régénéré. Sans les packs, `main` était cassé pour les coéquipiers (pistolet et zombie introuvables).
+- **3 commits séparés** dans `main` : pack Modern Guns (9 Mo), pack Free Shirtless Zombie (92 Mo, textures et modèles en Git LFS : 28 fichiers), NavMesh de la scène.
+- **Laissés de côté volontairement** (bruit local, pas du travail) : 22 matériaux / render textures de `Assets/Generated` réécrits par Unity (il retire un bloc de version interne à chaque génération), `Zombie_Mixamo.controller` (même cause), `DevAgentSettings.asset` (adresse IP locale du débogueur Meta), suppression de `RuntimeActionBindings.json` (régénéré par Unity).
+- Le dépôt reste **privé** : les packs sont sous licence Asset Store.

@@ -81,3 +81,14 @@ Ces assets ne correspondent à aucune mécanique du GDD pour l'instant. Ils sont
 5. Les gros fichiers (`.fbx`, `.png`, `.tga`, `.psd`) passent déjà par Git LFS (voir `.gitattributes`).
 6. **Licence** : le dépôt doit rester **privé**. Les assets de l'Asset Store ne doivent pas être publiés en clair. Chaque membre doit aussi pouvoir télécharger l'asset avec son compte Unity (les assets gratuits sont à ajouter à chaque compte).
 7. Cocher le statut ✅ dans ce fichier à chaque import, avec le prix et la licence.
+
+## Packs dans le dépôt (état au 7 octobre 2026)
+
+Les packs utilisés sont **commités dans le dépôt** pour que tout le groupe ouvre le même projet sans rien importer. Les textures et modèles sont en **Git LFS**.
+
+| Pack | Dossier | Taille | Utilisé pour |
+|---|---|---|---|
+| Modern Guns : Handgun (Nokobot) | `Assets/Nokobot` | 9 Mo | Pistolet, chargeur, douille, flash (matériaux URP du pack inclus) |
+| Free Shirtless Zombie (NewPunch) | `Assets/NewPunch` | 92 Mo | Modèle des zombies |
+
+⚠️ Ce sont des assets de l'Asset Store : le dépôt doit rester **privé**, et ils ne sont à publier nulle part en clair (README, release, démo en ligne).

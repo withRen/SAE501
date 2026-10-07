@@ -37,8 +37,13 @@ MonoBehaviour:
     - line: '|   targetDevice: 2'
     - line: '|   useOnDemandResources: 0'
     - line: '|   accelerometerFrequency: 60'
+<<<<<<< HEAD
     - line: '|   companyName: MMI3'
     - line: '|   productName: VRInteraction'
+=======
+    - line: '|   companyName: DefaultCompany'
+    - line: '|   productName: The Last Escapor'
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     - line: '|   defaultCursor: {instanceID: 0}'
     - line: '|   cursorHotspot: {x: 0, y: 0}'
     - line: '|   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}'
@@ -176,8 +181,12 @@ MonoBehaviour:
     - line: '|   tvOSBundleVersion: 1.0'
     - line: '|   bundleVersion: 0.1.0'
     - line: '|   preloadedAssets:'
+<<<<<<< HEAD
     - line: '|   - {fileID: 11400000, guid: 75b66d6782e7244be9aa1b94c3c8fceb, type: 2}'
     - line: '|   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}'
+=======
+    - line: '|   - {fileID: 11400000, guid: 55dc0b157825f44e18d97970954bbe8e, type: 2}'
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     - line: '|   metroInputSource: 0'
     - line: '|   wsaTransparentSwapchain: 0'
     - line: '|   xboxOneDisableKinectGpuReservation: 1'
@@ -197,8 +206,13 @@ MonoBehaviour:
     - line: '|   androidMaxAspectRatio: 2.4'
     - line: '|   androidMinAspectRatio: 1'
     - line: '|   applicationIdentifier:'
+<<<<<<< HEAD
     - line: '|     Android: com.mmi3.vrinteraction'
     - line: '|     Standalone: com.mmi3.vrinteraction'
+=======
+    - line: '|     Android: com.sae501.vr'
+    - line: '|     Standalone: com.Unity-Technologies.com.unity.template.urp-blank'
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     - line: '|     iPhone: com.Unity-Technologies.com.unity.template.urp-blank'
     - line: '|   buildNumber:'
     - line: '|     Standalone: 0'
@@ -212,7 +226,11 @@ MonoBehaviour:
     - line: '|   AndroidPreferredInstallLocation: 0'
     - line: '|   AndroidPreferredDataLocation: 1'
     - line: '|   aotOptions: '
+<<<<<<< HEAD
     - line: '|   stripEngineCode: 0'
+=======
+    - line: '|   stripEngineCode: 1'
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     - line: '|   iPhoneStrippingLevel: 0'
     - line: '|   iPhoneScriptCallOptimization: 0'
     - line: '|   ForceInternetPermission: 0'
@@ -498,9 +516,19 @@ MonoBehaviour:
     - line: '|   m_BuildTargetBatching: []'
     - line: '|   m_BuildTargetShaderSettings: []'
     - line: '|   m_BuildTargetGraphicsJobs:'
+<<<<<<< HEAD
     - line: '|   - m_BuildTarget: AndroidPlayer'
     - line: '|     m_GraphicsJobs: 1'
     - line: '|   m_BuildTargetGraphicsJobMode:'
+=======
+    - line: '|   - m_BuildTarget: MacStandaloneSupport'
+    - line: '|     m_GraphicsJobs: 1'
+    - line: '|   - m_BuildTarget: AndroidPlayer'
+    - line: '|     m_GraphicsJobs: 1'
+    - line: '|   m_BuildTargetGraphicsJobMode:'
+    - line: '|   - m_BuildTarget: MacStandaloneSupport'
+    - line: '|     m_GraphicsJobMode: 1'
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     - line: '|   - m_BuildTarget: AndroidPlayer'
     - line: '|     m_GraphicsJobMode: 1'
     - line: '|   m_BuildTargetGraphicsAPIs:'
@@ -508,7 +536,11 @@ MonoBehaviour:
     - line: '|     m_APIs: 10000000i'
     - line: '|     m_Automatic: 1'
     - line: '|   - m_BuildTarget: AndroidPlayer'
+<<<<<<< HEAD
     - line: '|     m_APIs: 15000000i'
+=======
+    - line: '|     m_APIs: 150000000b000000i'
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     - line: '|     m_Automatic: 0'
     - line: '|   - m_BuildTarget: WindowsStandaloneSupport'
     - line: '|     m_APIs: 0200000012000000i'

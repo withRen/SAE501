@@ -19,13 +19,13 @@ public class Opening : MonoBehaviour
     void OnEnable() => All.Add(this);
     void OnDisable() => All.Remove(this);
 
-    public int PlankCount => slots.Count(s => s.Plank != null && (s.Plank.state == Plank.State.Nailed || s.Plank.state == Plank.State.Fixed));
+    public int PlankCount => slots.Count(s => s.Plank != null && s.Plank.InSlot);      // posées (clouées ou non)
     public bool IsBarricaded => PlankCount > 0;
 
     // planche à arracher : la plus haute
     public Plank NextPlankToBreak()
     {
-        return slots.Where(s => s.Plank != null && (s.Plank.state == Plank.State.Nailed || s.Plank.state == Plank.State.Fixed))
+        return slots.Where(s => s.Plank != null && s.Plank.InSlot)
                     .OrderByDescending(s => s.transform.position.y)
                     .Select(s => s.Plank)
                     .FirstOrDefault();

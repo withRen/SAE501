@@ -3,36 +3,35 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Cycle d'une planche :
-//   Free    : planche normale qu'on attrape (une seule à la fois)
-//   Snapped : tenue contre une ouverture, elle se cale toute seule ; il faut la TENIR. Clous visibles avec le marteau.
-//             Lâchée sans clou enfoncé -> elle tombe. Lâchée avec au moins 1 clou -> Nailed.
-//   Nailed  : 1 clou enfoncé : elle PEND par ce clou (sauf si on la tient avec l'autre main). 2 clous -> Fixed.
-//   Fixed   : solidement clouée.
+//   Free    : planche normale qu'on attrape (une seule à la fois). Celles du râtelier restent accrochées tant qu'on ne les prend pas.
+//   Snapped : tenue contre une ouverture, elle se cale toute seule sur l'emplacement.
+//   Placed  : lâchée sur l'emplacement, elle y reste (pas besoin de la tenir). Sans clou : un coup de zombie la fait tomber.
+//             On peut encore la reprendre tant qu'aucun clou n'est enfoncé.
+//   Nailed  : au moins un clou enfoncé au marteau : elle ne se reprend plus, un zombie doit frapper 3 fois pour l'arracher.
 public class Plank : MonoBehaviour
 {
-    public enum State { Free, Snapped, Nailed, Fixed }
+    public enum State { Free, Snapped, Placed, Nailed }
 
     public static Plank Held;
     public static readonly List<Plank> All = new List<Plank>();
 
-    public XRSimpleInteractable holdZone;
     public Nail[] nails;
     public float unsnapRadius = 0.35f;     // si la main s'éloigne de plus de 35 cm de l'ouverture, la planche se décale
+    public int hitsWhenNailed = 3;         // coups de zombie pour arracher une planche clouée (sans clou : 1 seul)
+    public bool stored;                    // posée sur le râtelier : immobile jusqu'à ce qu'on la prenne
     public BarricadeSlot startSlot;        // si renseigné : la planche est déjà clouée sur cet emplacement au début de la partie
 
     public State state { get; private set; }
-    public bool Placed => state != State.Free;
-
-    // vrai si la planche est maintenue en place par une main (la main qui la tient, ou l'autre main via la zone de maintien)
-    public bool IsHeldByHand =>
-        (state == State.Snapped && grab.isSelected)
-        || (holdZone && holdZone.gameObject.activeSelf && holdZone.isSelected);
+    public bool InSlot => state == State.Placed || state == State.Nailed;     // barricade en place (pas tenue en main)
+    public bool CanBeNailed => state != State.Free;                           // clous accessibles au marteau
+    public int Hits { get; private set; }
 
     XRGrabInteractable grab;
     Rigidbody rb;
     BarricadeSlot slot;
-    float angle, vel;
-    Vector3 pivot;
+    float push, pushVel;                   // recul de la planche quand un zombie frappe (ressort)
+    AudioSource src;
+    static AudioClip thud;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Held = null; All.Clear(); }
@@ -45,44 +44,58 @@ public class Plank : MonoBehaviour
         grab.selectEntered.AddListener(_ => OnGrab());
         grab.selectExited.AddListener(_ => OnRelease());
         foreach (var n in nails) { n.plank = this; n.Refresh(false); }
-        holdZone.gameObject.SetActive(false);
+        src = gameObject.AddComponent<AudioSource>();
+        src.spatialBlend = 1f;
+        if (!thud) thud = ProcAudio.Hit();
     }
 
     void Start()
     {
         if (startSlot != null) PlaceFixed(startSlot);
+        else if (stored) rb.isKinematic = true;
     }
 
     void OnDestroy() => All.Remove(this);
 
+    int DrivenCount()
+    {
+        int c = 0;
+        foreach (var n in nails) if (n.Driven) c++;
+        return c;
+    }
+
     // planche déjà clouée (état de départ d'une barricade)
     public void PlaceFixed(BarricadeSlot s)
     {
-        slot = s;
-        s.Occupied = true;
-        s.Plank = this;
+        TakeSlot(s);
         foreach (var n in nails) n.SetDriven();
-        state = State.Fixed;
-        grab.enabled = false;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        rb.isKinematic = true;
-        transform.SetPositionAndRotation(s.transform.position, s.transform.rotation);
-        holdZone.gameObject.SetActive(true);
-        angle = vel = 0f;
-        pivot = s.transform.position;
+        Settle();
+    }
+
+    // un coup de zombie : sans clou elle tombe tout de suite, clouée il faut hitsWhenNailed coups. Renvoie vrai si elle est tombée.
+    public bool TakeHit(Vector3 pushDirection)
+    {
+        if (!InSlot) return true;
+        Hits++;
+        src.pitch = Random.Range(0.55f, 0.7f);
+        src.PlayOneShot(thud, 0.9f);
+        pushVel += 0.9f;                                   // la planche encaisse : petit recul vers l'intérieur
+        if (state == State.Placed || Hits >= hitsWhenNailed) { Break(pushDirection); return true; }
+        return false;
     }
 
     // arrachée par un zombie : la planche se détache de l'ouverture et tombe (on peut la ramasser et la reposer)
     public void Break(Vector3 pushDirection)
     {
-        if (state != State.Nailed && state != State.Fixed) return;
-        if (slot) { slot.Occupied = false; slot.Plank = null; }
-        slot = null;
+        if (!InSlot) return;
+        ReleaseSlot();
         state = State.Free;
+        Hits = 0;
+        stored = false;
+        push = pushVel = 0f;
         foreach (var n in nails) n.ResetHits();
-        holdZone.gameObject.SetActive(false);
         grab.enabled = true;
+        grab.trackPosition = grab.trackRotation = true;
         rb.isKinematic = false;
         rb.AddForce(pushDirection.normalized * 3f + Vector3.up * 1.5f, ForceMode.Impulse);
         rb.AddTorque(Random.onUnitSphere * 2f, ForceMode.Impulse);
@@ -93,19 +106,14 @@ public class Plank : MonoBehaviour
     {
         Held = this;
         foreach (var p in All) if (p != this && p.state == State.Free) p.grab.enabled = false;
+        if (state == State.Placed) { state = State.Snapped; grab.trackPosition = grab.trackRotation = false; }   // reprise sur l'emplacement
     }
 
     void OnRelease()
     {
         if (Held == this) Held = null;
         foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
-    }
-
-    int DrivenCount()
-    {
-        int c = 0;
-        foreach (var n in nails) if (n.Driven) c++;
-        return c;
+        if (state == State.Free) { stored = false; rb.isKinematic = false; }      // sortie du râtelier : elle tombe normalement
     }
 
     void Update()
@@ -119,11 +127,7 @@ public class Plank : MonoBehaviour
                 break;
 
             case State.Snapped:
-                if (!grab.isSelected)
-                {
-                    // lâchée : sans clou elle tombe, avec au moins un clou elle reste accrochée
-                    if (DrivenCount() >= 1) EnterNailed(); else Unsnap();
-                }
+                if (!grab.isSelected) Settle();            // lâchée sur l'emplacement : elle reste
                 else
                 {
                     var att = grab.firstInteractorSelecting.GetAttachTransform(grab);
@@ -131,13 +135,29 @@ public class Plank : MonoBehaviour
                 }
                 break;
 
-            case State.Nailed:
-                if (DrivenCount() >= 2) state = State.Fixed;
+            case State.Placed:
+                if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
                 break;
         }
 
-        bool show = Hammer.Held && (state == State.Snapped || state == State.Nailed);
+        bool show = Hammer.Held && CanBeNailed;
         foreach (var n in nails) n.Refresh(show);
+    }
+
+    void TakeSlot(BarricadeSlot s)
+    {
+        slot = s;
+        s.Occupied = true;
+        s.Plank = this;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
+    }
+
+    void ReleaseSlot()
+    {
+        if (slot) { slot.Occupied = false; slot.Plank = null; }
+        slot = null;
     }
 
     void Snap(BarricadeSlot s)
@@ -148,14 +168,24 @@ public class Plank : MonoBehaviour
         state = State.Snapped;
         grab.trackPosition = false;     // la planche ne suit plus la main : elle reste calée sur l'ouverture
         grab.trackRotation = false;
-        angle = vel = 0f;
-        pivot = s.transform.position;
+    }
+
+    // posée sur l'emplacement, sans main : immobile ; clouée si un clou est déjà enfoncé
+    void Settle()
+    {
+        if (!slot) return;
+        TakeSlot(slot);
+        grab.trackPosition = grab.trackRotation = true;
+        Hits = 0;
+        stored = false;
+        if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
+        else { state = State.Placed; grab.enabled = true; }
+        foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
     }
 
     void Unsnap()
     {
-        if (slot) { slot.Occupied = false; slot.Plank = null; }
-        slot = null;
+        ReleaseSlot();
         state = State.Free;
         grab.trackPosition = true;
         grab.trackRotation = true;
@@ -163,49 +193,14 @@ public class Plank : MonoBehaviour
         if (!grab.isSelected) { rb.isKinematic = false; rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }   // elle tombe
     }
 
-    void EnterNailed()
-    {
-        state = State.Nailed;
-        grab.trackPosition = true;
-        grab.trackRotation = true;
-        grab.enabled = false;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        rb.isKinematic = true;
-        holdZone.gameObject.SetActive(true);
-        foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
-    }
-
     void LateUpdate()
     {
-        if (state == State.Snapped)
-        {
-            transform.SetPositionAndRotation(slot.transform.position, slot.transform.rotation);
-            return;
-        }
-        if (state != State.Nailed && state != State.Fixed) return;
-
-        Vector3 slotPos = slot.transform.position;
-        Quaternion slotRot = slot.transform.rotation;
-        Vector3 axis = slotRot * Vector3.forward;
-
-        int driven = DrivenCount();
-        Nail dn = null;
-        foreach (var n in nails) if (n.Driven) dn = n;
-
-        float target = 0f;
-        if (driven == 1)
-        {
-            pivot = slotPos + slotRot * new Vector3(dn.transform.localPosition.x, 0f, 0f);
-            // un seul clou : la planche pend par ce clou (sauf si on la tient)
-            if (!IsHeldByHand) target = Vector3.SignedAngle(slotPos - pivot, Vector3.down, axis);
-        }
-
+        if (state == State.Free || !slot) return;
+        // recul quand un zombie frappe, puis retour en place (ressort amorti)
         float dt = Time.deltaTime;
-        vel += (-40f * (angle - target) - 2.5f * vel) * dt;
-        angle += vel * dt;
-
-        var rot = Quaternion.AngleAxis(angle, axis);
-        transform.SetPositionAndRotation(pivot + rot * (slotPos - pivot), rot * slotRot);
+        pushVel += (-120f * push - 9f * pushVel) * dt;
+        push += pushVel * dt;
+        var t = slot.transform;
+        transform.SetPositionAndRotation(t.position + t.forward * push, t.rotation);
     }
 }

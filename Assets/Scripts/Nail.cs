@@ -65,7 +65,7 @@ public class Nail : MonoBehaviour
 
         if (!visual.activeSelf || Driven || Time.time - lastHit < 0.25f) return;
         var head = HammerHead.Instance;
-        if (head == null || !plank.IsHeldByHand || head.Speed < minSpeed) return;
+        if (head == null || !plank.CanBeNailed || head.Speed < minSpeed) return;     // planche posée sur l'ouverture : pas besoin de la tenir
 
         // tête du clou, en monde
         Vector3 tip = transform.TransformPoint(0f, 0f, z + 0.04f);

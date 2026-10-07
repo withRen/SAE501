@@ -4,7 +4,7 @@ using UnityEngine.AI;
 
 // Comportement d'un zombie (GDD : 4 états, très prévisibles) :
 //   Marche  : va vers l'ouverture accessible la plus proche (chemin NavMesh)
-//   Casse   : arrache une planche toutes les 3 secondes tant qu'il en reste
+//   Casse   : frappe les planches (un coup toutes les 2 s) : planche posée sans clou = 1 coup, clouée = 3 coups
 //   Attaque : ouverture libre -> entre dans le bunker et frappe le joueur
 //   Mort    : tête = mort immédiate ; torse (33 %) et jambes (20 %) retirent une part des PV (voir ZombieLevels)
 [RequireComponent(typeof(NavMeshAgent))]
@@ -18,7 +18,7 @@ public class Zombie : MonoBehaviour
     public float slowDuration = 1.8f;
 
     [Header("Barricades")]
-    public float breakInterval = 3f;        // une planche toutes les 3 s (GDD)
+    public float breakInterval = 2f;        // un coup toutes les 2 s : planche posée sans clou = 1 coup, planche clouée = 3 coups
 
     [Header("Attaque")]
     public float attackRange = 1.15f;
@@ -126,7 +126,7 @@ public class Zombie : MonoBehaviour
         }
         if (pendingPlank != null && Time.time >= hitAt)
         {
-            pendingPlank.Break((target.approachPoint.position - target.transform.position).normalized * -1f);   // la planche part vers l'intérieur
+            pendingPlank.TakeHit((target.approachPoint.position - target.transform.position).normalized * -1f);   // si elle cède, elle part vers l'intérieur
             pendingPlank = null;
             if (!target.IsBarricaded) StartEntering();
         }

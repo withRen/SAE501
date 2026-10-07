@@ -111,11 +111,28 @@ public class Pistol : MonoBehaviour
         }
         Haptic(interactor, hapticAmplitude, hapticDuration);
 
+        if (AimedAtOwnHead()) { if (PlayerHealth.Instance) PlayerHealth.Instance.Kill(); return; }
+
         if (Physics.Raycast(muzzle.position, muzzle.forward, out var hit, range, ~0, QueryTriggerInteraction.Ignore))
         {
             if (hit.rigidbody) hit.rigidbody.AddForceAtPosition(muzzle.forward * 6f, hit.point, ForceMode.Impulse);
             hit.collider.SendMessage("OnShot", hit, SendMessageOptions.DontRequireReceiver);
         }
+    }
+
+    // canon collé contre la tête du joueur et pointé vers elle (la tête n'a pas de collider : test de distance et d'angle)
+    [Header("Tir dans la tête")]
+    public float headRadius = 0.35f;        // distance max canon -> centre de la tête
+    public float headAngle = 35f;           // angle max entre le canon et la direction de la tête
+
+    public bool AimedAtOwnHead()
+    {
+        var cam = Camera.main;
+        if (!cam || !muzzle) return false;
+        var toHead = cam.transform.position - muzzle.position;
+        float d = toHead.magnitude;
+        if (d > headRadius) return false;
+        return d < 0.06f || Vector3.Angle(muzzle.forward, toHead) < headAngle;
     }
 
     // éjecte une douille vers la droite et le haut

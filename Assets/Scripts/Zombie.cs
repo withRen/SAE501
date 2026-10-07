@@ -7,6 +7,7 @@ using UnityEngine.AI;
 //   Casse   : frappe les planches (un coup toutes les 2 s) : planche posée sans clou = 1 coup, clouée = 3 coups
 //   Attaque : ouverture libre -> entre dans le bunker et frappe le joueur
 //   Mort    : tête = mort immédiate ; torse (33 %) et jambes (20 %) retirent une part des PV (voir ZombieLevels)
+//             armes de corps à corps (MeleeWeapon) : dégâts propres à chaque arme
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {
@@ -192,6 +193,15 @@ public class Zombie : MonoBehaviour
         Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
         if (Health <= 0.01f) { Health = 0f; Die(); return; }
         slowUntil = Time.time + (zone == HitZone.Legs ? slowDuration * 1.5f : slowDuration);     // touché : ralenti (plus longtemps aux jambes)
+    }
+
+    // appelé par une arme de corps à corps (MeleeWeapon) : retire une part des PV de base, ralentit et fait reculer un peu
+    public void OnMeleeHit(HitZone zone, float fractionOfBase)
+    {
+        if (Dead) return;
+        Health -= ZombieLevels.BaseHealth * fractionOfBase;
+        if (Health <= 0.01f) { Health = 0f; Die(); return; }
+        slowUntil = Time.time + slowDuration;
     }
 
     public void Die()

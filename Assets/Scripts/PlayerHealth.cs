@@ -80,6 +80,13 @@ public class PlayerHealth : MonoBehaviour
         if (Health <= 0f) Died?.Invoke();
     }
 
+    // tir dans la tête (Pistol) : mort immédiate
+    public void Kill()
+    {
+        if (IsDead) return;
+        TakeDamage(Health);
+    }
+
     // À appeler au début de chaque vague (WaveManager) : remet le quota de régénération à zéro.
     public void NewWave()
     {

@@ -49,6 +49,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [038](#038--test-du-décor-extérieur-dalban-branche-features_exterieur) | 2026-10-07 | Ajouter pour test le décor extérieur de la branche `features_exterieur` | Décor, revue | Branche locale `test/exterieur` : décor extrait en prefab, placé par le générateur, ciel en skybox, brouillard 0,03 |
 | [039](#039--sphère-de-ciel-dalban-seule) | 2026-10-07 | Retirer la forêt, garder seulement la sphère de ciel d'Alban | Décor | Forêt, montagnes, pins et lune retirés ; sphère de ciel sans brouillard qui suit la tête ; brouillard d'origine (0,12) |
 | [040](#040--nouvelle-carte-liaisons-ambiance-plus-sombre) | 2026-10-07 | Remplacer la carte par nouvellemap.blend, vérifier les liaisons, assombrir l'ambiance | Carte, lumière | Fichier identique à la carte déjà importée ; liaisons vérifiées ; lumières ×0,6, ciel ×0,4 |
+| [041](#041--chargeurs-tir-dans-la-tête-pied-de-biche-et-hache) | 2026-10-07 | 12 chargeurs dans la carte, se tirer une balle dans la tête, pied de biche et hache utilisables comme armes | Gameplay | `BuildMagazines`, `Pistol.AimedAtOwnHead` + `PlayerHealth.Kill`, `MeleeWeapon` |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -787,4 +788,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Liaisons vérifiées** (noms que le générateur utilise) : `Generator`, `Generator_Switch`, `Bunker_Hammer_Workbench`, `Plank_01`, `Light_Bunker_Workbench`, `Light_GeneratorBulb`, objets retirés (`Corridor_Door`, `Door_Boarded_Planks`, `Hammer`, `Stockage_Hammer`), 6 `Bunker_PlankSlot_*`, 17 planches, 4 caméras CCTV ayant chacune leur écran. Reconstruction de la scène sans aucun avertissement.
 - **Ambiance** (`RoomBuilder.cs`) : `LightLevel = 0.6` (toutes les lumières de la carte à 60 %) et `SkyLevel = 0.4` (ciel vu par les fenêtres et le toit). Mesuré à 0,7 : image ~12 % plus sombre, d'où le passage à 0,6.
 - La connexion MCP avec Unity s'est coupée avant la reconstruction à 0,6 : **scène à reconstruire** (SAE501 → Build VR Scene). **Pas testé au casque.**
+- Sur la branche locale `test/exterieur`, rien poussé.
+
+### 041 — Chargeurs, tir dans la tête, pied de biche et hache
+
+**Prompt**
+
+> Rajoute 2 chargeurs posés dans le bunker (la salle principale) un à côté des écrans des caméras et l'autre au niveau de la table. Rajoute également 2 chargeurs dans la cuisine, 3 dans la salle du générateur et 5 dans la salle de stockage. Rend également possible au joueur de se suicider (se tirer une balle dans la tête). Rend la crowbar (pied de biche) qui est posé dans le bunker utilisable comme une arme pour taper les zombis. Pareil pour la hache qui se trouve dans la salle de stockage
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- **Chargeurs** (`RoomBuilder.BuildMagazines`) : 12 chargeurs pleins (12 balles) couchés sur des meubles de la carte : bunker (pupitre des caméras, établi), cuisine (plan de travail ×2), générateur (établi ×2, caisse), stockage (établi ×2, 3 caisses). Vérifié en mode Play : les 12 restent sur leur surface (les 2 de la cuisine tombaient au début : plan de travail orienté autrement, positions corrigées).
+- **Tir dans la tête** (`Pistol.AimedAtOwnHead`, `PlayerHealth.Kill`) : si le canon est à moins de 35 cm de la tête et pointé vers elle (angle < 35°) au moment du tir, le joueur meurt (écran de fin habituel). Testé : tir devant soi et arme près du visage pointée devant = pas de mort ; canon contre la tempe = mort (PV 0).
+- **Armes de corps à corps** (`MeleeWeapon.cs`, `RoomBuilder.BuildMelee`) : le pied de biche de l'établi du bunker et la hache du stockage deviennent des objets à prendre (contour, prise par clic). Un coup compte si l'extrémité (crochet, fer) touche une zone du zombie à plus de 1,6 m/s ; une fois par coup et par zombie (0,45 s). Dégâts en part des PV de base : pied de biche tête 50 % / torse 25 % / jambes 15 % ; hache tête 100 % / torse 50 % / jambes 33 %. Son de choc et vibration de la manette. Testé : pied de biche au torse 100 → 75 PV ; hache à la tête = mort ; arme poussée lentement contre le zombie = pas de dégât.
+- Scène reconstruite (avec l'ambiance à 60 % de l'entrée 040), aucun avertissement. **Pas testé au casque** (force réelle d'un coup, prise en main des armes).
 - Sur la branche locale `test/exterieur`, rien poussé.

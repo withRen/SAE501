@@ -80,14 +80,20 @@ public static class RoomBuilder
         // porte ouverte du bunker (elle gênait la barricade), marteaux de la cuisine et du stockage (un seul vrai marteau, dans le bunker)
         RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks");
         var hammerNode = Find(roomRoot.transform, "Bunker_Hammer_Workbench");
+        var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
+        var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
         BuildExterior();
         BuildPlanks(planks);
         BuildHammer(hammerNode);
+        // armes de corps à corps : dégâts en part des PV de base du zombie (tête, torse, jambes)
+        BuildMelee(crowbarNode, "PiedDeBiche", 0.5f, 0.25f, 0.15f);
+        BuildMelee(axeNode, "Hache", 1f, 0.5f, 1f / 3f);
         BuildMonitors(rig, cam, BuildCameras());
         BuildBatteries();
+        BuildMagazines();
         BuildBelt(rig, cam);
         BuildBunkerOpenings(slots);
         BuildGatesAndGenerator();
@@ -698,6 +704,99 @@ public static class RoomBuilder
         hammerGrab = MakeGrab(h, attach);
         h.AddComponent<BeltItem>().type = BeltItemType.Hammer;
         h.AddComponent<Hammer>();
+    }
+
+    // Arme de corps à corps à partir d'un objet de la carte (pied de biche, hache) : même analyse que le marteau,
+    // l'axe le plus long devient Y, le bout le plus large (crochet, fer de la hache) est l'extrémité qui frappe.
+    static void BuildMelee(Transform node, string name, float headDmg, float torsoDmg, float legsDmg)
+    {
+        if (node == null) { Debug.LogWarning("Arme introuvable dans la carte : " + name); return; }
+        var mesh = node.GetComponent<MeshFilter>().sharedMesh;
+        var mats = node.GetComponent<Renderer>().sharedMaterials;
+        var rot = node.rotation;
+        var pos = node.TransformPoint(mesh.bounds.center);       // centre du maillage dans la carte
+        Object.DestroyImmediate(node.gameObject);
+
+        var v = mesh.vertices; var b = mesh.bounds;
+        int ax = b.size.x >= b.size.y && b.size.x >= b.size.z ? 0 : (b.size.y >= b.size.z ? 1 : 2);
+        float len = b.size[ax], lo = b.min[ax], hi = b.max[ax];
+        Vector3 Slice(bool high, out Vector3 ext)
+        {
+            Vector3 mn = Vector3.one * 1e9f, mx = -Vector3.one * 1e9f, sum = Vector3.zero; int n = 0;
+            foreach (var p in v)
+            {
+                if (high ? p[ax] <= hi - 0.25f * len : p[ax] >= lo + 0.25f * len) continue;
+                mn = Vector3.Min(mn, p); mx = Vector3.Max(mx, p); sum += p; n++;
+            }
+            ext = mx - mn;
+            return sum / Mathf.Max(1, n);
+        }
+        var cHi = Slice(true, out var eHi); var cLo = Slice(false, out var eLo);
+        float crossHi = eHi.x * eHi.y * eHi.z / Mathf.Max(1e-6f, eHi[ax]), crossLo = eLo.x * eLo.y * eLo.z / Mathf.Max(1e-6f, eLo[ax]);
+        bool headHigh = crossHi >= crossLo;
+        Vector3 headC = headHigh ? cHi : cLo, headExt = headHigh ? eHi : eLo;
+        Vector3 axisDir = Vector3.zero; axisDir[ax] = headHigh ? 1f : -1f;
+        var q = Quaternion.FromToRotation(axisDir, Vector3.up);
+
+        var w = new GameObject(name);
+        w.transform.SetParent(items, false);
+        // posée comme dans la carte (le maillage garde son orientation), un peu au-dessus de la surface
+        w.transform.SetPositionAndRotation(pos + Vector3.up * 0.03f, rot * Quaternion.Inverse(q));
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(w.transform, false);
+        vis.transform.localRotation = q;
+        vis.transform.localPosition = -(q * b.center);
+        vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+        vis.AddComponent<MeshRenderer>().sharedMaterials = mats;
+
+        var hc = q * headC + vis.transform.localPosition;
+        var qe = q * headExt;
+        var hs = new Vector3(Mathf.Abs(qe.x), Mathf.Abs(qe.y), Mathf.Abs(qe.z));
+        var striker = new GameObject("Extremite");
+        striker.transform.SetParent(w.transform, false);
+        striker.transform.localPosition = hc;
+        striker.AddComponent<BoxCollider>().size = hs + Vector3.one * 0.01f;
+
+        var handle = new GameObject("Manche");
+        handle.transform.SetParent(w.transform, false);
+        handle.AddComponent<BoxCollider>().size = new Vector3(0.035f, len, 0.035f);
+
+        var attach = new GameObject("Attach").transform;
+        attach.SetParent(w.transform, false);
+        attach.localPosition = new Vector3(0f, -len * 0.3f, 0f);       // prise vers le bout du manche
+
+        var rb = w.AddComponent<Rigidbody>();
+        rb.mass = 1.2f;
+        MakeGrab(w, attach);
+        var mw = w.AddComponent<MeleeWeapon>();
+        mw.striker = striker.transform;
+        mw.strikerSize = hs + new Vector3(0.06f, 0.06f, 0.06f);         // zone de frappe un peu plus large que le fer
+        mw.headDamage = headDmg; mw.torsoDamage = torsoDmg; mw.legsDamage = legsDmg;
+    }
+
+    // chargeurs pleins posés dans la carte (coordonnées Blender : x, y, hauteur de la surface)
+    static void BuildMagazines()
+    {
+        var spots = new (float x, float y, float z, float yaw, string where)[]
+        {
+            (-1.05f, -7.4f, 0.79f, 20f,  "bunker : pupitre des caméras, à gauche des écrans"),
+            (-1.85f, -12.45f, 0.9f, 75f, "bunker : établi (table)"),
+            (-18.4f, -2.1f, 0.9f, 10f,   "cuisine : plan de travail"),
+            (-20.7f, -2.15f, 0.9f, 100f, "cuisine : plan de travail"),
+            (-17.45f, 0.8f, 0.905f, 30f, "générateur : établi"),
+            (-16.6f, 0.75f, 0.905f, 120f,"générateur : établi"),
+            (-19.1f, 0.9f, 0.6f, 60f,    "générateur : caisse"),
+            (12.9f, 6.35f, 0.9f, 15f,    "stockage : établi"),
+            (14.2f, 6.9f, 0.9f, 140f,    "stockage : établi"),
+            (15.87f, 8.15f, 1.005f, 70f, "stockage : caisse sur la palette"),
+            (13.4f, 4.55f, 0.565f, 35f,  "stockage : caisse près des casiers"),
+            (11.85f, 7.45f, 0.465f, 95f, "stockage : caisse militaire"),
+        };
+        foreach (var s in spots)
+        {
+            var g = MakeMagazine(B(s.x, s.y, s.z + 0.015f));
+            g.transform.rotation = Quaternion.Euler(0f, s.yaw, 90f);   // couché sur le flanc
+        }
     }
 
     static GameObject MakePlank(Vector3 pos, Quaternion rot, Mesh mesh, Material[] mats)

@@ -14,7 +14,9 @@ public static class ZombieMixamo
 {
     public const string ControllerPath = "Assets/Generated/Zombie_Mixamo.controller";
 
-    // vitesse (m/s) à laquelle le clip de marche Mixamo avance à vitesse normale : sert à caler les pieds sur le sol
+    // vitesse (m/s) de référence du clip de marche : à cette vitesse du zombie, le clip est joué à vitesse normale.
+    // (le clip Mixamo avance en réalité de 0,32 m/s : 1,29 m en 4,03 s ; avec 0,55, à 0,9 m/s les pieds glissent un peu
+    //  mais la marche n'est pas accélérée de façon grotesque — à ajuster au casque)
     const float WalkClipSpeed = 0.55f;
 
     // attaque : dans le clip Mixamo (2,63 s), la main frappe à ~1,05 s (mesuré). Jouée x1,5 pour tenir dans l'intervalle
@@ -56,7 +58,6 @@ public static class ZombieMixamo
     static void SetupClip(string path, string clipName, bool loop, bool canFall)
     {
         var imp = (ModelImporter)AssetImporter.GetAtPath(path);
-        bool changed = false;
         if (imp.animationType != ModelImporterAnimationType.Human)
         {
             imp.animationType = ModelImporterAnimationType.Human;         // squelette Humanoid : le clip passe sur le Shirtless Zombie
@@ -64,22 +65,28 @@ public static class ZombieMixamo
             imp.materialImportMode = ModelImporterMaterialImportMode.None; // on ne garde que le mouvement
             imp.importAnimation = true;
             imp.SaveAndReimport();
-            changed = true;
         }
-        if (!changed && imp.clipAnimations.Length > 0 && imp.clipAnimations[0].name == clipName) return; // déjà réglé
 
-        var clips = imp.defaultClipAnimations;
+        var clips = imp.clipAnimations.Length > 0 ? imp.clipAnimations : imp.defaultClipAnimations;
+        bool dirty = imp.clipAnimations.Length == 0;
         foreach (var c in clips)
         {
+            // Les clips Mixamo ne sont pas « sur place » : la marche fait avancer le bassin de 1,29 m en 4 s.
+            // Si ce déplacement est intégré à la pose (lockRootPositionXZ = vrai), le corps s'éloigne pendant le cycle
+            // puis revient d'un coup au début de la boucle (la marche « se recharge »). On l'extrait donc en root motion,
+            // que l'Animator ignore (applyRootMotion = faux) : le zombie marche sur place, c'est le NavMeshAgent qui avance.
+            dirty |= c.name != clipName || c.loopTime != loop || !c.lockRootRotation || c.lockRootPositionXZ || c.lockRootHeightY != !canFall
+                     || !c.keepOriginalOrientation || !c.keepOriginalPositionY || c.keepOriginalPositionXZ;
             c.name = clipName;
             c.loopTime = loop;
-            c.lockRootRotation = true;      // ne tourne pas tout seul
-            c.lockRootPositionXZ = true;    // reste sur place : c'est le NavMeshAgent qui déplace le zombie
+            c.lockRootRotation = true;      // l'orientation reste dans la pose : le zombie ne tourne pas tout seul
+            c.lockRootPositionXZ = false;   // déplacement horizontal extrait (puis ignoré) : pas de saut en fin de boucle
             c.lockRootHeightY = !canFall;   // la mort peut descendre jusqu'au sol
             c.keepOriginalOrientation = true;
             c.keepOriginalPositionY = true;
             c.keepOriginalPositionXZ = false;
         }
+        if (!dirty) return;                 // déjà réglé
         imp.clipAnimations = clips;
         imp.SaveAndReimport();
     }

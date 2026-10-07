@@ -25,6 +25,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [014](#014--pistolet-modern-guns-handgun) | 2026-10-06 | Utiliser le pack Modern Guns : Handgun (analyse, animations, chargeur, balle) | Gameplay | M1911 intégré, tir animé, douille, flash, fumée, haptique |
 | [015](#015--nouvelle-carte-blender-et-navmesh) | 2026-10-07 | Remplacer la carte par le nouveau fichier Blender, corriger le NavMesh ; retirer les planches déjà posées | Carte | Carte complète importée, NavMesh corrigé, ouvertures sans barricade |
 | [016](#016--animations-mixamo-de-la-pr-68) | 2026-10-07 | Reprendre l'animation des zombies de la pull request (Mixamo) sur la nouvelle carte | Gameplay | PR #68 fusionnée, attaque synchronisée avec les dégâts |
+| [017](#017--marche-du-zombie-qui-se-recharge) | 2026-10-07 | La marche du zombie « se recharge » en plein milieu | Gameplay | Déplacement du clip extrait en root motion : plus de saut |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -350,3 +351,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - PR withRen/SAE501#68 (alamine01) : 3 clips Mixamo (marche, attaque, mort) + `ZombieMixamo.cs` (réglage Humanoid, Animator Controller `Speed` / `Attack` / `Die`). **Fusionnée** dans `main` (commits de l'auteur conservés), sans conflit avec la nouvelle carte (rayon NavMesh 0,2 m conservé).
 - Ajout de l'IA : l'attaque du clip (2,63 s, main qui frappe à 1,05 s) est jouée ×1,5 et les dégâts / l'arrachage de planche sont calés sur ce coup (0,7 s au lieu de 0,45 s) ; mesure faite en échantillonnant le clip.
 - Test dans l'éditeur sur la nouvelle carte : marche bras tendus, passage par la fenêtre (lien NavMesh), attaque (joueur 100 → 80 PV), mort au sol. **Non testé : au casque.** Glissement des pieds non vérifié (réglage `WalkClipSpeed`).
+
+---
+
+### 017 — Marche du zombie qui se recharge
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> Y a quelques soucis d'animations, quand le zombi marche, sont animation de marche se recharge en plein milieu
+
+**Résultat**
+
+- **Cause** (mesurée en échantillonnant le clip) : le clip Mixamo de marche n'est pas « sur place », le bassin avance de 1,29 m en 4,03 s. L'import réglé par la PR #68 gardait ce déplacement dans la pose (*bake into pose* XZ) : le corps s'éloignait du zombie pendant le cycle puis revenait d'un coup au début de chaque boucle.
+- **Correction** (`ZombieMixamo.cs`) : déplacement horizontal extrait en *root motion*, ignoré par l'Animator ; c'est le NavMeshAgent qui déplace le zombie. Le script réapplique maintenant les réglages quand ils changent (avant, il s'arrêtait si les clips étaient déjà nommés).
+- **Vérifié en jeu** (zombie qui marche 10 s dans le couloir droit, 4 boucles) : bassin à moins de 7 cm du zombie, plus grand écart d'une image à l'autre 7 mm. Non testé : au casque.
+- Remarque : le clip avance naturellement à 0,32 m/s ; le zombie marche à 0,9 m/s et le clip est joué ×1,6, donc les pieds glissent un peu (réglage `WalkClipSpeed`, à juger au casque).

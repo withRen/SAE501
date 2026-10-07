@@ -14,6 +14,8 @@ Toutes les valeurs d'équilibrage sont dans **`Assets/Scripts/ZombieLevels.cs`**
 | Attaque | 2,63 s | Jouée ×1,5 : la main frappe à 1,05 s du clip, donc **0,7 s** après le début ; les dégâts au joueur et l'arrachage de planche tombent à ce moment (`attackHitDelay` = 0,7 s) |
 | Mort | 2,97 s | Le corps descend jusqu'au sol |
 
+Les clips Mixamo **ne sont pas sur place** (la marche avance de 1,29 m en 4 s) : leur déplacement horizontal est extrait en *root motion* puis ignoré (`lockRootPositionXZ = false`, `applyRootMotion = false`), sinon le corps s'éloignait pendant le cycle puis revenait d'un coup à chaque boucle (« la marche se recharge »). Mesuré après correction : le bassin reste à moins de 7 cm du zombie, aucun saut d'une image à l'autre.
+
 Si les 3 fichiers sont absents, `ZombieBuilder` revient à l'animation par script (`ZombieBoneAnim`). Testé dans l'éditeur sur la nouvelle carte : marche, passage de fenêtre, attaque (le joueur perd 20 %), mort.
 
 Hitbox : 3 zones, posées **sur les os** (elles suivent l'animation), chacune avec un composant `ZombieHitbox` :

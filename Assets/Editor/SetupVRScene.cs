@@ -50,10 +50,51 @@ public static class SetupVRScene
         hand.transform.localRotation = Quaternion.Euler(0f, 0f, side == "l" ? 90f : -90f);
         hand.transform.localScale = Vector3.one;
 
+        UseDirectInteractor(controller);
+
         var anim = hand.GetComponent<AnimateHandOnInput>() ?? hand.AddComponent<AnimateHandOnInput>();
         anim.handAnimator = hand.GetComponentInChildren<Animator>();
         anim.triggerValue = new InputActionProperty(Ref(actions, map, "Activate Value"));
         anim.gripValue = new InputActionProperty(Ref(actions, map, "Select Value"));
+    }
+
+    // Même configuration que "My project" : on attrape uniquement à portée de main.
+    // - le Near-Far Interactor des Starter Assets (rayon qui attrape de loin, objet tenu à distance, joystick qui
+    //   approche/tourne l'objet tenu) est désactivé ;
+    // - à la place, un XRDirectInteractor : sphère de 15 cm autour de la main, point d'accroche dans la paume
+    //   (valeurs de My project : sphère centrée en (0 ; -0,05 ; 0,05), accroche en (0 ; -0,07 ; 0,04)).
+    // Les boutons sont repris du Near-Far Interactor (grip = attraper, gâchette = utiliser).
+    static void UseDirectInteractor(Transform controller)
+    {
+        var nearFar = controller.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.NearFarInteractor>(true);
+
+        var go = new GameObject("Direct Interactor");
+        go.transform.SetParent(controller, false);
+        var sc = go.AddComponent<SphereCollider>();
+        sc.isTrigger = true;
+        sc.radius = 0.15f;
+        sc.center = new Vector3(0f, -0.05f, 0.05f);
+        var direct = go.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRDirectInteractor>();
+        var attach = new GameObject("Attach").transform;
+        attach.SetParent(go.transform, false);
+        attach.localPosition = new Vector3(0f, -0.07f, 0.04f);
+        direct.attachTransform = attach;
+        direct.improveAccuracyWithSphereCollider = true;
+        direct.physicsTriggerInteraction = QueryTriggerInteraction.Ignore;
+        direct.keepSelectedTargetValid = true;
+
+        if (nearFar != null)
+        {
+            var src = new SerializedObject(nearFar);
+            var dst = new SerializedObject(direct);
+            foreach (var prop in new[] { "m_SelectInput", "m_ActivateInput" })
+            {
+                var sp = src.FindProperty(prop);
+                if (sp != null) dst.CopyFromSerializedProperty(sp);
+            }
+            dst.ApplyModifiedPropertiesWithoutUndo();
+            nearFar.gameObject.SetActive(false);
+        }
     }
 
     static InputActionReference Ref(InputActionAsset asset, string map, string action)

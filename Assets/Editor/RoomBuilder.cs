@@ -393,8 +393,8 @@ public static class RoomBuilder
         var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
         q.name = "MonitorOverlay";
         q.transform.SetParent(head.transform, false);
-        q.transform.localPosition = new Vector3(0, 0, 0.75f);
-        q.transform.localScale = new Vector3(1.6f, 0.9f, 1f);
+        q.transform.localPosition = new Vector3(0, 0, 0.5f);        // à portée de main pour le toucher et le fermer
+        q.transform.localScale = new Vector3(1.07f, 0.6f, 1f);     // même taille apparente qu'avant (1,6 x 0,9 à 0,75 m)
         Object.DestroyImmediate(q.GetComponent<MeshCollider>());
         var obc = q.AddComponent<BoxCollider>();
         obc.size = new Vector3(1f, 1f, 0.05f);
@@ -570,6 +570,7 @@ public static class RoomBuilder
         var rb = p.AddComponent<Rigidbody>();
         rb.mass = 2f;
         var plankGrab = MakeGrab(p);
+        plankGrab.useDynamicAttach = true;      // prise là où la main la touche (pas de saut au centre de la planche)
         // la planche ne doit utiliser que son propre collider (sinon elle "vole" celui de la zone de maintien)
         plankGrab.colliders.Clear();
         plankGrab.colliders.Add(bc);
@@ -618,7 +619,7 @@ public static class RoomBuilder
         Box("Visual", b.transform, Vector3.zero, new Vector3(0.03f, 0.03f, 0.06f), batteryM, false);
         Box("Tip", b.transform, new Vector3(0, 0, 0.035f), new Vector3(0.012f, 0.012f, 0.01f), metalM, false);
         b.AddComponent<Rigidbody>();
-        MakeGrab(b);
+        MakeGrab(b).useDynamicAttach = true;
         b.AddComponent<Battery>();
     }
 
@@ -874,8 +875,13 @@ public static class RoomBuilder
         l.shadows = LightShadows.None;
         l.enabled = false;
 
+        // prise fixe : le corps de la lampe dans la paume, le faisceau dans l'axe de la main
+        var fAttach = new GameObject("Attach").transform;
+        fAttach.SetParent(f.transform, false);
+        fAttach.localPosition = new Vector3(0f, 0f, -0.02f);
+
         f.AddComponent<Rigidbody>();
-        var grab = MakeGrab(f);
+        var grab = MakeGrab(f, fAttach);
         f.AddComponent<BeltItem>().type = BeltItemType.Flashlight;
         var fl = f.AddComponent<Flashlight>();
         fl.spot = l;

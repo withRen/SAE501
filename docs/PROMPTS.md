@@ -26,6 +26,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [015](#015--nouvelle-carte-blender-et-navmesh) | 2026-10-07 | Remplacer la carte par le nouveau fichier Blender, corriger le NavMesh ; retirer les planches déjà posées | Carte | Carte complète importée, NavMesh corrigé, ouvertures sans barricade |
 | [016](#016--animations-mixamo-de-la-pr-68) | 2026-10-07 | Reprendre l'animation des zombies de la pull request (Mixamo) sur la nouvelle carte | Gameplay | PR #68 fusionnée, attaque synchronisée avec les dégâts |
 | [017](#017--marche-du-zombie-qui-se-recharge) | 2026-10-07 | La marche du zombie « se recharge » en plein milieu | Gameplay | Déplacement du clip extrait en root motion : plus de saut |
+| [018](#018--mains-comme-dans-my-project) | 2026-10-07 | Mains comme dans My project : prise à portée de main, pas de rayon, objets placés dans la main | Interaction | Interacteurs directs, accroches fixes pour l'arme et la lampe |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -372,3 +373,30 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Correction** (`ZombieMixamo.cs`) : déplacement horizontal extrait en *root motion*, ignoré par l'Animator ; c'est le NavMeshAgent qui déplace le zombie. Le script réapplique maintenant les réglages quand ils changent (avant, il s'arrêtait si les clips étaient déjà nommés).
 - **Vérifié en jeu** (zombie qui marche 10 s dans le couloir droit, 4 boucles) : bassin à moins de 7 cm du zombie, plus grand écart d'une image à l'autre 7 mm. Non testé : au casque.
 - Remarque : le clip avance naturellement à 0,32 m/s ; le zombie marche à 0,9 m/s et le clip est joué ×1,6, donc les pieds glissent un peu (réglage `WalkClipSpeed`, à juger au casque).
+
+---
+
+### 018 — Mains comme dans My project
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Interaction |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> (capture du casque : pistolet tenu de travers, loin de la main)
+> Regarde dans My Project comment sont configurés les mains, il faut la même configuration :
+> * Les objets doivent être à porté de main pour interagir
+> * Le joystick de droit ne sert pas à rotate / bouger les objets à distance
+> * Retire les raycast qui attrapent les objets de loins
+> * Les objets : Arme, lampe torche; doivent être placé proprement dans la main instantannément
+
+**Résultat**
+
+- **Analyse de My project** (scène lue par script) : chaque main a un `XRDirectInteractor` (sphère de 15 cm, point d'accroche dans la paume), pas de rayon pour attraper ; armes avec point d'accroche fixe.
+- **Cause du problème** : le rig des Starter Assets utilise le `Near-Far Interactor`, qui attrape de loin avec un rayon, garde l'objet à distance et laisse le joystick le déplacer / tourner.
+- **Changement** (`SetupVRScene.UseDirectInteractor`) : Near-Far désactivé, interacteur direct ajouté sur chaque manette avec les valeurs de My project et les mêmes boutons. Points d'accroche fixes : pistolet, lampe torche (nouveau), marteau, chargeur ; planches et piles prises là où la main les touche. Plein écran des caméras rapproché à 50 cm pour être touchable.
+- Test dans l'éditeur (prise simulée) : pistolet et lampe à 0,5 cm du point d'accroche, alignés à 0° avec la manette. **Non testé : au casque.**
+- Page de wiki : Mains et prise des objets.

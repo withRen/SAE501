@@ -46,6 +46,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [035](#035--pluie-et-brouillard-réduits-musique-du-menu) | 2026-10-07 | Réduire pluie et brouillard du menu ; musique fournie en musique du menu | Menu, audio | Pluie 450 gouttes/s, brouillard très léger, `Musique_Menu.mp3` en boucle |
 | [036](#036--musique-du-menu-en-boucle) | 2026-10-07 | Menu bugué ; musique du menu en boucle tant que la scène est active | Menu, audio | Musique à une piste : boucle simple sur une seule source ; bug du menu non identifié (question restée sans réponse) |
 | [037](#037--contour-des-objets-interactifs) | 2026-10-07 | Contour autour des objets avec lesquels on peut interagir | Interactions, rendu | `InteractableOutline` + `Outline.shader` : liseré discret au repos, épais au survol de la main, masqué en main |
+| [038](#038--test-du-décor-extérieur-dalban-branche-features_exterieur) | 2026-10-07 | Ajouter pour test le décor extérieur de la branche `features_exterieur` | Décor, revue | Branche locale `test/exterieur` : décor extrait en prefab, placé par le générateur, ciel en skybox, brouillard 0,03 |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -737,4 +738,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Au repos : liseré ambre fin (2,5 mm) et sombre ; main à portée : liseré épais (6 mm) et lumineux ; objet tenu en main ou interaction coupée (planche clouée, autre planche en main) : pas de contour. Un objet rangé dans un support (ceinture) garde son contour.
 - `Assets/Resources/Outline.shader` : copie du maillage gonflée le long de normales lissées (arêtes des planches fermées), faces arrière seulement, compatible rendu stéréo du Quest.
 - Vérifié dans l'éditeur par captures (repos / survol). **Pas testé au casque** (coût : une copie de maillage dessinée en plus par objet, ~50 petits maillages).
+- Rien poussé.
+
+### 038 — Test du décor extérieur d'Alban (branche features_exterieur)
+
+**Prompt**
+
+> Il y a une branche qui s'appelle : features_exterieur. Elle comporte notament un décor d'exterieur pour la map jouable, rajoute le qu'on fasse un test
+
+**Résultat** (intégration faite par l'IA, Claude Code ; décor fait par Alban)
+
+- **Branche analysée** : un seul commit utile (a6501cf, Alban) ; aucun script, le décor est posé à la main dans `MainScene.unity`. La branche part d'un `main` ancien et contient aussi un autre historique (TextMesh Pro, rig XR, réglages OpenXR et ProjectSettings modifiés). Fusion directe : conflit sur `MainScene.unity` (binaire, générée par code) et sur 4 matériaux générés ; elle aurait écrasé la scène générée.
+- **Intégration de test** sur une branche locale `test/exterieur` (pas dans `main`) :
+  - `Assets/Environment/` repris tel quel de la branche (matériaux, textures, maillages) ;
+  - objets ajoutés par Alban extraits de sa scène dans `Assets/Environment/Exterieur_Alban.prefab` : terrain en relief, 4 montagnes, pins, lune (lumière directionnelle), cadres/plaques/voyants des 4 portes de niveau ;
+  - `RoomBuilder.BuildExteriorDecor` place le prefab dans la scène générée et rattache la déco des portes au battant de chaque porte.
+- **Changements nécessaires pour le voir** : avec notre brouillard (densité 0,12) tout disparaissait au-delà de ~15 m et la sphère de ciel (240 m) restait noire. Ciel remplacé par son matériau skybox (panorama de forêt de nuit), brouillard 0,12 → 0,03 (l'intérieur du bunker est donc moins « noyé »).
+- Vérifié dans l'éditeur par captures : extérieur (ciel étoilé, relief, pins, montagnes), intérieur du bunker, portes. **Pas testé au casque.**
+- **Points à surveiller** : 395 maillages et 44 000 triangles en plus (marqués statiques pour le regroupement), lune avec ombres douces sur tout le décor : coût GPU à mesurer au Quest ; pins faits de cylindres empilés ; la plaque « SECTEUR CONFINÉ » est derrière le panneau rouge du niveau (chevauchement).
 - Rien poussé.

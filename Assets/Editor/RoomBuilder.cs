@@ -91,6 +91,7 @@ public static class RoomBuilder
         BuildBelt(rig, cam);
         BuildBunkerOpenings(slots);
         BuildGatesAndGenerator();
+        BuildExteriorDecor(cam);
         BuildZombieSetup(rig);
         BuildMusic();
 
@@ -210,6 +211,40 @@ public static class RoomBuilder
         // bunker : x Blender -7,5..3,8 / mur sud y -14 ; le terrain va de y -14 à -19
         var c = B(-1.85f, -16.6f, -0.05f);
         Box("Sol", ext, c, new Vector3(13f, 0.1f, 5.2f), blockM);
+    }
+
+    // ---------- décor extérieur d'Alban (branche features_exterieur) : terrain en relief, montagnes, pins, ciel, lune ----------
+    // Le prefab est extrait de sa scène ; les cadres, plaques et voyants des portes de niveau sont rattachés au battant
+    // de chaque porte (ils bougent avec elle quand elle s'ouvre).
+    const string ExteriorPrefab = "Assets/Environment/Exterieur_Alban.prefab";
+    // Le ciel : la sphère d'Alban (240 m) disparaissait dans le brouillard, on utilise à la place son matériau skybox
+    // (panorama de forêt de nuit), que le brouillard ne voile pas. Brouillard allégé (0,12 -> 0,03) pour voir le relief.
+    static void BuildExteriorDecor(Camera cam)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ExteriorPrefab);
+        if (prefab == null) return;
+        var ext = (GameObject)PrefabUtility.InstantiatePrefab(prefab, mapRoot);
+        PrefabUtility.UnpackPrefabInstance(ext, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        var sky = AssetDatabase.LoadAssetAtPath<Material>("Assets/Environment/Materials/M_NightForest_Skybox.mat");
+        var sphere = ext.transform.Find("Environment_Skysphere");
+        if (sky != null)
+        {
+            RenderSettings.skybox = sky;
+            cam.clearFlags = CameraClearFlags.Skybox;
+            if (sphere != null) Object.DestroyImmediate(sphere.gameObject);
+        }
+        RenderSettings.fogDensity = 0.03f;
+        var portes = ext.transform.Find("Portes");
+        if (portes != null && gatesRoot != null)
+        {
+            foreach (Transform deco in portes)
+            {
+                var leaf = gatesRoot.transform.Find(deco.name + "/Battant");
+                if (leaf == null) continue;
+                for (int i = deco.childCount - 1; i >= 0; i--) deco.GetChild(i).SetParent(leaf, true);
+            }
+            Object.DestroyImmediate(portes.gameObject);
+        }
     }
 
     // ---------- ouvertures du bunker (zombies) : 2 portes, 2 fenêtres, 3 planches chacune ----------

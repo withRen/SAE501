@@ -31,6 +31,10 @@ public static class SetupVRScene
 
         RoomBuilder.Populate(rig);
 
+        // la carte fait moins de 50 m de diagonale : inutile de calculer l'affichage jusqu'à 1 km
+        var head = rig.GetComponentInChildren<Camera>(true);
+        if (head) head.farClipPlane = 60f;
+
         var path = "Assets/Scenes/MainScene.unity";
         EditorSceneManager.SaveScene(scene, path);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(path, true) };

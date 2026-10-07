@@ -437,6 +437,7 @@ public static class RoomBuilder
         station.feeds = new Material[feeds.Length];
         var rr = stationGo.AddComponent<CctvRoundRobin>();
         rr.cameras = feeds;
+        rr.screens = new Renderer[feeds.Length];
 
         for (int i = 0; i < feeds.Length; i++)
         {
@@ -456,6 +457,7 @@ public static class RoomBuilder
             var scr = Find(roomRoot.transform, "CCTV_Screen_" + suffix);
             if (!scr) { Debug.LogWarning("Écran introuvable pour " + feeds[i].name); continue; }
             scr.GetComponent<Renderer>().sharedMaterial = sm;
+            rr.screens[i] = scr.GetComponent<Renderer>();
             var col = scr.GetComponent<Collider>();
             if (col) Object.DestroyImmediate(col);
             var bc = scr.gameObject.AddComponent<BoxCollider>();
@@ -480,6 +482,7 @@ public static class RoomBuilder
         station.overlay = q.transform;
         station.overlayRenderer = q.GetComponent<Renderer>();
         q.SetActive(false);
+        rr.overlay = q;
     }
 
     // ---------- matériaux ----------

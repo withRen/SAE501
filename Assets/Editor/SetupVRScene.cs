@@ -33,7 +33,11 @@ public static class SetupVRScene
 
         var path = "Assets/Scenes/MainScene.unity";
         EditorSceneManager.SaveScene(scene, path);
-        EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(path, true) };
+        // le menu d'accueil (SAE501 > Build Menu Scene) reste la 1re scène s'il existe, puis le jeu
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+        if (System.IO.File.Exists(MenuBuilder.ScenePath)) scenes.Add(new EditorBuildSettingsScene(MenuBuilder.ScenePath, true));
+        scenes.Add(new EditorBuildSettingsScene(path, true));
+        EditorBuildSettings.scenes = scenes.ToArray();
         Debug.Log("SAE501: scene built");
     }
 

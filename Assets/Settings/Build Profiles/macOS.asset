@@ -44,7 +44,11 @@ MonoBehaviour:
         m_ExplicitDivideByZeroChecks: 0
         m_ExplicitArrayBoundsChecks: 0
 <<<<<<< HEAD
+<<<<<<< HEAD
         m_CompressionType: -1
+=======
+        m_CompressionType: 0
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
 =======
         m_CompressionType: 0
 >>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4

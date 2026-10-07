@@ -16,9 +16,13 @@ public static class SetupVRScene
         foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None)) Object.DestroyImmediate(cam.gameObject);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
         floor.name = "Floor";
         floor.transform.localScale = new Vector3(2, 1, 2);
+=======
+        foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None)) Object.DestroyImmediate(l.gameObject);
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
 =======
         foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None)) Object.DestroyImmediate(l.gameObject);
 >>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
@@ -31,12 +35,18 @@ public static class SetupVRScene
         AddHand(rig, "Right Controller", "r", "XRI Right Interaction", actions);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
         // même mode de suivi que dans "My project"
         rig.GetComponent<Unity.XR.CoreUtils.XROrigin>().RequestedTrackingOriginMode = Unity.XR.CoreUtils.XROrigin.TrackingOriginMode.Device;
 
         RoomBuilder.Populate(rig);
 
+<<<<<<< HEAD
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
+=======
 >>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
         var path = "Assets/Scenes/MainScene.unity";
         EditorSceneManager.SaveScene(scene, path);
@@ -60,6 +70,11 @@ public static class SetupVRScene
         hand.transform.localScale = Vector3.one;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        UseDirectInteractor(controller);
+
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
 =======
         UseDirectInteractor(controller);
 
@@ -71,7 +86,10 @@ public static class SetupVRScene
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     // Même configuration que "My project" : on attrape uniquement à portée de main.
     // - le Near-Far Interactor des Starter Assets (rayon qui attrape de loin, objet tenu à distance, joystick qui
     //   approche/tourne l'objet tenu) est désactivé ;
@@ -111,6 +129,9 @@ public static class SetupVRScene
         }
     }
 
+<<<<<<< HEAD
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
+=======
 >>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
     static InputActionReference Ref(InputActionAsset asset, string map, string action)
     {

@@ -22,10 +22,16 @@ mono_crash.*
 *.aab
 sysinfo.txt
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
 .utmp/
 *_BackUpThisFolder_ButDontShipItWithYourGame/
 rules.md
 /Assets/_Recovery/
 /Assets/_Recovery.meta
+<<<<<<< HEAD
+>>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4
+=======
 >>>>>>> 6ff67b85a7cb6a20d032da0311c78e65fe42e8f4

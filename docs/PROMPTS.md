@@ -38,6 +38,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [027](#027--corrections-doptimisation-rien-poussé) | 2026-10-07 | Appliquer les corrections d'optimisation proposées | Optimisation | Niveau Quest, textures 1024 px, CCTV rendues seulement si vues, allocations par image supprimées ; occlusion culling essayé puis retiré |
 | [028](#028--image-noire-au-casque) | 2026-10-07 | Image noire au casque après le niveau Quest | Bug | Quest_RPAsset : copie du pipeline PC sans ombres coûteuses |
 | [029](#029--écran-noir-son-seul) | 2026-10-07 | Toujours écran noir au casque, le son marche | Bug | GPU Resident Drawer qui plantait le pipeline à chaque image ; désactivé pour le Quest |
+| [030](#030--écran-noir-avec-les-textes) | 2026-10-07 | Écran noir mais textes visibles | Bug | Build profile Meta Quest qui citait des niveaux de qualité absents ; rendu fovéal fixe (72 images/s) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -619,4 +620,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Le **GPU Resident Drawer** est activé dans `PC_RPAsset` et donc dans sa copie `Quest_RPAsset`. Désactivé dans `Quest_RPAsset`.
 - Vérifié sur le casque (builds installés par adb) : avec la correction, plus aucune erreur, 72 images/s, le texte de statut s'affiche. Un build avec l'ancienne configuration de `origin/main` plante de la même façon : le problème existait avant les changements de 027.
 - Reste à confirmer casque sur la tête : le décor éclairé était noir sur la capture faite casque posé.
+
+### 030 — Écran noir avec les textes
+
+**Prompt**
+
+> (2 captures Meta Casting : noir, seuls les textes) Encore un écran noir mais avec les textes
+
+**Résultat**
+
+- Diagnostic temporaire au casque : niveau de qualité **« High »** et pipeline **PC_RPAsset**, 0 objet dessiné. Le **Build Profile « Meta Quest »** (actif) remplaçait la qualité du projet par « Mobile » et « Meta Quest (Build Profile) », niveaux qui n'existent pas ; le casque retombait sur le pipeline PC, dont le GPU Resident Drawer plante (le profil retire aussi les variantes « BRG » au build). C'était aussi la cause en 028 et 029.
+- Correction : le profil utilise le niveau « Quest » (`Quest_RPAsset`). Vérifié au casque : bunker, mains, lumières et textes affichés, aucune erreur.
+- GPU alors à 98 % (54 à 64 images/s) : **rendu fovéal fixe** activé au lancement (`QuestFoveation.cs`). Mesuré : 72 images/s, GPU à environ 60 % (vue moins chargée que la mesure précédente : comparaison approximative).
+- Commits locaux, rien poussé. Diagnostic retiré.
 

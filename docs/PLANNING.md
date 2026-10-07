@@ -117,7 +117,7 @@
 | ID | Tâche | Sous-tâches | Estim. | Dépend de | Statut |
 |---|---|---|---|---|---|
 | 7.1 | Caméras Render Texture | 2 couloirs (1 par couloir) ; positions utiles | 2 h | 2.6 | 🟡 |
-| 7.2 | Effet CCTV | Bruit, scanlines, teinte verte ; fréquence réduite pour la perf | 3 h | 7.1 | ⬜ |
+| 7.2 | Effet CCTV | Shader `SAE501/CCTV` sur les 4 écrans (et la vue plein écran) : teinte verte, grain animé, lignes de balayage, bande qui défile, bords sombres, scintillement ; incrustation « ● REC » qui clignote, nom de la caméra, date et heure (`CctvOverlay.cs`). Fréquence réduite : déjà faite (`CctvRoundRobin`, 1 caméra par image) | 3 h | 7.1 | 🟡 à tester |
 | 7.3 | Vue plein écran d'un écran | | — | — | ✅ (hors GDD, à garder si utile) |
 | 7.4 | Écran de score digital | Texte : points, numéro de vague | 3 h | 6.4 | ⬜ |
 

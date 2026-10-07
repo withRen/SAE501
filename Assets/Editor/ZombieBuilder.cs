@@ -138,6 +138,7 @@ public static class ZombieBuilder
 
         root.AddComponent<ZombieVoice>().variants = RoomBuilder.ZombieVoices();     // cris de zombie (3D)
         var bridge = root.AddComponent<ZombieAnimationBridge>();
+        root.AddComponent<ZombieWindowClimb>().visual = visual;     // [#74] enjambe les fenêtres au lieu de traverser le mur
         if (mixamo)
         {
             bridge.animator = anim;                         // Speed / Attack / Die -> Animator
@@ -232,6 +233,7 @@ public static class ZombieBuilder
         proc.visual = visual; proc.armL = armL; proc.armR = armR; proc.legL = legL; proc.legR = legR;
         root.AddComponent<ZombieVoice>().variants = RoomBuilder.ZombieVoices();     // cris de zombie (3D)
         var bridge = root.AddComponent<ZombieAnimationBridge>();
+        root.AddComponent<ZombieWindowClimb>().visual = visual;     // [#74] enjambe les fenêtres au lieu de traverser le mur
         bridge.procedural = proc;
 
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);

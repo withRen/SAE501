@@ -44,6 +44,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [033](#033--intégration-du-menu-daccueil-pr-81) | 2026-10-07 | Intégrer la PR #81 (menu d'accueil), vérifier conflits et qualité | Revue | Fusion locale ; 2 bugs corrigés (compilation, chute du joueur) |
 | [034](#034--brouillard-du-menu-menu-plus-large-prise-par-clic) | 2026-10-07 | Brouillard du menu trop fort, menu trop étroit ; prise d'objet par clic au lieu de maintenir grip | Menu, interactions | Brouillard allégé, panneau élargi, `ClickGrab` (un clic prend, un clic lâche) |
 | [035](#035--pluie-et-brouillard-réduits-musique-du-menu) | 2026-10-07 | Réduire pluie et brouillard du menu ; musique fournie en musique du menu | Menu, audio | Pluie 450 gouttes/s, brouillard très léger, `Musique_Menu.mp3` en boucle |
+| [036](#036--musique-du-menu-en-boucle) | 2026-10-07 | Menu bugué ; musique du menu en boucle tant que la scène est active | Menu, audio | Musique à une piste : boucle simple sur une seule source ; bug du menu non identifié (question restée sans réponse) |
+| [037](#037--contour-des-objets-interactifs) | 2026-10-07 | Contour autour des objets avec lesquels on peut interagir | Interactions, rendu | `InteractableOutline` + `Outline.shader` : liseré discret au repos, épais au survol de la main, masqué en main |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -710,4 +712,29 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Brouillard** : densité 0,012 → 0,006, nappes 0,09 → 0,05 d'opacité.
 - **Musique** : `Assets/Audio/Music/Musique_Menu.mp3` (1 min 36, via Git LFS), jouée en boucle sans blanc par `MusicPlayer` (le même que dans le jeu), en streaming Vorbis ; son volume suit le curseur Musique des paramètres. Seulement dans le menu : la scène de jeu garde ses deux musiques.
 - Vérifié dans l'éditeur : la musique joue au lancement du menu, ~400 gouttes à l'écran, capture du décor plus dégagée. **Pas testé au casque.**
+- Rien poussé.
+
+### 036 — Musique du menu en boucle
+
+**Prompt**
+
+> Le menu d'accueil est bugué actuellement (et fait la musique d'accueil loop tant que la scène est active)
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- **Musique** (`MusicPlayer.cs`) : avec une seule piste (le menu), la source joue en boucle simple (`loop`) au lieu d'enchaîner la piste sur deux sources ; un clip lu en streaming ne doit pas être joué par deux sources à la fois. La musique tourne tant que la scène du menu est active et s'arrête au chargement du jeu.
+- **« Menu bugué »** : logs du casque relus (aucune exception, 72 fps) ; le bug n'a pas pu être identifié, la question posée à l'utilisateur est restée sans réponse. À préciser.
+
+### 037 — Contour des objets interactifs
+
+**Prompt**
+
+> Fait en sorte que si ce sont des objets avec lequels on peut inerragir il y a un outline qui forme le contour de l'objet
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- `Assets/Scripts/InteractableOutline.cs` : ajouté automatiquement à chaque chargement de scène sur tous les objets interactifs (`XRGrabInteractable`, `XRSimpleInteractable`) : planches, marteau, pistolet, chargeur, lampe, piles, écrans de surveillance, interrupteur du générateur (36 objets dans `MainScene`). Pas sur les clous ni sur la vue plein écran des caméras.
+- Au repos : liseré ambre fin (2,5 mm) et sombre ; main à portée : liseré épais (6 mm) et lumineux ; objet tenu en main ou interaction coupée (planche clouée, autre planche en main) : pas de contour. Un objet rangé dans un support (ceinture) garde son contour.
+- `Assets/Resources/Outline.shader` : copie du maillage gonflée le long de normales lissées (arêtes des planches fermées), faces arrière seulement, compatible rendu stéréo du Quest.
+- Vérifié dans l'éditeur par captures (repos / survol). **Pas testé au casque** (coût : une copie de maillage dessinée en plus par objet, ~50 petits maillages).
 - Rien poussé.

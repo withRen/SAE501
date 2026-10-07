@@ -37,6 +37,14 @@ public class MusicPlayer : MonoBehaviour
 
         var first = sources[0];
         first.clip = tracks[0];
+        if (tracks.Length == 1)
+        {
+            // une seule piste (menu) : simple boucle de la source, rien à programmer
+            // (un clip lu en streaming ne doit pas être joué par deux sources à la fois)
+            first.loop = true;
+            first.Play();
+            yield break;
+        }
         first.Play();                   // Play() normal : réveille l'audio même si la sortie était suspendue
         nextTrack = 1 % tracks.Length;
         nextSource = 1;
@@ -45,7 +53,7 @@ public class MusicPlayer : MonoBehaviour
     void Update()
     {
         foreach (var s in sources) if (s) s.volume = volume;
-        if (sources[0] == null || sources[0].clip == null) return;
+        if (sources[0] == null || sources[0].clip == null || tracks.Length == 1) return;
 
         // 1re image où la piste joue vraiment : on calcule précisément l'instant où elle finira
         if (!synced)

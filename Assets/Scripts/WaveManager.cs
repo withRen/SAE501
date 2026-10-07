@@ -27,7 +27,7 @@ public class WaveManager : MonoBehaviour
     public LevelDef[] levels = DefaultLevels();
     public int startLevel = 1;                 // test : commencer à un autre niveau
     public float firstDelay = 15f;             // temps pour se préparer avant la 1re vague
-    public float breakBetweenLevels = 20f;     // pause entre deux vagues (réparer les barricades)
+    public float breakBetweenLevels = 35f;     // pause entre deux vagues (réparer les barricades, aller chercher des planches)
     public float lastLevelReinforcementEvery = 15f;   // niveau 4 : un renfort tant que le générateur n'est pas actif
     public int lastLevelMaxAlive = 6;
     public float victoryRestartDelay = 12f;

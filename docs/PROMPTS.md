@@ -27,6 +27,9 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [016](#016--animations-mixamo-de-la-pr-68) | 2026-10-07 | Reprendre l'animation des zombies de la pull request (Mixamo) sur la nouvelle carte | Gameplay | PR #68 fusionnée, attaque synchronisée avec les dégâts |
 | [017](#017--marche-du-zombie-qui-se-recharge) | 2026-10-07 | La marche du zombie « se recharge » en plein milieu | Gameplay | Déplacement du clip extrait en root motion : plus de saut |
 | [018](#018--mains-comme-dans-my-project) | 2026-10-07 | Mains comme dans My project : prise à portée de main, pas de rayon, objets placés dans la main | Interaction | Interacteurs directs, accroches fixes pour l'arme et la lampe |
+| [019](#019--retours-casque-planches-lampe-rotation-arme) | 2026-10-07 | Retours casque : planches du bunker, lampe, rotation fluide, arme au-dessus du poing | Interaction | Planches sous les fenêtres, objets qui ne traversent plus le sol, rotation fluide, accroche dans le poing |
+| [020](#020--pause-plus-longue-entre-les-vagues) | 2026-10-07 | Plus de temps entre les vagues | Gameplay | Pause 20 → 35 s |
+| [021](#021--musiques-de-fond-et-sons-du-pistolet) | 2026-10-07 | Deux musiques de fond en alternance, sons du pistolet (tir, rechargement), clic à vide | Audio | MusicPlayer, sons du pistolet, clic de culasse vide |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -400,3 +403,71 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Changement** (`SetupVRScene.UseDirectInteractor`) : Near-Far désactivé, interacteur direct ajouté sur chaque manette avec les valeurs de My project et les mêmes boutons. Points d'accroche fixes : pistolet, lampe torche (nouveau), marteau, chargeur ; planches et piles prises là où la main les touche. Plein écran des caméras rapproché à 50 cm pour être touchable.
 - Test dans l'éditeur (prise simulée) : pistolet et lampe à 0,5 cm du point d'accroche, alignés à 0° avec la manette. **Non testé : au casque.**
 - Page de wiki : Mains et prise des objets.
+
+---
+
+### 019 — Retours casque : planches, lampe, rotation, arme
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Interaction |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> (capture du casque : pistolet au-dessus du poing)
+> Dans le bunker il manque les planches pour bloquer la fenêtre
+> La lampe est bugué
+> Pour tourner fait un traveling smooth au lieu d'un tp de caméra
+> Actuellement quand j'attrape l'arme elle flotte encore au dessus de la main au lieu d'être dans le grip fermé
+
+**Résultat**
+
+- **Planches** : la réserve existait (6 planches au sol près de la fenêtre sud-est, peu visibles) ; elle est répartie en **2 piles de 3 sous chaque fenêtre**.
+- **Arme au-dessus du poing** : le point d'accroche de My project (7 cm sous la manette) ne correspond pas à notre modèle de main (10 cm plus bas) ; mesuré sur les os de la main, le poing est à ~13,5 cm. Point d'accroche déplacé au **centre du poing** (côté droit / gauche) : la crosse est maintenant entre les doigts et la paume (capture dans l'éditeur).
+- **Lampe** : bug trouvé en test — lâchée de haut, elle **traversait le sol** et tombait sans fin (petit objet, détection de collision discrète). Tous les objets attrapables passent en **détection continue** ; vérifié avec lampe, pile, chargeur lâchés de 2,6 m. Allumage / extinction à la gâchette vérifiés. Si le bug vu au casque était autre chose, il reste à le décrire.
+- **Rotation** : **fluide** au lieu de crans (`SmoothTurn` dans `SetupVRScene.cs`). ⚠️ Contraire à la recommandation de confort du document de la SAÉ (rotation par crans) : choix de l'équipe, à justifier dans le GDD ou à rendre réglable.
+- **Non testé : au casque.**
+
+---
+
+### 020 — Pause plus longue entre les vagues
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Gameplay |
+| **Statut** | Fait |
+
+**Prompt**
+
+> Laisse un peu plus de temps entre les vagues
+
+**Résultat**
+
+- Pause entre deux vagues : **20 s → 35 s** (`WaveManager.breakBetweenLevels`), pour réparer les barricades et aller chercher des planches. Le délai avant la 1re vague (15 s) n'a pas changé. Valeur vérifiée dans la scène régénérée ; non testé au casque.
+
+---
+
+### 021 — Musiques de fond et sons du pistolet
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Audio |
+| **Statut** | Fait (mesuré dans l'éditeur, pas écouté au casque) |
+
+**Prompt**
+
+> (fichiers `music_jeu_principale_1.mp3` et `music_jeu_principale_2.mp3`) Met les deux musiques dans le jeu, ça alterne l'une après l'autre
+> (fichiers `gun_reload.mp3` et `gun_shot.mp3`) Vérifie l'alternance des deux musiques en jeu. Rajoute ces sons : tire et rechargement (du pistolet). Rajoute un petit click si le joueur tente de tirer alors qu'il n'a plus de balles
+
+**Résultat**
+
+- **Musique** (`MusicPlayer`) : les 2 pistes (2 min 12 et 1 min 56) s'enchaînent en boucle, chargées en streaming (Vorbis) pour le Quest, volume 35 %.
+- **Sons du pistolet** : `Pistolet_Tir.mp3` au tir, `Pistolet_Rechargement.mp3` quand le chargeur entre dans la crosse ; sons 3D sortant de l'arme.
+- **Clic à vide** : le clic existant (40 ms de bruit, presque inaudible) est remplacé par un vrai « tic » métallique de culasse vide (0,09 s) généré par code ; aucun fichier fourni pour celui-ci.
+- **Bug trouvé en vérifiant** : la première version démarrait la piste 1 avec `PlayScheduled`. Le projet a « Enable Output Suspension » : sans son, Unity coupe l'audio et fige son horloge, donc rien ne démarrait. Corrigé (premier `Play()` normal, les suivantes programmées). À l'origine de plusieurs « blocages » constatés : l'éditeur gelait aussi pendant un « Build And Run » lancé à 11 h 46, et l'horloge audio de l'éditeur est restée bloquée jusqu'à son redémarrage.
+- **Vérifié dans l'éditeur (vraies pistes)** : piste 1 → piste 2 à 124 s, piste 2 → piste 1 à 240 s, sans blanc ; durées de lecture mesurées : tir 2,02 s, rechargement 1,00 s, clic 0,12 s. **Non écouté** à l'oreille ni au casque (volume à régler).
+- Pages de wiki : Musique (nouvelle), Pistolet (section Sons).

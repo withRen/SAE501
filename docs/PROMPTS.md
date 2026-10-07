@@ -27,6 +27,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [016](#016--animations-mixamo-de-la-pr-68) | 2026-10-07 | Reprendre l'animation des zombies de la pull request (Mixamo) sur la nouvelle carte | Gameplay | PR #68 fusionnée, attaque synchronisée avec les dégâts |
 | [017](#017--marche-du-zombie-qui-se-recharge) | 2026-10-07 | La marche du zombie « se recharge » en plein milieu | Gameplay | Déplacement du clip extrait en root motion : plus de saut |
 | [018](#018--mains-comme-dans-my-project) | 2026-10-07 | Mains comme dans My project : prise à portée de main, pas de rayon, objets placés dans la main | Interaction | Interacteurs directs, accroches fixes pour l'arme et la lampe |
+| [019](#019--retours-casque-planches-lampe-rotation-arme) | 2026-10-07 | Retours casque : planches du bunker, lampe, rotation fluide, arme au-dessus du poing | Interaction | Planches sous les fenêtres, objets qui ne traversent plus le sol, rotation fluide, accroche dans le poing |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -400,3 +401,29 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Changement** (`SetupVRScene.UseDirectInteractor`) : Near-Far désactivé, interacteur direct ajouté sur chaque manette avec les valeurs de My project et les mêmes boutons. Points d'accroche fixes : pistolet, lampe torche (nouveau), marteau, chargeur ; planches et piles prises là où la main les touche. Plein écran des caméras rapproché à 50 cm pour être touchable.
 - Test dans l'éditeur (prise simulée) : pistolet et lampe à 0,5 cm du point d'accroche, alignés à 0° avec la manette. **Non testé : au casque.**
 - Page de wiki : Mains et prise des objets.
+
+---
+
+### 019 — Retours casque : planches, lampe, rotation, arme
+
+| | |
+|---|---|
+| **Date** | 2026-10-07 |
+| **Domaine** | Interaction |
+| **Statut** | Fait (testé dans l'éditeur) |
+
+**Prompt**
+
+> (capture du casque : pistolet au-dessus du poing)
+> Dans le bunker il manque les planches pour bloquer la fenêtre
+> La lampe est bugué
+> Pour tourner fait un traveling smooth au lieu d'un tp de caméra
+> Actuellement quand j'attrape l'arme elle flotte encore au dessus de la main au lieu d'être dans le grip fermé
+
+**Résultat**
+
+- **Planches** : la réserve existait (6 planches au sol près de la fenêtre sud-est, peu visibles) ; elle est répartie en **2 piles de 3 sous chaque fenêtre**.
+- **Arme au-dessus du poing** : le point d'accroche de My project (7 cm sous la manette) ne correspond pas à notre modèle de main (10 cm plus bas) ; mesuré sur les os de la main, le poing est à ~13,5 cm. Point d'accroche déplacé au **centre du poing** (côté droit / gauche) : la crosse est maintenant entre les doigts et la paume (capture dans l'éditeur).
+- **Lampe** : bug trouvé en test — lâchée de haut, elle **traversait le sol** et tombait sans fin (petit objet, détection de collision discrète). Tous les objets attrapables passent en **détection continue** ; vérifié avec lampe, pile, chargeur lâchés de 2,6 m. Allumage / extinction à la gâchette vérifiés. Si le bug vu au casque était autre chose, il reste à le décrire.
+- **Rotation** : **fluide** au lieu de crans (`SmoothTurn` dans `SetupVRScene.cs`). ⚠️ Contraire à la recommandation de confort du document de la SAÉ (rotation par crans) : choix de l'équipe, à justifier dans le GDD ou à rendre réglable.
+- **Non testé : au casque.**

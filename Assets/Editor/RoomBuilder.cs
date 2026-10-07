@@ -274,9 +274,10 @@ public static class RoomBuilder
     {
         // planches de la cuisine et du stockage, là où elles sont dans la carte
         foreach (var p in planks) MakePlank(p.pos, p.rot, plankMesh, plankMats).name = "Planche_" + p.name;
-        // réserve du bunker : une pile au sol près de la fenêtre sud-est (à la place des 2 planches posées au sol dans le fichier)
+        // réserve du bunker : une pile de 3 planches au sol sous chaque fenêtre sud (bien visibles, à portée de la fenêtre à barricader)
         var flat = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-        for (int i = 0; i < 6; i++) MakePlank(B(1.15f, -12.2f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_" + (i + 1);
+        for (int i = 0; i < 3; i++) MakePlank(B(-4.4f, -12.75f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_SW_" + (i + 1);
+        for (int i = 0; i < 3; i++) MakePlank(B(1.15f, -12.2f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_SE_" + (i + 1);
     }
 
     // ---------- caméras de surveillance : celles du fichier (couloir gauche, couloir droit, cuisine, stockage) ----------
@@ -469,6 +470,9 @@ public static class RoomBuilder
 
     static XRGrabInteractable MakeGrab(GameObject g, Transform attach = null)
     {
+        // détection continue : les petits objets (lampe, piles, chargeur) lâchés de haut traversaient le sol et tombaient sans fin
+        var rb = g.GetComponent<Rigidbody>();
+        if (rb) rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
         var grab = g.AddComponent<XRGrabInteractable>();
         grab.movementType = XRBaseInteractable.MovementType.Instantaneous;
         if (attach) grab.attachTransform = attach;

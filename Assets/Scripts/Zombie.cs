@@ -18,7 +18,8 @@ public class Zombie : MonoBehaviour
     public float slowDuration = 1.8f;
 
     [Header("Barricades")]
-    public float breakInterval = 3f;        // une planche toutes les 3 s (GDD)
+    public float breakInterval = 3f;        // (ancien réglage : remplacé par hitInterval, voir 4.4)
+    public float hitInterval = 1f;          // [4.4] un coup par seconde : 3 coups pour une planche clouée de 2 clous = 3 s
 
     [Header("Attaque")]
     public float attackRange = 1.15f;
@@ -117,11 +118,11 @@ public class Zombie : MonoBehaviour
             if (pendingPlank == null) { StartEntering(); return; }
             anim?.Attack();
             hitAt = Time.time + attackHitDelay;
-            nextBreak = Time.time + breakInterval;
+            nextBreak = Time.time + hitInterval;
         }
         if (pendingPlank != null && Time.time >= hitAt)
         {
-            pendingPlank.Break((target.approachPoint.position - target.transform.position).normalized * -1f);   // la planche part vers l'intérieur
+            pendingPlank.Hit((target.approachPoint.position - target.transform.position).normalized * -1f);   // [4.4] un coup : tremble, clou qui saute, puis chute vers l'intérieur
             pendingPlank = null;
             if (!target.IsBarricaded) StartEntering();
         }

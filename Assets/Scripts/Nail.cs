@@ -14,6 +14,7 @@ public class Nail : MonoBehaviour
     public float sinkSpeed = 0.5f;     // m/s : vitesse à laquelle le clou s'enfonce visuellement
 
     int hits;
+    bool popped;                       // [4.4] arraché par un zombie : il dépasse de la planche et reste visible
     float lastHit, z;
     AudioSource src;
     static AudioClip hitClip;
@@ -32,7 +33,7 @@ public class Nail : MonoBehaviour
 
     public void Refresh(bool show)
     {
-        bool vis = show || hits > 0;
+        bool vis = show || hits > 0 || popped;
         if (visual.activeSelf != vis) visual.SetActive(vis);
     }
 
@@ -48,6 +49,15 @@ public class Nail : MonoBehaviour
     public void ResetHits()
     {
         hits = 0;
+        popped = false;
+    }
+
+    // [4.4] un zombie fait sauter ce clou : il ressort (animation vers restZ) et devra être renfoncé de 3 coups
+    public void Pop()
+    {
+        hits = 0;
+        popped = true;
+        visual.SetActive(true);
     }
 
     void Apply()
@@ -74,6 +84,7 @@ public class Nail : MonoBehaviour
         if (Vector3.Dot(head.Velocity.normalized, -transform.forward) < 0.25f) return;
 
         hits++;
+        if (Driven) popped = false;
         lastHit = Time.time;
         src.pitch = 0.9f + 0.1f * hits;
         src.PlayOneShot(hitClip);

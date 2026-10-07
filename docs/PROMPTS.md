@@ -33,6 +33,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [022](#022--commit-propre-des-packs-dassets) | 2026-10-07 | Commiter proprement dans main | Dépôt | 3 commits : pack pistolet, pack zombie, NavMesh ; bruit de régénération laissé de côté |
 | [023](#023--analyse-du-skin-du-joueur-protective-suit-man) | 2026-10-07 | Skin du joueur « Protective suit man » : vérifier le modèle et les animations du pack | Personnage joueur | Pack analysé : humanoïde de 1,86 m, aucune animation |
 | [024](#024--sons-de-lancement-et-voix-des-zombies) | 2026-10-07 | Sons à ajouter : lancement de la partie, zombies et une variante | Audio | Son de lancement, cris de zombie en 3D (2 variantes) |
+| [025](#025--revue-des-pull-requests-69-79-77-rien-poussé-dans-le-main) | 2026-10-07 | Revue des PR #69, #79 et #77 : fonctionnement et conflits, sans rien pousser dans le main | Revue | 2 bugs bloquants (#69 entrée, #77 shader), #79 OK, #67 en conflit |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -540,3 +541,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Vérifié dans l'éditeur** : 4 zombies, les 2 variantes jouées en alternance aléatoire, jamais plus de 3 voix ; voix coupée 0,6 s après un tir à la tête en plein cri. **Non écouté** au casque (volumes).
 - Le dossier contenait 2 autres fichiers non cités (`dragon-studio-…`, dont une copie identique de `zombis.mp3`) : non utilisés.
 - Pages de wiki : Zombies (voix), Niveaux et vagues (son de lancement).
+
+### 025 — Revue des pull requests #69, #79, #77 (rien poussé dans le main)
+
+**Prompt**
+
+> Regarde les pull request : [6.4][6.5][7.4] Points, écran de score au mur, écrans de début et de fin / [#74] Le zombie enjambe la fenêtre au lieu de traverser le mur / Feature/7.2 effet cctv- #77. Vérifie le fonctionnement de chacune l'une après l'autre, et vérifie qu'il n'y ait pas de conflicts (ne push rien dans le main pour l'instant)
+
+**Résultat**
+
+- Chaque PR a été testée seule, sur une branche locale jetable fusionnée avec le main (branches supprimées, **rien poussé**), dans l'éditeur uniquement : **rien n'a été testé au casque**.
+- **#69 (score, écrans)** : **bloquante**. `VRInput.AnyTrigger()` appelle `Input.GetKey` (ancien système) alors que le projet est en « Input System » seul : exception à chaque image, l'écran de début ne se ferme jamais, le jeu ne démarre pas. Avec `Keyboard.current.spaceKey.isPressed` à la place, plus d'erreur, `BeginGame` et le score fonctionnent. Les `.meta` des nouveaux scripts ne sont pas dans la PR.
+- **#79 (enjambe la fenêtre)** : OK. Le zombie arrive de l'extérieur, se hisse (hauteur max 0,96 m), retombe à l'intérieur et repart ; aucune erreur. Traversée ≈ 4,5 s.
+- **#77 (CCTV)** : **bloquante**. `CCTV.shader` nomme une variable `line` (mot réservé HLSL) : erreur de compilation, écrans magenta. Renommée `scan` : l'effet s'affiche (vert, grain, lignes, « CAM 01 COULOIR GAUCHE », date et heure).
+- **Conflits** : #69, #79, #77 et #78 fusionnent proprement ensemble. **#67 (planches)** est en conflit avec le main, #69 et #78 sur `RoomBuilder.cs` et `WaveManager.cs` ; `PLANNING.md` est aussi touché par toutes les PR.
+- Les correctifs de test (2 lignes) ne sont pas appliqués aux PR : à faire par leurs auteurs.

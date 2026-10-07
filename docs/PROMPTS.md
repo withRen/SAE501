@@ -34,6 +34,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [023](#023--analyse-du-skin-du-joueur-protective-suit-man) | 2026-10-07 | Skin du joueur « Protective suit man » : vérifier le modèle et les animations du pack | Personnage joueur | Pack analysé : humanoïde de 1,86 m, aucune animation |
 | [024](#024--sons-de-lancement-et-voix-des-zombies) | 2026-10-07 | Sons à ajouter : lancement de la partie, zombies et une variante | Audio | Son de lancement, cris de zombie en 3D (2 variantes) |
 | [025](#025--revue-des-pull-requests-69-79-77-rien-poussé-dans-le-main) | 2026-10-07 | Revue des PR #69, #79 et #77 : fonctionnement et conflits, sans rien pousser dans le main | Revue | 2 bugs bloquants (#69 entrée, #77 shader), #79 OK, #67 en conflit |
+| [026](#026--revue-bugs-et-optimisation-rien-poussé) | 2026-10-07 | Vérifier bugs et optimisation, sans rien pousser | Revue | Quest rendu avec le pipeline PC, 26 lumières temps réel, ombre de point light, textures 4K du zombie, petites allocations par image |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -556,3 +557,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **#77 (CCTV)** : **bloquante**. `CCTV.shader` nomme une variable `line` (mot réservé HLSL) : erreur de compilation, écrans magenta. Renommée `scan` : l'effet s'affiche (vert, grain, lignes, « CAM 01 COULOIR GAUCHE », date et heure).
 - **Conflits** : #69, #79, #77 et #78 fusionnent proprement ensemble. **#67 (planches)** est en conflit avec le main, #69 et #78 sur `RoomBuilder.cs` et `WaveManager.cs` ; `PLANNING.md` est aussi touché par toutes les PR.
 - Les correctifs de test (2 lignes) ne sont pas appliqués aux PR : à faire par leurs auteurs.
+
+### 026 — Revue bugs et optimisation (rien poussé)
+
+**Prompt**
+
+> Vérifie qu'il n'y a pas de bugs, pas de problèmes d'optimisation. Ne push toujours rien sur github, pour l'instant l'idée est de vérifier que la structure est bonne et optimisée
+
+**Résultat** (revue du code + mesures dans l'éditeur ; **rien mesuré sur le Quest**)
+
+- Aucune erreur de compilation ni en jeu (vagues, 6 zombies, mort du joueur et rechargement de la scène). Listes statiques bien vidées au rechargement ; textes CCTV invisibles pour les autres caméras ; calque 31 libre ; rendu stéréo « single pass instanced ».
+- **Réglages Quest** : un seul niveau de qualité (« PC ») exclu d'Android ; le Quest utilise donc `PC_RPAsset` (échelle de rendu 1, ombres des lumières additionnelles) et `Mobile_RPAsset` ne sert pas.
+- **Lumières** : 26 lumières temps réel, rien de précalculé, 4 lumières par objet au maximum ; `Light_Bunker_Workbench` (point) a des ombres douces = 6 rendus d'ombre par image ; les 357 objets projettent des ombres.
+- **Textures** : 4 textures du zombie en 4096 px (1024 suffit au casque).
+- **Rendu** : une caméra de surveillance rendue à chaque image même quand personne ne regarde les écrans ; caméra du joueur à 1000 m de portée ; occlusion culling non précalculé.
+- **Code** : `ZombieAnimationBridge` lit `animator.parameters` (copie de tableau) à chaque appel ; texte de statut du `WaveManager` et horloge CCTV reconstruits à chaque image ; `Zombie.ChooseOpening` relancé à chaque image si aucune ouverture n'est accessible.
+- Rien n'a été corrigé : liste et ordre proposés dans la réponse.

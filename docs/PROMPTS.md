@@ -36,6 +36,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [025](#025--revue-des-pull-requests-69-79-77-rien-poussé-dans-le-main) | 2026-10-07 | Revue des PR #69, #79 et #77 : fonctionnement et conflits, sans rien pousser dans le main | Revue | 2 bugs bloquants (#69 entrée, #77 shader), #79 OK, #67 en conflit |
 | [026](#026--revue-bugs-et-optimisation-rien-poussé) | 2026-10-07 | Vérifier bugs et optimisation, sans rien pousser | Revue | Quest rendu avec le pipeline PC, 26 lumières temps réel, ombre de point light, textures 4K du zombie, petites allocations par image |
 | [027](#027--corrections-doptimisation-rien-poussé) | 2026-10-07 | Appliquer les corrections d'optimisation proposées | Optimisation | Niveau Quest, textures 1024 px, CCTV rendues seulement si vues, allocations par image supprimées ; occlusion culling essayé puis retiré |
+| [028](#028--image-noire-au-casque) | 2026-10-07 | Image noire au casque après le niveau Quest | Bug | Quest_RPAsset : copie du pipeline PC sans ombres coûteuses |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -592,4 +593,16 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Occlusion culling essayé puis retiré** : il coupait aussi les lumières de lune placées dehors, les murs du bunker devenaient sombres.
 - **Non fait, choix de l'équipe** : précalculer l'éclairage (26 lumières temps réel, 4 par objet au maximum sur le Quest).
 - Page de wiki non mise à jour : le wiki est sur GitHub, et rien ne doit y être poussé pour l'instant.
+
+### 028 — Image noire au casque
+
+**Prompt**
+
+> (capture Meta Casting, image presque noire) Sans les lights le jeu est actuellement noir, il y a pas de render
+
+**Résultat**
+
+- Cause probable : le niveau « Quest » ajouté en 027 utilisait `Mobile_RPAsset`, jamais utilisé dans le projet (renderer en Forward au lieu de Forward+, ancienne version de fichier, Native Render Pass). Le noir ne se reproduit pas dans l'éditeur : la cause exacte au casque n'est pas confirmée.
+- Correction : nouveau `Quest_RPAsset`, copie exacte du pipeline PC (celui qui rendait bien au casque) avec seulement 4 réglages d'ombre en moins (ombres des lumières secondaires, ombres douces, 1 cascade, carte d'ombre 1024).
+- Commit local, rien poussé. **À vérifier au casque.**
 

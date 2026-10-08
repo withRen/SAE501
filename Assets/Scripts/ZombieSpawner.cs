@@ -39,7 +39,10 @@ public class ZombieSpawner : MonoBehaviour
                     : where == Point.CouloirDroit ? points.rightCorridorEnd
                     : where == Point.Toit && points.roof ? points.roof
                     : points.exterior;
-        var go = Instantiate(zombiePrefab, p.position, p.rotation);
+        // terrain en relief : départ posé sur le NavMesh le plus proche (sinon l'agent ne se crée pas s'il est sous le sol)
+        var pos = p.position;
+        if (UnityEngine.AI.NavMesh.SamplePosition(pos, out var hit, 4f, UnityEngine.AI.NavMesh.AllAreas)) pos = hit.position;
+        var go = Instantiate(zombiePrefab, pos, p.rotation);
         var z = go.GetComponent<Zombie>();
         z.ApplyLevel(level);
         z.walkSpeed = zombieSpeed * Random.Range(speedRange.x, speedRange.y);   // chaque zombie a son allure

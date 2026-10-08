@@ -86,7 +86,6 @@ public static class RoomBuilder
         var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");
         var bunkerAxeNode = Find(roomRoot.transform, "Bunker_Axe_Stove");      // hache posée au sol, sous le bord de l'établi du bunker
         var genCrowbarNode = Find(roomRoot.transform, "GenRoom_Crowbar");       // carte finale : établi de la salle du générateur
-        var cabinAxeNode = Find(roomRoot.transform, "Garden_Cabin_Axe");        // carte finale : établi de la cabane du jardin
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
@@ -98,7 +97,6 @@ public static class RoomBuilder
         BuildMelee(axeNode, "Hache", 1f, 0.5f, 1f / 3f);
         BuildMelee(bunkerAxeNode, "Hache_Bunker", 1f, 0.5f, 1f / 3f);
         BuildMelee(genCrowbarNode, "PiedDeBiche_Generateur", 0.5f, 0.25f, 0.15f);
-        BuildMelee(cabinAxeNode, "Hache_Cabane", 1f, 0.5f, 1f / 3f);
         BuildMonitors(rig, cam, BuildCameras());
         BuildBreaker();
         BuildBatteries();
@@ -186,11 +184,11 @@ public static class RoomBuilder
     static readonly string[] NoCollider = { "Debris", "Papers", "Rug", "Runner", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "Handle", "Frame",
         "WindowSash", "WindowGlass", "Chair_Overturned", "Brick", "Apoc_", "Puddle", "OilStain", "Cables", "CableConduits", "Pendant", "Sconce",
         "CCTV_Monitor", "CCTV_Bezel", "LEDs", "TallyLED", "CameraMesh", "Mount", "Bulb", "Door_Boarded_Planks",
-        "Canopy", "OilSpills", "CeilingVines", "Cabin_Roof" };   // jardin : feuillage des arbres, toit de la cabane ; salle du générateur : flaques, lianes
+        "Canopy", "Canopies", "OilSpills", "CeilingVines", "Cabin_Roof" };   // jardin : feuillage des arbres, toit de la cabane ; salle du générateur : flaques, lianes
     // structure : collider exact (murs percés de portes et de fenêtres, sols en L)
     // jardin (carte finale) : terrain vallonné, allée, haies, rochers, piliers du portail, troncs ; tuyaux de la salle du générateur
     // (une boîte englobante bloquerait tout : la haie fait le tour du jardin, les tuyaux longent toute la salle)
-    static readonly string[] Structural = { "Wall", "Floor", "Ceiling", "Trim", "Stub", "Terrain", "StonePath", "Hedges", "Rocks", "Pillars", "Trunk", "IndustrialPipes" };
+    static readonly string[] Structural = { "Wall", "Floor", "Ceiling", "Trim", "Stub", "Terrain", "StonePath", "Hedges", "Rocks", "Pillars", "Trunk", "IndustrialPipes", "EscapeRoad" };
 
     static void MakeMapColliders(Transform root)
     {
@@ -275,6 +273,7 @@ public static class RoomBuilder
         ext.SetParent(mapRoot, false);
         // bunker : x Blender -7,5..3,8 / mur sud y -14 ; le terrain va de y -14 à -19
         var c = B(-1.85f, -16.6f, -0.05f);
+        if (Find(roomRoot.transform, "Exterior_World_Terrain") != null) return;   // la carte a son propre terrain extérieur : pas de sol ajouté
         var sol = Box("Sol", ext, c, new Vector3(13f, 0.1f, 5.2f), blockM);
         GameObjectUtility.SetStaticEditorFlags(sol, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI);
     }
@@ -395,8 +394,16 @@ public static class RoomBuilder
     }
 
     // window = vrai : le zombie passe par la fenêtre grâce à un lien NavMesh (il n'y a pas de sol continu sous l'allège)
+    static Vector3 Ground(Vector3 p)
+    {
+        Physics.SyncTransforms();
+        return Physics.Raycast(p + Vector3.up * 1.2f, Vector3.down, out var h, 3f, ~0, QueryTriggerInteraction.Ignore) ? h.point : p;
+    }
+
     static void MakeOpening(Transform holder, string name, Vector3 center, Vector3 approach, Vector3 inside, bool window)
     {
+        // carte avec terrain en relief : les points d'approche et d'arrivée sont posés sur le sol réel (sinon enterrés ou en l'air)
+        approach = Ground(approach); inside = Ground(inside);
         var go = new GameObject("Ouverture_" + name);
         go.transform.SetParent(holder, false);
         go.transform.position = center;

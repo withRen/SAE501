@@ -56,6 +56,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [045](#045--disjoncteur-caméras-zombies-portes-toit) | 2026-10-08 | Disjoncteurs, caméras trop sombres, zombies (2 fenêtres, plus nombreux, vitesse aléatoire, bug de focus), portes à tirer barricadables, plus sombre, plateforme du menu invisible, zombies par le toit | Gameplay, rendu | `Breaker`, CCTV vision nocturne, `HingedDoor`, passages réservés (zone NavMesh 3), trous du toit, lumières ×0,32 |
 | [046](#046--rendu-proche-de-cycles-éclairage-précalculé) | 2026-10-08 | Graphismes aussi développés que le rendu Blender (captures Cycles), ambiance très sombre | Rendu | Éclairage précalculé (lightmaps + sondes), textures procédurales cuites, conversion des lumières corrigée, calage sur des rendus Cycles |
 | [047](#047--volume-des-zombies-musique-plus-forte-en-boucle) | 2026-10-08 | Réglage du volume des zombies ; musique en jeu plus forte et en boucle | Son | Curseur « Zombies », `MusicPlayer` simplifié (boucle sûre), musique indépendante du volume des effets |
+| [048](#048--carte-map_final_final) | 2026-10-08 | Remplacer la carte par `map_final_final.blend` en respectant ses éléments | Carte | Export + import, collisions et points d'apparition adaptés au terrain, éclairage recuit |
+| [049](#049--fin-de-limport-de-la-nouvelle-carte) | 2026-10-08 | Finir proprement l'import de la nouvelle carte | Carte | Vérification en jeu : zombies (2 fenêtres + toit), portes, disjoncteur, armes, chargeurs |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -906,4 +908,30 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Musique plus forte** : elle ne passe plus par le volume général des effets (`ignoreListenerVolume`), seul le curseur Musique la règle : 0,96 au réglage par défaut contre 0,35 effectifs avant (≈ ×2,7).
 - **Musique en boucle** : `MusicPlayer` réécrit avec une seule source : la piste suivante démarre quand la précédente se termine (1, 2, 1, 2…, sans fin) ; elle attend pendant le menu pause. L'ancienne version programmait les pistes sur l'horloge audio, qui continuait pendant la pause : la musique se décalait ou s'arrêtait. Testé : fin de la piste 1 → piste 2 enchaînée.
 - Au passage : fond du menu pause rendu opaque (le bandeau de niveau se lisait au travers) ; GPU Resident Drawer coupé aussi dans le pipeline PC (erreurs en boucle dans l'éditeur avec les sondes de lumière ; il l'était déjà pour le Quest).
+- **Pas testé au casque.** Branche locale `feature/map-finale`, rien poussé.
+
+### 048 — Carte map_final_final
+
+**Prompt**
+
+> @map_final_final.blend Utilise cette map là, respect eactement les éléments qu'elle a
+
+**Résultat** (code et réglages par l'IA, Claude Code)
+
+- Carte exportée telle quelle depuis Blender (`export_map.py`) : 492 objets, 31 lumières, 23 objets à matériau procédural cuits en textures (terrain, forêt, route de fuite en pierres). Rien n'a été ajouté ni retiré dans la carte.
+- Adaptations du constructeur (`RoomBuilder`) aux nouveaux noms : feuillage de la forêt (« Canopies ») sans collision, route de fuite (« EscapeRoad ») solide, sol plat de secours supprimé quand la carte a son propre terrain, hache de la cabane retirée (absente de cette carte), points d'approche des fenêtres posés sur le terrain en relief.
+- `ZombieSpawner` : le zombie apparaît sur le point du NavMesh le plus proche (le terrain est en relief, sinon l'agent pouvait naître sous le sol).
+- Éclairage recuit (1 lightmap 1024, 2 729 sondes). Calage sur Cycles : bunker 0,0127 (Cycles) / 0,0138 (Unity), extérieur 0,0015 / 0,0013.
+
+### 049 — Fin de l'import de la nouvelle carte
+
+**Prompt**
+
+> @map_final_final.blend Fini l'import propre de la nouvelle map
+
+**Résultat** (vérifications par l'IA, Claude Code)
+
+- Les zombies qui « disparaissaient » devant les fenêtres : reste d'un script de test de la session précédente, pas un bug du jeu. En partie relancée proprement : 4 zombies (3 dehors, 1 sur le toit) entrent par la fenêtre SE, la fenêtre SW et le trou du toit, puis attaquent le joueur.
+- Vérifié en jeu : 4 portes à charnière (dont Ouest/Est barricadables), disjoncteur des caméras, générateur, 4 armes de mêlée (2 pieds-de-biche, 2 haches), chargeurs tirés au sort (6 sur 12 dans cette partie, aucun tombé), aucune erreur dans la console.
+- Le dossier `Assets/Protection_suite` (pack importé le 7 octobre) n'est pas inclus dans le commit.
 - **Pas testé au casque.** Branche locale `feature/map-finale`, rien poussé.

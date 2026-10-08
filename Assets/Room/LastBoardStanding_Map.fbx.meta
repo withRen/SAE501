@@ -207,6 +207,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Mat_Garden_DarkFoliage__Exterior_Forest_Canopies
+    second: {fileID: 2100000, guid: 772afe9c19b344ebebeac4a59adfa861, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Mat_Garden_DarkFoliage__Garden_Tree_01_NE_Hill_Canopy
     second: {fileID: 2100000, guid: e899604337a654986bc04b5f4a3af615, type: 2}
   - first:
@@ -262,6 +267,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Mat_Garden_GrassDirt__Exterior_World_Terrain
+    second: {fileID: 2100000, guid: b6c9783a8149c461881d2fbea36749fc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Mat_Garden_GrassDirt__Garden_Terrain_Vallons
     second: {fileID: 2100000, guid: d13e1e6e61b504f37995a07bbf054e1d, type: 2}
   - first:
@@ -287,6 +297,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Mat_Garden_StonePath__Exterior_EscapeRoad_Stones
+    second: {fileID: 2100000, guid: 94a06cba040784fe099c8ff6d2d859e5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Mat_Garden_StonePath__Garden_StonePath_And_Porch
     second: {fileID: 2100000, guid: be5bce08702c54ae1a44a217ca019fe9, type: 2}
   - first:
@@ -294,6 +309,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Mat_Garden_TreeBark
     second: {fileID: 2100000, guid: 33d3d2d6488c34aeab1deed9d92518c1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_TreeBark__Exterior_Forest_Trunks
+    second: {fileID: 2100000, guid: 0ef20b664735a44298251b391e1ad720, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -407,6 +427,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Rockingchair_01
+    second: {fileID: 2100000, guid: d9ac575a5d92540879c5d3567684d793, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Rubber
     second: {fileID: 2100000, guid: 0c718c4860aff42de89e37f372942f46, type: 2}
   - first:
@@ -477,6 +502,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: WoodenTable_03
+    second: {fileID: 2100000, guid: 0de78524603bf401cb94f83f2a82f5a8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: ammo_box
     second: {fileID: 2100000, guid: 2b09c2064736d4188b9d46938c6bd34b, type: 2}
   - first:
@@ -484,6 +514,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: barrel_stove
     second: {fileID: 2100000, guid: 5e09ebcc0564349358249c63c1ad59b0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: boulder_01
+    second: {fileID: 2100000, guid: 6484c1466f81047a19b833356ab0e0e3, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -512,6 +547,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: dead_tree_trunk_02
+    second: {fileID: 2100000, guid: 09739d009505743d79fa5cea9a81b519, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: electric_stove
     second: {fileID: 2100000, guid: 080c02d46240c4b2ab5301625e97a93e, type: 2}
   - first:
@@ -524,6 +564,16 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: garden_gnome_01
     second: {fileID: 2100000, guid: 9941bf37a5b984b05b713ffb71775d5b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: garden_hose_wall_mounted_01
+    second: {fileID: 2100000, guid: d794174a358014b60bf3263419783b20, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hand_truck
+    second: {fileID: 2100000, guid: c94b679a8746441249ab6fd605cf05c6, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -607,6 +657,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: metal_toolbox
+    second: {fileID: 2100000, guid: 041fc986135274b20880d798d1765a24, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: painted_wooden_bench
     second: {fileID: 2100000, guid: 984ca2640419544958151ce3cd15b463, type: 2}
   - first:
@@ -644,6 +699,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: trashbag
     second: {fileID: 2100000, guid: 93aa33c96649e4ad3b61a4c3d91fef72, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: tree_stump_01
+    second: {fileID: 2100000, guid: f283cd6978f9c4d938cbaf33aeec03c6, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -697,6 +757,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: wall_clock
+    second: {fileID: 2100000, guid: 9a7f8ea6830b74a089478eea8f083b81, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wall_clock_glass
+    second: {fileID: 2100000, guid: ebc88c467b5014bc6918030982f25275, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: watering_can_metal_01
     second: {fileID: 2100000, guid: 80f9bb54dd7be4d0ba80d73f4acde777, type: 2}
   - first:
@@ -707,8 +777,78 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_clearwater
+    second: {fileID: 2100000, guid: c2cddc901ddf84de993effd5fee3660a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_ftero_vinea_01
+    second: {fileID: 2100000, guid: 5ba39b8a025a4442e939be5d77c028b0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_ftero_vinea_02
+    second: {fileID: 2100000, guid: 6e18282cbda5c47fe9ee83306dc70372, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_glass_clear
+    second: {fileID: 2100000, guid: 53f5540caedcb4929bf52d2ec06e3295, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_glass_green
+    second: {fileID: 2100000, guid: 2c682dbef56f34c36bc699168d4361fc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_glass_orange
+    second: {fileID: 2100000, guid: 050fa38c656c54e8daf4de0056ea4427, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_glass_yellow
+    second: {fileID: 2100000, guid: 3afef38a4bcd44a75bd0fb3693d22fc7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_intertwine
+    second: {fileID: 2100000, guid: 15fbe3b7c97d64587ba546075af79782, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_seal_cork
+    second: {fileID: 2100000, guid: fe316816b070f4773986bce5b1e6a306, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_wine_clear
+    second: {fileID: 2100000, guid: cee162966ead84574b3a5e320ada9e1b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_wine_light_red
+    second: {fileID: 2100000, guid: 694ccc53e3a31405eaea2d2e3e9db43d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_bottles_01_wine_red
+    second: {fileID: 2100000, guid: 87872d373c0514d34b19d9f1256e6688, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: wooden_axe
     second: {fileID: 2100000, guid: b4756d883372d4628a55c6163c23d917, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wooden_bookshelf_worn
+    second: {fileID: 2100000, guid: 100931774fe1f4fb7bc44bd86f511523, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wooden_crate_01
+    second: {fileID: 2100000, guid: e3a74e27798ae470b839067feaafde34, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

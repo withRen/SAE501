@@ -181,6 +181,32 @@
    1.0
   ]
  },
+ "boulder_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.8721678853034973,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "boulder_01_diff.jpg",
+  "normal_tex": "boulder_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "brass_pan_01": {
   "base_color": [
    0.800000011920929,
@@ -675,6 +701,32 @@
    0.0
   ]
  },
+ "dead_tree_trunk_02": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7720880508422852,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "dead_tree_trunk_02_diff.jpg",
+  "normal_tex": "dead_tree_trunk_02_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "DoorMetal": {
   "base_color": [
    0.25,
@@ -1013,6 +1065,32 @@
    0.0
   ]
  },
+ "garden_hose_wall_mounted_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.4618852734565735,
+  "metal": 0.11535854637622833,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "garden_hose_wall_mounted_01_diff.jpg",
+  "normal_tex": "garden_hose_wall_mounted_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "GeneratorPaint": {
   "base_color": [
    0.20000000298023224,
@@ -1056,6 +1134,32 @@
   ],
   "base_tex": null,
   "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "hand_truck": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6273791790008545,
+  "metal": 0.20784589648246765,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "hand_truck_diff.jpg",
+  "normal_tex": "hand_truck_nor_gl.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1585,6 +1689,32 @@
    1.0
   ]
  },
+ "Mat_Garden_DarkFoliage__Exterior_Forest_Canopies": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Exterior_Forest_Canopies_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Exterior_Forest_Canopies_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
  "Mat_Garden_DarkFoliage__Garden_Tree_01_NE_Hill_Canopy": {
   "base_color": [
    0.05999999865889549,
@@ -1819,6 +1949,32 @@
    1.0
   ]
  },
+ "Mat_Garden_GrassDirt__Exterior_World_Terrain": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.8999999761581421,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_GrassDirt__Exterior_World_Terrain_Couleur.jpg",
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
  "Mat_Garden_GrassDirt__Garden_Terrain_Vallons": {
   "base_color": [
    0.800000011920929,
@@ -1871,23 +2027,23 @@
    0.20000000298023224
   ]
  },
- "Mat_Garden_Rock__Garden_Rocks_And_Boulders": {
+ "Mat_Garden_StonePath__Exterior_EscapeRoad_Stones": {
   "base_color": [
-   0.20000000298023224,
+   0.23999999463558197,
+   0.23000000417232513,
    0.20999999344348907,
-   0.2199999988079071,
    1.0
   ],
-  "rough": 0.8799999952316284,
-  "metal": 0.05000000074505806,
+  "rough": 0.8500000238418579,
+  "metal": 0.0,
   "alpha": 1.0,
   "blend": "HASHED",
   "tiling": [
    1,
    1
   ],
-  "base_tex": "Mat_Garden_Rock__Garden_Rocks_And_Boulders_Couleur.jpg",
-  "normal_tex": "Mat_Garden_Rock__Garden_Rocks_And_Boulders_Normale.jpg",
+  "base_tex": "Mat_Garden_StonePath__Exterior_EscapeRoad_Stones_Couleur.jpg",
+  "normal_tex": "Mat_Garden_StonePath__Exterior_EscapeRoad_Stones_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1914,6 +2070,32 @@
   ],
   "base_tex": "Mat_Garden_StonePath__Garden_StonePath_And_Porch_Couleur.jpg",
   "normal_tex": "Mat_Garden_StonePath__Garden_StonePath_And_Porch_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Exterior_Forest_Trunks": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Exterior_Forest_Trunks_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Exterior_Forest_Trunks_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -2339,6 +2521,32 @@
    0.0
   ]
  },
+ "metal_toolbox": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.4335557818412781,
+  "metal": 0.06264974921941757,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "metal_toolbox_diff.jpg",
+  "normal_tex": "metal_toolbox_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
  "MetalDark": {
   "base_color": [
    0.10000000149011612,
@@ -2729,6 +2937,32 @@
    1.0
   ]
  },
+ "Rockingchair_01": {
+  "base_color": [
+   0.32156863808631897,
+   0.32156863808631897,
+   0.32156863808631897,
+   1.0
+  ],
+  "rough": 0.4608180522918701,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Rockingchair_01_diff.jpg",
+  "normal_tex": "Rockingchair_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "Rubber": {
   "base_color": [
    0.05000000074505806,
@@ -3013,6 +3247,32 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "tree_stump_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.9106351137161255,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "tree_stump_01_diff.jpg",
+  "normal_tex": "tree_stump_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "TrimPaint": {
@@ -3379,6 +3639,58 @@
    1.0
   ]
  },
+ "wall_clock": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.3706388473510742,
+  "metal": 0.4391329884529114,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wall_clock_diff.jpg",
+  "normal_tex": "wall_clock_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "wall_clock_glass": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.05214111506938934,
+  "metal": 0.0,
+  "alpha": 0.4000000059604645,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
  "Wallpaper": {
   "base_color": [
    0.44999998807907104,
@@ -3483,6 +3795,318 @@
    0.0
   ]
  },
+ "wine_bottles_01_clearwater": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7098735570907593,
+  "metal": 0.014167550951242447,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_label_clearwater_crystals_01_diff.png",
+  "normal_tex": "wine_bottles_01_paper_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_ftero_vinea_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.701216459274292,
+  "metal": 0.04616546630859375,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_label_ftero_vinea_02_diff.png",
+  "normal_tex": "wine_bottles_01_paper_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_ftero_vinea_02": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7033931016921997,
+  "metal": 0.029171504080295563,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_label_ftero_vinea_01_diff.png",
+  "normal_tex": "wine_bottles_01_paper_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_glass_clear": {
+  "base_color": [
+   0.9149893522262573,
+   0.9149893522262573,
+   0.9149893522262573,
+   1.0
+  ],
+  "rough": 0.20392856001853943,
+  "metal": 0.06572742760181427,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_diff.jpg",
+  "normal_tex": "wine_bottles_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_glass_green": {
+  "base_color": [
+   0.7428088188171387,
+   0.8478346467018127,
+   0.5893216133117676,
+   1.0
+  ],
+  "rough": 0.20392856001853943,
+  "metal": 0.06572742760181427,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_diff.jpg",
+  "normal_tex": "wine_bottles_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_glass_orange": {
+  "base_color": [
+   0.7687060236930847,
+   0.5786375403404236,
+   0.4140673279762268,
+   1.0
+  ],
+  "rough": 0.20392856001853943,
+  "metal": 0.06572742760181427,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_diff.jpg",
+  "normal_tex": "wine_bottles_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_glass_yellow": {
+  "base_color": [
+   1.0,
+   0.9713022708892822,
+   0.7357107996940613,
+   1.0
+  ],
+  "rough": 0.20392856001853943,
+  "metal": 0.06572742760181427,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_diff.jpg",
+  "normal_tex": "wine_bottles_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_intertwine": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7106865644454956,
+  "metal": 0.008085987530648708,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_label_intertwine_01_diff.png",
+  "normal_tex": "wine_bottles_01_paper_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_seal_cork": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.20392856001853943,
+  "metal": 0.06572742760181427,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_bottles_01_diff.png",
+  "normal_tex": "wine_bottles_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": true,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_wine_clear": {
+  "base_color": [
+   1.0,
+   0.9324522614479065,
+   0.7874122262001038,
+   1.0
+  ],
+  "rough": 0.20512822270393372,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_wine_light_red": {
+  "base_color": [
+   1.0,
+   0.08782617002725601,
+   0.04163853079080582,
+   1.0
+  ],
+  "rough": 0.12820515036582947,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_bottles_01_wine_red": {
+  "base_color": [
+   0.5224650502204895,
+   0.04925941303372383,
+   0.024301469326019287,
+   1.0
+  ],
+  "rough": 0.12820515036582947,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "wooden_axe": {
   "base_color": [
    0.800000011920929,
@@ -3507,6 +4131,58 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "wooden_bookshelf_worn": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7226974964141846,
+  "metal": 0.006998766213655472,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_bookshelf_worn_diff.jpg",
+  "normal_tex": "wooden_bookshelf_worn_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wooden_crate_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7047491073608398,
+  "metal": 0.2791311740875244,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_crate_01_diff.jpg",
+  "normal_tex": "wooden_crate_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "wooden_ladder": {
@@ -3604,6 +4280,32 @@
   ],
   "base_tex": "wooden_picnic_table_top_diff.jpg",
   "normal_tex": "wooden_picnic_table_top_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "WoodenTable_03": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.48116397857666016,
+  "metal": 0.23294001817703247,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "WoodenTable_03_diff.jpg",
+  "normal_tex": "WoodenTable_03_nor_gl.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 1.0,

@@ -330,7 +330,7 @@
   "normal_tex": null,
   "emission_tex": null,
   "alpha_linked": false,
-  "emission_strength": 6.0,
+  "emission_strength": 1.5,
   "emission_color": [
    1.0,
    0.75,
@@ -517,6 +517,32 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "compost_bag_02": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7165209650993347,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "compost_bag_02_diff.jpg",
+  "normal_tex": "compost_bag_02_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "CorridorDoor": {
@@ -959,6 +985,32 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "garden_gnome_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.3297930955886841,
+  "metal": 0.001096630934625864,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "garden_gnome_diff.jpg",
+  "normal_tex": "garden_gnome_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "GeneratorPaint": {
@@ -1474,7 +1526,7 @@
   "normal_tex": null,
   "emission_tex": null,
   "alpha_linked": false,
-  "emission_strength": 5.0,
+  "emission_strength": 1.5,
   "emission_color": [
    0.10000000149011612,
    1.0,
@@ -1500,7 +1552,7 @@
   "normal_tex": null,
   "emission_tex": null,
   "alpha_linked": false,
-  "emission_strength": 6.0,
+  "emission_strength": 1.5,
   "emission_color": [
    1.0,
    0.10000000149011612,
@@ -1516,6 +1568,188 @@
   ],
   "rough": 0.10000000149011612,
   "metal": 0.8999999761581421,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage": {
+  "base_color": [
+   0.07499999925494194,
+   0.14000000059604645,
+   0.04499999899417162,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DenseHedge": {
+  "base_color": [
+   0.060000001452863216,
+   0.11499999836087227,
+   0.03500000014901161,
+   1.0
+  ],
+  "rough": 0.8999999761581421,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_GrassDirt": {
+  "base_color": [
+   0.16999999806284904,
+   0.21000000089406967,
+   0.08499999903142452,
+   1.0
+  ],
+  "rough": 0.8999999761581421,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_HiddenKey_Gold": {
+  "base_color": [
+   0.949999988079071,
+   0.7799999713897705,
+   0.20000000298023224,
+   1.0
+  ],
+  "rough": 0.18000000715255737,
+  "metal": 0.949999988079071,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.5,
+  "emission_color": [
+   1.0,
+   0.800000011920929,
+   0.20000000298023224
+  ]
+ },
+ "Mat_Garden_Rock": {
+  "base_color": [
+   0.19999999925494194,
+   0.20000000298023224,
+   0.19500000029802322,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.05000000074505806,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_StonePath": {
+  "base_color": [
+   0.23999999463558197,
+   0.22500000894069672,
+   0.20500000566244125,
+   1.0
+  ],
+  "rough": 0.8500000238418579,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": null,
+  "normal_tex": null,
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark": {
+  "base_color": [
+   0.14500000327825546,
+   0.09999999962747097,
+   0.06500000134110451,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
   "alpha": 1.0,
   "blend": "HASHED",
   "tiling": [
@@ -1793,6 +2027,32 @@
    1.0
   ]
  },
+ "painted_wooden_bench": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7059654593467712,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "painted_wooden_bench_diff.jpg",
+  "normal_tex": "painted_wooden_bench_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "Paper": {
   "base_color": [
    0.75,
@@ -1843,6 +2103,58 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "planter_box_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.7972515821456909,
+  "metal": 0.02896772138774395,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "planter_box_01_diff.jpg",
+  "normal_tex": "planter_box_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "planter_box_02": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.8095849752426147,
+  "metal": 0.049185123294591904,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "planter_box_02_diff.jpg",
+  "normal_tex": "planter_box_02_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "PlasterChunk": {
@@ -2157,6 +2469,32 @@
    1.0
   ]
  },
+ "rusted_spade_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.5683592557907104,
+  "metal": 0.35681265592575073,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "rusted_spade_01_diff.jpg",
+  "normal_tex": "rusted_spade_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "SinkEnamel": {
   "base_color": [
    0.7799999713897705,
@@ -2363,6 +2701,32 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "trowel_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6161297559738159,
+  "metal": 0.6637212634086609,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "trowel_01_diff.jpg",
+  "normal_tex": "trowel_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "vintage_day_bed": {
@@ -2703,6 +3067,58 @@
    1.0
   ]
  },
+ "watering_can_metal_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.770639181137085,
+  "metal": 0.37428683042526245,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "watering_can_metal_01_diff.jpg",
+  "normal_tex": "watering_can_metal_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wine_barrel_01": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.853184700012207,
+  "metal": 0.100878044962883,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wine_barrel_01_diff.jpg",
+  "normal_tex": "wine_barrel_01_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
  "wooden_axe": {
   "base_color": [
    0.800000011920929,
@@ -2779,6 +3195,58 @@
    1.0,
    1.0,
    1.0
+  ]
+ },
+ "wooden_picnic_table_bottom": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6601345539093018,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_picnic_table_bottom_diff.jpg",
+  "normal_tex": "wooden_picnic_table_bottom_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "wooden_picnic_table_table": {
+  "base_color": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
+   1.0
+  ],
+  "rough": 0.6728509068489075,
+  "metal": 0.004002499394118786,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "wooden_picnic_table_top_diff.jpg",
+  "normal_tex": "wooden_picnic_table_top_nor_gl.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 1.0,
+  "emission_color": [
+   0.0,
+   0.0,
+   0.0
   ]
  },
  "worn_metal_rack": {

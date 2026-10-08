@@ -3,7 +3,7 @@
   {
    "name": "Light_OilLamp",
    "type": "POINT",
-   "energy": 18.0,
+   "energy": 3.9600000381469727,
    "color": [
     1.0,
     0.5199999809265137,
@@ -27,7 +27,7 @@
   {
    "name": "Light_Moon_East",
    "type": "SPOT",
-   "energy": 220.0,
+   "energy": 18.0,
    "color": [
     0.41999998688697815,
     0.5600000023841858,
@@ -51,7 +51,7 @@
   {
    "name": "Light_Moon_West",
    "type": "SPOT",
-   "energy": 220.0,
+   "energy": 18.0,
    "color": [
     0.41999998688697815,
     0.5600000023841858,
@@ -75,7 +75,7 @@
   {
    "name": "Light_Stockage_OilLamp",
    "type": "POINT",
-   "energy": 22.0,
+   "energy": 4.840000152587891,
    "color": [
     1.0,
     0.5199999809265137,
@@ -99,7 +99,7 @@
   {
    "name": "Light_Stockage_Fill",
    "type": "POINT",
-   "energy": 10.0,
+   "energy": 2.200000047683716,
    "color": [
     1.0,
     0.5799999833106995,
@@ -123,7 +123,7 @@
   {
    "name": "Light_Corridor_Junction",
    "type": "POINT",
-   "energy": 16.0,
+   "energy": 3.5199999809265137,
    "color": [
     1.0,
     0.5199999809265137,
@@ -147,7 +147,7 @@
   {
    "name": "Light_Corridor_South",
    "type": "POINT",
-   "energy": 12.0,
+   "energy": 2.640000104904175,
    "color": [
     1.0,
     0.550000011920929,
@@ -171,7 +171,7 @@
   {
    "name": "Light_Corridor_Mid",
    "type": "POINT",
-   "energy": 10.0,
+   "energy": 2.200000047683716,
    "color": [
     1.0,
     0.550000011920929,
@@ -195,7 +195,7 @@
   {
    "name": "Light_Moon_Stockage_East",
    "type": "SPOT",
-   "energy": 220.0,
+   "energy": 18.0,
    "color": [
     0.41999998688697815,
     0.5600000023841858,
@@ -219,7 +219,7 @@
   {
    "name": "Light_Bunker_BarrelStove",
    "type": "POINT",
-   "energy": 35.0,
+   "energy": 12.0,
    "color": [
     1.0,
     0.44999998807907104,
@@ -243,7 +243,7 @@
   {
    "name": "Light_Bunker_Workbench",
    "type": "POINT",
-   "energy": 22.0,
+   "energy": 4.840000152587891,
    "color": [
     1.0,
     0.5400000214576721,
@@ -267,7 +267,7 @@
   {
    "name": "Light_Bunker_CommandDesk",
    "type": "POINT",
-   "energy": 18.0,
+   "energy": 3.9600000381469727,
    "color": [
     1.0,
     0.5600000023841858,
@@ -291,7 +291,7 @@
   {
    "name": "Light_Bunker_Beds",
    "type": "POINT",
-   "energy": 14.0,
+   "energy": 3.0799999237060547,
    "color": [
     1.0,
     0.5199999809265137,
@@ -315,7 +315,7 @@
   {
    "name": "Light_Corridor_BunkerTurn",
    "type": "POINT",
-   "energy": 18.0,
+   "energy": 3.9600000381469727,
    "color": [
     1.0,
     0.5199999809265137,
@@ -339,7 +339,7 @@
   {
    "name": "Light_Corridor_CeilingHole_01",
    "type": "POINT",
-   "energy": 15.0,
+   "energy": 3.299999952316284,
    "color": [
     0.550000011920929,
     0.7200000286102295,
@@ -363,7 +363,7 @@
   {
    "name": "Light_Corridor_CeilingHole_02",
    "type": "POINT",
-   "energy": 15.0,
+   "energy": 3.299999952316284,
    "color": [
     0.550000011920929,
     0.7200000286102295,
@@ -387,7 +387,7 @@
   {
    "name": "Light_Moon_Bunker_WinSW",
    "type": "SPOT",
-   "energy": 240.0,
+   "energy": 18.0,
    "color": [
     0.41999998688697815,
     0.5600000023841858,
@@ -411,7 +411,7 @@
   {
    "name": "Light_Moon_Bunker_WinSE",
    "type": "SPOT",
-   "energy": 240.0,
+   "energy": 18.0,
    "color": [
     0.41999998688697815,
     0.5600000023841858,
@@ -435,7 +435,7 @@
   {
    "name": "Light_GeneratorBulb",
    "type": "POINT",
-   "energy": 35.0,
+   "energy": 12.0,
    "color": [
     1.0,
     0.7200000286102295,
@@ -457,9 +457,33 @@
    "shadow": true
   },
   {
+   "name": "Light_GeneratorRoom_West",
+   "type": "POINT",
+   "energy": 12.0,
+   "color": [
+    1.0,
+    0.7200000286102295,
+    0.41999998688697815
+   ],
+   "loc": [
+    -20.5,
+    3.200000047683716,
+    2.1500000953674316
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "spot_size": 0.0,
+   "spot_blend": 0.0,
+   "radius": 0.3499999940395355,
+   "shadow": true
+  },
+  {
    "name": "Light_Corridor_Fill",
    "type": "POINT",
-   "energy": 6.0,
+   "energy": 1.3200000524520874,
    "color": [
     0.44999998807907104,
     0.550000011920929,
@@ -483,7 +507,7 @@
   {
    "name": "Light_Corridor_Sconce",
    "type": "POINT",
-   "energy": 10.0,
+   "energy": 2.200000047683716,
    "color": [
     1.0,
     0.6499999761581421,
@@ -507,7 +531,7 @@
   {
    "name": "Light_Bunker_CCTV_Glow",
    "type": "POINT",
-   "energy": 35.0,
+   "energy": 5.0,
    "color": [
     0.3499999940395355,
     0.949999988079071,
@@ -531,7 +555,7 @@
   {
    "name": "Light_CCTV_IR_01_Corridor_Left",
    "type": "SPOT",
-   "energy": 15.0,
+   "energy": 3.0,
    "color": [
     0.8500000238418579,
     1.0,
@@ -555,7 +579,7 @@
   {
    "name": "Light_CCTV_IR_02_Corridor_Right",
    "type": "SPOT",
-   "energy": 15.0,
+   "energy": 3.0,
    "color": [
     0.8500000238418579,
     1.0,
@@ -579,7 +603,7 @@
   {
    "name": "Light_CCTV_IR_03_Cuisine",
    "type": "SPOT",
-   "energy": 15.0,
+   "energy": 3.0,
    "color": [
     0.8500000238418579,
     1.0,
@@ -603,7 +627,7 @@
   {
    "name": "Light_CCTV_IR_04_Stockage",
    "type": "SPOT",
-   "energy": 15.0,
+   "energy": 3.0,
    "color": [
     0.8500000238418579,
     1.0,
@@ -620,6 +644,102 @@
     -0.2681611180305481
    ],
    "spot_size": 1.4500000476837158,
+   "spot_blend": 0.5,
+   "radius": 0.0,
+   "shadow": true
+  },
+  {
+   "name": "Light_Garden_CabinKey",
+   "type": "POINT",
+   "energy": 8.0,
+   "color": [
+    1.0,
+    0.7200000286102295,
+    0.3199999928474426
+   ],
+   "loc": [
+    -32.45000076293945,
+    0.15000000596046448,
+    1.25
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "spot_size": 0.0,
+   "spot_blend": 0.0,
+   "radius": 0.25,
+   "shadow": true
+  },
+  {
+   "name": "Light_Garden_Campfire",
+   "type": "POINT",
+   "energy": 8.0,
+   "color": [
+    1.0,
+    0.550000011920929,
+    0.20000000298023224
+   ],
+   "loc": [
+    -28.100000381469727,
+    -8.5,
+    1.149999976158142
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "spot_size": 0.0,
+   "spot_blend": 0.0,
+   "radius": 0.4000000059604645,
+   "shadow": true
+  },
+  {
+   "name": "Light_Garden_ExitGate",
+   "type": "POINT",
+   "energy": 10.0,
+   "color": [
+    0.8500000238418579,
+    0.949999988079071,
+    1.0
+   ],
+   "loc": [
+    -40.79999923706055,
+    -5.800000190734863,
+    2.8499999046325684
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "spot_size": 0.0,
+   "spot_blend": 0.0,
+   "radius": 0.5,
+   "shadow": true
+  },
+  {
+   "name": "Light_Garden_Moonlight",
+   "type": "SPOT",
+   "energy": 18.0,
+   "color": [
+    0.550000011920929,
+    0.7200000286102295,
+    1.0
+   ],
+   "loc": [
+    -31.5,
+    -6.5,
+    14.0
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "spot_size": 1.3089969158172607,
    "spot_blend": 0.5,
    "radius": 0.0,
    "shadow": true
@@ -702,5 +822,6 @@
    ],
    "fov": 1.5707963705062866
   }
- ]
+ ],
+ "exposure": 2.5
 }

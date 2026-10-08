@@ -202,6 +202,41 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Mat_Garden_DarkFoliage
+    second: {fileID: 2100000, guid: 95f5dfa7bc1ff4215ab6eee528c66031, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_DenseHedge
+    second: {fileID: 2100000, guid: 7f8c5e3de0bf144c48cd9d58496f4ba2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_GrassDirt
+    second: {fileID: 2100000, guid: 395a349d6e9d64db08010d9480b957bc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_HiddenKey_Gold
+    second: {fileID: 2100000, guid: 751e40cab1ab24942b188bd9f0ed0220, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_Rock
+    second: {fileID: 2100000, guid: 2b8e02e0ed34542ffb596dbea7cabc21, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_StonePath
+    second: {fileID: 2100000, guid: 479063ee16200485eb2055c7781ba6b0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Garden_TreeBark
+    second: {fileID: 2100000, guid: 33d3d2d6488c34aeab1deed9d92518c1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Mat_Screen_CAM01_Corridor_Left
     second: {fileID: 2100000, guid: 6a28744f5a74045aca3d085ad6b26995, type: 2}
   - first:
@@ -362,6 +397,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: compost_bag_02
+    second: {fileID: 2100000, guid: e50c2a2b46f52449bb34e89462d075ef, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: cross_pein_hammer
     second: {fileID: 2100000, guid: 2b315350c12e2434cb7702825b2a42a2, type: 2}
   - first:
@@ -379,6 +419,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: electric_stove_glass
     second: {fileID: 2100000, guid: 9e0ebb6a819694f8f95dd349c58fbbfd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: garden_gnome_01
+    second: {fileID: 2100000, guid: 9941bf37a5b984b05b713ffb71775d5b, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -462,6 +507,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: painted_wooden_bench
+    second: {fileID: 2100000, guid: 984ca2640419544958151ce3cd15b463, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: planter_box_01
+    second: {fileID: 2100000, guid: 5fc48eb5786f246eba48c6bd87fc408a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: planter_box_02
+    second: {fileID: 2100000, guid: 34bc28e5ccf894986a46c2720d28bb40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: pot_enamel_01
     second: {fileID: 2100000, guid: 642fb47d76cbe49e7a86a1ef85cea92b, type: 2}
   - first:
@@ -472,6 +532,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: rusted_spade_01
+    second: {fileID: 2100000, guid: 715f6ecf836144fa7a614df6ab85f627, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: tool_cart
     second: {fileID: 2100000, guid: d7629ddf6d94b4cc0a238dc85bd15ce5, type: 2}
   - first:
@@ -479,6 +544,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: trashbag
     second: {fileID: 2100000, guid: 93aa33c96649e4ad3b61a4c3d91fef72, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: trowel_01
+    second: {fileID: 2100000, guid: b7a581a15448d4799aff2f1c905ac6c6, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -527,6 +597,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: watering_can_metal_01
+    second: {fileID: 2100000, guid: 80f9bb54dd7be4d0ba80d73f4acde777, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wine_barrel_01
+    second: {fileID: 2100000, guid: 84a0b56bed14c4387917fc73da693dda, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: wooden_axe
     second: {fileID: 2100000, guid: b4756d883372d4628a55c6163c23d917, type: 2}
   - first:
@@ -539,6 +619,16 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: wooden_military_crate
     second: {fileID: 2100000, guid: 1813e3445eaf4455ea12d975afad9447, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wooden_picnic_table_bottom
+    second: {fileID: 2100000, guid: a4a4155ce8de04cdaa342074e6bba1f4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wooden_picnic_table_table
+    second: {fileID: 2100000, guid: b63e1e3d897374efcba12c07b1b750ee, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

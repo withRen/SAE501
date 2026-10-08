@@ -35,12 +35,14 @@ public static class RoomBuilder
 
     [System.Serializable] class LightInfo { public string name, type; public float energy; public float[] color, loc, dir; public float spot_size, spot_blend, radius; public bool shadow; }
     [System.Serializable] class CamInfo { public string name; public float[] loc, dir, up; public float fov; }
-    [System.Serializable] class MapMeta { public LightInfo[] lights; public CamInfo[] cameras; }
+    [System.Serializable] class MapMeta { public LightInfo[] lights; public CamInfo[] cameras; public float exposure; }
     static MapMeta meta;
 
     public static void Populate(GameObject rig)
     {
         if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets", "Generated");
+        // références gardées d'une reconstruction à l'autre : après un réimport de la carte elles pointeraient vers d'anciens matériaux (planches roses)
+        plankMesh = null; plankMats = null; hammerGrab = null;
         MakeMaterials();
         blockM = Mat("Blockout", new Color(0.05f, 0.05f, 0.055f));
 
@@ -83,6 +85,8 @@ public static class RoomBuilder
         var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
         var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");
         var bunkerAxeNode = Find(roomRoot.transform, "Bunker_Axe_Stove");      // hache posée au sol, sous le bord de l'établi du bunker
+        var genCrowbarNode = Find(roomRoot.transform, "GenRoom_Crowbar");       // carte finale : établi de la salle du générateur
+        var cabinAxeNode = Find(roomRoot.transform, "Garden_Cabin_Axe");        // carte finale : établi de la cabane du jardin
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
@@ -93,6 +97,8 @@ public static class RoomBuilder
         BuildMelee(crowbarNode, "PiedDeBiche", 0.5f, 0.25f, 0.15f);
         BuildMelee(axeNode, "Hache", 1f, 0.5f, 1f / 3f);
         BuildMelee(bunkerAxeNode, "Hache_Bunker", 1f, 0.5f, 1f / 3f);
+        BuildMelee(genCrowbarNode, "PiedDeBiche_Generateur", 0.5f, 0.25f, 0.15f);
+        BuildMelee(cabinAxeNode, "Hache_Cabane", 1f, 0.5f, 1f / 3f);
         BuildMonitors(rig, cam, BuildCameras());
         BuildBatteries();
         BuildMagazines();
@@ -153,9 +159,12 @@ public static class RoomBuilder
     // sans collision : décor plat ou suspendu, et tout ce qui boucherait un passage (cadres, plantes grimpantes, tuyaux sur toute la longueur des couloirs)
     static readonly string[] NoCollider = { "Debris", "Papers", "Rug", "Runner", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "Handle", "Frame",
         "WindowSash", "WindowGlass", "Chair_Overturned", "Brick", "Apoc_", "Puddle", "OilStain", "Cables", "CableConduits", "Ceiling", "Pendant", "Sconce",
-        "CCTV_Monitor", "CCTV_Bezel", "LEDs", "TallyLED", "CameraMesh", "Mount", "Bulb", "Door_Boarded_Planks" };
+        "CCTV_Monitor", "CCTV_Bezel", "LEDs", "TallyLED", "CameraMesh", "Mount", "Bulb", "Door_Boarded_Planks",
+        "Canopy", "OilSpills", "CeilingVines", "Cabin_Roof" };   // jardin : feuillage des arbres, toit de la cabane ; salle du générateur : flaques, lianes
     // structure : collider exact (murs percés de portes et de fenêtres, sols en L)
-    static readonly string[] Structural = { "Wall", "Floor", "Trim", "Stub" };
+    // jardin (carte finale) : terrain vallonné, allée, haies, rochers, piliers du portail, troncs ; tuyaux de la salle du générateur
+    // (une boîte englobante bloquerait tout : la haie fait le tour du jardin, les tuyaux longent toute la salle)
+    static readonly string[] Structural = { "Wall", "Floor", "Trim", "Stub", "Terrain", "StonePath", "Hedges", "Rocks", "Pillars", "Trunk", "IndustrialPipes" };
 
     static void MakeMapColliders(Transform root)
     {
@@ -172,10 +181,13 @@ public static class RoomBuilder
     // ---------- lumières du fichier ----------
     // niveau général de toutes les lumières de la carte (1 = valeurs d'origine) : baissé pour une ambiance plus sombre
     const float LightLevel = 0.6f;
+    static readonly List<Light> generatorLights = new List<Light>();
+    static readonly List<float> generatorLightLevels = new List<float>();
     // luminosité du ciel (sphère d'Alban) vu par les fenêtres et le trou du toit
     const float SkyLevel = 0.4f;
     static void BuildMapLights()
     {
+        generatorLights.Clear(); generatorLightLevels.Clear();
         var root = new GameObject("Lumieres").transform;
         root.SetParent(env, false);
         foreach (var li in meta.lights)
@@ -184,6 +196,8 @@ public static class RoomBuilder
             g.transform.SetParent(root, false);
             g.transform.position = B(li.loc);
             var l = g.AddComponent<Light>();
+            // énergie vue dans Blender : la carte est réglée avec une exposition (Color Management), 2^exposition
+            float energy = li.energy * Mathf.Pow(2f, meta.exposure);
             l.color = new Color(li.color[0], li.color[1], li.color[2]);
             l.shadows = LightShadows.None;
             if (li.type == "SPOT")
@@ -192,14 +206,14 @@ public static class RoomBuilder
                 g.transform.rotation = Quaternion.LookRotation(B(li.dir));
                 l.spotAngle = Mathf.Clamp(li.spot_size * Mathf.Rad2Deg, 10f, 170f);
                 l.innerSpotAngle = l.spotAngle * (1f - Mathf.Clamp01(li.spot_blend));
-                l.intensity = li.energy / 275f;        // 220 W (lune) -> 0,8 comme l'ancienne salle
-                l.range = 9f;
+                l.intensity = energy / 275f;           // 220 W (lune, exposition 0) -> 0,8 comme l'ancienne salle
+                l.range = Mathf.Max(9f, li.loc[2] + 6f);   // lune haute (jardin : 14 m) : la lumière doit atteindre le sol
             }
             else
             {
                 l.type = LightType.Point;
-                l.intensity = li.energy / 24f;         // 18 W (lampe à huile) -> 0,75
-                l.range = Mathf.Clamp(1.1f * Mathf.Sqrt(li.energy), 2.5f, 6.5f);
+                l.intensity = energy / 24f;            // 18 W (lampe à huile, exposition 0) -> 0,75
+                l.range = Mathf.Clamp(1.1f * Mathf.Sqrt(energy), 2.5f, 6.5f);
             }
             l.intensity *= LightLevel;                 // ambiance générale (voir LightLevel)
             // lampe à huile de l'établi : la seule avec des ombres (planches, chaises), et qui vacille
@@ -212,8 +226,9 @@ public static class RoomBuilder
             {
                 var f = g.AddComponent<FlickerLamp>(); f.lamp = l; f.baseIntensity = l.intensity; f.hum = 0.12f; f.humSpeed = 5f; f.dipDepth = 0.85f;
             }
-            // générateur à l'arrêt : l'ampoule de sa salle est presque éteinte (le Generator la rallume)
+            // générateur à l'arrêt : les lumières de sa salle sont presque éteintes (le Generator les rallume)
             if (li.name == "Light_GeneratorBulb") l.intensity = 0.08f;
+            else if (li.name.StartsWith("Light_GeneratorRoom")) { generatorLights.Add(l); generatorLightLevels.Add(l.intensity); l.intensity *= 0.08f; }
         }
     }
 
@@ -502,6 +517,7 @@ public static class RoomBuilder
         var lamp = GameObject.Find("Light_GeneratorBulb");
         var g2 = gen.gameObject.AddComponent<Generator>();
         g2.button = btn; g2.buttonRenderer = sw.GetComponent<Renderer>(); g2.label = label; g2.lamp = lamp ? lamp.GetComponent<Light>() : null;
+        g2.roomLights = generatorLights.ToArray(); g2.roomLightLevels = generatorLightLevels.ToArray();
         if (genNode) GameObjectUtility.SetStaticEditorFlags(genNode.gameObject, StaticEditorFlags.BatchingStatic);
     }
 
@@ -788,9 +804,9 @@ public static class RoomBuilder
             (-1.85f, -12.45f, 0.9f, 75f, "bunker : établi (table)"),
             (-18.4f, -2.1f, 0.9f, 10f,   "cuisine : plan de travail"),
             (-20.7f, -2.15f, 0.9f, 100f, "cuisine : plan de travail"),
-            (-17.45f, 0.8f, 0.905f, 30f, "générateur : établi"),
-            (-16.6f, 0.75f, 0.905f, 120f,"générateur : établi"),
-            (-19.1f, 0.9f, 0.6f, 60f,    "générateur : caisse"),
+            (-17.65f, -0.25f, 0.9f, 30f, "générateur : établi (à gauche du coffre à outils)"),
+            (-16.35f, 0.0f, 0.9f, 120f,  "générateur : établi (à droite)"),
+            (-22.6f, -0.1f, 0.6f, 60f,   "générateur : caisse"),
             (12.9f, 6.35f, 0.9f, 15f,    "stockage : établi"),
             (14.2f, 6.9f, 0.9f, 140f,    "stockage : établi"),
             (15.87f, 8.15f, 1.005f, 70f, "stockage : caisse sur la palette"),

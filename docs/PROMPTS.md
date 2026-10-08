@@ -52,6 +52,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [041](#041--chargeurs-tir-dans-la-tête-pied-de-biche-et-hache) | 2026-10-07 | 12 chargeurs dans la carte, se tirer une balle dans la tête, pied de biche et hache utilisables comme armes | Gameplay | `BuildMagazines`, `Pistol.AimedAtOwnHead` + `PlayerHealth.Kill`, `MeleeWeapon` |
 | [042](#042--menu-pause) | 2026-10-08 | Menu pause sur le bouton menu de la manette gauche, style du menu d'accueil : Reprendre, Paramètres, Menu | Menu | `PauseMenu` + base commune `AmberMenu` ; temps figé, son en pause |
 | [043](#043--chargeurs-aléatoires-hache-du-bunker) | 2026-10-08 | Apparition aléatoire de chaque chargeur ; hache sous la table du bunker utilisable comme arme | Gameplay | `RandomSpawn` (50 % par emplacement), `Hache_Bunker` |
+| [044](#044--carte-finale-jardin) | 2026-10-08 | Importer et utiliser map_finale.blend en respectant les lumières et l'ambiance sombre | Carte, lumière | Jardin, salle du générateur agrandie ; exposition de Blender appliquée aux lumières ; collisions, chargeurs et matériaux corrigés |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -833,3 +834,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `Assets/Scripts/RandomSpawn.cs` : à chaque partie, chacun des 12 emplacements de chargeur garde son chargeur avec une probabilité de 50 % (`RoomBuilder.MagazineChance`), sinon il est retiré. Le chargeur de la ceinture est toujours là. Testé : 5, 5 puis 9 chargeurs présents sur 3 parties, à des emplacements différents.
 - La hache posée au sol sous le bord de l'établi du bunker (`Bunker_Axe_Stove`) devient une arme comme celle du stockage (`Hache_Bunker` : tête = mort, torse 50 %, jambes 33 %), avec contour et prise par clic. Vérifié : elle reste au sol, saisissable.
 - **Pas testé au casque.** Rien poussé (en attente de l'accord).
+
+### 044 — Carte finale (jardin)
+
+**Prompt**
+
+> (capture de Blender + fichier map_finale.blend) Importe et utilise cette map, respect les lumière et l'ambiance sombre (exemple sur l'image)
+
+**Résultat** (import et code par l'IA, Claude Code ; carte faite dans Blender par le groupe)
+
+- **Ce qui change dans la carte** (comparé objet par objet à l'ancienne) : 88 objets ajoutés (jardin à l'ouest derrière la cuisine : terrain vallonné, haies, 8 arbres, cabane, table de pique-nique, portail de sortie avec cadenas, clé cachée ; salle du générateur agrandie à 8,6 × 7,5 m avec racks, fûts, tuyaux), 3 retirés, 14 déplacés (établi et caisse du générateur). 31 lumières. Le jardin s'ouvre par la porte arrachée du mur ouest de la cuisine (zone du niveau 2).
+- **Lumières respectées** : la scène Blender rend avec Cycles, un monde noir et une exposition de +2,5 ; les énergies des lumières ont été baissées en conséquence (lampes ×0,22, lunes ×0,08). L'export transmet maintenant l'exposition (`map_meta.json`) et `RoomBuilder` l'applique (×2^2,5) : lampes proches d'avant, lunes nettement plus sombres, comme dans Blender. Niveau général gardé à 60 %. Portée des spots selon leur hauteur (lune du jardin à 14 m). Les deux lumières de la salle du générateur restent presque éteintes jusqu'à son démarrage (`Generator.roomLights`).
+- **Couleurs du jardin** : ses matériaux sont procéduraux (bruit + rampe de couleur), l'export les sortait en blanc ; il prend maintenant la couleur moyenne de la rampe (sol vert-brun, feuillage vert sombre, allée grise).
+- **Collisions** : terrain, allée, haies, rochers, piliers du portail, troncs et tuyaux du générateur ont leur forme exacte (une boîte englobante aurait bloqué le jardin entier, fait flotter le joueur au-dessus du terrain et rempli la salle du générateur) ; feuillage, toit de la cabane, flaques et lianes sans collision.
+- **Chargeurs** : les 3 emplacements de la salle du générateur suivent le nouvel établi et la caisse déplacée. **Armes** : le pied de biche de la salle du générateur et la hache de la cabane du jardin sont aussi utilisables.
+- **Bug corrigé** : après un réimport de la carte, toutes les planches de jeu étaient roses (matériau gardé en mémoire d'une reconstruction à l'autre) ; remis à zéro à chaque reconstruction.
+- Export : 1,5 million de triangles dans Blender, ~700 000 après la simplification automatique des objets de décor (90 objets). Vérifié dans l'éditeur : aucun avertissement, aucun matériau manquant, captures du jardin comparées à l'image, sol du jardin, chargeurs posés, générateur qui rallume sa salle. **Pas testé au casque** : performances à mesurer (carte plus lourde).
+- Non fait (pas demandé) : la clé cachée et le portail de sortie cadenassé du jardin ne sont pas encore jouables.
+- Branche locale `feature/map-finale`, rien poussé.

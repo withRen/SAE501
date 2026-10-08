@@ -11,6 +11,8 @@ public class Generator : MonoBehaviour
     public Renderer buttonRenderer;
     public TextMesh label;
     public Light lamp;                  // lumière de la salle
+    public Light[] roomLights;          // autres lumières de la salle, presque éteintes avant le démarrage
+    public float[] roomLightLevels;     // leur intensité une fois le générateur démarré
     public int unlockLevel = 4;
     public float holdSeconds = 5f;
     public float releaseDecay = 0.5f;   // la jauge redescend à cette vitesse relative quand on lâche
@@ -63,6 +65,9 @@ public class Generator : MonoBehaviour
         SetLabel("GÉNÉRATEUR ACTIVÉ");
         SetButtonColor(buttonOn);
         if (lamp) { lamp.color = new Color(1f, 0.8f, 0.5f); lamp.intensity = 3f; lamp.range = 9f; }
+        if (roomLights != null)
+            for (int i = 0; i < roomLights.Length; i++)
+                if (roomLights[i]) roomLights[i].intensity = roomLightLevels != null && i < roomLightLevels.Length ? roomLightLevels[i] : 1f;
         if (hum) hum.Play();
         if (WaveManager.Instance) WaveManager.Instance.GeneratorActivated();
     }

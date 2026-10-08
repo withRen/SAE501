@@ -65,6 +65,10 @@ for m in bpy.data.materials:
          "blend": getattr(m, "blend_method", "OPAQUE"), "tiling": [1, 1], "base_tex": None, "normal_tex": None,
          "emission_tex": None, "alpha_linked": alpha_linked, "emission_strength": 0.0}
     n = src(b.inputs["Base Color"])
+    # couleur procédurale (bruit -> rampe de couleur, jardin de la carte finale) : couleur moyenne de la rampe
+    if n and n.type == "VALTORGB":
+        el = n.color_ramp.elements
+        d["base_color"] = [sum(e.color[i] for e in el) / len(el) for i in range(3)] + [1.0]
     if n and n.type == "TEX_IMAGE":
         d["base_tex"] = save_img(n.image, keep_alpha=alpha_linked)
         if n.inputs["Vector"].is_linked and n.inputs["Vector"].links[0].from_node.type == "MAPPING":
@@ -94,7 +98,8 @@ json.dump(mats, open(OUT + "/materials.json", "w"), indent=1)
 # lumières et caméras (repère Blender : X droite, Y avant, Z haut ; conversion en Unity par RoomImport/RoomBuilder)
 from mathutils import Vector
 def fwd(o): return list(o.matrix_world.to_3x3() @ Vector((0, 0, -1)))
-meta = {"lights": [], "cameras": []}
+# exposition de la vue (Color Management) : la carte est éclairée pour cette exposition, RoomBuilder l'applique aux intensités
+meta = {"lights": [], "cameras": [], "exposure": float(bpy.context.scene.view_settings.exposure)}
 for o in bpy.context.scene.objects:
     if not o.visible_get(): continue
     if o.type == "LIGHT":

@@ -71,6 +71,7 @@ public static class MenuBuilder
         var fm = Mat("Quai_Mouille", "Universal Render Pipeline/Lit", new Color(0.05f, 0.05f, 0.055f), null);
         fm.SetFloat("_Smoothness", 0.9f); fm.SetFloat("_Metallic", 0f);
         floor.GetComponent<Renderer>().sharedMaterial = fm;
+        floor.GetComponent<Renderer>().enabled = false;            // invisible : seul le collider reste (le joueur ne tombe pas)
 
         // ---------- lumières ----------
         var moon = new GameObject("Lune").AddComponent<Light>();

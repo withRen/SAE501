@@ -53,6 +53,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [042](#042--menu-pause) | 2026-10-08 | Menu pause sur le bouton menu de la manette gauche, style du menu d'accueil : Reprendre, Paramètres, Menu | Menu | `PauseMenu` + base commune `AmberMenu` ; temps figé, son en pause |
 | [043](#043--chargeurs-aléatoires-hache-du-bunker) | 2026-10-08 | Apparition aléatoire de chaque chargeur ; hache sous la table du bunker utilisable comme arme | Gameplay | `RandomSpawn` (50 % par emplacement), `Hache_Bunker` |
 | [044](#044--carte-finale-jardin) | 2026-10-08 | Importer et utiliser map_finale.blend en respectant les lumières et l'ambiance sombre | Carte, lumière | Jardin, salle du générateur agrandie ; exposition de Blender appliquée aux lumières ; collisions, chargeurs et matériaux corrigés |
+| [045](#045--disjoncteur-caméras-zombies-portes-toit) | 2026-10-08 | Disjoncteurs, caméras trop sombres, zombies (2 fenêtres, plus nombreux, vitesse aléatoire, bug de focus), portes à tirer barricadables, plus sombre, plateforme du menu invisible, zombies par le toit | Gameplay, rendu | `Breaker`, CCTV vision nocturne, `HingedDoor`, passages réservés (zone NavMesh 3), trous du toit, lumières ×0,32 |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -851,4 +852,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Bug corrigé** : après un réimport de la carte, toutes les planches de jeu étaient roses (matériau gardé en mémoire d'une reconstruction à l'autre) ; remis à zéro à chaque reconstruction.
 - Export : 1,5 million de triangles dans Blender, ~700 000 après la simplification automatique des objets de décor (90 objets). Vérifié dans l'éditeur : aucun avertissement, aucun matériau manquant, captures du jardin comparées à l'image, sol du jardin, chargeurs posés, générateur qui rallume sa salle. **Pas testé au casque** : performances à mesurer (carte plus lourde).
 - Non fait (pas demandé) : la clé cachée et le portail de sortie cadenassé du jardin ne sont pas encore jouables.
+- Branche locale `feature/map-finale`, rien poussé.
+
+### 045 — Disjoncteur, caméras, zombies, portes, toit
+
+**Prompt**
+
+> Interraction avec les disjoncteurs (alumer les caméras). Règler les caméras qui sont trop sombres (CCTV). Zombis qui puissent passer par les deux fenêtres. Plus de zombis par vagues. Vitesse aléatoires par zombis. Par moments les zombis vont dans la salle de bunker sans focus le joueur (alors qu'ils devraient). Faire des portes ouvrable en tirant et baricadable. Rassombri encore le jeu, c'est encore trop claire. Rend invisible la plateforme dans le menu (mais garde la pour que le joueur ne tombe pas dans le vide). Dans le bunker y a un trou dans le toit, il faudrait que les zombis puisse arriver par là aussi (rend solide le toit de la carte car actuellement on peu glitch dessus et sortir de la map)
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- **Disjoncteur** (`Breaker.cs`) : le boîtier électrique du mur est du bunker se manipule (grip) ; levier et voyant rouge/vert. Coupé au départ : caméras non rendues, écrans noirs (global `_CctvPower`), plein écran impossible. Testé : actionné → caméras allumées.
+- **Caméras trop sombres** : `CCTV.shader` en vision nocturne (`1 - exp(-gain·√luminance)`, gain 5) : les zones sombres sont relevées sans saturer. Vérifié par capture : couloirs et portes lisibles en vert.
+- **Bug « zombies dans le bunker sans viser le joueur »** : la carte de navigation permettait à un zombie qui visait une porte côté couloir de passer par une fenêtre (sans casser ses planches) et de traverser le bunker. Les liens des fenêtres et du toit sont maintenant en zone NavMesh 3, réservée aux zombies qui entrent (`Zombie.WalkMask`).
+- **Les deux fenêtres** : chaque zombie tire au sort parmi les ouvertures à moins de 6 m de plus que la plus proche. Testé avec 12 zombies dehors : 6 sur chaque fenêtre.
+- **Plus de zombies** : vagues de 6 / 9 / 12 / 15 (au lieu de 4 / 6 / 8 / 10), apparitions plus rapprochées, 9 zombies max en renfort au dernier niveau. **Vitesse aléatoire** : ×0,75 à ×1,4 par zombie.
+- **Portes** (`HingedDoor.cs`) : les 4 portes de niveau sont sur charnière. Verrouillées : la poignée ne répond pas. Déverrouillées : on prend la poignée (grip) et on tire, la porte suit la main ; lâchée, elle reste ouverte. Portes ouest / est du bunker barricadables : planche posée = porte bloquée ; un zombie doit d'abord enfoncer la porte fermée (3 coups) puis casser les planches. Testé : verrouillée 0°, tirée à 84°, barricadée 0°, enfoncée par un zombie en 3 coups puis grande ouverte.
+- **Toit** : plafonds et toits ont une collision exacte (on ne passe plus au travers). Deux trous repérés dans le plafond du bunker (au-dessus des lits et de l'établi) : point d'apparition sur le toit (niveaux 1 à 4), le zombie marche jusqu'à un trou et se laisse tomber (chute réaliste), puis attaque. Testé : chute de 2,8 m, attaque du joueur (100 → 80 PV).
+- **Plus sombre** : lumières de la carte à 32 % (au lieu de 60 %), ciel à 30 %. Mesuré : image du bunker ~18 % plus sombre.
+- **Menu** : la plateforme est invisible, son collider reste (le joueur ne tombe pas).
+- Corrigé au passage : avertissement des planches du râtelier posées par code (vitesse d'un corps cinématique).
+- **Pas testé au casque.** Limites : seul le disjoncteur du bunker est utilisé (ceux de la salle du générateur restent du décor) ; les portes du stockage et du générateur ne sont pas barricadables (aucun zombie n'y passe).
 - Branche locale `feature/map-finale`, rien poussé.

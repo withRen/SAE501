@@ -29,7 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Gain: 1.9
+    - _Gain: 5
     - _LineStrength: 0.3
     - _Lines: 180
     - _Noise: 0.18

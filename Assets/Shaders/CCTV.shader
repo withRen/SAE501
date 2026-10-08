@@ -7,7 +7,7 @@ Shader "SAE501/CCTV"
     {
         _BaseMap ("Image de la caméra", 2D) = "black" {}
         _Tint ("Teinte", Color) = (0.35, 1.0, 0.5, 1)
-        _Gain ("Luminosité", Range(0.5, 4)) = 1.9
+        _Gain ("Luminosité (vision nocturne)", Range(0.5, 12)) = 5
         _Noise ("Grain", Range(0, 0.6)) = 0.18
         _Lines ("Nombre de lignes", Float) = 180
         _LineStrength ("Force des lignes", Range(0, 1)) = 0.3
@@ -29,6 +29,7 @@ Shader "SAE501/CCTV"
             float4 _BaseMap_ST;
             fixed4 _Tint;
             float _Gain, _Noise, _Lines, _LineStrength, _Vignette, _Roll;
+            float _CctvPower;      // global, réglé par le disjoncteur (Breaker) : 0 = caméras coupées
 
             struct appdata
             {
@@ -67,7 +68,9 @@ Shader "SAE501/CCTV"
                 uv.x += band * 0.004;
 
                 fixed3 src = tex2D(_BaseMap, uv).rgb;
-                float lum = dot(src, float3(0.299, 0.587, 0.114)) * _Gain;
+                // vision nocturne : les zones sombres sont fortement relevées, les zones claires ne saturent pas (carte très sombre)
+                float lum0 = dot(src, float3(0.299, 0.587, 0.114));
+                float lum = 1.0 - exp(-_Gain * sqrt(lum0));
 
                 // grain : change ~24 fois par seconde
                 float n = hash(floor(uv * float2(320, 180)) + floor(t * 24.0)) - 0.5;
@@ -86,6 +89,8 @@ Shader "SAE501/CCTV"
                 lum *= saturate(1.0 - dot(d, d) * _Vignette);
 
                 fixed3 col = saturate(lum) * _Tint.rgb;
+                // disjoncteur coupé : écran éteint (juste un léger grain)
+                if (_CctvPower < 0.5) return fixed4(saturate(n * 0.05 + 0.01) * float3(1, 1, 1), 1);
 
                 // le rouge vif (point « REC ») reste rouge
                 float red = saturate((src.r - max(src.g, src.b)) * 3.0);

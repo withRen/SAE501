@@ -58,27 +58,42 @@ public class Zombie : MonoBehaviour
         anim = GetComponent<ZombieAnimationBridge>();
     }
 
+    // Liens de passage des fenêtres et des trous du toit (zone NavMesh 3) : réservés aux zombies qui ENTRENT.
+    // En marche vers leur ouverture, ils ne peuvent pas les emprunter : sinon un zombie qui visait une porte côté couloir
+    // passait par une fenêtre sans casser ses planches et traversait le bunker sans s'occuper du joueur.
+    public const int PassageArea = 3;
+    public static int WalkMask => NavMesh.AllAreas & ~(1 << PassageArea);
+
     void Start()
     {
         player = PlayerHealth.Instance;
         agent.speed = walkSpeed;
+        agent.areaMask = WalkMask;
         ChooseOpening();
     }
 
-    // ouverture accessible la plus proche (longueur du chemin réel, pas la distance à vol d'oiseau)
+    // ouverture accessible (longueur du chemin réel) : tirée au sort parmi celles à peine plus loin que la plus proche,
+    // pour que les zombies se répartissent (les deux fenêtres, les deux trous du toit) au lieu de tous prendre la même
+    public float openingSpread = 6f;     // m de plus que la plus proche encore acceptés
+
     void ChooseOpening()
     {
-        float best = float.MaxValue;
         target = null;
         var path = new NavMeshPath();
+        var found = new System.Collections.Generic.List<(Opening o, float len)>();
         foreach (var o in Opening.All.Where(x => x.zombiesCanUse))
         {
-            if (!NavMesh.CalculatePath(transform.position, o.approachPoint.position, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) continue;
+            if (!NavMesh.CalculatePath(transform.position, o.approachPoint.position, WalkMask, path) || path.status != NavMeshPathStatus.PathComplete) continue;
             float len = 0f;
             for (int i = 1; i < path.corners.Length; i++) len += Vector3.Distance(path.corners[i - 1], path.corners[i]);
-            if (len < best) { best = len; target = o; }
+            found.Add((o, len));
         }
-        if (target != null) { state = State.Walking; agent.SetDestination(target.approachPoint.position); }
+        if (found.Count == 0) return;
+        float best = found.Min(f => f.len);
+        var near = found.Where(f => f.len <= best + openingSpread).ToList();
+        target = near[Random.Range(0, near.Count)].o;
+        state = State.Walking;
+        agent.SetDestination(target.approachPoint.position);
     }
 
     void Update()
@@ -110,13 +125,20 @@ public class Zombie : MonoBehaviour
         }
         if (!Arrived()) return;
         agent.isStopped = true;
-        if (target.IsBarricaded) { state = State.Breaking; nextBreak = Time.time + 0.5f; }
+        if (target.IsBarricaded || target.DoorClosed) { state = State.Breaking; nextBreak = Time.time + 0.5f; }
         else StartEntering();
     }
 
     void UpdateBreaking()
     {
         FaceToward(target.transform.position);
+        // porte fermée devant les planches : il l'enfonce d'abord (HingedDoor : 3 coups)
+        if (target.DoorClosed)
+        {
+            if (Time.time >= nextBreak && hitAt < 0f) { anim?.Attack(); hitAt = Time.time + attackHitDelay; nextBreak = Time.time + breakInterval; }
+            if (hitAt > 0f && Time.time >= hitAt) { hitAt = -1f; target.door.ZombieHit(); }
+            return;
+        }
         if (pendingPlank == null && Time.time >= nextBreak)
         {
             pendingPlank = target.NextPlankToBreak();
@@ -136,6 +158,8 @@ public class Zombie : MonoBehaviour
     void StartEntering()
     {
         state = State.Entering;
+        agent.areaMask = NavMesh.AllAreas;           // il peut maintenant passer par sa fenêtre / le trou du toit
+        if (target && target.door) target.door.ForceOpen();
         agent.isStopped = false;
         repath = 0f;
     }

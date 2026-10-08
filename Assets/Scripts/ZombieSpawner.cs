@@ -4,7 +4,7 @@ using UnityEngine;
 // Chaque zombie reçoit PV et dégâts de son niveau (ZombieLevels). Le chemin NavMesh de chaque zombie part de son point d'apparition.
 public class ZombieSpawner : MonoBehaviour
 {
-    public enum Point { CouloirGauche, CouloirDroit, Exterieur }
+    public enum Point { CouloirGauche, CouloirDroit, Exterieur, Toit }
 
     public GameObject zombiePrefab;
     public ZombieSpawnPoints points;
@@ -12,6 +12,7 @@ public class ZombieSpawner : MonoBehaviour
     [Header("Niveau (= vague) : PV des zombies et dégâts infligés au joueur")]
     [Range(1, ZombieLevels.MaxLevel)] public int level = 1;
     public float zombieSpeed = 0.9f;
+    public Vector2 speedRange = new Vector2(0.75f, 1.4f);     // vitesse de chaque zombie : zombieSpeed × tirage dans cet intervalle
 
     [Header("Test : un zombie au lancement")]
     public bool spawnOnStart = true;
@@ -36,11 +37,12 @@ public class ZombieSpawner : MonoBehaviour
     {
         Transform p = where == Point.CouloirGauche ? points.leftCorridorEnd
                     : where == Point.CouloirDroit ? points.rightCorridorEnd
+                    : where == Point.Toit && points.roof ? points.roof
                     : points.exterior;
         var go = Instantiate(zombiePrefab, p.position, p.rotation);
         var z = go.GetComponent<Zombie>();
         z.ApplyLevel(level);
-        z.walkSpeed = zombieSpeed;
+        z.walkSpeed = zombieSpeed * Random.Range(speedRange.x, speedRange.y);   // chaque zombie a son allure
         return z;
     }
 }

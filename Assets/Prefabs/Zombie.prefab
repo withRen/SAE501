@@ -3280,6 +3280,7 @@ MonoBehaviour:
   attackDamage: 0.2
   attackHitDelay: 0.7
   level: 1
+  openingSpread: 6
 --- !u!54 &2022766816865418597
 Rigidbody:
   m_ObjectHideFlags: 0

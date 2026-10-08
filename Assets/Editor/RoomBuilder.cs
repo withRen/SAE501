@@ -100,6 +100,7 @@ public static class RoomBuilder
         BuildMelee(genCrowbarNode, "PiedDeBiche_Generateur", 0.5f, 0.25f, 0.15f);
         BuildMelee(cabinAxeNode, "Hache_Cabane", 1f, 0.5f, 1f / 3f);
         BuildMonitors(rig, cam, BuildCameras());
+        BuildBreaker();
         BuildBatteries();
         BuildMagazines();
         BuildBelt(rig, cam);
@@ -158,13 +159,13 @@ public static class RoomBuilder
     // ---------- collisions ----------
     // sans collision : décor plat ou suspendu, et tout ce qui boucherait un passage (cadres, plantes grimpantes, tuyaux sur toute la longueur des couloirs)
     static readonly string[] NoCollider = { "Debris", "Papers", "Rug", "Runner", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "Handle", "Frame",
-        "WindowSash", "WindowGlass", "Chair_Overturned", "Brick", "Apoc_", "Puddle", "OilStain", "Cables", "CableConduits", "Ceiling", "Pendant", "Sconce",
+        "WindowSash", "WindowGlass", "Chair_Overturned", "Brick", "Apoc_", "Puddle", "OilStain", "Cables", "CableConduits", "Pendant", "Sconce",
         "CCTV_Monitor", "CCTV_Bezel", "LEDs", "TallyLED", "CameraMesh", "Mount", "Bulb", "Door_Boarded_Planks",
         "Canopy", "OilSpills", "CeilingVines", "Cabin_Roof" };   // jardin : feuillage des arbres, toit de la cabane ; salle du générateur : flaques, lianes
     // structure : collider exact (murs percés de portes et de fenêtres, sols en L)
     // jardin (carte finale) : terrain vallonné, allée, haies, rochers, piliers du portail, troncs ; tuyaux de la salle du générateur
     // (une boîte englobante bloquerait tout : la haie fait le tour du jardin, les tuyaux longent toute la salle)
-    static readonly string[] Structural = { "Wall", "Floor", "Trim", "Stub", "Terrain", "StonePath", "Hedges", "Rocks", "Pillars", "Trunk", "IndustrialPipes" };
+    static readonly string[] Structural = { "Wall", "Floor", "Ceiling", "Trim", "Stub", "Terrain", "StonePath", "Hedges", "Rocks", "Pillars", "Trunk", "IndustrialPipes" };
 
     static void MakeMapColliders(Transform root)
     {
@@ -180,11 +181,11 @@ public static class RoomBuilder
 
     // ---------- lumières du fichier ----------
     // niveau général de toutes les lumières de la carte (1 = valeurs d'origine) : baissé pour une ambiance plus sombre
-    const float LightLevel = 0.6f;
+    const float LightLevel = 0.32f;
     static readonly List<Light> generatorLights = new List<Light>();
     static readonly List<float> generatorLightLevels = new List<float>();
     // luminosité du ciel (sphère d'Alban) vu par les fenêtres et le trou du toit
-    const float SkyLevel = 0.4f;
+    const float SkyLevel = 0.3f;
     static void BuildMapLights()
     {
         generatorLights.Clear(); generatorLightLevels.Clear();
@@ -282,12 +283,40 @@ public static class RoomBuilder
         {
             foreach (Transform deco in portes)
             {
-                var leaf = gatesRoot.transform.Find(deco.name + "/Battant");
+                var leaf = gatesRoot.transform.Find(deco.name + "/Charniere/Battant") ?? gatesRoot.transform.Find(deco.name + "/Battant");
                 if (leaf == null) continue;
                 for (int i = deco.childCount - 1; i >= 0; i--) deco.GetChild(i).SetParent(leaf, true);
             }
             Object.DestroyImmediate(portes.gameObject);
         }
+    }
+
+    // ---------- disjoncteur des caméras de surveillance : boîtier électrique du mur est du bunker ----------
+    // Au départ les caméras sont coupées (écrans noirs) ; on actionne le disjoncteur (grip) pour les allumer (Breaker, CctvPower).
+    static void BuildBreaker()
+    {
+        var box = Find(roomRoot.transform, "Bunker_PowerBox_East");
+        if (box == null) { Debug.LogWarning("Boîtier électrique introuvable : Bunker_PowerBox_East"); return; }
+        var r = box.GetComponent<Renderer>();
+        var b = r.bounds;
+        // face avant : côté le plus fin du boîtier, tournée vers l'intérieur du bunker
+        int thin = b.size.x <= b.size.z ? 0 : 2;
+        var toCenter = B(-1.85f, -10.1f, 0f) - b.center;
+        var front = Vector3.zero; front[thin] = Mathf.Sign(toCenter[thin]);
+        var lever = Box("Levier", box, Vector3.zero, new Vector3(0.04f, 0.12f, 0.04f), darkM, false);
+        lever.transform.SetParent(null, true);
+        lever.transform.position = b.center + front * (b.extents[thin] + 0.03f) + Vector3.down * 0.05f;
+        lever.transform.localScale = new Vector3(0.04f, 0.12f, 0.04f);
+        lever.transform.SetParent(box, true);
+        var led = Box("Voyant", box, Vector3.zero, Vector3.one * 0.025f, lightM, false);
+        led.transform.SetParent(null, true);
+        led.transform.position = b.center + front * (b.extents[thin] + 0.015f) + Vector3.up * 0.15f;
+        led.transform.localScale = Vector3.one * 0.025f;
+        led.transform.SetParent(box, true);
+        var col = box.GetComponent<Collider>() ?? box.gameObject.AddComponent<BoxCollider>();
+        var it = box.gameObject.AddComponent<XRSimpleInteractable>();
+        var br = box.gameObject.AddComponent<Breaker>();
+        br.lever = lever.transform; br.led = led.GetComponent<Renderer>(); br.front = front;
     }
 
     // ---------- ouvertures du bunker (zombies) : 2 portes, 2 fenêtres, 3 planches chacune ----------
@@ -323,6 +352,10 @@ public static class RoomBuilder
         MakeOpening(holder, "Est", B(3.72f, -10.1f, 1.0f), B(4.6f, -10.1f, 0f), B(2.6f, -10.1f, 0f), false);
         MakeOpening(holder, "SW", B(-4.4f, -13.92f, 1.5f), B(-4.4f, -14.9f, 0f), B(-4.4f, -12.6f, 0f), true);
         MakeOpening(holder, "SE", B(0.7f, -13.92f, 1.5f), B(0.7f, -14.9f, 0f), B(0.95f, -12.45f, 0f), true);
+        // trous du toit du bunker (carte finale, repérés par rayons : ~1,2 x 1,2 m) : les zombies du toit s'y laissent tomber.
+        // Pas de planches : on ne peut pas les barricader. Approche sur le toit (y = 2,8 m), arrivée au sol dessous.
+        MakeOpening(holder, "Toit_Lits", new Vector3(3.9f, 2.8f, 7.9f), new Vector3(3.9f, 2.8f, 6.85f), new Vector3(3.9f, 0f, 7.9f), true);
+        MakeOpening(holder, "Toit_Etabli", new Vector3(-1.1f, 2.8f, 12.3f), new Vector3(-1.1f, 2.8f, 13.35f), new Vector3(-1.0f, 0f, 12.0f), true);
     }
 
     // window = vrai : le zombie passe par la fenêtre grâce à un lien NavMesh (il n'y a pas de sol continu sous l'allège)
@@ -345,6 +378,7 @@ public static class RoomBuilder
             link.width = 1.0f;
             link.bidirectional = false;
             link.agentTypeID = 0;
+            link.area = Zombie.PassageArea;   // réservé aux zombies qui entrent (voir Zombie.WalkMask)
         }
     }
 
@@ -490,15 +524,36 @@ public static class RoomBuilder
         {
             var root = new GameObject("Porte_" + name).transform;
             root.SetParent(gatesRoot.transform, false);
-            var leaf = Box("Battant", root, pos + Vector3.up * 1.05f, new Vector3(0.12f, 2.1f, width), metalM);
+            // charnière sur un bord du passage (le passage s'étend sur Z), battant en enfant ; la porte s'ouvre vers le joueur (viewer)
+            var hinge = new GameObject("Charniere").transform;
+            hinge.SetParent(root, false);
+            hinge.position = pos - Vector3.forward * (width / 2f);
+            var leaf = Box("Battant", hinge, Vector3.zero, new Vector3(0.12f, 2.1f, width), metalM);
+            leaf.transform.position = pos + Vector3.up * 1.05f;
+            var obstacle = leaf.AddComponent<UnityEngine.AI.NavMeshObstacle>();      // fermée : les zombies ne passent pas
+            obstacle.shape = UnityEngine.AI.NavMeshObstacleShape.Box; obstacle.size = Vector3.one; obstacle.carving = true;
+            // poignée côté joueur, près du bord libre (enfant de la charnière : elle tourne avec la porte)
+            var handle = Box("Poignee", hinge, Vector3.zero, new Vector3(0.04f, 0.2f, 0.04f), darkM, false);
+            handle.transform.position = pos + Vector3.up * 1.0f + Vector3.forward * (width / 2f - 0.15f) + viewer * 0.1f;
+            var hbc = handle.AddComponent<BoxCollider>(); hbc.size = new Vector3(4f, 1.5f, 4f);   // zone de prise plus large que la poignée (16 x 30 cm)
+            var hi = handle.AddComponent<XRSimpleInteractable>();
+            var door = hinge.gameObject.AddComponent<HingedDoor>();
+            door.leaf = leaf.transform; door.handle = hi; door.openSign = viewer.x > 0f ? 1f : -1f;
             var tm = MakeLabel("Panneau", root, pos + Vector3.up * 1.5f + viewer * 0.09f, Quaternion.LookRotation(-viewer), 0.012f, new Color(1f, 0.2f, 0.15f));
             var g = root.gameObject.AddComponent<ZoneGate>();
-            g.unlockLevel = level; g.zoneName = zone; g.door = leaf.transform; g.doorCollider = leaf.GetComponent<Collider>(); g.sign = tm;
+            g.unlockLevel = level; g.zoneName = zone; g.door = leaf.transform; g.doorCollider = leaf.GetComponent<Collider>(); g.sign = tm; g.hinged = door;
         }
         Gate("Couloir_Gauche", "Couloir gauche et cuisine", 2, B(-7.43f, -10.1f, 0f), 1.4f, Vector3.left);
         Gate("Couloir_Droit", "Couloir droit", 2, B(3.72f, -10.1f, 0f), 1.8f, Vector3.right);
         Gate("Stockage", "Stockage", 3, B(10.58f, 6.5f, 0f), 1.85f, Vector3.right);
         Gate("Generateur", "Générateur", 4, B(-14.58f, 2.5f, 0f), 1.25f, Vector3.left);
+        // portes ouest / est du bunker : barricadables (planches de l'ouverture) et enfoncées par les zombies avant les planches
+        foreach (var (gate, op) in new[] { ("Porte_Couloir_Gauche", "Ouverture_Ouest"), ("Porte_Couloir_Droit", "Ouverture_Est") })
+        {
+            var door = gatesRoot.transform.Find(gate)?.GetComponentInChildren<HingedDoor>();
+            var opening = GameObject.Find(op)?.GetComponent<Opening>();
+            if (door && opening) { door.opening = opening; opening.door = door; }
+        }
 
         // le générateur du fichier : on rend son interrupteur actionnable (le maintenir 5 s)
         var genNode = Find(roomRoot.transform, "Generator");
@@ -542,6 +597,7 @@ public static class RoomBuilder
             feeds[i].depth = -10;
 
             var sm = Mat($"Screen_{i}", Color.white, 0f, "SAE501/CCTV");          // [7.2] effet caméra de surveillance (vert, grain, lignes)
+            sm.SetFloat("_Gain", 5f);                                             // vision nocturne : la carte est très sombre
             sm.SetTexture("_BaseMap", rt);
             station.feeds[i] = sm;
 

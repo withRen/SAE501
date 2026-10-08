@@ -51,6 +51,7 @@ public class ZombieWindowClimb : MonoBehaviour
         var link = agent.currentOffMeshLinkData;
         Vector3 start = transform.position;
         Vector3 end = link.endPos;
+        if (end.y < start.y - 1f) { yield return Drop(start, end); yield break; }   // trou du toit : il se laisse tomber
         Vector3 flat = end - start; flat.y = 0f;
         Vector3 dir = flat.sqrMagnitude > 1e-4f ? flat.normalized : transform.forward;
         float ground = start.y;
@@ -133,6 +134,41 @@ public class ZombieWindowClimb : MonoBehaviour
             anim?.SetMoveSpeed(approachSpeed);
             yield return null;
         }
+        if (agent.enabled && agent.isOnOffMeshLink) agent.CompleteOffMeshLink();
+        Climbing = false;
+    }
+
+    // trou du toit du bunker : marche jusqu'au-dessus du trou, chute libre jusqu'au sol, se redresse
+    IEnumerator Drop(Vector3 start, Vector3 end)
+    {
+        var flat = end - start; flat.y = 0f;
+        var rot = flat.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(flat.normalized) : transform.rotation;
+        Vector3 a = start, b = new Vector3(end.x, start.y, end.z);
+        float dur = Mathf.Max(0.05f, flat.magnitude / approachSpeed);
+        for (float t = 0; t < dur; t += Time.deltaTime)
+        {
+            if (Abort()) yield break;
+            transform.SetPositionAndRotation(Vector3.Lerp(a, b, t / dur), Quaternion.Slerp(transform.rotation, rot, 8f * Time.deltaTime));
+            anim?.SetMoveSpeed(approachSpeed);
+            yield return null;
+        }
+        float h = start.y - end.y, fall = Mathf.Sqrt(2f * h / 9.81f);
+        for (float t = 0; t < fall; t += Time.deltaTime)
+        {
+            if (Abort()) yield break;
+            transform.position = new Vector3(end.x, start.y - 0.5f * 9.81f * t * t, end.z);
+            Lean(Mathf.Lerp(0f, 25f, t / fall));
+            yield return null;
+        }
+        transform.position = end;
+        for (float t = 0; t < recoverTime * 2f; t += Time.deltaTime)
+        {
+            if (Abort()) yield break;
+            Lean(Mathf.Lerp(25f, 0f, t / (recoverTime * 2f)));
+            anim?.SetMoveSpeed(0f);
+            yield return null;
+        }
+        Lean(0f);
         if (agent.enabled && agent.isOnOffMeshLink) agent.CompleteOffMeshLink();
         Climbing = false;
     }

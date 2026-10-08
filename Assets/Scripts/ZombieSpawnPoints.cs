@@ -8,8 +8,9 @@ public class ZombieSpawnPoints : MonoBehaviour
     public Transform leftCorridorEnd;
     public Transform rightCorridorEnd;
     [UnityEngine.Serialization.FormerlySerializedAs("northWindow")] public Transform exterior;
+    public Transform roof;              // sur le toit du bunker, près des deux trous
 
-    public Transform[] All => new[] { leftCorridorEnd, rightCorridorEnd, exterior };
+    public Transform[] All => new[] { leftCorridorEnd, rightCorridorEnd, exterior, roof };
 
     void OnDrawGizmos()
     {

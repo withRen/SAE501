@@ -149,8 +149,7 @@ public class Plank : MonoBehaviour
         slot = s;
         s.Occupied = true;
         s.Plank = this;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        if (!rb.isKinematic) { rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }   // (planche du râtelier : déjà immobile)
         rb.isKinematic = true;
     }
 

@@ -26,6 +26,7 @@ public class ClickGrab : MonoBehaviour
     {
         if (a.interactableObject is XRGrabInteractable) return;
         if (a.interactableObject.transform.GetComponentInParent<Generator>()) return;
+        if (a.interactableObject.transform.GetComponentInParent<HingedDoor>()) return;   // poignée de porte : tenue tant qu'on tire
         pending = a.interactableObject;                // relâché à la fin de l'image (pas pendant l'événement)
     }
 

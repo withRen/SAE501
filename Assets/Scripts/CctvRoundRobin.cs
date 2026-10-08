@@ -26,7 +26,7 @@ public class CctvRoundRobin : MonoBehaviour
 
     void LateUpdate()
     {
-        if (cameras == null || cameras.Length == 0 || !AnyoneWatching()) return;
+        if (cameras == null || cameras.Length == 0 || !Breaker.On || !AnyoneWatching()) return;   // disjoncteur coupé : rien à rendre
         for (int k = 0; k < camerasPerFrame; k++)
         {
             var c = cameras[next];

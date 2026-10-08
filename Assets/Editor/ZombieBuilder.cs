@@ -29,6 +29,7 @@ public static class ZombieBuilder
         sp.leftCorridorEnd = P("Spawn_Couloir_Gauche", new Vector3(12.0f, 0f, -3.7f), Vector3.forward);    // Blender (-12, 3,7)
         sp.rightCorridorEnd = P("Spawn_Couloir_Droit", new Vector3(-7.1f, 0f, -7.0f), Vector3.forward);    // Blender (7,1, 7)
         sp.exterior = P("Spawn_Exterieur_Sud", new Vector3(1.85f, 0f, 17.6f), Vector3.back);               // Blender (-1,85, -17,6)
+        sp.roof = P("Spawn_Toit_Bunker", new Vector3(1.5f, 2.8f, 10.0f), Vector3.back);                   // sur le toit du bunker, entre les deux trous
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, SpawnPointsPath);
         Object.DestroyImmediate(root);
         AssetDatabase.SaveAssets();

@@ -51,6 +51,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [040](#040--nouvelle-carte-liaisons-ambiance-plus-sombre) | 2026-10-07 | Remplacer la carte par nouvellemap.blend, vérifier les liaisons, assombrir l'ambiance | Carte, lumière | Fichier identique à la carte déjà importée ; liaisons vérifiées ; lumières ×0,6, ciel ×0,4 |
 | [041](#041--chargeurs-tir-dans-la-tête-pied-de-biche-et-hache) | 2026-10-07 | 12 chargeurs dans la carte, se tirer une balle dans la tête, pied de biche et hache utilisables comme armes | Gameplay | `BuildMagazines`, `Pistol.AimedAtOwnHead` + `PlayerHealth.Kill`, `MeleeWeapon` |
 | [042](#042--menu-pause) | 2026-10-08 | Menu pause sur le bouton menu de la manette gauche, style du menu d'accueil : Reprendre, Paramètres, Menu | Menu | `PauseMenu` + base commune `AmberMenu` ; temps figé, son en pause |
+| [043](#043--chargeurs-aléatoires-hache-du-bunker) | 2026-10-08 | Apparition aléatoire de chaque chargeur ; hache sous la table du bunker utilisable comme arme | Gameplay | `RandomSpawn` (50 % par emplacement), `Hache_Bunker` |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -820,3 +821,15 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Testé dans l'éditeur : pause (temps 0, son en pause, zombie immobile sur 120 images), rayon qui atteint REPRENDRE, PARAMÈTRES puis RETOUR, REPRENDRE (le zombie repart), MENU (scène d'accueil chargée, temps et son rétablis) ; captures. **Pas testé au casque** (bouton ☰ réel de la manette gauche).
 - Limite : changer la difficulté en pleine partie ne s'applique qu'à la partie suivante.
 - Sur la branche locale `test/exterieur`, rien poussé.
+
+### 043 — Chargeurs aléatoires, hache du bunker
+
+**Prompt**
+
+> Je t'ai déjà décrit les spawn points des chargeurs, randomize maintenant la chance d'apparition de chacun (Y a une ache dans le spawn sous la table, rend la utilisable pour tapper les zombis également)
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- `Assets/Scripts/RandomSpawn.cs` : à chaque partie, chacun des 12 emplacements de chargeur garde son chargeur avec une probabilité de 50 % (`RoomBuilder.MagazineChance`), sinon il est retiré. Le chargeur de la ceinture est toujours là. Testé : 5, 5 puis 9 chargeurs présents sur 3 parties, à des emplacements différents.
+- La hache posée au sol sous le bord de l'établi du bunker (`Bunker_Axe_Stove`) devient une arme comme celle du stockage (`Hache_Bunker` : tête = mort, torse 50 %, jambes 33 %), avec contour et prise par clic. Vérifié : elle reste au sol, saisissable.
+- **Pas testé au casque.** Rien poussé (en attente de l'accord).

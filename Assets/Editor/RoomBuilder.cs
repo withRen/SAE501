@@ -82,6 +82,7 @@ public static class RoomBuilder
         var hammerNode = Find(roomRoot.transform, "Bunker_Hammer_Workbench");
         var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
         var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");
+        var bunkerAxeNode = Find(roomRoot.transform, "Bunker_Axe_Stove");      // hache posée au sol, sous le bord de l'établi du bunker
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
@@ -91,6 +92,7 @@ public static class RoomBuilder
         // armes de corps à corps : dégâts en part des PV de base du zombie (tête, torse, jambes)
         BuildMelee(crowbarNode, "PiedDeBiche", 0.5f, 0.25f, 0.15f);
         BuildMelee(axeNode, "Hache", 1f, 0.5f, 1f / 3f);
+        BuildMelee(bunkerAxeNode, "Hache_Bunker", 1f, 0.5f, 1f / 3f);
         BuildMonitors(rig, cam, BuildCameras());
         BuildBatteries();
         BuildMagazines();
@@ -776,6 +778,8 @@ public static class RoomBuilder
     }
 
     // chargeurs pleins posés dans la carte (coordonnées Blender : x, y, hauteur de la surface)
+    // chacun n'apparaît qu'avec une probabilité MagazineChance, tirée au sort à chaque partie (RandomSpawn)
+    const float MagazineChance = 0.5f;
     static void BuildMagazines()
     {
         var spots = new (float x, float y, float z, float yaw, string where)[]
@@ -797,6 +801,7 @@ public static class RoomBuilder
         {
             var g = MakeMagazine(B(s.x, s.y, s.z + 0.015f));
             g.transform.rotation = Quaternion.Euler(0f, s.yaw, 90f);   // couché sur le flanc
+            g.gameObject.AddComponent<RandomSpawn>().chance = MagazineChance;
         }
     }
 

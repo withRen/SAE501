@@ -80,20 +80,28 @@ public static class RoomBuilder
         // porte ouverte du bunker (elle gênait la barricade), marteaux de la cuisine et du stockage (un seul vrai marteau, dans le bunker)
         RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks");
         var hammerNode = Find(roomRoot.transform, "Bunker_Hammer_Workbench");
+        var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
+        var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
         BuildExterior();
         BuildPlanks(planks);
         BuildHammer(hammerNode);
+        // armes de corps à corps : dégâts en part des PV de base du zombie (tête, torse, jambes)
+        BuildMelee(crowbarNode, "PiedDeBiche", 0.5f, 0.25f, 0.15f);
+        BuildMelee(axeNode, "Hache", 1f, 0.5f, 1f / 3f);
         BuildMonitors(rig, cam, BuildCameras());
         BuildBatteries();
+        BuildMagazines();
         BuildBelt(rig, cam);
         BuildBunkerOpenings(slots);
         BuildGatesAndGenerator();
+        BuildExteriorDecor();
         BuildZombieSetup(rig);
         BuildMusic();
 
+        new GameObject("Menu_Pause").AddComponent<PauseMenu>();          // bouton menu de la manette gauche
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
     }
@@ -160,6 +168,10 @@ public static class RoomBuilder
     }
 
     // ---------- lumières du fichier ----------
+    // niveau général de toutes les lumières de la carte (1 = valeurs d'origine) : baissé pour une ambiance plus sombre
+    const float LightLevel = 0.6f;
+    // luminosité du ciel (sphère d'Alban) vu par les fenêtres et le trou du toit
+    const float SkyLevel = 0.4f;
     static void BuildMapLights()
     {
         var root = new GameObject("Lumieres").transform;
@@ -187,6 +199,7 @@ public static class RoomBuilder
                 l.intensity = li.energy / 24f;         // 18 W (lampe à huile) -> 0,75
                 l.range = Mathf.Clamp(1.1f * Mathf.Sqrt(li.energy), 2.5f, 6.5f);
             }
+            l.intensity *= LightLevel;                 // ambiance générale (voir LightLevel)
             // lampe à huile de l'établi : la seule avec des ombres (planches, chaises), et qui vacille
             if (li.name == "Light_Bunker_Workbench")
             {
@@ -210,6 +223,54 @@ public static class RoomBuilder
         // bunker : x Blender -7,5..3,8 / mur sud y -14 ; le terrain va de y -14 à -19
         var c = B(-1.85f, -16.6f, -0.05f);
         Box("Sol", ext, c, new Vector3(13f, 0.1f, 5.2f), blockM);
+    }
+
+    // ---------- décor d'Alban (branche features_exterieur) : sphère de ciel (panorama de forêt de nuit) ----------
+    // Le prefab est extrait de sa scène (la forêt en relief n'est pas reprise). La sphère passe sur un shader sans brouillard
+    // (sinon notre brouillard dense la rendait noire), rétrécie à 50 m et collée à la tête du joueur (SkyFollow) pour rester
+    // sous la distance d'affichage de la caméra (60 m). Les cadres, plaques et voyants des portes de niveau sont rattachés
+    // au battant de chaque porte (ils bougent avec elle quand elle s'ouvre).
+    const string ExteriorPrefab = "Assets/Environment/Exterieur_Alban.prefab";
+    const string SkyMatPath = "Assets/Environment/Materials/M_NightForest_SkySphere_SansBrouillard.mat";
+    static void BuildExteriorDecor()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ExteriorPrefab);
+        if (prefab == null) return;
+        var ext = (GameObject)PrefabUtility.InstantiatePrefab(prefab, mapRoot);
+        PrefabUtility.UnpackPrefabInstance(ext, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+
+        var sphere = ext.transform.Find("Environment_Skysphere");
+        if (sphere != null)
+        {
+            var r = sphere.GetComponent<Renderer>();
+            var src = r.sharedMaterial;
+            var m = AssetDatabase.LoadAssetAtPath<Material>(SkyMatPath);
+            if (m == null) { m = new Material(Shader.Find("SAE501/SkySphere")); AssetDatabase.CreateAsset(m, SkyMatPath); }
+            m.shader = Shader.Find("SAE501/SkySphere");
+            m.SetTexture("_BaseMap", src.GetTexture("_BaseMap"));
+            m.SetTextureScale("_BaseMap", src.GetTextureScale("_BaseMap"));
+            m.SetTextureOffset("_BaseMap", src.GetTextureOffset("_BaseMap"));
+            m.SetColor("_BaseColor", src.GetColor("_BaseColor") * SkyLevel);   // ciel assombri
+            EditorUtility.SetDirty(m);
+            r.sharedMaterial = m;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            GameObjectUtility.SetStaticEditorFlags(sphere.gameObject, 0);   // elle bouge avec la tête
+            sphere.localScale = Vector3.one * 50f;
+            sphere.gameObject.AddComponent<SkyFollow>();
+        }
+
+        var portes = ext.transform.Find("Portes");
+        if (portes != null && gatesRoot != null)
+        {
+            foreach (Transform deco in portes)
+            {
+                var leaf = gatesRoot.transform.Find(deco.name + "/Battant");
+                if (leaf == null) continue;
+                for (int i = deco.childCount - 1; i >= 0; i--) deco.GetChild(i).SetParent(leaf, true);
+            }
+            Object.DestroyImmediate(portes.gameObject);
+        }
     }
 
     // ---------- ouvertures du bunker (zombies) : 2 portes, 2 fenêtres, 3 planches chacune ----------
@@ -275,10 +336,24 @@ public static class RoomBuilder
     {
         // planches de la cuisine et du stockage, là où elles sont dans la carte
         foreach (var p in planks) MakePlank(p.pos, p.rot, plankMesh, plankMats).name = "Planche_" + p.name;
-        // réserve du bunker : une pile de 3 planches au sol sous chaque fenêtre sud (bien visibles, à portée de la fenêtre à barricader)
-        var flat = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-        for (int i = 0; i < 3; i++) MakePlank(B(-4.4f, -12.75f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_SW_" + (i + 1);
-        for (int i = 0; i < 3; i++) MakePlank(B(1.15f, -12.2f, 0.02f + 0.032f * i), flat, plankMesh, plankMats).name = "Planche_Reserve_SE_" + (i + 1);
+        // réserve du bunker : râtelier sur le mur sud, entre les deux fenêtres (face au joueur, à hauteur de main).
+        // 3 rangées de 2 planches, à plat contre le mur ; elles restent accrochées jusqu'à ce qu'on les prenne.
+        var rack = new GameObject("Ratelier_Planches").transform;
+        rack.SetParent(bunkerRoot, false);
+        var faceRoom = Quaternion.LookRotation(Vector3.back, Vector3.up);       // comme sur une fenêtre : longueur le long du mur
+        float[] rows = { 1.0f, 1.32f, 1.64f };
+        for (int r = 0; r < rows.Length; r++)
+        {
+            for (int d = 0; d < 2; d++)
+            {
+                var pl = MakePlank(B(-1.85f, -13.835f + 0.035f * d, rows[r]), faceRoom, plankMesh, plankMats);
+                pl.name = $"Planche_Ratelier_{r + 1}_{d + 1}";
+                pl.GetComponent<Plank>().stored = true;
+            }
+            // deux supports métalliques sous chaque rangée
+            foreach (float dx in new[] { -0.7f, 0.7f })
+                Box("Support", rack, B(-1.85f + dx, -13.82f, rows[r] - PlankWidth / 2f - 0.015f), new Vector3(0.05f, 0.03f, 0.1f), metalM, false);
+        }
     }
 
     // ---------- caméras de surveillance : celles du fichier (couloir gauche, couloir droit, cuisine, stockage) ----------
@@ -298,6 +373,7 @@ public static class RoomBuilder
             var ucd = g.AddComponent<UniversalAdditionalCameraData>();
             ucd.renderShadows = false;
             ucd.renderPostProcessing = false;
+            g.AddComponent<CctvOverlay>().label = CctvOverlay.LabelFor(c.name);   // [7.2] « ● REC », nom de la caméra, heure
             list.Add(cam);
         }
         return list.ToArray();
@@ -436,6 +512,7 @@ public static class RoomBuilder
         station.feeds = new Material[feeds.Length];
         var rr = stationGo.AddComponent<CctvRoundRobin>();
         rr.cameras = feeds;
+        rr.screens = new Renderer[feeds.Length];
 
         for (int i = 0; i < feeds.Length; i++)
         {
@@ -446,7 +523,7 @@ public static class RoomBuilder
             feeds[i].backgroundColor = Color.black;
             feeds[i].depth = -10;
 
-            var sm = Mat($"Screen_{i}", Color.white, 0f, "Universal Render Pipeline/Unlit");
+            var sm = Mat($"Screen_{i}", Color.white, 0f, "SAE501/CCTV");          // [7.2] effet caméra de surveillance (vert, grain, lignes)
             sm.SetTexture("_BaseMap", rt);
             station.feeds[i] = sm;
 
@@ -455,6 +532,7 @@ public static class RoomBuilder
             var scr = Find(roomRoot.transform, "CCTV_Screen_" + suffix);
             if (!scr) { Debug.LogWarning("Écran introuvable pour " + feeds[i].name); continue; }
             scr.GetComponent<Renderer>().sharedMaterial = sm;
+            rr.screens[i] = scr.GetComponent<Renderer>();
             var col = scr.GetComponent<Collider>();
             if (col) Object.DestroyImmediate(col);
             var bc = scr.gameObject.AddComponent<BoxCollider>();
@@ -479,6 +557,7 @@ public static class RoomBuilder
         station.overlay = q.transform;
         station.overlayRenderer = q.GetComponent<Renderer>();
         q.SetActive(false);
+        rr.overlay = q;
     }
 
     // ---------- matériaux ----------
@@ -629,6 +708,99 @@ public static class RoomBuilder
         h.AddComponent<Hammer>();
     }
 
+    // Arme de corps à corps à partir d'un objet de la carte (pied de biche, hache) : même analyse que le marteau,
+    // l'axe le plus long devient Y, le bout le plus large (crochet, fer de la hache) est l'extrémité qui frappe.
+    static void BuildMelee(Transform node, string name, float headDmg, float torsoDmg, float legsDmg)
+    {
+        if (node == null) { Debug.LogWarning("Arme introuvable dans la carte : " + name); return; }
+        var mesh = node.GetComponent<MeshFilter>().sharedMesh;
+        var mats = node.GetComponent<Renderer>().sharedMaterials;
+        var rot = node.rotation;
+        var pos = node.TransformPoint(mesh.bounds.center);       // centre du maillage dans la carte
+        Object.DestroyImmediate(node.gameObject);
+
+        var v = mesh.vertices; var b = mesh.bounds;
+        int ax = b.size.x >= b.size.y && b.size.x >= b.size.z ? 0 : (b.size.y >= b.size.z ? 1 : 2);
+        float len = b.size[ax], lo = b.min[ax], hi = b.max[ax];
+        Vector3 Slice(bool high, out Vector3 ext)
+        {
+            Vector3 mn = Vector3.one * 1e9f, mx = -Vector3.one * 1e9f, sum = Vector3.zero; int n = 0;
+            foreach (var p in v)
+            {
+                if (high ? p[ax] <= hi - 0.25f * len : p[ax] >= lo + 0.25f * len) continue;
+                mn = Vector3.Min(mn, p); mx = Vector3.Max(mx, p); sum += p; n++;
+            }
+            ext = mx - mn;
+            return sum / Mathf.Max(1, n);
+        }
+        var cHi = Slice(true, out var eHi); var cLo = Slice(false, out var eLo);
+        float crossHi = eHi.x * eHi.y * eHi.z / Mathf.Max(1e-6f, eHi[ax]), crossLo = eLo.x * eLo.y * eLo.z / Mathf.Max(1e-6f, eLo[ax]);
+        bool headHigh = crossHi >= crossLo;
+        Vector3 headC = headHigh ? cHi : cLo, headExt = headHigh ? eHi : eLo;
+        Vector3 axisDir = Vector3.zero; axisDir[ax] = headHigh ? 1f : -1f;
+        var q = Quaternion.FromToRotation(axisDir, Vector3.up);
+
+        var w = new GameObject(name);
+        w.transform.SetParent(items, false);
+        // posée comme dans la carte (le maillage garde son orientation), un peu au-dessus de la surface
+        w.transform.SetPositionAndRotation(pos + Vector3.up * 0.03f, rot * Quaternion.Inverse(q));
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(w.transform, false);
+        vis.transform.localRotation = q;
+        vis.transform.localPosition = -(q * b.center);
+        vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+        vis.AddComponent<MeshRenderer>().sharedMaterials = mats;
+
+        var hc = q * headC + vis.transform.localPosition;
+        var qe = q * headExt;
+        var hs = new Vector3(Mathf.Abs(qe.x), Mathf.Abs(qe.y), Mathf.Abs(qe.z));
+        var striker = new GameObject("Extremite");
+        striker.transform.SetParent(w.transform, false);
+        striker.transform.localPosition = hc;
+        striker.AddComponent<BoxCollider>().size = hs + Vector3.one * 0.01f;
+
+        var handle = new GameObject("Manche");
+        handle.transform.SetParent(w.transform, false);
+        handle.AddComponent<BoxCollider>().size = new Vector3(0.035f, len, 0.035f);
+
+        var attach = new GameObject("Attach").transform;
+        attach.SetParent(w.transform, false);
+        attach.localPosition = new Vector3(0f, -len * 0.3f, 0f);       // prise vers le bout du manche
+
+        var rb = w.AddComponent<Rigidbody>();
+        rb.mass = 1.2f;
+        MakeGrab(w, attach);
+        var mw = w.AddComponent<MeleeWeapon>();
+        mw.striker = striker.transform;
+        mw.strikerSize = hs + new Vector3(0.06f, 0.06f, 0.06f);         // zone de frappe un peu plus large que le fer
+        mw.headDamage = headDmg; mw.torsoDamage = torsoDmg; mw.legsDamage = legsDmg;
+    }
+
+    // chargeurs pleins posés dans la carte (coordonnées Blender : x, y, hauteur de la surface)
+    static void BuildMagazines()
+    {
+        var spots = new (float x, float y, float z, float yaw, string where)[]
+        {
+            (-1.05f, -7.4f, 0.79f, 20f,  "bunker : pupitre des caméras, à gauche des écrans"),
+            (-1.85f, -12.45f, 0.9f, 75f, "bunker : établi (table)"),
+            (-18.4f, -2.1f, 0.9f, 10f,   "cuisine : plan de travail"),
+            (-20.7f, -2.15f, 0.9f, 100f, "cuisine : plan de travail"),
+            (-17.45f, 0.8f, 0.905f, 30f, "générateur : établi"),
+            (-16.6f, 0.75f, 0.905f, 120f,"générateur : établi"),
+            (-19.1f, 0.9f, 0.6f, 60f,    "générateur : caisse"),
+            (12.9f, 6.35f, 0.9f, 15f,    "stockage : établi"),
+            (14.2f, 6.9f, 0.9f, 140f,    "stockage : établi"),
+            (15.87f, 8.15f, 1.005f, 70f, "stockage : caisse sur la palette"),
+            (13.4f, 4.55f, 0.565f, 35f,  "stockage : caisse près des casiers"),
+            (11.85f, 7.45f, 0.465f, 95f, "stockage : caisse militaire"),
+        };
+        foreach (var s in spots)
+        {
+            var g = MakeMagazine(B(s.x, s.y, s.z + 0.015f));
+            g.transform.rotation = Quaternion.Euler(0f, s.yaw, 90f);   // couché sur le flanc
+        }
+    }
+
     static GameObject MakePlank(Vector3 pos, Quaternion rot, Mesh mesh, Material[] mats)
     {
         var p = new GameObject("Plank");
@@ -651,7 +823,7 @@ public static class RoomBuilder
         rb.mass = 2f;
         var plankGrab = MakeGrab(p);
         plankGrab.useDynamicAttach = true;      // prise là où la main la touche (pas de saut au centre de la planche)
-        // la planche ne doit utiliser que son propre collider (sinon elle "vole" celui de la zone de maintien)
+        // la planche n'utilise que son propre collider (pas ceux des clous)
         plankGrab.colliders.Clear();
         plankGrab.colliders.Add(bc);
 
@@ -676,16 +848,9 @@ public static class RoomBuilder
             nails[i] = nail;
         }
 
-        // zone pour tenir la planche avec l'autre main
-        var hz = new GameObject("HoldZone");
-        hz.transform.SetParent(p.transform, false);
-        var hcol = hz.AddComponent<BoxCollider>();
-        hcol.size = new Vector3(PlankLength + 0.1f, PlankWidth + 0.1f, 0.16f);
-        var hold = hz.AddComponent<XRSimpleInteractable>();
 
         var pl = p.AddComponent<Plank>();
         pl.nails = nails;
-        pl.holdZone = hold;
         return p;
     }
 

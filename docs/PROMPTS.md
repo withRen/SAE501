@@ -54,6 +54,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [043](#043--chargeurs-aléatoires-hache-du-bunker) | 2026-10-08 | Apparition aléatoire de chaque chargeur ; hache sous la table du bunker utilisable comme arme | Gameplay | `RandomSpawn` (50 % par emplacement), `Hache_Bunker` |
 | [044](#044--carte-finale-jardin) | 2026-10-08 | Importer et utiliser map_finale.blend en respectant les lumières et l'ambiance sombre | Carte, lumière | Jardin, salle du générateur agrandie ; exposition de Blender appliquée aux lumières ; collisions, chargeurs et matériaux corrigés |
 | [045](#045--disjoncteur-caméras-zombies-portes-toit) | 2026-10-08 | Disjoncteurs, caméras trop sombres, zombies (2 fenêtres, plus nombreux, vitesse aléatoire, bug de focus), portes à tirer barricadables, plus sombre, plateforme du menu invisible, zombies par le toit | Gameplay, rendu | `Breaker`, CCTV vision nocturne, `HingedDoor`, passages réservés (zone NavMesh 3), trous du toit, lumières ×0,32 |
+| [046](#046--rendu-proche-de-cycles-éclairage-précalculé) | 2026-10-08 | Graphismes aussi développés que le rendu Blender (captures Cycles), ambiance très sombre | Rendu | Éclairage précalculé (lightmaps + sondes), textures procédurales cuites, conversion des lumières corrigée, calage sur des rendus Cycles |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -873,4 +874,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Menu** : la plateforme est invisible, son collider reste (le joueur ne tombe pas).
 - Corrigé au passage : avertissement des planches du râtelier posées par code (vitesse d'un corps cinématique).
 - **Pas testé au casque.** Limites : seul le disjoncteur du bunker est utilisé (ceux de la salle du générateur restent du décor) ; les portes du stockage et du générateur ne sont pas barricadables (aucun zombie n'y passe).
+- Branche locale `feature/map-finale`, rien poussé.
+
+### 046 — Rendu proche de Cycles (éclairage précalculé)
+
+**Prompt**
+
+> (2 captures du rendu Blender Cycles : jardin et pupitre des caméras) Les graphismes sont sensé être autant développé que l'image, et un truc bien sombre comme ça
+
+**Résultat** (code et réglages par l'IA, Claude Code)
+
+- **Constat** : les images viennent de Cycles (calcul de la lumière rebondie, ombres douces), impossible à reproduire en temps réel sur un Quest. Écart mesuré avec Unity : bunker 2,5 fois trop sombre et deux fois trop orange (AgX désature les lumières chaudes), jardin sans texture (matériaux procéduraux sans UV).
+- **Éclairage précalculé** (`Assets/Editor/LightBaker.cs`, menu **SAE501 > Cuire l'éclairage**) : lightmaps (rebonds ×3, ombres douces, occlusion ambiante), 25 lampes fixes en « Baked », 8 restent en temps réel (lampes qui vacillent, générateur, lampe de poche). Sondes de lumière (245) pour les zombies, armes et mains. Ciel d'ambiance noir comme dans Blender. Résultat : 2 lightmaps (~3,5 Mo), cuisson ~1 min sur le Mac. **Étapes** : *Build VR Scene* puis *Cuire l'éclairage*.
+- **Textures du jardin** (`Tools/blender/export_map.py`) : les 20 objets à matériau procédural (terrain, haies, arbres, rochers, allée) sont dépliés et leur couleur et leur relief sont cuits par Cycles dans des images (39 textures). Gestion des couleurs neutre pendant l'export (vérifié : les textures existantes n'avaient pas été altérées).
+- **Conversion des lumières corrigée** : les spots étaient ~11 fois trop faibles (diviseur 275 contre 24 pour les ampoules, alors que Blender les traite pareil) ; couleurs désaturées de 45 % (AgX) ; portée des spots hauts doublée. Niveau général 0,62.
+- **Calage sur Cycles** : la même vue rendue par Cycles (avec AgX et l'exposition de la carte) et par Unity, luminosité linéaire mesurée : bunker 0,0117 (Cycles) / 0,0132 (Unity) ; jardin médiane 0,0012 / 0,0015. Comparaison visuelle côte à côte : même pénombre, même flaque de lumière de l'établi, mêmes ombres douces. Zombie en jeu correctement éclairé par les sondes.
+- Brouillard allégé (0,12 → 0,06). Différences volontaires : pas de planches aux fenêtres au départ (gameplay), ciel d'Alban au lieu du ciel noir.
+- **Pas testé au casque** : à vérifier (rendu, images/s ; l'éclairage précalculé allège le GPU : 8 lumières temps réel au lieu de 33).
 - Branche locale `feature/map-finale`, rien poussé.

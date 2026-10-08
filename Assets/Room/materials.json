@@ -1585,11 +1585,11 @@
    1.0
   ]
  },
- "Mat_Garden_DarkFoliage": {
+ "Mat_Garden_DarkFoliage__Garden_Tree_01_NE_Hill_Canopy": {
   "base_color": [
-   0.07499999925494194,
-   0.14000000059604645,
-   0.04499999899417162,
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
    1.0
   ],
   "rough": 0.8799999952316284,
@@ -1600,8 +1600,8 @@
    1,
    1
   ],
-  "base_tex": null,
-  "normal_tex": null,
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_01_NE_Hill_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_01_NE_Hill_Canopy_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1611,11 +1611,193 @@
    1.0
   ]
  },
- "Mat_Garden_DenseHedge": {
+ "Mat_Garden_DarkFoliage__Garden_Tree_02_SE_Corner_Canopy": {
   "base_color": [
-   0.060000001452863216,
-   0.11499999836087227,
-   0.03500000014901161,
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_02_SE_Corner_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_02_SE_Corner_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage__Garden_Tree_03_CenterS_Canopy": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_03_CenterS_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_03_CenterS_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage__Garden_Tree_04_SW_Hill_Canopy": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_04_SW_Hill_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_04_SW_Hill_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage__Garden_Tree_05_GateSouth_Canopy": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_05_GateSouth_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_05_GateSouth_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage__Garden_Tree_06_GateNorth_Canopy": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_06_GateNorth_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_06_GateNorth_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage__Garden_Tree_07_BehindShed_Canopy": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_07_BehindShed_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_07_BehindShed_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DarkFoliage__Garden_Tree_08_MidNorth_Canopy": {
+  "base_color": [
+   0.05999999865889549,
+   0.12999999523162842,
+   0.05000000074505806,
+   1.0
+  ],
+  "rough": 0.8799999952316284,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_DarkFoliage__Garden_Tree_08_MidNorth_Canopy_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DarkFoliage__Garden_Tree_08_MidNorth_Canopy_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_DenseHedge__Garden_HighHedges_Boundary": {
+  "base_color": [
+   0.05000000074505806,
+   0.10999999940395355,
+   0.03999999910593033,
    1.0
   ],
   "rough": 0.8999999761581421,
@@ -1626,8 +1808,8 @@
    1,
    1
   ],
-  "base_tex": null,
-  "normal_tex": null,
+  "base_tex": "Mat_Garden_DenseHedge__Garden_HighHedges_Boundary_Couleur.jpg",
+  "normal_tex": "Mat_Garden_DenseHedge__Garden_HighHedges_Boundary_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1637,11 +1819,11 @@
    1.0
   ]
  },
- "Mat_Garden_GrassDirt": {
+ "Mat_Garden_GrassDirt__Garden_Terrain_Vallons": {
   "base_color": [
-   0.16999999806284904,
-   0.21000000089406967,
-   0.08499999903142452,
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929,
    1.0
   ],
   "rough": 0.8999999761581421,
@@ -1652,7 +1834,7 @@
    1,
    1
   ],
-  "base_tex": null,
+  "base_tex": "Mat_Garden_GrassDirt__Garden_Terrain_Vallons_Couleur.jpg",
   "normal_tex": null,
   "emission_tex": null,
   "alpha_linked": false,
@@ -1689,11 +1871,11 @@
    0.20000000298023224
   ]
  },
- "Mat_Garden_Rock": {
+ "Mat_Garden_Rock__Garden_Rocks_And_Boulders": {
   "base_color": [
-   0.19999999925494194,
    0.20000000298023224,
-   0.19500000029802322,
+   0.20999999344348907,
+   0.2199999988079071,
    1.0
   ],
   "rough": 0.8799999952316284,
@@ -1704,8 +1886,8 @@
    1,
    1
   ],
-  "base_tex": null,
-  "normal_tex": null,
+  "base_tex": "Mat_Garden_Rock__Garden_Rocks_And_Boulders_Couleur.jpg",
+  "normal_tex": "Mat_Garden_Rock__Garden_Rocks_And_Boulders_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1715,11 +1897,11 @@
    1.0
   ]
  },
- "Mat_Garden_StonePath": {
+ "Mat_Garden_StonePath__Garden_StonePath_And_Porch": {
   "base_color": [
    0.23999999463558197,
-   0.22500000894069672,
-   0.20500000566244125,
+   0.23000000417232513,
+   0.20999999344348907,
    1.0
   ],
   "rough": 0.8500000238418579,
@@ -1730,8 +1912,8 @@
    1,
    1
   ],
-  "base_tex": null,
-  "normal_tex": null,
+  "base_tex": "Mat_Garden_StonePath__Garden_StonePath_And_Porch_Couleur.jpg",
+  "normal_tex": "Mat_Garden_StonePath__Garden_StonePath_And_Porch_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1741,11 +1923,11 @@
    1.0
   ]
  },
- "Mat_Garden_TreeBark": {
+ "Mat_Garden_TreeBark__Garden_Tree_01_NE_Hill_Trunk": {
   "base_color": [
-   0.14500000327825546,
-   0.09999999962747097,
-   0.06500000134110451,
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
    1.0
   ],
   "rough": 0.9200000166893005,
@@ -1756,8 +1938,190 @@
    1,
    1
   ],
-  "base_tex": null,
-  "normal_tex": null,
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_01_NE_Hill_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_01_NE_Hill_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_02_SE_Corner_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_02_SE_Corner_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_02_SE_Corner_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_03_CenterS_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_03_CenterS_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_03_CenterS_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_04_SW_Hill_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_04_SW_Hill_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_04_SW_Hill_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_05_GateSouth_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_05_GateSouth_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_05_GateSouth_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_06_GateNorth_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_06_GateNorth_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_06_GateNorth_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_07_BehindShed_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_07_BehindShed_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_07_BehindShed_Trunk_Normale.jpg",
+  "emission_tex": null,
+  "alpha_linked": false,
+  "emission_strength": 0.0,
+  "emission_color": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "Mat_Garden_TreeBark__Garden_Tree_08_MidNorth_Trunk": {
+  "base_color": [
+   0.14000000059604645,
+   0.10000000149011612,
+   0.07000000029802322,
+   1.0
+  ],
+  "rough": 0.9200000166893005,
+  "metal": 0.0,
+  "alpha": 1.0,
+  "blend": "HASHED",
+  "tiling": [
+   1,
+   1
+  ],
+  "base_tex": "Mat_Garden_TreeBark__Garden_Tree_08_MidNorth_Trunk_Couleur.jpg",
+  "normal_tex": "Mat_Garden_TreeBark__Garden_Tree_08_MidNorth_Trunk_Normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,

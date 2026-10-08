@@ -89,7 +89,7 @@ public static class RoomImport
                 // les écrans, LED et ampoules du fichier brillent (force plafonnée pour rester sombre)
                 m.SetColor("_EmissionColor", (et ? Color.white : ec) * Mathf.Min(i.emission_strength, 4f));
                 m.EnableKeyword("_EMISSION");
-                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;   // écrans, lanternes : leur lueur entre dans l'éclairage précalculé
             }
             AssetDatabase.CreateAsset(m, $"{MatDir}/{Safe(kv.Key)}.mat");
             made[kv.Key] = m;
@@ -103,6 +103,7 @@ public static class RoomImport
         mi.importCameras = false;
         mi.importLights = false;
         mi.isReadable = true;       // le builder lit les maillages (marteau)
+        mi.generateSecondaryUV = true;   // UV de lightmap : l'éclairage de la carte est précalculé (SAE501 > Cuire l'éclairage)
         foreach (var kv in made)
             mi.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), kv.Key), kv.Value);
         mi.SaveAndReimport();

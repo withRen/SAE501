@@ -21,7 +21,70 @@ for f in ("LastBoardStanding_Room.fbx", "LastBoardStanding_Map.fbx", "materials.
 if os.path.isdir(TEX): shutil.rmtree(TEX)
 os.makedirs(TEX, exist_ok=True)
 
+# gestion des couleurs neutre pendant l'export : les images sont enregistrées par le moteur de rendu (save_render),
+# qui appliquerait sinon la vue de la scène (AgX, exposition +2,5 dans la carte finale) et éclaircirait les textures.
+# L'exposition d'origine est gardée pour les lumières (map_meta.json).
+EXPOSURE = float(bpy.context.scene.view_settings.exposure)
+bpy.context.scene.view_settings.view_transform = "Standard"
+bpy.context.scene.view_settings.look = "None"
+bpy.context.scene.view_settings.exposure = 0.0
+bpy.context.scene.view_settings.gamma = 1.0
+
 def safe(n): return re.sub(r"[^A-Za-z0-9_\-]", "_", os.path.splitext(n)[0])
+
+# ---------- matériaux procéduraux (jardin : bruit -> rampe de couleur, relief) ----------
+# Unity ne sait pas calculer ces matériaux : pour chaque objet concerné on déplie le maillage (UV) et on cuit
+# sa couleur et son relief (bump) dans deux images, avec un matériau propre à l'objet qui les utilise.
+def bake_procedural():
+    scn = bpy.context.scene
+    scn.render.engine = "CYCLES"
+    scn.cycles.samples = 1
+    scn.cycles.device = "CPU"
+    done = 0
+    for o in list(scn.objects):
+        if o.type != "MESH" or not o.visible_get() or not o.material_slots: continue
+        m = o.material_slots[0].material
+        if not m or not m.node_tree: continue
+        nt0 = m.node_tree
+        b = next((n for n in nt0.nodes if n.type == "BSDF_PRINCIPLED"), None)
+        if not b or not b.inputs["Base Color"].is_linked or b.inputs["Base Color"].links[0].from_node.type != "VALTORGB": continue
+        if o.data.users > 1: o.data = o.data.copy()
+        bpy.ops.object.select_all(action="DESELECT")
+        o.select_set(True); bpy.context.view_layer.objects.active = o
+        if len(o.data.uv_layers) == 0:
+            bpy.ops.object.mode_set(mode="EDIT")
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.uv.smart_project(angle_limit=1.15, island_margin=0.01)
+            bpy.ops.object.mode_set(mode="OBJECT")
+        mc = m.copy(); mc.name = safe(m.name + "__" + o.name)
+        for sl in o.material_slots:
+            if sl.material == m: sl.material = mc
+        nt = mc.node_tree
+        size = 1024 if max(o.dimensions) > 4 else 512
+        col = bpy.data.images.new(mc.name + "_Couleur", size, size)
+        nrm = bpy.data.images.new(mc.name + "_Normale", size, size); nrm.colorspace_settings.name = "Non-Color"
+        tex = nt.nodes.new("ShaderNodeTexImage"); nt.nodes.active = tex
+        tex.image = col
+        bpy.ops.object.bake(type="DIFFUSE", pass_filter={"COLOR"}, margin=8)
+        bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+        if bsdf.inputs["Normal"].is_linked:
+            tex.image = nrm
+            bpy.ops.object.bake(type="NORMAL", normal_space="TANGENT", margin=8)
+        # le matériau utilise maintenant les images cuites
+        for l in list(bsdf.inputs["Base Color"].links): nt.links.remove(l)
+        tc = nt.nodes.new("ShaderNodeTexImage"); tc.image = col
+        nt.links.new(tc.outputs["Color"], bsdf.inputs["Base Color"])
+        if bsdf.inputs["Normal"].is_linked:
+            for l in list(bsdf.inputs["Normal"].links): nt.links.remove(l)
+            tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = nrm
+            nm = nt.nodes.new("ShaderNodeNormalMap")
+            nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
+            nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+        nt.nodes.remove(tex)
+        done += 1
+    print("PROCEDURAUX CUITS", done)
+
+bake_procedural()
 saved = {}
 def save_img(img, keep_alpha=False):
     if img is None: return None
@@ -99,7 +162,7 @@ json.dump(mats, open(OUT + "/materials.json", "w"), indent=1)
 from mathutils import Vector
 def fwd(o): return list(o.matrix_world.to_3x3() @ Vector((0, 0, -1)))
 # exposition de la vue (Color Management) : la carte est éclairée pour cette exposition, RoomBuilder l'applique aux intensités
-meta = {"lights": [], "cameras": [], "exposure": float(bpy.context.scene.view_settings.exposure)}
+meta = {"lights": [], "cameras": [], "exposure": EXPOSURE}
 for o in bpy.context.scene.objects:
     if not o.visible_get(): continue
     if o.type == "LIGHT":

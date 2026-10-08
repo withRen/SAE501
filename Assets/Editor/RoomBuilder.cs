@@ -60,7 +60,7 @@ public static class RoomBuilder
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.003f, 0.003f, 0.004f);
-        RenderSettings.fogDensity = 0.12f;
+        RenderSettings.fogDensity = 0.06f;                   // léger : la profondeur reste lisible (rendu proche de Cycles)
 
         var cam = rig.GetComponentInChildren<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
@@ -113,6 +113,31 @@ public static class RoomBuilder
         new GameObject("Menu_Pause").AddComponent<PauseMenu>();          // bouton menu de la manette gauche
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
+        BuildLightProbes();
+        LightBaker.ApplySettings();
+    }
+
+    // sondes de lumière : les objets qui bougent (zombies, armes, mains) prennent l'éclairage précalculé de l'endroit où ils sont
+    static void BuildLightProbes()
+    {
+        var b = new Bounds(roomRoot.transform.position, Vector3.zero);
+        foreach (var r in roomRoot.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+        var pts = new List<Vector3>();
+        for (float x = b.min.x; x <= b.max.x; x += 2f)
+            for (float z = b.min.z; z <= b.max.z; z += 2f)
+            {
+                // sol sous le point (pièces : sous le plafond ; dehors : terrain)
+                if (!Physics.Raycast(new Vector3(x, 2.4f, z), Vector3.down, out var hit, 3f, ~0, QueryTriggerInteraction.Ignore)) continue;
+                foreach (var h in new[] { 0.5f, 1.7f })
+                {
+                    var p = hit.point + Vector3.up * h;
+                    if (!Physics.CheckSphere(p, 0.15f, ~0, QueryTriggerInteraction.Ignore)) pts.Add(p);
+                }
+            }
+        var go = new GameObject("Sondes_Lumiere");
+        go.transform.SetParent(mapRoot, false);
+        go.AddComponent<LightProbeGroup>().probePositions = pts.ToArray();
+        Debug.Log($"[RoomBuilder] {pts.Count} sondes de lumière");
     }
 
     // ---------- lecture de la carte ----------
@@ -171,7 +196,8 @@ public static class RoomBuilder
     {
         foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true))
         {
-            GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic);
+            // statique : regroupement des maillages + éclairage précalculé (lightmaps, SAE501 > Cuire l'éclairage)
+            GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI);
             var n = r.name;
             if (NoCollider.Any(k => n.Contains(k))) continue;
             if (Structural.Any(k => n.Contains(k))) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
@@ -181,7 +207,7 @@ public static class RoomBuilder
 
     // ---------- lumières du fichier ----------
     // niveau général de toutes les lumières de la carte (1 = valeurs d'origine) : baissé pour une ambiance plus sombre
-    const float LightLevel = 0.32f;
+    const float LightLevel = 0.62f;     // calé sur le rendu Cycles de la carte (même vue, luminosité moyenne mesurée)
     static readonly List<Light> generatorLights = new List<Light>();
     static readonly List<float> generatorLightLevels = new List<float>();
     // luminosité du ciel (sphère d'Alban) vu par les fenêtres et le trou du toit
@@ -200,6 +226,9 @@ public static class RoomBuilder
             // énergie vue dans Blender : la carte est réglée avec une exposition (Color Management), 2^exposition
             float energy = li.energy * Mathf.Pow(2f, meta.exposure);
             l.color = new Color(li.color[0], li.color[1], li.color[2]);
+            // Blender rend avec AgX, qui désature les lumières chaudes : sans ça tout sortait orange vif (mesuré : rouge/vert 4,9 contre 2,2)
+            Color.RGBToHSV(l.color, out var hue, out var sat, out var val);
+            l.color = Color.HSVToRGB(hue, sat * 0.55f, val);
             l.shadows = LightShadows.None;
             if (li.type == "SPOT")
             {
@@ -207,8 +236,8 @@ public static class RoomBuilder
                 g.transform.rotation = Quaternion.LookRotation(B(li.dir));
                 l.spotAngle = Mathf.Clamp(li.spot_size * Mathf.Rad2Deg, 10f, 170f);
                 l.innerSpotAngle = l.spotAngle * (1f - Mathf.Clamp01(li.spot_blend));
-                l.intensity = energy / 275f;           // 220 W (lune, exposition 0) -> 0,8 comme l'ancienne salle
-                l.range = Mathf.Max(9f, li.loc[2] + 6f);   // lune haute (jardin : 14 m) : la lumière doit atteindre le sol
+                l.intensity = energy / 24f;            // même conversion que les ampoules : dans Blender un spot de N W éclaire comme une ampoule de N W (dans son cône)
+                l.range = Mathf.Max(9f, li.loc[2] * 2f);   // lune haute (jardin : 14 m) : portée large, sinon l'atténuation de fin de portée l'éteint avant le sol
             }
             else
             {
@@ -217,6 +246,12 @@ public static class RoomBuilder
                 l.range = Mathf.Clamp(1.1f * Mathf.Sqrt(energy), 2.5f, 6.5f);
             }
             l.intensity *= LightLevel;                 // ambiance générale (voir LightLevel)
+            // éclairage précalculé (rebonds, ombres douces comme dans Cycles) pour les lampes fixes ; restent en temps réel
+            // celles qui changent en jeu : lampes qui vacillent (établi, poêle, lampes à huile) et lumières du générateur
+            bool live = li.name == "Light_Bunker_Workbench" || li.name.Contains("BarrelStove") || li.name.Contains("OilLamp")
+                     || li.name == "Light_GeneratorBulb" || li.name.StartsWith("Light_GeneratorRoom");
+            l.lightmapBakeType = live ? LightmapBakeType.Realtime : LightmapBakeType.Baked;
+            if (!live) { l.shadows = LightShadows.Soft; l.shapeRadius = Mathf.Max(0.05f, li.radius); }
             // lampe à huile de l'établi : la seule avec des ombres (planches, chaises), et qui vacille
             if (li.name == "Light_Bunker_Workbench")
             {
@@ -240,7 +275,8 @@ public static class RoomBuilder
         ext.SetParent(mapRoot, false);
         // bunker : x Blender -7,5..3,8 / mur sud y -14 ; le terrain va de y -14 à -19
         var c = B(-1.85f, -16.6f, -0.05f);
-        Box("Sol", ext, c, new Vector3(13f, 0.1f, 5.2f), blockM);
+        var sol = Box("Sol", ext, c, new Vector3(13f, 0.1f, 5.2f), blockM);
+        GameObjectUtility.SetStaticEditorFlags(sol, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI);
     }
 
     // ---------- décor d'Alban (branche features_exterieur) : sphère de ciel (panorama de forêt de nuit) ----------

@@ -58,6 +58,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [047](#047--volume-des-zombies-musique-plus-forte-en-boucle) | 2026-10-08 | Réglage du volume des zombies ; musique en jeu plus forte et en boucle | Son | Curseur « Zombies », `MusicPlayer` simplifié (boucle sûre), musique indépendante du volume des effets |
 | [048](#048--carte-map_final_final) | 2026-10-08 | Remplacer la carte par `map_final_final.blend` en respectant ses éléments | Carte | Export + import, collisions et points d'apparition adaptés au terrain, éclairage recuit |
 | [049](#049--fin-de-limport-de-la-nouvelle-carte) | 2026-10-08 | Finir proprement l'import de la nouvelle carte | Carte | Vérification en jeu : zombies (2 fenêtres + toit), portes, disjoncteur, armes, chargeurs |
+| [050](#050--push-de-la-branche-carte) | 2026-10-08 | Pousser le travail | Git | Branche `feature/map-finale` poussée (5 commits) |
+| [051](#051--analyse-de-la-pr-86-tutoriel) | 2026-10-08 | Importer et analyser la PR #86 d'Al Amine (tutoriel, prise en main, vagues) | Revue | Ne compile pas en l'état ; tutoriel fonctionnel après 4 corrections ; conflit avec la prise par clic |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -935,3 +937,27 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Vérifié en jeu : 4 portes à charnière (dont Ouest/Est barricadables), disjoncteur des caméras, générateur, 4 armes de mêlée (2 pieds-de-biche, 2 haches), chargeurs tirés au sort (6 sur 12 dans cette partie, aucun tombé), aucune erreur dans la console.
 - Le dossier `Assets/Protection_suite` (pack importé le 7 octobre) n'est pas inclus dans le commit.
 - **Pas testé au casque.** Branche locale `feature/map-finale`, rien poussé.
+
+### 050 — Push de la branche carte
+
+**Prompt**
+
+> Push tout ça proprement
+
+**Résultat** (par l'IA, Claude Code)
+
+- Branche `feature/map-finale` poussée sur GitHub (5 commits, depuis `feature/aex_usable`) après vérification : aucun fichier de plus de 3 Mo, aucun co-auteur. `main` inchangé ; `Assets/Protection_suite` non inclus.
+
+### 051 — Analyse de la PR #86 (tutoriel)
+
+**Prompt**
+
+> Pull request de Al Amine « Tutoriel + prise en main + difficulté des vagues (6.3) » : importe la et analyse la et dit moi ce qu'il en est
+
+**Résultat** (analyse par l'IA, Claude Code ; rien n'a été fusionné)
+
+- Fusion d'essai dans une branche temporaire, puis abandonnée.
+- **Ne compile pas**, même sur `main` (sa base) : `Plank.Placed` et `Plank.State.Fixed` n'existent dans aucune branche, `IsSelectedBy` n'existe pas dans XRI 3.6, `CommonUsages` ambigu. 9 erreurs, 4 corrections simples.
+- **Tutoriel** (après corrections) : se lance seul, bloque les vagues, panneau lisible, se termine proprement (vagues relancées, mémorisé).
+- **GrabGuard** : la « prise ferme » du pistolet remet la main en mode « garder enfoncé » après le lâcher, ce qui annule la prise par clic demandée (prompt 034). Le reste (pas de prise de loin, pas de vol par l'autre main) est utile.
+- **Vagues** : conflit avec `feature/map-finale` (6/9/12/15 zombies et le toit contre 4/6/8/12 sans le toit) ; les nouveaux réglages ne s'appliquent qu'après *Build VR Scene*.

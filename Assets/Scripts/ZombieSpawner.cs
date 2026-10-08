@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Fait apparaître des zombies aux points du prefab ZombieSpawnPoints (bouts des couloirs, extérieur sud du bunker).
-// Chaque zombie reçoit PV et dégâts de son niveau (ZombieLevels). Le chemin NavMesh de chaque zombie part de son point d'apparition.
+// Chaque zombie reçoit PV, vitesse et cadence d'attaque de son type (ZombieTypes). Le chemin NavMesh de chaque zombie part de son point d'apparition.
 public class ZombieSpawner : MonoBehaviour
 {
     public enum Point { CouloirGauche, CouloirDroit, Exterieur }
@@ -32,15 +32,16 @@ public class ZombieSpawner : MonoBehaviour
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
     }
 
-    public Zombie Spawn(Point where)
+    // type : standard / rapide / renforcé (ZombieTypes). speedMultiplier : réglage de la vague (WaveManager).
+    public Zombie Spawn(Point where, ZombieType type = ZombieType.Standard, float speedMultiplier = 1f)
     {
         Transform p = where == Point.CouloirGauche ? points.leftCorridorEnd
                     : where == Point.CouloirDroit ? points.rightCorridorEnd
                     : points.exterior;
         var go = Instantiate(zombiePrefab, p.position, p.rotation);
         var z = go.GetComponent<Zombie>();
-        z.ApplyLevel(level);
-        z.walkSpeed = zombieSpeed;
+        z.ApplyType(type, zombieSpeed * speedMultiplier);
+        ZombieTypes.ApplyLook(go, type);
         return z;
     }
 }

@@ -33,6 +33,7 @@ public class Zombie : MonoBehaviour
     public float Health { get; private set; } = ZombieLevels.BaseHealth;
     public float MaxHealth { get; private set; } = ZombieLevels.BaseHealth;
 
+    public ZombieType type { get; private set; } = ZombieType.Standard;
     public State state { get; private set; }
     public Opening target { get; private set; }
     public bool Dead => state == State.Dead;
@@ -50,6 +51,17 @@ public class Zombie : MonoBehaviour
         var st = ZombieLevels.For(level);
         MaxHealth = Health = ZombieLevels.BaseHealth * st.hpMultiplier;
         attackDamage = st.playerDamage;
+    }
+
+    // règle PV, vitesse et cadence d'attaque selon le type (voir ZombieTypes) : à appeler juste après la création, avant Start
+    public void ApplyType(ZombieType t, float baseSpeed)
+    {
+        type = t;
+        var d = ZombieTypes.For(t);
+        MaxHealth = Health = d.Health;
+        walkSpeed = baseSpeed * d.speedMultiplier;
+        attackCooldown = d.attackCooldown;
+        attackDamage = ZombieTypes.PlayerDamageFraction;     // 1 PV sur 4
     }
 
     void Awake()

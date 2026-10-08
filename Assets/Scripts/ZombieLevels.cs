@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// Équilibrage des zombies par niveau (un niveau = une vague). Toutes les valeurs sont ici, à un seul endroit.
+// Constantes de tir (zones touchées). Les PV et dégâts des zombies viennent maintenant de ZombieTypes ; la table par niveau ci-dessous n'est plus utilisée.
+// Ancien équilibrage par niveau (un niveau = une vague). Toutes les valeurs sont ici, à un seul endroit.
 // Voir docs/ZOMBIES.md pour le tableau complet.
 public static class ZombieLevels
 {
@@ -17,7 +18,7 @@ public static class ZombieLevels
     public const float TorsoShot = 1f / 3f;        //  33 % : 3 tirs au niveau 1
     public const float LegsShot = 1f / 5f;         //  20 % : 5 tirs au niveau 1
 
-    public const int MaxLevel = 4;
+    public const int MaxLevel = 5;
 
     static readonly Stats[] table =
     {
@@ -25,6 +26,7 @@ public static class ZombieLevels
         new Stats { hpMultiplier = 1.3f, playerDamage = 0.20f },       // niveau 2
         new Stats { hpMultiplier = 1.6f, playerDamage = 1f / 3f },     // niveau 3
         new Stats { hpMultiplier = 2.0f, playerDamage = 0.50f },       // niveau 4
+        new Stats { hpMultiplier = 2.0f, playerDamage = 0.50f },       // niveau 5
     };
 
     // Au-delà du niveau 4, on garde les valeurs du niveau 4.

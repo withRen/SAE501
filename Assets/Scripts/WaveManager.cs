@@ -1,34 +1,49 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Système de niveaux par vagues : 4 niveaux = 4 vagues.
-//   Niveau 1 : le bunker seul (couloirs verrouillés)     Niveau 2 : + couloirs et cuisine
-//   Niveau 3 : + stockage                                Niveau 4 : + générateur  -> objectif : l'activer (Generator)
-// Chaque niveau : les zombies ont plus de PV et frappent plus fort (ZombieLevels), apparaissent aux points autorisés,
-// puis une pause pour réparer les barricades. Détails : wiki « Niveaux et vagues ».
+// Système de 5 vagues (GDD) :
+//   Vague  Zombies  Ouvertures  Zones débloquées            Types de zombies
+//     1       4         2       salle principale            standard
+//     2       8         4       2ème salle                  standard + rapides (10 %)
+//     3      12         4       3ème salle                  standard + rapides (20 %)
+//     4      18         4       4ème salle                  + rapides (30 %) + renforcés (10 %)
+//     5      24         4       générateur + évacuation     + rapides (40 %) + renforcés (10 %) : tenir jusqu'à l'activation du générateur
+// Les zones sont débloquées par les ZoneGate (leur « unlockLevel » = numéro de vague) ; le générateur par Generator.unlockLevel (= 5).
+// Chaque vague : apparitions espacées, puis pause pour réparer les barricades. Tout se règle dans l'inspecteur (levels).
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
     public static int Level { get; private set; }          // 0 = partie pas commencée
+
+    public const int WaveCount = 5;
 
     [Serializable]
     public class LevelDef
     {
         public int zombies = 4;                                         // zombies de la vague
         public float spawnInterval = 12f;                               // secondes entre deux apparitions
+        public int maxAlive = 0;                                        // zombies vivants en même temps (0 = pas de limite) : protège les 72 fps
+        public int openings = 0;                                        // ouvertures attaquées (0 = toutes), voir openingOrder
+        public float speedMultiplier = 1f;                              // vitesse de tous les zombies de la vague
+        [Range(0f, 1f)] public float fastChance = 0f;                   // chance qu'un zombie soit rapide
+        [Range(0f, 1f)] public float reinforcedChance = 0f;             // chance qu'un zombie soit renforcé
         public ZombieSpawner.Point[] points = { ZombieSpawner.Point.Exterieur };
-        [TextArea] public string banner;                                // annonce au début du niveau
+        [TextArea] public string banner;                                // annonce au début de la vague (les zones débloquées sont ajoutées toutes seules)
     }
 
     public ZombieSpawner spawner;
     public LevelDef[] levels = DefaultLevels();
-    public int startLevel = 1;                 // test : commencer à un autre niveau
+    [Tooltip("Ouvertures par ordre d'attaque : la vague N n'attaque que les N premières (champ « openings »). Vide = toutes les ouvertures de la scène.")]
+    public Opening[] openingOrder;
+    public int startLevel = 1;                 // test : commencer à une autre vague
     public float firstDelay = 15f;             // temps pour se préparer avant la 1re vague
     public float breakBetweenLevels = 35f;     // pause entre deux vagues (réparer les barricades, aller chercher des planches)
-    public float lastLevelReinforcementEvery = 15f;   // niveau 4 : un renfort tant que le générateur n'est pas actif
+    public float lastLevelReinforcementEvery = 15f;   // vague 5 : un renfort tant que le générateur n'est pas actif
     public int lastLevelMaxAlive = 6;
     public float victoryRestartDelay = 12f;
 
@@ -41,23 +56,31 @@ public class WaveManager : MonoBehaviour
     float timer, spawnTimer, reinforceTimer;
     int spawned, pointIndex;
     readonly List<Zombie> alive = new List<Zombie>();
+    readonly int[] spawnedByType = new int[3];
+    Dictionary<Opening, bool> baseUsable;
     TextMesh banner, status;
     Coroutine bannerRoutine;
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
     public bool Victory => phase == Phase.Victory;
 
-    static LevelDef[] DefaultLevels() => new[]
+    static LevelDef Def(int zombies, float interval, int maxAlive, int openings, float speed, float fast, float reinforced, ZombieSpawner.Point[] points, string banner) =>
+        new LevelDef { zombies = zombies, spawnInterval = interval, maxAlive = maxAlive, openings = openings, speedMultiplier = speed,
+                       fastChance = fast, reinforcedChance = reinforced, points = points, banner = banner };
+
+    static LevelDef[] DefaultLevels()
     {
-        new LevelDef { zombies = 4, spawnInterval = 12f, points = new[] { ZombieSpawner.Point.Exterieur },
-            banner = "NIVEAU 1\nRestez dans le bunker : les couloirs sont verrouillés.\nObjectif : survivre, puis activer le générateur." },
-        new LevelDef { zombies = 6, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
-            banner = "NIVEAU 2\nCouloirs et cuisine déverrouillés." },
-        new LevelDef { zombies = 8, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
-            banner = "NIVEAU 3\nStockage déverrouillé." },
-        new LevelDef { zombies = 10, spawnInterval = 7f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
-            banner = "NIVEAU 4\nGénérateur déverrouillé.\nObjectif : l'ACTIVER !" },
-    };
+        var ext = new[] { ZombieSpawner.Point.Exterieur };
+        var all = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit };
+        return new[]
+        {
+            Def(4,  12f,  4, 2, 0.8f, 0.00f, 0.00f, ext, "Approche frontale, très lente.\nRestez dans la salle principale."),
+            Def(8,  9f,   6, 4, 1f,   0.10f, 0.00f, all, "Les zombies arrivent par les angles morts.\nLa cadence s'accélère."),
+            Def(12, 7f,   8, 4, 1f,   0.20f, 0.00f, all, "Cadence accélérée."),
+            Def(18, 5.5f, 10, 4, 1f,  0.30f, 0.10f, all, "Assaut de tous les côtés.\nTournez-vous vite (snap turn) !"),
+            Def(24, 4.5f, 12, 4, 1f,  0.40f, 0.10f, all, "Assaut maximal.\nObjectif : ACTIVER le générateur !"),
+        };
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Level = 0; Instance = null; }
@@ -67,11 +90,21 @@ public class WaveManager : MonoBehaviour
         Instance = this;
         Level = 0;
         timer = firstDelay;
+
+        // une scène enregistrée avec l'ancien système (4 niveaux) : on repart des 5 vagues par défaut
+        if (levels == null || levels.Length != WaveCount)
+        {
+            Debug.LogWarning("WaveManager : " + (levels == null ? 0 : levels.Length) + " niveaux trouvés, " + WaveCount + " vagues attendues -> valeurs par défaut rechargées.");
+            levels = DefaultLevels();
+        }
+        startLevel = Mathf.Clamp(startLevel, 1, levels.Length);
     }
 
     void Start()
     {
         ZoneGate.UpdateAll(0);
+        CacheOpenings();
+
         var head = Camera.main ? Camera.main.transform : null;
         banner = MakeText("Annonce", head, new Vector3(0f, 0.12f, 1.5f), 0.006f, 64, TextAnchor.MiddleCenter, new Color(1f, 0.85f, 0.4f));
         status = MakeText("Statut", head, new Vector3(0f, -0.30f, 1.5f), 0.0035f, 64, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.55f));
@@ -100,6 +133,30 @@ public class WaveManager : MonoBehaviour
         return tm;
     }
 
+    // ---- ouvertures attaquées -------------------------------------------------------------------------------
+
+    // on mémorise l'état de départ de la scène : une ouverture interdite aux zombies par la scène le reste
+    void CacheOpenings()
+    {
+        baseUsable = new Dictionary<Opening, bool>();
+        foreach (var o in Opening.All) baseUsable[o] = o.zombiesCanUse;
+        if (openingOrder == null || openingOrder.Length == 0) openingOrder = Opening.All.ToArray();
+    }
+
+    // seules les n premières ouvertures de openingOrder sont attaquées (n <= 0 : toutes)
+    void ApplyOpenings(int n)
+    {
+        for (int i = 0; i < openingOrder.Length; i++)
+        {
+            var o = openingOrder[i];
+            if (!o) continue;
+            bool allowedByScene = !baseUsable.TryGetValue(o, out var b) || b;
+            o.zombiesCanUse = allowedByScene && (n <= 0 || i < n);
+        }
+    }
+
+    // ---- déroulement ----------------------------------------------------------------------------------------
+
     void Update()
     {
         if (spawner == null) return;
@@ -117,7 +174,7 @@ public class WaveManager : MonoBehaviour
             case Phase.Break:
                 timer -= Time.deltaTime;
                 if (StatusChanged(1000 + Level, Mathf.CeilToInt(Mathf.Max(0f, timer))))
-                    SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !");
+                    SetStatus("Vague " + Level + " terminée · prochaine vague dans " + statusValue + " s : réparez !");
                 if (timer <= 0f) StartLevel(Level + 1);
                 break;
         }
@@ -126,12 +183,26 @@ public class WaveManager : MonoBehaviour
     void StartLevel(int lvl)
     {
         Level = Mathf.Clamp(lvl, 1, levels.Length);
+        var def = levels[Level - 1];
         spawner.level = Level;
         spawned = 0; pointIndex = 0; spawnTimer = 1f; reinforceTimer = lastLevelReinforcementEvery;
+        Array.Clear(spawnedByType, 0, spawnedByType.Length);
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);
+        ApplyOpenings(def.openings);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
-        Announce(levels[Level - 1].banner, 6f);
+        Announce(BannerFor(Level), 6f);
+    }
+
+    // texte de la vague + zones débloquées (lues sur les ZoneGate de la scène)
+    string BannerFor(int lvl)
+    {
+        var sb = new StringBuilder("VAGUE ").Append(lvl).Append('/').Append(levels.Length);
+        var def = levels[lvl - 1];
+        if (!string.IsNullOrEmpty(def.banner)) sb.Append('\n').Append(def.banner);
+        foreach (var g in ZoneGate.All)
+            if (g.unlockLevel == lvl && !string.IsNullOrEmpty(g.zoneName)) sb.Append("\nDéverrouillé : ").Append(g.zoneName);
+        return sb.ToString();
     }
 
     void UpdateWave()
@@ -142,10 +213,11 @@ public class WaveManager : MonoBehaviour
         if (spawned < def.zombies)
         {
             spawnTimer -= Time.deltaTime;
-            if (spawnTimer <= 0f) { SpawnOne(def); spawnTimer = def.spawnInterval; }
+            if (spawnTimer <= 0f && (def.maxAlive <= 0 || Alive < def.maxAlive)) { SpawnOne(def); spawnTimer = def.spawnInterval; }
         }
         else if (last)
         {
+            // dernière vague : la vague ne se termine pas en tuant tout le monde, il faut activer le générateur
             reinforceTimer -= Time.deltaTime;
             if (reinforceTimer <= 0f && Alive < lastLevelMaxAlive) { SpawnOne(def); reinforceTimer = lastLevelReinforcementEvery; }
         }
@@ -158,13 +230,24 @@ public class WaveManager : MonoBehaviour
         }
 
         if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned)))
-            SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
+            SetStatus("Vague " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
+    }
+
+    // un seul tirage : renforcé, puis rapide, sinon standard (les pourcentages du GDD sont donc exacts)
+    ZombieType PickType(LevelDef def)
+    {
+        float r = UnityEngine.Random.value;
+        if (r < def.reinforcedChance) return ZombieType.Reinforced;
+        if (r < def.reinforcedChance + def.fastChance) return ZombieType.Fast;
+        return ZombieType.Standard;
     }
 
     void SpawnOne(LevelDef def)
     {
         var p = def.points[pointIndex++ % def.points.Length];
-        alive.Add(spawner.Spawn(p));
+        var type = PickType(def);
+        alive.Add(spawner.Spawn(p, type, def.speedMultiplier));
+        spawnedByType[(int)type]++;
         spawned++;
     }
 
@@ -185,8 +268,11 @@ public class WaveManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-    // pour les tests / le debug : saute directement à un niveau
+    // pour les tests / le debug : saute directement à une vague
     public void SkipToLevel(int lvl) => StartLevel(lvl);
+
+    // répartition des types dans la vague en cours (debug : standard / rapides / renforcés)
+    public string TypeStats() => spawnedByType[0] + " standard, " + spawnedByType[1] + " rapides, " + spawnedByType[2] + " renforcés";
 
     void SetStatus(string s) { if (status && status.text != s) status.text = s; }
 

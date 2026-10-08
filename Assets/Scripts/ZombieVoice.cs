@@ -63,8 +63,17 @@ public class ZombieVoice : MonoBehaviour
 
     void Update()
     {
+        // réglage « Zombies » des paramètres : volume et portée de la voix (on les entend de plus loin quand on monte le curseur)
+        if (zombie == null || !zombie.Dead)
+        {
+            float z = GameSettings.Zombies;
+            src.volume = Mathf.Clamp01(volume * z * 1.6f);       // curseur à 6/10 : volume d'origine (0,77)
+            src.minDistance = Mathf.Lerp(1f, 6f, z);
+            src.maxDistance = Mathf.Max(maxDistance, src.minDistance + 5f);
+            return;
+        }
         // mort : fondu rapide puis silence
-        if (zombie != null && zombie.Dead && src.isPlaying)
+        if (src.isPlaying)
         {
             src.volume = Mathf.MoveTowards(src.volume, 0f, Time.deltaTime * 4f);
             if (src.volume <= 0.01f) src.Stop();

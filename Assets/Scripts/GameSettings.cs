@@ -4,12 +4,15 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Réglages du joueur (menu PARAMÈTRES), enregistrés d'une partie à l'autre (PlayerPrefs) et appliqués à chaque scène chargée :
-//   musique / effets, rotation fluide ou par à-coups, bords sombres en mouvement, difficulté.
+//   musique / effets / cris des zombies, rotation fluide ou par à-coups, bords sombres en mouvement, difficulté.
 public static class GameSettings
 {
     public enum Level { Facile, Normal, Difficile }
 
-    public static float Music { get => PlayerPrefs.GetFloat("sae501.music", 0.5f); set { PlayerPrefs.SetFloat("sae501.music", Mathf.Clamp01(value)); Apply(); } }
+    public static float Music { get => PlayerPrefs.GetFloat("sae501.music", 0.6f); set { PlayerPrefs.SetFloat("sae501.music", Mathf.Clamp01(value)); Apply(); } }
+    // cris des zombies (0..1) : volume et portée de leurs voix (ZombieVoice) ; gardé en mémoire (lu à chaque image par les zombies)
+    public static float Zombies { get { if (zombies < 0f) zombies = PlayerPrefs.GetFloat("sae501.zombies", 0.6f); return zombies; } set { zombies = Mathf.Clamp01(value); PlayerPrefs.SetFloat("sae501.zombies", zombies); } }
+    static float zombies = -1f;
     public static float Effects { get => PlayerPrefs.GetFloat("sae501.sfx", 0.8f); set { PlayerPrefs.SetFloat("sae501.sfx", Mathf.Clamp01(value)); Apply(); } }
     public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 1) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
@@ -36,9 +39,10 @@ public static class GameSettings
     public static void Apply()
     {
         AudioListener.volume = Effects;
-        // la musique passe aussi par AudioListener.volume : on compense pour que le curseur Musique soit indépendant
+        // la musique ignore AudioListener.volume (MusicPlayer) : seul le curseur Musique la règle ; plus forte qu'avant
+        // (curseur à 6/10 -> volume 0,96, contre 0,35 effectifs auparavant)
         foreach (var mp in Object.FindObjectsByType<MusicPlayer>(FindObjectsSortMode.None))
-            mp.volume = Mathf.Clamp01(0.7f * Music / Mathf.Max(0.05f, Effects));
+            mp.volume = Mathf.Clamp01(Music * 1.6f);
 
         // ControllerInputActionManager (Starter Assets XRI) : propriété smoothTurnEnabled, lue par réflexion
         foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))

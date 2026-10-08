@@ -32,7 +32,7 @@ public class PauseMenu : AmberMenu
         settingsPage = BuildSettings(() => ShowSettings(false));
         panel.gameObject.AddComponent<MenuPointer>().head = head;   // rayons des manettes, seulement quand le panneau est affiché
         // fond plus opaque derrière les pages : le décor et les textes du jeu ne se lisent plus à travers
-        UiKit.Quad(panel, "Fond_Opaque", Vector2.zero, PanelSize, new Color(0f, 0f, 0f, 0.7f), -1, 0.02f);
+        UiKit.Quad(panel, "Fond_Opaque", Vector2.zero, PanelSize, new Color(0f, 0f, 0f, 0.97f), -1, 0.02f);
         // ordre d'affichage : au-dessus de tout ce qui est en jeu (textes d'état, écrans collés à la tête : 4300 au plus)
         foreach (var r in panel.GetComponentsInChildren<Renderer>(true))
             r.material.renderQueue = r.GetComponent<TextMesh>() ? 4600 : r.name == "Fond_Opaque" ? 4490 : 4500;   // fond opaque dessiné en premier

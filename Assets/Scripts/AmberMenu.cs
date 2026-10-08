@@ -25,6 +25,7 @@ public abstract class AmberMenu : MonoBehaviour
         Section(p, ref y, "SON");
         Slider(p, ref y, "Musique", () => GameSettings.Music, v => GameSettings.Music = v);
         Slider(p, ref y, "Effets", () => GameSettings.Effects, v => GameSettings.Effects = v);
+        Slider(p, ref y, "Zombies", () => GameSettings.Zombies, v => GameSettings.Zombies = v);
         Section(p, ref y, "CONFORT VR");
         Choice(p, ref y, "Rotation", new[] { "PAR À-COUPS", "FLUIDE" }, () => GameSettings.SmoothTurn ? 1 : 0, i => GameSettings.SmoothTurn = i == 1);
         Choice(p, ref y, "Bords sombres", new[] { "OUI", "NON" }, () => GameSettings.ComfortVignette ? 0 : 1, i => GameSettings.ComfortVignette = i == 0);

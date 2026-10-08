@@ -55,6 +55,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [044](#044--carte-finale-jardin) | 2026-10-08 | Importer et utiliser map_finale.blend en respectant les lumières et l'ambiance sombre | Carte, lumière | Jardin, salle du générateur agrandie ; exposition de Blender appliquée aux lumières ; collisions, chargeurs et matériaux corrigés |
 | [045](#045--disjoncteur-caméras-zombies-portes-toit) | 2026-10-08 | Disjoncteurs, caméras trop sombres, zombies (2 fenêtres, plus nombreux, vitesse aléatoire, bug de focus), portes à tirer barricadables, plus sombre, plateforme du menu invisible, zombies par le toit | Gameplay, rendu | `Breaker`, CCTV vision nocturne, `HingedDoor`, passages réservés (zone NavMesh 3), trous du toit, lumières ×0,32 |
 | [046](#046--rendu-proche-de-cycles-éclairage-précalculé) | 2026-10-08 | Graphismes aussi développés que le rendu Blender (captures Cycles), ambiance très sombre | Rendu | Éclairage précalculé (lightmaps + sondes), textures procédurales cuites, conversion des lumières corrigée, calage sur des rendus Cycles |
+| [047](#047--volume-des-zombies-musique-plus-forte-en-boucle) | 2026-10-08 | Réglage du volume des zombies ; musique en jeu plus forte et en boucle | Son | Curseur « Zombies », `MusicPlayer` simplifié (boucle sûre), musique indépendante du volume des effets |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -892,3 +893,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Brouillard allégé (0,12 → 0,06). Différences volontaires : pas de planches aux fenêtres au départ (gameplay), ciel d'Alban au lieu du ciel noir.
 - **Pas testé au casque** : à vérifier (rendu, images/s ; l'éclairage précalculé allège le GPU : 8 lumières temps réel au lieu de 33).
 - Branche locale `feature/map-finale`, rien poussé.
+
+### 047 — Volume des zombies, musique plus forte et en boucle
+
+**Prompt**
+
+> Rajoute dans les paramètre les sons augmentatble (les zombis). Fait en sorte que la musique ingame soit plus forte et en boucle
+
+**Résultat** (code écrit par l'IA, Claude Code)
+
+- **Curseur « Zombies »** dans PARAMÈTRES > SON (menu d'accueil et menu pause, `AmberMenu`), enregistré (`GameSettings.Zombies`). Il règle le volume des cris et leur portée (`ZombieVoice`) : à 6/10 (défaut) le volume d'avant (0,77), à 10/10 volume maximal et voix entendue de plus loin. Testé : 0,77 → 1,0, portée 4 → 6 m.
+- **Musique plus forte** : elle ne passe plus par le volume général des effets (`ignoreListenerVolume`), seul le curseur Musique la règle : 0,96 au réglage par défaut contre 0,35 effectifs avant (≈ ×2,7).
+- **Musique en boucle** : `MusicPlayer` réécrit avec une seule source : la piste suivante démarre quand la précédente se termine (1, 2, 1, 2…, sans fin) ; elle attend pendant le menu pause. L'ancienne version programmait les pistes sur l'horloge audio, qui continuait pendant la pause : la musique se décalait ou s'arrêtait. Testé : fin de la piste 1 → piste 2 enchaînée.
+- Au passage : fond du menu pause rendu opaque (le bandeau de niveau se lisait au travers) ; GPU Resident Drawer coupé aussi dans le pipeline PC (erreurs en boucle dans l'éditeur avec les sondes de lumière ; il l'était déjà pour le Quest).
+- **Pas testé au casque.** Branche locale `feature/map-finale`, rien poussé.

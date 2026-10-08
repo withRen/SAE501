@@ -10,6 +10,8 @@ using UnityEngine;
 // sont réglés en Humanoid puis mis dans un Animator Controller piloté par ZombieAnimationBridge :
 //   Speed (float) = vitesse réelle en m/s, Attack (trigger), Die (trigger).
 // Appelé par ZombieBuilder.BuildShirtless : si les 3 fichiers sont absents, on garde l'animation par script (ZombieBoneAnim).
+// Types de zombie : chaque type (Variant) a sa marche et son attaque, rangées dans Assets/Animations/<dossier>.
+//   La mort est la même pour tous (« Zombie Death »). Un type dont les fichiers manquent est simplement ignoré.
 public static class ZombieMixamo
 {
     public const string ControllerPath = "Assets/Generated/Zombie_Mixamo.controller";
@@ -24,6 +26,51 @@ public static class ZombieMixamo
     const float AttackClipSpeed = 1.5f;
     const float AttackHitTimeInClip = 1.05f;
     public const float AttackHitDelay = AttackHitTimeInClip / AttackClipSpeed;
+
+    // ---------------- types de zombie (animations différentes) ----------------
+    public class Variant
+    {
+        public string id;               // nom du type, sert aux noms des fichiers générés
+        public string walk, attack;     // chemins des fichiers .fbx
+        public bool walkLoops = true;
+        public float walkClipSpeed;     // vitesse (m/s) à laquelle le clip de marche est joué à vitesse normale
+        public float attackClipSpeed;   // vitesse de lecture du clip d'attaque
+        public float attackHitTime;     // moment du coup dans le clip (s, mesuré)
+        public string ControllerPath => $"Assets/Generated/Zombie_{id}.controller";
+        public float AttackHitDelay => attackHitTime / attackClipSpeed;
+    }
+
+    // Zombie « cogneur » : marche lourde, coups de poing.
+    //   Walking : 1,53 s, avance de 0,85 m (0,55 m/s). Zombie Punching : 1,03 s, 1er poing en avant à 0,33 s (mesuré).
+    public static readonly Variant Cogneur = new Variant
+    {
+        id = "Cogneur", walk = "Assets/Animations/Zombie2/Walking.fbx", attack = "Assets/Animations/Zombie2/Zombie Punching.fbx",
+        walkClipSpeed = 0.7f, attackClipSpeed = 1f, attackHitTime = 0.33f,
+    };
+
+    // Zombie « coureur » : il court, et frappe d'un coup de pied.
+    //   Zombie Running : 0,8 s, avance de 2,5 m (3,1 m/s : un vrai sprint, joué plus lentement car le zombie va moins vite).
+    //   Zombie Kicking : 3,5 s, pied le plus haut et le plus en avant à 1,23 s (mesuré). Joué x2,3 : le coup tombe à 0,53 s
+    //   et le clip (1,5 s) tient dans l'intervalle entre deux coups.
+    public static readonly Variant Coureur = new Variant
+    {
+        id = "Coureur", walk = "Assets/Animations/Zombie3/Zombie Running.fbx", attack = "Assets/Animations/Zombie3/Zombie Kicking.fbx",
+        walkClipSpeed = 2f, attackClipSpeed = 2.3f, attackHitTime = 1.23f,
+    };
+
+    /// <summary>Contrôleur d'un type de zombie, ou null si ses fichiers ne sont pas dans le projet.</summary>
+    public static RuntimeAnimatorController EnsureController(Variant v)
+    {
+        string death = FindModel("Zombie Death");
+        if (death == null || AssetImporter.GetAtPath(v.walk) == null || AssetImporter.GetAtPath(v.attack) == null) return null;
+
+        SetupClip(v.walk, $"Zombie_{v.id}_Walk", loop: v.walkLoops);
+        SetupClip(v.attack, $"Zombie_{v.id}_Attack", loop: false);
+        SetupClip(death, "Zombie_Death", loop: false);
+
+        return BuildController(v.ControllerPath, LoadClip(v.walk), LoadClip(v.attack), LoadClip(death),
+                               v.walkClipSpeed, v.attackClipSpeed);
+    }
 
     [MenuItem("SAE501/Zombie/Régler les animations Mixamo")]
     static void Menu()
@@ -48,7 +95,7 @@ public static class ZombieMixamo
         SetupClip(attack, "Zombie_Attack", loop: false);
         SetupClip(death, "Zombie_Death", loop: false);
 
-        return BuildController(LoadClip(walk), LoadClip(attack), LoadClip(death));
+        return BuildController(ControllerPath, LoadClip(walk), LoadClip(attack), LoadClip(death), WalkClipSpeed, AttackClipSpeed);
     }
 
     static string FindModel(string fileName) =>
@@ -95,13 +142,14 @@ public static class ZombieMixamo
     static AnimationClip LoadClip(string path) =>
         AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().First(c => !c.name.StartsWith("__preview__"));
 
-    static AnimatorController BuildController(AnimationClip walk, AnimationClip attack, AnimationClip death)
+    static AnimatorController BuildController(string controllerPath, AnimationClip walk, AnimationClip attack, AnimationClip death,
+                                              float walkClipSpeed, float attackClipSpeed)
     {
         if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
 
         // on réutilise le fichier s'il existe (même identifiant : pas de changements inutiles dans git)
-        var ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath)
-                   ?? AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
+        var ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath)
+                   ?? AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
         var sm = ctrl.layers[0].stateMachine;
         foreach (var t in sm.anyStateTransitions) sm.RemoveAnyStateTransition(t);
         foreach (var s in sm.states) sm.RemoveState(s.state);
@@ -115,13 +163,13 @@ public static class ZombieMixamo
         // Marche : la vitesse du clip suit la vitesse réelle (Speed en m/s). À l'arrêt (Speed = 0) le zombie se fige.
         var sWalk = sm.AddState("Walk", new Vector3(300, 0, 0));
         sWalk.motion = walk;
-        sWalk.speed = 1f / WalkClipSpeed;
+        sWalk.speed = 1f / walkClipSpeed;
         sWalk.speedParameterActive = true;
         sWalk.speedParameter = "Speed";
 
         var sAttack = sm.AddState("Attack", new Vector3(300, 120, 0));
         sAttack.motion = attack;
-        sAttack.speed = AttackClipSpeed;
+        sAttack.speed = attackClipSpeed;
 
         var sDeath = sm.AddState("Death", new Vector3(600, 60, 0));
         sDeath.motion = death;

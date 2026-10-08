@@ -28,6 +28,13 @@ public class Zombie : MonoBehaviour
     public float attackDamage = 0.2f;
     public float attackHitDelay = 0.45f;    // moment du coup dans l'animation
 
+    [Header("Type de zombie (voir ZombieVariants)")]
+    public string typeName = "Normal";
+    public float speedMultiplier = 1f;      // x la vitesse donnée par le spawner
+    public float healthMultiplier = 1f;     // x les PV du niveau (la tête tue toujours d'un coup)
+    public int minLevel = 1;                // vague à partir de laquelle ce type peut apparaître
+    public float spawnWeight = 1f;          // chance d'apparaître par rapport aux autres types
+
     [Header("Vie")]
     public int level = 1;
     public float Health { get; private set; } = ZombieLevels.BaseHealth;
@@ -48,7 +55,7 @@ public class Zombie : MonoBehaviour
     {
         level = Mathf.Clamp(lvl, 1, ZombieLevels.MaxLevel);
         var st = ZombieLevels.For(level);
-        MaxHealth = Health = ZombieLevels.BaseHealth * st.hpMultiplier;
+        MaxHealth = Health = ZombieLevels.BaseHealth * st.hpMultiplier * Mathf.Max(0.1f, healthMultiplier);
         attackDamage = st.playerDamage;
     }
 

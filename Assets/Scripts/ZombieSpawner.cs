@@ -37,10 +37,35 @@ public class ZombieSpawner : MonoBehaviour
         Transform p = where == Point.CouloirGauche ? points.leftCorridorEnd
                     : where == Point.CouloirDroit ? points.rightCorridorEnd
                     : points.exterior;
-        var go = Instantiate(zombiePrefab, p.position, p.rotation);
+        var go = Instantiate(PickPrefab(), p.position, p.rotation);
         var z = go.GetComponent<Zombie>();
         z.ApplyLevel(level);
-        z.walkSpeed = zombieSpeed;
+        z.walkSpeed = zombieSpeed * z.speedMultiplier;
         return z;
+    }
+
+    // types de zombie : le prefab principal liste les autres (ZombieVariants, rempli par ZombieBuilder).
+    // Tirage au hasard selon spawnWeight, parmi les types autorisés à ce niveau (minLevel).
+    GameObject PickPrefab()
+    {
+        var v = zombiePrefab ? zombiePrefab.GetComponent<ZombieVariants>() : null;
+        if (v == null || v.others == null || v.others.Length == 0) return zombiePrefab;
+
+        float total = 0f;
+        for (int i = -1; i < v.others.Length; i++) total += Weight(i < 0 ? zombiePrefab : v.others[i]);
+        float r = Random.value * total;
+        for (int i = -1; i < v.others.Length; i++)
+        {
+            var prefab = i < 0 ? zombiePrefab : v.others[i];
+            r -= Weight(prefab);
+            if (r <= 0f && Weight(prefab) > 0f) return prefab;
+        }
+        return zombiePrefab;
+    }
+
+    float Weight(GameObject prefab)
+    {
+        var z = prefab ? prefab.GetComponent<Zombie>() : null;
+        return z != null && level >= z.minLevel ? Mathf.Max(0f, z.spawnWeight) : 0f;
     }
 }

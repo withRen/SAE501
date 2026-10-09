@@ -39,6 +39,13 @@ public static class VRInput
         if (d.isValid) d.SendHapticImpulse(0, amplitude, duration);
     }
 
+    /// <summary>Touche du clavier (éditeur sans casque).</summary>
+    public static bool KeyboardKey(UnityEngine.InputSystem.Key key)
+    {
+        var k = UnityEngine.InputSystem.Keyboard.current;
+        return k != null && k[key].isPressed;
+    }
+
     public static bool KeyboardSpace()
     {
         var k = UnityEngine.InputSystem.Keyboard.current;

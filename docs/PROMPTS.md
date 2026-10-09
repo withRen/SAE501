@@ -77,6 +77,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [066](#066--concept-art) | 2026-10-09 | Qu'est-ce que le concept art ? | Question | Explication et propositions |
 | [067](#067--lampe-torche-sol-et-prise-à-distance) | 2026-10-09 | Lampe pixelisée, objets sous le sol, prise de loin et de plusieurs objets | Correctif | Tramage + faisceau adouci ; filet de sécurité des objets ; Near-Far supprimé |
 | [068](#068--lampe-planches-chute-du-joueur-tutoriel-dans-la-carte) | 2026-10-09 | Lampe encore pixelisée, planches difficiles à poser, chute sous la carte, zombies pendant le tuto, tuto en panneaux dans la carte | Correctif | Rendu Forward + textures filtrées, pose des planches refaite, joueur protégé, vagues bloquées, panneaux uGUI |
+| [069](#069--saccroupir-gâchette-gauche) | 2026-10-09 | S'accroupir avec la gâchette gauche | Contrôles | Gâchette gauche maintenue = vue 55 cm plus bas (sauf pistolet ou lampe en main gauche) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1145,3 +1146,16 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Zombies pendant le tutoriel** : non reproduit dans l'éditeur (même en passant par le menu). Le `WaveManager` attend maintenant lui-même la fin du tutoriel (`Tutorial.Running`), même si quelque chose le réactive.
 - **Tutoriel dans la carte** : chaque étape s'affiche sur un **panneau uGUI (Canvas en espace monde)** posé à côté de l'objet (râtelier de planches, fenêtre, disjoncteur, écrans, cible), tourné vers le joueur et relié à l'objet par un trait ; objets de la ceinture : panneau devant le joueur. Le panneau devant les yeux ne sert plus qu'aux écrans d'accueil et de fin.
 - Scène reconstruite, éclairage recuit. **Pas testé au casque.**
+
+### 069 — S'accroupir (gâchette gauche)
+
+**Prompt**
+
+> rajoute le bouton accroupir sur la gachette gauche quand elle est pressée
+
+**Résultat** (code par l'IA, Claude Code)
+
+- `Crouch.cs` sur le XR Origin : tant que la **gâchette gauche** est enfoncée, la vue descend en douceur de **55 cm** (1,36 → 0,81 m) ; relâchée, on se relève. Éditeur : touche C.
+- Si la main gauche tient le **pistolet** ou la **lampe**, la gâchette garde son rôle (tirer, allumer) : pas d'accroupi.
+- Testé dans l'éditeur : caméra 1,36 m → 0,81 m en maintenant, retour à 1,36 m au relâchement. **Pas testé au casque.**
+- Schéma des commandes et wiki mis à jour.

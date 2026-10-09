@@ -67,6 +67,7 @@ public class InteractableOutline : MonoBehaviour
     {
         if (!(r is MeshRenderer) || r.GetComponent<TextMesh>() || r.name.StartsWith("Contour")) return;
         if (r.GetComponentInParent<Nail>()) return;                          // les clous d'une planche : pas de contour
+        if (r.isPartOfStaticBatch) return;                                   // maillage fusionné (toute la carte) : contour impossible
         var mf = r.GetComponent<MeshFilter>();
         if (!mf || !mf.sharedMesh) return;
         var g = new GameObject("Contour");

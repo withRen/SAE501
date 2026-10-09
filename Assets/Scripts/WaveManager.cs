@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 //   Niveau 3 : + stockage                                Niveau 4 : + générateur  -> objectif : l'activer (Generator)
 // Chaque niveau : les zombies ont plus de PV et frappent plus fort (ZombieLevels), apparaissent aux points autorisés,
 // puis une pause pour réparer les barricades. Détails : wiki « Niveaux et vagues ».
+// [6.3] Courbe de difficulté : la vague 1 est lente, d'un seul côté et avec peu de zombies à la fois ;
+//   à chaque vague les zombies sont plus nombreux, plus rapides, et plus d'entre eux attaquent en même temps.
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
@@ -20,6 +22,8 @@ public class WaveManager : MonoBehaviour
         public int zombies = 4;                                         // zombies de la vague
         public float spawnInterval = 12f;                               // secondes entre deux apparitions
         public ZombieSpawner.Point[] points = { ZombieSpawner.Point.Exterieur };
+        public float speed = 1f;                                        // vitesse de marche (x la vitesse du spawner)
+        public int maxAlive = 4;                                        // zombies vivants en même temps, au maximum
         [TextArea] public string banner;                                // annonce au début du niveau
     }
 
@@ -49,13 +53,13 @@ public class WaveManager : MonoBehaviour
 
     static LevelDef[] DefaultLevels() => new[]
     {
-        new LevelDef { zombies = 6, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.Toit },
+        new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.Toit },
             banner = "NIVEAU 1\nRestez dans le bunker : les couloirs sont verrouillés.\nObjectif : survivre, puis activer le générateur." },
-        new LevelDef { zombies = 9, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
+        new LevelDef { zombies = 9, speed = 0.95f, maxAlive = 4, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
             banner = "NIVEAU 2\nCouloirs et cuisine déverrouillés." },
-        new LevelDef { zombies = 12, spawnInterval = 6.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
+        new LevelDef { zombies = 12, speed = 1.05f, maxAlive = 5, spawnInterval = 6.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
             banner = "NIVEAU 3\nStockage déverrouillé." },
-        new LevelDef { zombies = 15, spawnInterval = 5.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
+        new LevelDef { zombies = 15, speed = 1.2f, maxAlive = 7, spawnInterval = 5.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
             banner = "NIVEAU 4\nGénérateur déverrouillé.\nObjectif : l'ACTIVER !" },
     };
 
@@ -142,12 +146,14 @@ public class WaveManager : MonoBehaviour
         if (spawned < def.zombies)
         {
             spawnTimer -= Time.deltaTime;
-            if (spawnTimer <= 0f) { SpawnOne(def); spawnTimer = def.spawnInterval; }
+            // trop de zombies déjà présents : le suivant attend qu'un autre soit abattu
+            bool room = def.maxAlive <= 0 || Alive < def.maxAlive;
+            if (spawnTimer <= 0f && room) { SpawnOne(def); spawnTimer = def.spawnInterval; }
         }
         else if (last)
         {
             reinforceTimer -= Time.deltaTime;
-            if (reinforceTimer <= 0f && Alive < lastLevelMaxAlive) { SpawnOne(def); reinforceTimer = lastLevelReinforcementEvery; }
+            if (reinforceTimer <= 0f && Alive < Mathf.Max(lastLevelMaxAlive, def.maxAlive)) { SpawnOne(def); reinforceTimer = lastLevelReinforcementEvery; }
         }
         else if (Alive == 0)
         {
@@ -164,7 +170,9 @@ public class WaveManager : MonoBehaviour
     void SpawnOne(LevelDef def)
     {
         var p = def.points[pointIndex++ % def.points.Length];
-        alive.Add(spawner.Spawn(p));
+        var z = spawner.Spawn(p);
+        if (def.speed > 0f) z.walkSpeed *= def.speed;      // le spawner a mis sa vitesse (déjà réglée par la difficulté du menu)
+        alive.Add(z);
         spawned++;
     }
 

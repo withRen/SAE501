@@ -112,10 +112,24 @@ public static class RoomBuilder
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
         BuildLightProbes();
+        UnbatchInteractables();
         LightBaker.ApplySettings();
     }
 
     // sondes de lumière : les objets qui bougent (zombies, armes, mains) prennent l'éclairage précalculé de l'endroit où ils sont
+    // Objets de la carte devenus interactifs (écrans CCTV, disjoncteur…) : pas de regroupement statique. Sinon, en jeu, leur
+    // MeshFilter renvoie le maillage fusionné de toute la carte et le contour (InteractableOutline) l'entoure en entier
+    // (grande forme jaune devant les écrans). L'éclairage précalculé (ContributeGI) est conservé.
+    static void UnbatchInteractables()
+    {
+        foreach (var it in Object.FindObjectsByType<XRBaseInteractable>(FindObjectsInactive.Include))
+            foreach (var r in it.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                var f = GameObjectUtility.GetStaticEditorFlags(r.gameObject);
+                GameObjectUtility.SetStaticEditorFlags(r.gameObject, f & ~StaticEditorFlags.BatchingStatic);
+            }
+    }
+
     static void BuildLightProbes()
     {
         var b = new Bounds(roomRoot.transform.position, Vector3.zero);
@@ -748,6 +762,7 @@ public static class RoomBuilder
         grab.movementType = XRBaseInteractable.MovementType.Instantaneous;
         if (attach) grab.attachTransform = attach;
         g.AddComponent<IgnorePlayer>();
+        g.AddComponent<GrabGuard>();          // portée limitée (pas de prise de loin), pas de vol par l'autre main ou un holster
         return grab;
     }
 

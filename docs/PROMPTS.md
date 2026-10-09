@@ -60,6 +60,10 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [049](#049--fin-de-limport-de-la-nouvelle-carte) | 2026-10-08 | Finir proprement l'import de la nouvelle carte | Carte | Vérification en jeu : zombies (2 fenêtres + toit), portes, disjoncteur, armes, chargeurs |
 | [050](#050--push-de-la-branche-carte) | 2026-10-08 | Pousser le travail | Git | Branche `feature/map-finale` poussée (5 commits) |
 | [051](#051--analyse-de-la-pr-86-tutoriel) | 2026-10-08 | Importer et analyser la PR #86 d'Al Amine (tutoriel, prise en main, vagues) | Revue | Ne compile pas en l'état ; tutoriel fonctionnel après 4 corrections ; conflit avec la prise par clic |
+| [052](#052--schéma-des-commandes-quest-3) | 2026-10-09 | Schéma visuel des commandes des manettes Quest 3 | Doc | PNG sur le bureau, commandes relevées dans le code |
+| [053](#053--plans-de-la-carte-vue-de-dessus-et-34) | 2026-10-09 | Plan de la carte vu de dessus et en 3/4 (style terminal) | Doc | 2 PNG : plan schématique et rendu Blender isométrique légendé |
+| [054](#054--planche-set-dress) | 2026-10-09 | Image représentant le set dress | Doc | Planche de 6 pièces rendues dans Blender avec l'inventaire du décor |
+| [055](#055--tutoriel-intégré-et-contour-géant-des-écrans) | 2026-10-09 | Tutoriel absent au casque ; forme jaune devant les écrans CCTV | Correctif | PR #86 fusionnée et corrigée ; contours des objets regroupés (static batching) corrigés |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -961,3 +965,47 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Tutoriel** (après corrections) : se lance seul, bloque les vagues, panneau lisible, se termine proprement (vagues relancées, mémorisé).
 - **GrabGuard** : la « prise ferme » du pistolet remet la main en mode « garder enfoncé » après le lâcher, ce qui annule la prise par clic demandée (prompt 034). Le reste (pas de prise de loin, pas de vol par l'autre main) est utile.
 - **Vagues** : conflit avec `feature/map-finale` (6/9/12/15 zombies et le toit contre 4/6/8/12 sans le toit) ; les nouveaux réglages ne s'appliquent qu'après *Build VR Scene*.
+
+### 052 — Schéma des commandes Quest 3
+
+**Prompt**
+
+> (2 images de référence de manettes) Fait moi le schéma de controle visuelle (un PNG que tu vas déposer dans mes documents ou dans mon desktop). Représente les manettes du question 3 et tu fais un trait pour chacun des bouton avec une mini explication / juste 2/3 mots
+
+**Résultat** (par l'IA, Claude Code)
+
+- `Commandes_Quest3_TheLastEscapor.png` (2800×1560) sur le bureau. Commandes relevées dans le code : gâchette = tirer / utiliser, joystick gauche = se déplacer, joystick droit = tourner, grip = attraper / lâcher (prise par clic), bouton menu = menu pause ; A, B, X, Y non utilisés.
+
+### 053 — Plans de la carte (vue de dessus et 3/4)
+
+**Prompt**
+
+> (plan Hadley's Hope et vue isométrique en référence) Génére moi un schématic vue de haut de la map, et une vue en 3/4 (regarde les images de référence)
+
+**Résultat** (par l'IA, Claude Code)
+
+- `Plan_VueDessus_TheLastEscapor.png` : plan vert façon terminal, à l'échelle (dimensions lues dans `map_final_final.blend`), pièces, niveaux d'ouverture, portes, fenêtres, trous du toit, apparitions des zombies, objets (positions de la scène Unity), légende.
+- `Plan_Vue3-4_TheLastEscapor.png` : rendu Blender isométrique en traits (Freestyle), plafonds retirés, légendes à traits et cartouche.
+
+### 054 — Planche set dress
+
+**Prompt**
+
+> Génère moi une image afin de représenter le setdress
+
+**Résultat** (par l'IA, Claude Code)
+
+- `SetDress_TheLastEscapor.png` (3600×2440) : 6 pièces (bunker, cuisine, générateur, stockage, couloir ouest, jardin et cabane) rendues dans Blender en coupe 3/4 avec leurs matériaux, nombre d'objets et inventaire du décor par pièce.
+
+### 055 — Tutoriel intégré et contour géant des écrans
+
+**Prompt**
+
+> (2 captures du casque) Le tutoriel n'est acuellement pas fonctionnel. Il y a également un bug d'affichage devant les télévisions (Camera CCTV)
+
+**Résultat** (code par l'IA, Claude Code ; tutoriel et GrabGuard écrits par Al Amine, PR #86)
+
+- **Forme jaune devant les écrans** : régression du prompt 046. Les objets de la carte sont marqués « regroupement statique » pour l'éclairage ; en jeu, le MeshFilter des écrans CCTV et du disjoncteur renvoie alors le maillage fusionné de la carte, et le contour (`InteractableOutline`) l'entourait en entier (≈ 60 m). Correctif : les objets interactifs ne sont plus regroupés (`RoomBuilder.UnbatchInteractables`, éclairage précalculé conservé) et le contour ignore tout maillage regroupé.
+- **Tutoriel** : il n'était pas dans la build (PR #86 non fusionnée). Fusionné dans `feature/map-finale` avec : les 4 corrections de compilation, la « prise ferme » du pistolet retirée (elle annulait la prise par clic), textes adaptés à la prise par clic, nouvelle étape « disjoncteur » avant les caméras (écrans noirs sinon), 10 étapes.
+- **Vagues** : nos 6/9/12/15 zombies avec le toit, plus la vitesse progressive d'Al Amine (×0,8 → ×1,2) et un maximum de zombies en même temps (3/4/5/7).
+- Scène reconstruite et éclairage recuit.

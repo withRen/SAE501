@@ -32,9 +32,15 @@ public class Flashlight : MonoBehaviour
         spot.enabled = on;
         if (on)
         {
+            // batterie presque vide (< 10 %) : la lumière faiblit et ondule doucement (bruit lissé, pas de saut à chaque image)
             float k = 1f;
-            if (level < 0.15f) k = Random.value < 0.25f ? Random.Range(0.1f, 0.5f) : Random.Range(0.6f, 1f);
-            spot.intensity = baseIntensity * k;
+            if (level < 0.1f)
+            {
+                float low = Mathf.InverseLerp(0f, 0.1f, level);                       // 1 → 0 quand la batterie se vide
+                float wave = Mathf.PerlinNoise(Time.time * 1.5f, 0.37f);              // variation lente
+                k = Mathf.Lerp(0.35f, 1f, low) * Mathf.Lerp(0.75f, 1f, wave);
+            }
+            spot.intensity = Mathf.Lerp(spot.intensity, baseIntensity * k, 1f - Mathf.Exp(-8f * Time.deltaTime));
         }
 
         if (bar)

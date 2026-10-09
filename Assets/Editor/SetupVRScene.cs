@@ -26,6 +26,22 @@ public static class SetupVRScene
         AddHand(rig, "Left Controller", "l", "XRI Left Interaction", actions);
         AddHand(rig, "Right Controller", "r", "XRI Right Interaction", actions);
 
+        // déplacement : seulement marcher (joystick gauche) et tourner (joystick droit). Les autres modes des Starter Assets
+        // (saut sur A, escalade, « grab move » qui déplace le joueur quand on serre le grip dans le vide, téléportation sans zone)
+        // ne servent pas et faisaient passer le joueur à travers le sol ou par-dessus les obstacles.
+        foreach (var t in rig.GetComponentsInChildren<Transform>(true))
+            if (t.name == "Grab Move" || t.name == "Jump" || t.name == "Climb" || t.name == "Climb Teleport" || t.name == "Teleportation")
+                t.gameObject.SetActive(false);
+        var cc = rig.GetComponent<CharacterController>();
+        if (cc)
+        {
+            cc.radius = 0.2f;          // 0,1 m avec 8 cm de marge : collisions instables contre les murs fins et les caisses
+            cc.skinWidth = 0.02f;
+            cc.stepOffset = 0.3f;      // marche franchissable (0,5 m : on montait sur les caisses et les tonneaux)
+            cc.minMoveDistance = 0f;
+        }
+        rig.AddComponent<PlayerFallGuard>();                       // jamais sous la carte
+
         // même mode de suivi que dans "My project"
         rig.GetComponent<Unity.XR.CoreUtils.XROrigin>().RequestedTrackingOriginMode = Unity.XR.CoreUtils.XROrigin.TrackingOriginMode.Device;
 
@@ -36,12 +52,11 @@ public static class SetupVRScene
         if (head)
         {
             head.farClipPlane = 60f;
-            // le Quest affiche en 8 bits (pas de HDR) : dans une scène aussi sombre, le dégradé de la lampe torche formait
-            // des marches visibles (« pixelisé »). Le tramage (dithering) les fait disparaître ; il passe par le post-traitement.
+            // pas de post-traitement ni de tramage : le bruit du tramage se voyait (grésillement) dans une scène aussi sombre
             var ucd = head.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>()
                       ?? head.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
-            ucd.renderPostProcessing = true;
-            ucd.dithering = true;
+            ucd.renderPostProcessing = false;
+            ucd.dithering = false;
         }
 
         var path = "Assets/Scenes/MainScene.unity";

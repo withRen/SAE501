@@ -76,6 +76,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [065](#065--palette-de-couleurs) | 2026-10-09 | Palette de couleurs utilisée | GDD | 18 couleurs : interface, retours de jeu (code), ambiance (mesurée en jeu) |
 | [066](#066--concept-art) | 2026-10-09 | Qu'est-ce que le concept art ? | Question | Explication et propositions |
 | [067](#067--lampe-torche-sol-et-prise-à-distance) | 2026-10-09 | Lampe pixelisée, objets sous le sol, prise de loin et de plusieurs objets | Correctif | Tramage + faisceau adouci ; filet de sécurité des objets ; Near-Far supprimé |
+| [068](#068--lampe-planches-chute-du-joueur-tutoriel-dans-la-carte) | 2026-10-09 | Lampe encore pixelisée, planches difficiles à poser, chute sous la carte, zombies pendant le tuto, tuto en panneaux dans la carte | Correctif | Rendu Forward + textures filtrées, pose des planches refaite, joueur protégé, vagues bloquées, panneaux uGUI |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1128,4 +1129,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Lampe « pixelisée »** : le Quest affiche en 8 bits (pas de HDR) ; dans une scène aussi sombre, le dégradé du faisceau formait des marches visibles. Tramage (dithering) activé sur la caméra du joueur (passe par le post-traitement), bord du faisceau adouci (angle intérieur 22° → 10°), lumière toujours calculée par pixel.
 - **Prise de loin et plusieurs objets dans une main** : le `ControllerInputActionManager` des Starter Assets **réactivait le Near-Far Interactor** (le rayon) à la fin d'un geste de téléportation (joystick poussé puis relâché) : chaque main avait alors deux interacteurs. Le Near-Far est maintenant supprimé de la scène et sa référence retirée du script.
 - **Objets sous le sol** : non reproduit en lâchant 24 objets dans toutes les pièces (tous restent sur le sol). Cause probable au casque : la main passe sous le sol virtuel quand on pose un objet par terre. Nouveau `ItemSafety` sur tous les objets attrapables : au lâcher, un objet sous le sol (ou le terrain) est remis dessus ; un objet qui tombe de la carte revient à sa dernière position sûre.
+- Scène reconstruite, éclairage recuit. **Pas testé au casque.**
+
+### 068 — Lampe, planches, chute du joueur, tutoriel dans la carte
+
+**Prompt**
+
+> La flashlight est encore glitché, c'est encore du pixel, et elle grésille alors quelle devrait être smooth, propre. Le plaçage de planche est encore complexe, la planche se place rarement bien, alors qu'elle devrait se placer proprement à chaque fois. Également il y a des moment où l'on peut tomber en dessous de la map exemple en se baladant dans les couloirs. La tutoriel se lance mais pendant le tuto les zombis se lancent aussi (ça ne devrait pas être le cas). Et le tuto devrai expliquer directement dans la map les planches etc avec des canvas 2D
+
+**Résultat** (code par l'IA, Claude Code)
+
+- **Lampe** : trois causes probables corrigées ensemble. Le Quest utilisait le rendu Forward+ (découpage en tuiles : blocs de lumière qui scintillent sur mobile) → rendu **Forward** (jusqu'à 8 lumières par objet). Textures de la carte en filtrage **trilinéaire + anisotrope ×4** (le sol vu en biais scintillait sous le faisceau). Batterie faible : variation **lissée** au lieu d'un tirage aléatoire à chaque image (grésillement). Tramage du prompt 067 retiré (son bruit se voyait dans le noir).
+- **Planches** : la planche se décrochait dès que la main était à plus de 35 cm du centre de l'emplacement ; tenue par un bout, elle l'est toujours (elle mesure 1,84 m) : elle s'accrochait puis se décrochait en boucle. Maintenant : distance mesurée sur **toute la longueur** de la planche (30 cm), décrochage seulement si la main bouge de 40 cm **depuis le calage**, et **lâchée à moins de 50 cm d'un emplacement libre, elle s'y pose toute seule, bien alignée**, quelle que soit son orientation. Testé : tenue par un bout et inclinée de 25° → posée ; lâchée à 40 cm et tournée de 70° → posée et alignée.
+- **Chute sous la carte** : le sol n'a aucun trou (29 000 points sondés). Le corps du joueur était fragile : capsule de 10 cm de rayon avec 8 cm de marge (collisions instables), marche de 50 cm (on montait sur les caisses), et des modes de déplacement des Starter Assets jamais coupés (saut sur A, escalade, « grab move » qui déplace le joueur quand on serre le grip dans le vide, téléportation). Capsule 20 cm / marge 2 cm / marche 30 cm, modes inutiles désactivés, et `PlayerFallGuard` : sous le sol → ramené à la dernière position sûre (testé : 1,2 m sous le sol → remis au sol).
+- **Zombies pendant le tutoriel** : non reproduit dans l'éditeur (même en passant par le menu). Le `WaveManager` attend maintenant lui-même la fin du tutoriel (`Tutorial.Running`), même si quelque chose le réactive.
+- **Tutoriel dans la carte** : chaque étape s'affiche sur un **panneau uGUI (Canvas en espace monde)** posé à côté de l'objet (râtelier de planches, fenêtre, disjoncteur, écrans, cible), tourné vers le joueur et relié à l'objet par un trait ; objets de la ceinture : panneau devant le joueur. Le panneau devant les yeux ne sert plus qu'aux écrans d'accueil et de fin.
 - Scène reconstruite, éclairage recuit. **Pas testé au casque.**

@@ -16,7 +16,10 @@ public class Plank : MonoBehaviour
     public static readonly List<Plank> All = new List<Plank>();
 
     public Nail[] nails;
-    public float unsnapRadius = 0.35f;     // si la main s'éloigne de plus de 35 cm de l'ouverture, la planche se décale
+    public float unsnapRadius = 0.4f;      // si la main s'éloigne de plus de 40 cm de l'endroit où elle a calé la planche, celle-ci se décale
+    public float snapDistance = 0.3f;      // tenue en main : calée dès que la planche passe à 30 cm d'un emplacement libre (sur toute sa longueur)
+    public float releaseSnapDistance = 0.5f;   // lâchée à moins de 50 cm d'un emplacement libre : posée dessus, quelle que soit son orientation
+    public float halfLength = 0.85f;       // demi-longueur de la planche (axe x local)
     public int hitsWhenNailed = 3;         // coups de zombie pour arracher une planche clouée (sans clou : 1 seul)
     public bool stored;                    // posée sur le râtelier : immobile jusqu'à ce qu'on la prenne
     public BarricadeSlot startSlot;        // si renseigné : la planche est déjà clouée sur cet emplacement au début de la partie
@@ -29,6 +32,7 @@ public class Plank : MonoBehaviour
     XRGrabInteractable grab;
     Rigidbody rb;
     BarricadeSlot slot;
+    Vector3 snapHand;                      // position de la main au moment où la planche s'est calée
     float push, pushVel;                   // recul de la planche quand un zombie frappe (ressort)
     AudioSource src;
     static AudioClip thud;
@@ -113,7 +117,13 @@ public class Plank : MonoBehaviour
     {
         if (Held == this) Held = null;
         foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
-        if (state == State.Free) { stored = false; rb.isKinematic = false; }      // sortie du râtelier : elle tombe normalement
+        if (state == State.Free)
+        {
+            // lâchée près d'une ouverture libre : posée proprement sur l'emplacement le plus proche (pas besoin de viser juste)
+            var near = BarricadeSlot.Best(transform, halfLength, releaseSnapDistance, 0f);
+            if (near) { Snap(near); Settle(); return; }
+            stored = false; rb.isKinematic = false;                                // sortie du râtelier : elle tombe normalement
+        }
     }
 
     void Update()
@@ -122,16 +132,20 @@ public class Plank : MonoBehaviour
         {
             case State.Free:
                 if (Held == this)
-                    foreach (var s in BarricadeSlot.All)
-                        if (s.Accepts(transform)) { Snap(s); break; }
+                {
+                    var s = BarricadeSlot.Best(transform, halfLength, snapDistance, 0.5f);
+                    if (s) Snap(s);
+                }
                 break;
 
             case State.Snapped:
                 if (!grab.isSelected) Settle();            // lâchée sur l'emplacement : elle reste
                 else
                 {
+                    // on compare la main à sa position au moment du calage (et non au centre de l'emplacement :
+                    // en tenant la planche par un bout, la main est déjà à 50 cm du centre et la planche se décrochait aussitôt)
                     var att = grab.firstInteractorSelecting.GetAttachTransform(grab);
-                    if (Vector3.Distance(att.position, slot.transform.position) > unsnapRadius) Unsnap();
+                    if (Vector3.Distance(att.position, snapHand) > unsnapRadius) Unsnap();
                 }
                 break;
 
@@ -162,6 +176,7 @@ public class Plank : MonoBehaviour
     void Snap(BarricadeSlot s)
     {
         slot = s;
+        snapHand = grab.isSelected ? grab.firstInteractorSelecting.GetAttachTransform(grab).position : transform.position;
         s.Occupied = true;
         s.Plank = this;
         state = State.Snapped;

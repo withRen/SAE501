@@ -106,7 +106,8 @@ public class WaveManager : MonoBehaviour
 
     void Update()
     {
-        if (spawner == null) return;
+        // pendant le tutoriel : rien ne bouge (pas de compte à rebours, pas de zombie), même si le WaveManager a été réactivé
+        if (spawner == null || Tutorial.Running) return;
         switch (phase)
         {
             case Phase.Waiting:

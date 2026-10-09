@@ -53,7 +53,11 @@ public class Tutorial : MonoBehaviour
         var t = new GameObject("Tutoriel").AddComponent<Tutorial>();
         t.replayOnly = Done && !forceNext;
         forceNext = false;
-        if (!t.replayOnly) WaveManager.Instance.enabled = false;   // son Start (compte à rebours, son) attend la fin du tutoriel
+        if (!t.replayOnly)
+        {
+            WaveManager.Instance.enabled = false;   // son Start (compte à rebours, son) attend la fin du tutoriel
+            Running = true;                         // et son Update attend aussi (sécurité si quelqu'un le réactive)
+        }
     }
 
     // ───────────────────────── réglages ─────────────────────────
@@ -118,7 +122,7 @@ public class Tutorial : MonoBehaviour
         yield return Step(1, total, "Prenez une planche :\napprochez la main et appuyez une fois\nsur le bouton latéral (grip).\nUn 2e appui la lâche.",
             () => Plank.Held != null, () => NearestFreePlank(), "PLANCHE");
 
-        yield return Step(2, total, "Posez la planche contre une fenêtre :\nalignez-la sur la planche fantôme.",
+        yield return Step(2, total, "Approchez la planche d'une fenêtre\n(planche fantôme) et lâchez-la :\nelle se pose toute seule.",
             () => NewPlank(p => p.InSlot), () => NearestFreeSlot(sw, se), "ICI");
 
         if (hammer)
@@ -168,6 +172,7 @@ public class Tutorial : MonoBehaviour
                 () => NearestScreen(station), "CAMÉRAS");
             if (!skipAll && station.overlay && station.overlay.gameObject.activeSelf)
             {
+                if (panel) panel.gameObject.SetActive(true);
                 SetPanel("CAMÉRAS", "Appuyez à nouveau sur le grip\npour fermer l'image.", false);
                 float t0 = Time.time;
                 while (station.overlay.gameObject.activeSelf && Time.time - t0 < 8f && !skipAll) yield return null;
@@ -220,6 +225,7 @@ public class Tutorial : MonoBehaviour
         if (pistol && pistol.ammo < pistol.maxAmmo) pistol.Load(pistol.maxAmmo);
         if (head) RestoreMagazine();   // toujours un chargeur à la ceinture pour la partie
         if (spareMag) Destroy(spareMag.transform.parent ? spareMag.transform.parent.gameObject : spareMag);
+        foreach (var b in FindObjectsByType<TutorialBoard>(FindObjectsSortMode.None)) Destroy(b.gameObject);
         if (panel) Destroy(panel.gameObject);       // panneau et flèche ne sont pas enfants du tutoriel
         if (marker) Destroy(marker.gameObject);
         Running = false;
@@ -230,31 +236,35 @@ public class Tutorial : MonoBehaviour
     // ───────────────────────── étapes ─────────────────────────
     IEnumerator Info(string title, string text, float seconds)
     {
+        if (panel) panel.gameObject.SetActive(true);
         SetPanel(title, text, true);
         float t0 = Time.time;
         while (Time.time - t0 < seconds && !skipStep && !skipAll) yield return null;
         skipStep = false;
     }
 
+    // une étape : l'explication est sur un panneau posé dans la carte, à côté de l'objet concerné (TutorialBoard)
     IEnumerator Step(int n, int total, string text, Func<bool> done, Func<Vector3?> where, string label, Func<string> progress = null)
     {
         if (skipAll) yield break;
-        string title = "TUTORIEL  ·  ÉTAPE " + n + " / " + total;
+        if (panel) panel.gameObject.SetActive(false);              // le panneau devant les yeux laisse la place au panneau de la carte
+        var board = TutorialBoard.Create(head, "ÉTAPE " + n + " / " + total, label, text, where != null ? where() : null);
         while (!done() && !skipStep && !skipAll)
         {
             string extra = progress != null ? progress() : "";
-            SetPanel(title, string.IsNullOrEmpty(extra) ? text : text + "\n\n" + extra, true);
+            board.SetText(string.IsNullOrEmpty(extra) ? text : text + "\n\n" + extra);
             var p = where != null ? where() : null;
+            board.Point(p);
             if (p.HasValue) ShowMarker(p.Value, label); else HideMarker();
             yield return null;
         }
         skipStep = false;
         HideMarker();
-        if (skipAll) yield break;
-        // réussite : bip + vibration, texte vert un instant
+        if (skipAll) { if (board) Destroy(board.gameObject); yield break; }
+        // réussite : bip + vibration, panneau vert un instant
         audioSrc.PlayOneShot(beep);
         Haptic(XRNode.LeftHand); Haptic(XRNode.RightHand);
-        SetPanel(title, "Bien joué !", true, "", true);
+        board.Success();
         yield return new WaitForSeconds(1.2f);
     }
 

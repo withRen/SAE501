@@ -40,6 +40,9 @@ public static class RoomImport
             ti.textureType = isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
             ti.maxTextureSize = 1024;
             ti.mipmapEnabled = true;
+            // trilinéaire + anisotrope : les sols vus en biais ne scintillent plus sous la lampe torche
+            ti.filterMode = FilterMode.Trilinear;
+            ti.anisoLevel = 4;
             ti.alphaIsTransparency = !isNormal;
             ti.SaveAndReimport();
         }

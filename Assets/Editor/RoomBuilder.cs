@@ -763,6 +763,7 @@ public static class RoomBuilder
         if (attach) grab.attachTransform = attach;
         g.AddComponent<IgnorePlayer>();
         g.AddComponent<GrabGuard>();          // portée limitée (pas de prise de loin), pas de vol par l'autre main ou un holster
+        g.AddComponent<ItemSafety>();         // jamais sous le sol : remis sur le sol au lâcher, rattrapé s'il tombe de la carte
         return grab;
     }
 
@@ -1257,6 +1258,8 @@ public static class RoomBuilder
         l.intensity = 12f;
         l.color = new Color(1f, 0.97f, 0.88f);
         l.shadows = LightShadows.None;
+        l.innerSpotAngle = 10f;                         // bord du faisceau très progressif (avant : 22°, transition marquée)
+        l.renderMode = LightRenderMode.ForcePixel;      // toujours calculée par pixel
         l.enabled = false;
 
         // prise fixe : le corps de la lampe dans la paume, le faisceau dans l'axe de la main

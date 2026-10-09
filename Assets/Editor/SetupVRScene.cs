@@ -33,7 +33,16 @@ public static class SetupVRScene
 
         // la carte fait moins de 50 m de diagonale : inutile de calculer l'affichage jusqu'à 1 km
         var head = rig.GetComponentInChildren<Camera>(true);
-        if (head) head.farClipPlane = 60f;
+        if (head)
+        {
+            head.farClipPlane = 60f;
+            // le Quest affiche en 8 bits (pas de HDR) : dans une scène aussi sombre, le dégradé de la lampe torche formait
+            // des marches visibles (« pixelisé »). Le tramage (dithering) les fait disparaître ; il passe par le post-traitement.
+            var ucd = head.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>()
+                      ?? head.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            ucd.renderPostProcessing = true;
+            ucd.dithering = true;
+        }
 
         var path = "Assets/Scenes/MainScene.unity";
         EditorSceneManager.SaveScene(scene, path);
@@ -111,7 +120,16 @@ public static class SetupVRScene
                 if (sp != null) dst.CopyFromSerializedProperty(sp);
             }
             dst.ApplyModifiedPropertiesWithoutUndo();
-            nearFar.gameObject.SetActive(false);
+            // Le ControllerInputActionManager des Starter Assets RÉACTIVE le Near-Far à la fin d'un geste de téléportation
+            // (joystick poussé puis relâché) : on retrouvait alors un rayon qui attrape de loin, en plus de la main
+            // (2 objets dans la même main). On coupe sa référence et on supprime le Near-Far pour de bon.
+            foreach (var cim in controller.root.GetComponentsInChildren<ControllerInputActionManager>(true))
+            {
+                var so = new SerializedObject(cim);
+                var nf = so.FindProperty("m_NearFarInteractor");
+                if (nf != null && nf.objectReferenceValue == nearFar) { nf.objectReferenceValue = null; so.ApplyModifiedPropertiesWithoutUndo(); }
+            }
+            Object.DestroyImmediate(nearFar.gameObject);
         }
     }
 

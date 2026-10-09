@@ -65,6 +65,17 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [054](#054--planche-set-dress) | 2026-10-09 | Image représentant le set dress | Doc | Planche de 6 pièces rendues dans Blender avec l'inventaire du décor |
 | [055](#055--tutoriel-intégré-et-contour-géant-des-écrans) | 2026-10-09 | Tutoriel absent au casque ; forme jaune devant les écrans CCTV | Correctif | PR #86 fusionnée et corrigée ; contours des objets regroupés (static batching) corrigés |
 | [056](#056--types-de-zombie-pr-89-et-wiki) | 2026-10-09 | Importer la PR #89 (Cogneur et Coureur) avec les packs FREE Zombie Male AAB et Zombie ; mettre à jour le wiki | Zombies | PR fusionnée, chaque type a son propre modèle, wiki complété |
+| [057](#057--circulatoire-gdd) | 2026-10-09 | Visuel du circulatoire (GDD) d'après le plan | GDD | Plan avec flux du joueur par niveau, des zombies et des ressources, boucle de jeu |
+| [058](#058--macro-boucle-gdd) | 2026-10-09 | Visuel de la macro boucle (gabarit objectif / challenge / récompense) | GDD | Échelle de la partie : s'échapper, tenir la vague, la base s'ouvre |
+| [059](#059--micro-boucle-gdd) | 2026-10-09 | Visuel de la micro boucle | GDD | Échelle du moment : tenir l'ouverture, agir sous pression, la menace tombe |
+| [060](#060--core-gameplay) | 2026-10-09 | Décrire le core gameplay | GDD | Texte de synthèse : piliers, boucles, tension, victoire / défaite |
+| [061](#061--game-feel) | 2026-10-09 | Décrire le game feel | GDD | Texte : gestes, retours sonores, visuels et vibrations, ambiance |
+| [062](#062--présentation-des-ennemis-et-t-pose) | 2026-10-09 | Présentations des ennemis et images en T-pose (face / dos) | GDD | 3 fiches (Rôdeur, Cogneur, Coureur) et rendu Unity des 3 modèles |
+| [063](#063--hitbox-et-dégâts) | 2026-10-09 | Image explicative des hitbox et des dégâts | GDD | Rendu des vraies hitbox + tableaux ; correction du wiki (hache à la tête) |
+| [064](#064--hitbox-simplifiée) | 2026-10-09 | Simplifier l'image des hitbox | GDD | Dégâts écrits à côté de chaque zone, sans les tableaux |
+| [065](#065--palette-de-couleurs) | 2026-10-09 | Palette de couleurs utilisée | GDD | 18 couleurs : interface, retours de jeu (code), ambiance (mesurée en jeu) |
+| [066](#066--concept-art) | 2026-10-09 | Qu'est-ce que le concept art ? | Question | Explication et propositions |
+| [067](#067--lampe-torche-sol-et-prise-à-distance) | 2026-10-09 | Lampe pixelisée, objets sous le sol, prise de loin et de plusieurs objets | Correctif | Tramage + faisceau adouci ; filet de sécurité des objets ; Near-Far supprimé |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1025,3 +1036,96 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Testé dans l'éditeur** : 3 prefabs construits (animations, 8 zones de touche, aucun matériau rose), tirage par vague (aucun type spécial en vague 1 ; vague 3 : 20 normaux, 9 cogneurs, 1 coureur sur 30), cogneurs qui entrent et frappent (animation de coup de poing, dégâts au joueur). Coup de pied du coureur non vérifié jusqu'au bout. **Pas testé au casque.**
 - Les deux packs sont ajoutés au dépôt (fichiers lourds en LFS).
 - Wiki mis à jour (voir les pages du wiki GitHub).
+
+### 057 — Circulatoire (GDD)
+
+**Prompt**
+
+> Génère moi un visuel pour le Circulatoire (GDD) en te basant sur le schéma
+
+**Résultat** (par l'IA, Claude Code) : `Circulatoire_TheLastEscapor.png` : plan vu de dessus avec la progression du joueur par niveau (1 à 4), les chemins des zombies (extérieur, toit, couloirs), les ressources rapportées au bunker et la boucle de jeu.
+
+### 058 — Macro boucle (GDD)
+
+**Prompt**
+
+> Fait un visuel de la macro boucle (GDD). Visuellement ça doit être 3 éléments comme ça : (gabarit Objectif / Challenge / récompense)
+
+**Résultat** (par l'IA, Claude Code) : `MacroBoucle_TheLastEscapor.png` : objectif « s'échapper du bunker », challenge « tenir la vague », récompense « la base s'ouvre ».
+
+### 059 — Micro boucle (GDD)
+
+**Prompt**
+
+> Et la micro boucle ?
+
+**Résultat** (par l'IA, Claude Code) : `MicroBoucle_TheLastEscapor.png` : objectif « tenir l'ouverture », challenge « agir sous pression », récompense « la menace tombe ».
+
+### 060 — Core gameplay
+
+**Prompt**
+
+> Décrit moi le core gameplay (le core gameplay est comment se définit l'essence même du jeu… le résumé sans avoir à tout lire)
+
+**Résultat** (par l'IA, Claude Code) : texte de synthèse pour le GDD (piliers barricader / se défendre / progresser, boucles, tension, victoire et défaite, accessibilité).
+
+### 061 — Game feel
+
+**Prompt**
+
+> Décrit moi le gamefeel
+
+**Résultat** (par l'IA, Claude Code) : texte pour le GDD (gestes en VR, clouer, tirer, menace sonore, dégâts, ambiance, lisibilité) ; piste : vibration du marteau absente.
+
+### 062 — Présentation des ennemis et T-pose
+
+**Prompt**
+
+> rédige moi des présentations des ennemis, ainsi que des images des ennemis en T pose (une image avec chacun l'un à côté de l'autre, une vue de devant et une vue de derrière pour chacun)
+
+**Résultat** (par l'IA, Claude Code) : fiches du Rôdeur (zombie normal, nom proposé), du Cogneur et du Coureur ; `Ennemis_TPose_TheLastEscapor.png` rendu dans Unity (pose de référence du squelette, face et dos, même échelle).
+
+### 063 — Hitbox et dégâts
+
+**Prompt**
+
+> Fait moi une image explicative de la hitbox / des damages sur les zombis
+
+**Résultat** (par l'IA, Claude Code) : rendu des 8 vraies hitbox du prefab et tableaux des dégâts. En vérifiant le code : un coup de hache à la tête retire 100 PV (pas de mort immédiate en mêlée) ; page wiki « Armes de mêlée » corrigée.
+
+### 064 — Hitbox simplifiée
+
+**Prompt**
+
+> Simplifie l'image qui rémontre la hitbox du zombi, ne met pas les infos telles que : dégat au joueur par coup de zombi, précise directement à côté de la hitbox les dégats
+
+**Résultat** (par l'IA, Claude Code) : `Hitbox_Degats_TheLastEscapor.png` : un encadré par zone (tête, torse et bras, jambes) avec les dégâts au pistolet, à la hache et au pied-de-biche.
+
+### 065 — Palette de couleurs
+
+**Prompt**
+
+> Génère moi la palette de couleurs actuellement utilisé
+
+**Résultat** (par l'IA, Claude Code) : `Palette_TheLastEscapor.png` : couleurs de l'interface et des retours de jeu lues dans le code, couleurs d'ambiance mesurées sur des captures du jeu.
+
+### 066 — Concept art
+
+**Prompt**
+
+> C'est quoi concept art ?
+
+**Résultat** (par l'IA, Claude Code) : explication (rôle, types, différence avec les visuels de production déjà faits) et propositions.
+
+### 067 — Lampe torche, objets sous le sol, prise à distance
+
+**Prompt**
+
+> La flash light est pixelisé quand on l'allume, fait en sorte que ce soit un éclairrage smooth. Les items passent à travers le sol, patch ça. Actuellement il est encore possible d'attraper les objets de loin, et aussi sans le vouloir d'attraper plusieurs objets en même temps à une main
+
+**Résultat** (code par l'IA, Claude Code)
+
+- **Lampe « pixelisée »** : le Quest affiche en 8 bits (pas de HDR) ; dans une scène aussi sombre, le dégradé du faisceau formait des marches visibles. Tramage (dithering) activé sur la caméra du joueur (passe par le post-traitement), bord du faisceau adouci (angle intérieur 22° → 10°), lumière toujours calculée par pixel.
+- **Prise de loin et plusieurs objets dans une main** : le `ControllerInputActionManager` des Starter Assets **réactivait le Near-Far Interactor** (le rayon) à la fin d'un geste de téléportation (joystick poussé puis relâché) : chaque main avait alors deux interacteurs. Le Near-Far est maintenant supprimé de la scène et sa référence retirée du script.
+- **Objets sous le sol** : non reproduit en lâchant 24 objets dans toutes les pièces (tous restent sur le sol). Cause probable au casque : la main passe sous le sol virtuel quand on pose un objet par terre. Nouveau `ItemSafety` sur tous les objets attrapables : au lâcher, un objet sous le sol (ou le terrain) est remis dessus ; un objet qui tombe de la carte revient à sa dernière position sûre.
+- Scène reconstruite, éclairage recuit. **Pas testé au casque.**

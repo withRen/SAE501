@@ -39,6 +39,13 @@ public static class VRInput
         if (d.isValid) d.SendHapticImpulse(0, amplitude, duration);
     }
 
+    /// <summary>Joystick gauche enfoncé (clic).</summary>
+    public static bool LeftStickClick()
+    {
+        var d = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+        return d.isValid && d.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out bool b) && b;
+    }
+
     /// <summary>Touche du clavier (éditeur sans casque).</summary>
     public static bool KeyboardKey(UnityEngine.InputSystem.Key key)
     {

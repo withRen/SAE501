@@ -41,7 +41,7 @@ public static class SetupVRScene
             cc.minMoveDistance = 0f;
         }
         rig.AddComponent<PlayerFallGuard>();                       // jamais sous la carte
-        rig.AddComponent<Crouch>();                                // s'accroupir : gâchette gauche maintenue
+        rig.AddComponent<Crouch>();                                // s'accroupir : joystick gauche enfoncé
 
         // même mode de suivi que dans "My project"
         rig.GetComponent<Unity.XR.CoreUtils.XROrigin>().RequestedTrackingOriginMode = Unity.XR.CoreUtils.XROrigin.TrackingOriginMode.Device;

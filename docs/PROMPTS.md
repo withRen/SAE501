@@ -78,6 +78,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [067](#067--lampe-torche-sol-et-prise-à-distance) | 2026-10-09 | Lampe pixelisée, objets sous le sol, prise de loin et de plusieurs objets | Correctif | Tramage + faisceau adouci ; filet de sécurité des objets ; Near-Far supprimé |
 | [068](#068--lampe-planches-chute-du-joueur-tutoriel-dans-la-carte) | 2026-10-09 | Lampe encore pixelisée, planches difficiles à poser, chute sous la carte, zombies pendant le tuto, tuto en panneaux dans la carte | Correctif | Rendu Forward + textures filtrées, pose des planches refaite, joueur protégé, vagues bloquées, panneaux uGUI |
 | [069](#069--saccroupir-gâchette-gauche) | 2026-10-09 | S'accroupir avec la gâchette gauche | Contrôles | Gâchette gauche maintenue = vue 55 cm plus bas (sauf pistolet ou lampe en main gauche) |
+| [070](#070--saccroupir-joystick-gauche) | 2026-10-09 | Correction : s'accroupir avec le joystick gauche, pas la gâchette | Contrôles | Joystick gauche enfoncé (maintenu) = accroupi ; gâchette gauche rendue à son rôle |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1159,3 +1160,15 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Si la main gauche tient le **pistolet** ou la **lampe**, la gâchette garde son rôle (tirer, allumer) : pas d'accroupi.
 - Testé dans l'éditeur : caméra 1,36 m → 0,81 m en maintenant, retour à 1,36 m au relâchement. **Pas testé au casque.**
 - Schéma des commandes et wiki mis à jour.
+
+### 070 — S'accroupir (joystick gauche)
+
+**Prompt**
+
+> Pas la gachette gauche, je voulais dire le joystick gauche
+
+**Résultat** (code par l'IA, Claude Code)
+
+- `Crouch.cs` : on s'accroupit tant que le **joystick gauche est enfoncé** (clic maintenu), vue 55 cm plus bas ; relâché, on se relève. La gâchette gauche retrouve son rôle normal (tirer, allumer, valider). Éditeur : touche C.
+- Pas de conflit : dans les actions des Starter Assets, le clic du joystick gauche ne sert qu'au « Scale Toggle » du rayon Near-Far (supprimé) et à une action « Crouch » utilisée par aucun script du rig.
+- Testé dans l'éditeur (caméra 1,36 → 0,81 → 1,36 m). **Pas testé au casque.** Schéma des commandes et wiki mis à jour.

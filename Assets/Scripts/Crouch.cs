@@ -1,12 +1,8 @@
 using UnityEngine;
-using UnityEngine.XR;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using Unity.XR.CoreUtils;
 
-// S'accroupir : tant que la gâchette GAUCHE est enfoncée, la vue descend (pour passer sous un obstacle, ramasser au sol,
-// viser sous une planche) ; relâchée, on se relève. Sur le XR Origin, ajouté par SetupVRScene.
-// Si la main gauche tient un objet qui se sert de la gâchette (pistolet, lampe torche), la gâchette garde ce rôle : pas d'accroupi.
-// Éditeur sans casque : touche C.
+// S'accroupir : tant que le JOYSTICK GAUCHE est enfoncé (clic), la vue descend (pour passer sous un obstacle, ramasser au sol,
+// viser sous une planche) ; relâché, on se relève. Sur le XR Origin, ajouté par SetupVRScene. Éditeur sans casque : touche C.
 [RequireComponent(typeof(XROrigin))]
 public class Crouch : MonoBehaviour
 {
@@ -14,7 +10,6 @@ public class Crouch : MonoBehaviour
     public float speed = 6f;                // vitesse de transition (exponentielle)
 
     XROrigin origin;
-    XRDirectInteractor leftHand;
     float standY, current;
 
     public static bool Crouching { get; private set; }
@@ -24,20 +19,11 @@ public class Crouch : MonoBehaviour
         origin = GetComponent<XROrigin>();
         standY = origin.CameraYOffset;
         current = standY;
-        foreach (var d in GetComponentsInChildren<XRDirectInteractor>(true))
-            if (d.transform.parent && d.transform.parent.name.Contains("Left")) { leftHand = d; break; }
-    }
-
-    bool LeftHandUsesTrigger()
-    {
-        if (!leftHand || !leftHand.hasSelection) return false;
-        var t = leftHand.interactablesSelected[0].transform;
-        return t.GetComponentInParent<Pistol>() || t.GetComponentInParent<Flashlight>();
     }
 
     void Update()
     {
-        bool want = (VRInput.Trigger(XRNode.LeftHand) && !LeftHandUsesTrigger()) || VRInput.KeyboardKey(UnityEngine.InputSystem.Key.C);
+        bool want = VRInput.LeftStickClick() || VRInput.KeyboardKey(UnityEngine.InputSystem.Key.C);
         Crouching = want;
         float goal = want ? standY - crouchDrop : standY;
         current = Mathf.Lerp(current, goal, 1f - Mathf.Exp(-speed * Time.deltaTime));

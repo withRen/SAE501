@@ -3214,6 +3214,7 @@ GameObject:
   - component: {fileID: 1449065886529926053}
   - component: {fileID: 5918886184603064916}
   - component: {fileID: 6837597911154729111}
+  - component: {fileID: 1777282036595635705}
   m_Layer: 0
   m_Name: Zombie
   m_TagString: Untagged
@@ -3279,6 +3280,11 @@ MonoBehaviour:
   attackCooldown: 1.5
   attackDamage: 0.2
   attackHitDelay: 0.7
+  typeName: Normal
+  speedMultiplier: 1
+  healthMultiplier: 1
+  minLevel: 1
+  spawnWeight: 1
   level: 1
   openingSpread: 6
 --- !u!54 &2022766816865418597
@@ -3366,6 +3372,21 @@ MonoBehaviour:
   leanDegrees: 55
   hipHeight: 1
   defaultSill: 0.9
+--- !u!114 &1777282036595635705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8098143063374109313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f710895f6cc74ccf8808caac384b2967, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombieVariants
+  others:
+  - {fileID: 1934199957624454038, guid: 6c80ec08932ae440f9bb6a0269b4ba69, type: 3}
+  - {fileID: 2639173544064596935, guid: 37c22ff754b5b4af5a0bb9457b98332a, type: 3}
 --- !u!1 &8117863688872140548
 GameObject:
   m_ObjectHideFlags: 0

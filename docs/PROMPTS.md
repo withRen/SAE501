@@ -64,6 +64,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [053](#053--plans-de-la-carte-vue-de-dessus-et-34) | 2026-10-09 | Plan de la carte vu de dessus et en 3/4 (style terminal) | Doc | 2 PNG : plan schématique et rendu Blender isométrique légendé |
 | [054](#054--planche-set-dress) | 2026-10-09 | Image représentant le set dress | Doc | Planche de 6 pièces rendues dans Blender avec l'inventaire du décor |
 | [055](#055--tutoriel-intégré-et-contour-géant-des-écrans) | 2026-10-09 | Tutoriel absent au casque ; forme jaune devant les écrans CCTV | Correctif | PR #86 fusionnée et corrigée ; contours des objets regroupés (static batching) corrigés |
+| [056](#056--types-de-zombie-pr-89-et-wiki) | 2026-10-09 | Importer la PR #89 (Cogneur et Coureur) avec les packs FREE Zombie Male AAB et Zombie ; mettre à jour le wiki | Zombies | PR fusionnée, chaque type a son propre modèle, wiki complété |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1009,3 +1010,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Tutoriel** : il n'était pas dans la build (PR #86 non fusionnée). Fusionné dans `feature/map-finale` avec : les 4 corrections de compilation, la « prise ferme » du pistolet retirée (elle annulait la prise par clic), textes adaptés à la prise par clic, nouvelle étape « disjoncteur » avant les caméras (écrans noirs sinon), 10 étapes.
 - **Vagues** : nos 6/9/12/15 zombies avec le toit, plus la vitesse progressive d'Al Amine (×0,8 → ×1,2) et un maximum de zombies en même temps (3/4/5/7).
 - Scène reconstruite et éclairage recuit.
+
+### 056 — Types de zombie (PR #89) et wiki
+
+**Prompt**
+
+> Il faudrait également importer la pull request Types de zombie : Cogneur (poings) et Coureur (course + coups de pied) #89. FREE Zombie Male AAB, Zombies : les deux assets sont déjà importés (met à jour le wiki avec toutes les nouveautés également)
+
+**Résultat** (code par l'IA, Claude Code ; types de zombie écrits par Al Amine, PR #89)
+
+- PR #89 fusionnée dans `feature/map-finale`. Conflit dans `ZombieSpawner` résolu : point « Toit », départ posé sur le NavMesh et vitesse tirée au hasard conservés, multipliés par la vitesse du type.
+- La PR utilisait le même modèle teinté pour les 3 types ; les deux packs importés sont maintenant utilisés : **Cogneur** = FREE Zombie Male AAB (chemise, 1,9 m), **Coureur** = pack « Zombie » (Zombie3). Os trouvés par le squelette humanoïde (noms d'os différents selon le modèle), matériaux « Standard » des packs convertis en URP/Lit (`Assets/Generated`). Si un pack manque, retour au modèle teinté de la PR.
+- Réglages d'Al Amine conservés : Cogneur ×0,9 vitesse, ×1,5 PV, dès la vague 2, poids 0,35 ; Coureur ×1,6 vitesse, ×0,7 PV, dès la vague 3, poids 0,3 ; la tête tue toujours d'un coup.
+- **Testé dans l'éditeur** : 3 prefabs construits (animations, 8 zones de touche, aucun matériau rose), tirage par vague (aucun type spécial en vague 1 ; vague 3 : 20 normaux, 9 cogneurs, 1 coureur sur 30), cogneurs qui entrent et frappent (animation de coup de poing, dégâts au joueur). Coup de pied du coureur non vérifié jusqu'au bout. **Pas testé au casque.**
+- Les deux packs sont ajoutés au dépôt (fichiers lourds en LFS).
+- Wiki mis à jour (voir les pages du wiki GitHub).

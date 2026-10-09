@@ -62,6 +62,15 @@ public static class ZombieBuilder
 
     const string ModelPrefab = "Assets/NewPunch/ShirtlessZombieFree/Prefabs/ShirtlessZombie_FREE_URP.prefab";
 
+    // Types de zombie en plus du zombie normal : leur propre modèle (packs « FREE Zombie Male AAB » et « Zombie »,
+    // squelettes humanoïdes ; à défaut le modèle normal teinté), une autre taille, d'autres animations
+    // (ZombieMixamo.Cogneur / Coureur) et d'autres réglages. Un type dont les animations
+    // ne sont pas dans le projet n'est pas construit. Le prefab principal les liste (ZombieVariants) : ZombieSpawner tire au hasard.
+    public const string CogneurPath = "Assets/Prefabs/Zombie_Cogneur.prefab";
+    public const string CoureurPath = "Assets/Prefabs/Zombie_Coureur.prefab";
+    const string CogneurModel = "Assets/ZombieMale_AAB/Prefabs/URP/ZombieMale_AAB_URP.prefab";   // FREE Zombie Male AAB
+    const string CoureurModel = "Assets/Zombie/Prefabs/Zombie3.prefab";                          // pack « Zombie » (Asset Store 30232)
+
     // Zombie avec le modèle « Shirtless Zombie FREE » (rig humanoïde).
     // Animations : clips Mixamo si présents (ZombieMixamo), sinon os animés par ZombieBoneAnim.
     [MenuItem("SAE501/Zombie/Reconstruire le prefab (modèle Shirtless Zombie)")]
@@ -71,17 +80,125 @@ public static class ZombieBuilder
         if (model == null) return BuildPlaceholder();
         if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
 
-        var root = new GameObject("Zombie");
+        var others = new System.Collections.Generic.List<GameObject>();
+
+        // Cogneur : grand, peau grise et sombre, marche lourde, coups de poing ; plus résistant. À partir de la vague 2.
+        var cog = ZombieMixamo.EnsureController(ZombieMixamo.Cogneur);
+        var cogModel = AssetDatabase.LoadAssetAtPath<GameObject>(CogneurModel);
+        if (cog) others.Add(BuildModel(cogModel ? cogModel : model, CogneurPath, "Zombie_Cogneur", cog, ZombieMixamo.Cogneur.AttackHitDelay,
+            cogModel ? Color.white : new Color(0.62f, 0.62f, 0.66f), cogModel ? 1.04f : 1.12f, z =>
+            {
+                z.typeName = "Cogneur"; z.speedMultiplier = 0.9f; z.healthMultiplier = 1.5f;
+                z.minLevel = 2; z.spawnWeight = 0.35f;
+            }));
+        else DeleteIfExists(CogneurPath);
+
+        // Coureur : plus petit, peau pâle et rougeâtre, court et donne des coups de pied ; moins résistant. À partir de la vague 3.
+        var cou = ZombieMixamo.EnsureController(ZombieMixamo.Coureur);
+        var couModel = AssetDatabase.LoadAssetAtPath<GameObject>(CoureurModel);
+        if (cou) others.Add(BuildModel(couModel ? couModel : model, CoureurPath, "Zombie_Coureur", cou, ZombieMixamo.Coureur.AttackHitDelay,
+            couModel ? Color.white : new Color(1f, 0.82f, 0.78f), couModel ? 0.92f : 0.94f, z =>
+            {
+                z.typeName = "Coureur"; z.speedMultiplier = 1.6f; z.healthMultiplier = 0.7f;
+                z.minLevel = 3; z.spawnWeight = 0.3f;
+            }));
+        else DeleteIfExists(CoureurPath);
+
+        var anim0 = model.GetComponent<Animator>();
+        var mixamo = anim0 ? ZombieMixamo.EnsureController() : null;
+        var prefab = BuildModel(model, PrefabPath, "Zombie", mixamo, ZombieMixamo.AttackHitDelay, Color.white, 1f, null, others.ToArray());
+        if (others.Count > 0) Debug.Log($"Zombie : {others.Count} type(s) en plus du zombie normal ({string.Join(", ", others.ConvertAll(o => o.name))}).");
+        return prefab;
+    }
+
+    static readonly System.Collections.Generic.Dictionary<string, HumanBodyBones> HumanBones = new System.Collections.Generic.Dictionary<string, HumanBodyBones>
+    {
+        { "head", HumanBodyBones.Head }, { "neck_01", HumanBodyBones.Neck }, { "pelvis", HumanBodyBones.Hips },
+        { "spine_01", HumanBodyBones.Spine }, { "spine_02", HumanBodyBones.Chest },
+        { "upperarm_l", HumanBodyBones.LeftUpperArm }, { "upperarm_r", HumanBodyBones.RightUpperArm },
+        { "lowerarm_l", HumanBodyBones.LeftLowerArm }, { "lowerarm_r", HumanBodyBones.RightLowerArm },
+        { "hand_l", HumanBodyBones.LeftHand }, { "hand_r", HumanBodyBones.RightHand },
+        { "thigh_l", HumanBodyBones.LeftUpperLeg }, { "thigh_r", HumanBodyBones.RightUpperLeg },
+        { "calf_l", HumanBodyBones.LeftLowerLeg }, { "calf_r", HumanBodyBones.RightLowerLeg },
+        { "foot_l", HumanBodyBones.LeftFoot }, { "foot_r", HumanBodyBones.RightFoot },
+    };
+
+    // Matériaux « Standard » des packs (rose en URP) : copie en URP/Lit (Assets/Generated/<type>_URP_<matériau>.mat)
+    static void ToUrp(GameObject m, string name)
+    {
+        var lit = Shader.Find("Universal Render Pipeline/Lit");
+        foreach (var r in m.GetComponentsInChildren<Renderer>(true))
+        {
+            var mats = r.sharedMaterials;
+            for (int k = 0; k < mats.Length; k++)
+            {
+                var src = mats[k];
+                if (src == null || src.shader == null || src.shader.name.StartsWith("Universal Render Pipeline")) continue;
+                string p = $"Assets/Generated/{name}_URP_{src.name.Replace(' ', '_')}.mat";
+                var dst = AssetDatabase.LoadAssetAtPath<Material>(p);
+                if (dst == null) { dst = new Material(lit); AssetDatabase.CreateAsset(dst, p); }
+                dst.shader = lit;
+                if (src.HasProperty("_MainTex")) dst.SetTexture("_BaseMap", src.GetTexture("_MainTex"));
+                if (src.HasProperty("_Color")) dst.SetColor("_BaseColor", src.GetColor("_Color"));
+                if (src.HasProperty("_BumpMap") && src.GetTexture("_BumpMap")) { dst.SetTexture("_BumpMap", src.GetTexture("_BumpMap")); dst.EnableKeyword("_NORMALMAP"); }
+                if (src.HasProperty("_OcclusionMap") && src.GetTexture("_OcclusionMap")) { dst.SetTexture("_OcclusionMap", src.GetTexture("_OcclusionMap")); dst.EnableKeyword("_OCCLUSIONMAP"); }
+                if (src.HasProperty("_MetallicGlossMap") && src.GetTexture("_MetallicGlossMap")) { dst.SetTexture("_MetallicGlossMap", src.GetTexture("_MetallicGlossMap")); dst.EnableKeyword("_METALLICSPECGLOSSMAP"); }
+                dst.SetFloat("_Smoothness", src.HasProperty("_Glossiness") ? src.GetFloat("_Glossiness") * 0.6f : 0.25f);
+                dst.SetFloat("_Cull", 0f);                    // vêtements en une seule épaisseur (double face dans le pack)
+                EditorUtility.SetDirty(dst);
+                mats[k] = dst;
+            }
+            r.sharedMaterials = mats;
+        }
+    }
+
+    static void DeleteIfExists(string path)
+    {
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) AssetDatabase.DeleteAsset(path);
+    }
+
+    // Copie teintée des matériaux du modèle (Assets/Generated/<nom>_<i>.mat), pour reconnaître un type de loin.
+    static void Tint(GameObject m, string name, Color tint)
+    {
+        if (tint == Color.white) return;
+        if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
+        int i = 0;
+        foreach (var r in m.GetComponentsInChildren<Renderer>(true))
+        {
+            var mats = r.sharedMaterials;
+            for (int k = 0; k < mats.Length; k++)
+            {
+                if (mats[k] == null) continue;
+                string p = $"Assets/Generated/{name}_{i++}.mat";
+                var copy = AssetDatabase.LoadAssetAtPath<Material>(p);
+                if (copy == null) { copy = new Material(mats[k]); AssetDatabase.CreateAsset(copy, p); }
+                else { copy.shader = mats[k].shader; copy.CopyPropertiesFromMaterial(mats[k]); }
+                foreach (var prop in new[] { "_BaseColor", "_Color" })
+                    if (copy.HasProperty(prop)) copy.SetColor(prop, copy.GetColor(prop) * tint);
+                EditorUtility.SetDirty(copy);
+                mats[k] = copy;
+            }
+            r.sharedMaterials = mats;
+        }
+    }
+
+    static GameObject BuildModel(GameObject model, string prefabPath, string rootName, RuntimeAnimatorController mixamo, float hitDelay,
+                                 Color tint, float scale, System.Action<Zombie> setup, GameObject[] others = null)
+    {
+        var root = new GameObject(rootName);
         var visual = new GameObject("Visual").transform;
         visual.SetParent(root.transform, false);
         var m = (GameObject)PrefabUtility.InstantiatePrefab(model, visual);
         PrefabUtility.UnpackPrefabInstance(m, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
         m.name = "ShirtlessZombie";
         m.transform.localPosition = Vector3.zero; m.transform.localRotation = Quaternion.identity;
+        m.transform.localScale = Vector3.one * scale;      // taille du type (les hitbox plus bas suivent)
         foreach (var e in m.GetComponentsInChildren<FreeZombie_EyesGlow>(true)) Object.DestroyImmediate(e);   // script HDRP du pack, inutile
+        Tint(m, rootName, tint);
+        ToUrp(m, rootName);
         var anim = m.GetComponent<Animator>();
         // vraies animations Mixamo si elles sont dans le projet (voir ZombieMixamo), sinon os pilotés par script
-        var mixamo = anim ? ZombieMixamo.EnsureController() : null;
+        if (!anim) mixamo = null;
         if (mixamo)
         {
             anim.enabled = true;
@@ -91,10 +208,21 @@ public static class ZombieBuilder
         }
         else if (anim) anim.enabled = false;               // aucun clip : on pilote les os par script
 
-        Transform B(string n) { foreach (var t in m.GetComponentsInChildren<Transform>(true)) if (t.name == n) return t; Debug.LogError("os introuvable : " + n); return null; }
+        // os : par le squelette humanoïde (les modèles n'ont pas les mêmes noms d'os), sinon par le nom
+        Transform B(string n)
+        {
+            if (anim && anim.avatar && anim.avatar.isHuman && HumanBones.TryGetValue(n, out var hb))
+            {
+                var t0 = anim.GetBoneTransform(hb);
+                if (t0) return t0;
+            }
+            foreach (var t in m.GetComponentsInChildren<Transform>(true)) if (t.name == n) return t;
+            Debug.LogError("os introuvable : " + n); return null;
+        }
         var head = B("head");
 
         var z = root.AddComponent<Zombie>();
+        setup?.Invoke(z);
         z.ApplyLevel(1);
 
         // ---- hitbox sur les os (suivent l'animation) : tête 100 % / torse + bras 33 % / jambes 20 % ----
@@ -134,7 +262,7 @@ public static class ZombieBuilder
         }
 
         var agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
-        agent.radius = NavBuilder.AgentRadius; agent.height = 1.8f; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
+        agent.radius = NavBuilder.AgentRadius; agent.height = 1.8f * scale; agent.speed = 0.9f; agent.acceleration = 4f; agent.angularSpeed = 240f; agent.stoppingDistance = 0.1f;
         var rb = root.AddComponent<Rigidbody>(); rb.isKinematic = true;
 
         root.AddComponent<ZombieVoice>().variants = RoomBuilder.ZombieVoices();     // cris de zombie (3D)
@@ -143,7 +271,7 @@ public static class ZombieBuilder
         if (mixamo)
         {
             bridge.animator = anim;                         // Speed / Attack / Die -> Animator
-            z.attackHitDelay = ZombieMixamo.AttackHitDelay;  // dégâts et planche arrachée au moment où la main frappe dans le clip
+            z.attackHitDelay = hitDelay;                    // dégâts et planche arrachée au moment où la main (ou le pied) frappe dans le clip
         }
         else
         {
@@ -155,7 +283,9 @@ public static class ZombieBuilder
             bridge.boneAnim = bone;
         }
 
-        var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+        if (others != null && others.Length > 0) root.AddComponent<ZombieVariants>().others = others;
+
+        var prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
         Object.DestroyImmediate(root);
         AssetDatabase.SaveAssets();
         return prefab;

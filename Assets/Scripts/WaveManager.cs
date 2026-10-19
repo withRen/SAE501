@@ -13,6 +13,8 @@ using UnityEngine.SceneManagement;
 //   à chaque vague les zombies sont plus nombreux, plus rapides, et plus d'entre eux attaquent en même temps.
 // Niveaux 1 et 2 : pas de zombie sur le toit (ses trous ne se barricadent pas) : tout arrive par une fenêtre ou une porte.
 // Une vague se termine toujours : un zombie coincé meurt seul au bout de 20 s (Zombie.stuckTimeout).
+// [#102] Annonces et statut sur un écran fixe du bunker (mur sud, au-dessus du râtelier), plus rien ne suit le regard ;
+//   une alarme retentit au début de chaque vague. [#106] L'annonce dit ce que contiennent les zones qui s'ouvrent (ZoneGate).
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
@@ -38,9 +40,14 @@ public class WaveManager : MonoBehaviour
     public int lastLevelMaxAlive = 9;
     public float victoryRestartDelay = 12f;
 
+    [Header("Écran d'annonces (fixe, dans le bunker)")]
+    public Transform screen;                   // créé par RoomBuilder ; absent : écran posé au mur sud du bunker
+    public static readonly Vector3 DefaultScreenPosition = new Vector3(1.85f, 2.25f, 13.80f);
+
     [Header("Son")]
     public AudioClip startClip;                // joué au lancement de la partie (début de la scène)
     [Range(0f, 1f)] public float startVolume = 0.9f;
+    [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme de début de vague
 
     enum Phase { Waiting, Wave, Break, Victory }
     Phase phase = Phase.Waiting;
@@ -49,6 +56,10 @@ public class WaveManager : MonoBehaviour
     readonly List<Zombie> alive = new List<Zombie>();
     TextMesh banner, status;
     Coroutine bannerRoutine;
+    AudioSource sfx;
+    AudioClip alarm;
+
+    public TextMesh StatusText => status;
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
     public bool Victory => phase == Phase.Victory;
@@ -56,13 +67,14 @@ public class WaveManager : MonoBehaviour
     static LevelDef[] DefaultLevels() => new[]
     {
         new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur },
-            banner = "NIVEAU 1\nRestez dans le bunker : les couloirs sont verrouillés.\nObjectif : survivre, puis activer le générateur." },
+            banner = "NIVEAU 1\nRestez dans le bunker :\nles couloirs sont verrouillés." },
         new LevelDef { zombies = 9, speed = 0.95f, maxAlive = 4, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
-            banner = "NIVEAU 2\nCouloirs et cuisine déverrouillés." },
+            banner = "NIVEAU 2" },
         new LevelDef { zombies = 12, speed = 1.05f, maxAlive = 5, spawnInterval = 6.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
-            banner = "NIVEAU 3\nStockage déverrouillé." },
+            banner = "NIVEAU 3" },
         new LevelDef { zombies = 15, speed = 1.2f, maxAlive = 7, spawnInterval = 5.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
-            banner = "NIVEAU 4\nGénérateur déverrouillé.\nObjectif : l'ACTIVER !" },
+            // [#107] où aller, quoi faire
+            banner = "NIVEAU 4 · OBJECTIF FINAL\nLe GÉNÉRATEUR est ouvert :\nporte ouest, couloir gauche,\ntout au bout après la cuisine.\nAbaissez son levier, tenez 5 s." },
     };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -78,18 +90,21 @@ public class WaveManager : MonoBehaviour
     void Start()
     {
         ZoneGate.UpdateAll(0);
-        var head = Camera.main ? Camera.main.transform : null;
-        banner = MakeText("Annonce", head, new Vector3(0f, 0.12f, 1.5f), 0.006f, 64, TextAnchor.MiddleCenter, new Color(1f, 0.85f, 0.4f));
-        status = MakeText("Statut", head, new Vector3(0f, -0.30f, 1.5f), 0.0035f, 64, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0.55f));
+        if (!screen)
+        {
+            screen = new GameObject("Ecran_Annonces").transform;
+            screen.SetPositionAndRotation(DefaultScreenPosition, Quaternion.LookRotation(Vector3.forward));
+        }
+        // textes posés sur l'écran (repère de l'écran : x à droite, y en haut, -z vers le joueur), lisibles depuis le centre du bunker
+        banner = MakeText("Annonce", screen, new Vector3(0f, 0.06f, -0.03f), 0.011f, 64, TextAnchor.MiddleCenter, new Color(1f, 0.85f, 0.4f));
+        status = MakeText("Statut", screen, new Vector3(0f, -0.29f, -0.03f), 0.0085f, 64, TextAnchor.MiddleCenter, new Color(0.75f, 0.95f, 0.8f));
         banner.gameObject.SetActive(false);
 
-        // son de lancement de la partie (non spatialisé : il vient de partout)
-        if (startClip)
-        {
-            var a = gameObject.AddComponent<AudioSource>();
-            a.playOnAwake = false; a.spatialBlend = 0f; a.volume = startVolume;
-            a.PlayOneShot(startClip);
-        }
+        // son de lancement de la partie et alarme (non spatialisés : ils viennent de partout, on les entend hors du bunker)
+        sfx = gameObject.AddComponent<AudioSource>();
+        sfx.playOnAwake = false; sfx.spatialBlend = 0f;
+        alarm = ProcAudio.Alarm();
+        if (startClip) sfx.PlayOneShot(startClip, startVolume);
     }
 
     static TextMesh MakeText(string name, Transform parent, Vector3 localPos, float charSize, int fontSize, TextAnchor anchor, Color c)
@@ -100,9 +115,7 @@ public class WaveManager : MonoBehaviour
         var tm = go.AddComponent<TextMesh>();
         tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         tm.fontSize = fontSize; tm.characterSize = charSize; tm.anchor = anchor; tm.alignment = TextAlignment.Center; tm.color = c;
-        var mr = go.GetComponent<MeshRenderer>();
-        mr.sharedMaterial = tm.font.material;
-        mr.material.renderQueue = 4100;
+        go.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
         return tm;
     }
 
@@ -138,7 +151,19 @@ public class WaveManager : MonoBehaviour
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
-        Announce(levels[Level - 1].banner, 6f);
+        if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
+        Announce(levels[Level - 1].banner + ZonesOpenedText(Level), 8f);
+    }
+
+    // [#106] zones ouvertes à ce niveau et ce qu'on y trouve (ZoneGate.contents)
+    static string ZonesOpenedText(int lvl)
+    {
+        if (lvl >= ZombieLevels.MaxLevel) return "";            // niveau 4 : l'annonce dit déjà où aller
+        var sb = new System.Text.StringBuilder();
+        foreach (var g in ZoneGate.All)
+            if (g.unlockLevel == lvl)
+                sb.Append("\nOUVERT : ").Append(g.zoneName).Append(string.IsNullOrEmpty(g.contents) ? "" : "\n· " + g.contents + " ·");
+        return sb.ToString();
     }
 
     void UpdateWave()

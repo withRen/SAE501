@@ -4,6 +4,7 @@ using UnityEngine;
 // Porte verrouillée qui ferme une zone de la carte jusqu'à un certain niveau (WaveManager).
 // Verrouillée : battant fermé (le joueur ne passe pas : le rig a un CharacterController) + panneau rouge « VERROUILLÉ ».
 // Au niveau voulu : la porte se déverrouille, le joueur l'ouvre en tirant la poignée (HingedDoor).
+// [#106] Le panneau dit aussi ce que contient la zone (contents), pour que le joueur sache pourquoi sortir du bunker.
 // Ces portes sont ignorées par le NavMesh (les zombies n'apparaissent dans une zone qu'une fois la porte ouverte).
 public class ZoneGate : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class ZoneGate : MonoBehaviour
 
     public int unlockLevel = 2;
     public string zoneName;
+    public string contents;             // ce qu'on y trouve (panneau et annonce de WaveManager), ex. « planches, chargeurs »
     public Transform door;
     public Collider doorCollider;
     public TextMesh sign;
@@ -27,7 +29,7 @@ public class ZoneGate : MonoBehaviour
     {
         All.Add(this);
         closedPos = door.localPosition;
-        if (sign) sign.text = "VERROUILLÉ\n" + zoneName + "\n(niveau " + unlockLevel + ")";
+        if (sign) sign.text = "VERROUILLÉ\n" + zoneName + (string.IsNullOrEmpty(contents) ? "" : "\n" + contents) + "\n(niveau " + unlockLevel + ")";
     }
 
     void OnDestroy() => All.Remove(this);

@@ -146,11 +146,15 @@ public class Tutorial : MonoBehaviour
                 () => BeltItem.InHand(pistolGrab), () => pistol.transform.position, "PISTOLET");
 
             var target = SpawnTarget();
-            yield return Step(7, total, "Tirez sur la cible avec la gâchette.\nVisez la tête des zombies : un tir suffit.",
+            // [#105] la règle « Visez la tête » est dite à l'étape de la cible, puis rappelée avec le nombre de tirs
+            yield return Step(7, total, "Tirez sur la cible avec la gâchette.\nRÈGLE : VISEZ LA TÊTE.\nUn tir dans la tête tue un zombie.",
                 () => target == null || target.Hits >= targetHits,
                 () => target ? target.transform.position + Vector3.up * 0.35f : (Vector3?)null, "CIBLE",
                 () => target ? "Touches : " + target.Hits + " / " + targetHits : "");
             if (target) target.Pop();
+            yield return Info("VISEZ LA TÊTE",
+                "Tête : 1 tir, toujours.\nTorse : " + ZombieLevels.ShotsToKill(1, HitZone.Torso) + " tirs · jambes : " + ZombieLevels.ShotsToKill(1, HitZone.Legs) +
+                " tirs (vague 1).\nLes zombies encaissent plus à chaque vague,\nla tête reste mortelle.", 6f);
 
             EnsureMagazineAvailable();
             int ammoBefore = pistol.ammo;
@@ -162,7 +166,7 @@ public class Tutorial : MonoBehaviour
 
         // les écrans restent noirs tant que le disjoncteur est coupé (Breaker)
         if (breaker && !Breaker.On)
-            yield return Step(9, total, "Allumez les caméras :\nabaissez le levier du disjoncteur\n(main dessus + grip).",
+            yield return Step(9, total, "Allumez les caméras :\nattrapez le levier du disjoncteur (grip)\net abaissez-le jusqu'en bas.",
                 () => Breaker.On, () => breaker.transform.position + Vector3.up * 0.3f, "DISJONCTEUR");
 
         if (station)
@@ -516,8 +520,7 @@ public class Tutorial : MonoBehaviour
 
     void ShowWaveTexts(bool show)
     {
-        if (!head) return;
-        var s = head.Find("Statut");
+        var s = WaveManager.Instance ? WaveManager.Instance.StatusText : null;      // statut de vague : sur l'écran fixe du bunker
         if (s) s.gameObject.SetActive(show);
     }
 

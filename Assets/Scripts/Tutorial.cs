@@ -185,6 +185,12 @@ public class Tutorial : MonoBehaviour
 
         skipAll = false;
         HideMarker();
+        // astuces (rien à faire, le panneau se ferme tout seul) : passer l'attente, et la radio si elle est dans la scène
+        // (cherchée par son nom : la radio vient d'une autre branche, features/radio-ravitaillement)
+        var tips = "Maintenez B (manette droite) 1 seconde\npour lancer la vague sans attendre\nla fin de la pause.";
+        if (GameObject.Find("Radio_Ravitaillement"))
+            tips += "\n\nRadio au mur : bouton rouge =\n1 chargeur livré par le toit\n(1 appel par vague).";
+        yield return Info("ASTUCES", tips, 8f);
         yield return Info("PRÊT ?", "Survivez aux vagues de zombies.\nRéparez les barricades entre les vagues.\n\nLa première vague arrive…", 4f);
         Finish(true);
     }

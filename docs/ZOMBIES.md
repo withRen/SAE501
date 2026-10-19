@@ -74,3 +74,12 @@ Le prefab **`Assets/Prefabs/ZombieSpawnPoints.prefab`** regroupe les points de d
 - **Zombie coincé** (issue #95) : un zombie qui devrait se déplacer (marche, entrée, poursuite) mais n'a pas parcouru 0,5 m en **20 s** meurt seul, pour que la vague se termine toujours. Casser des planches ou frapper ne compte pas comme « coincé ».
 
 Test dans l'éditeur (nouvelle carte) : zombie de l'extérieur → fenêtre sud-est, 3 planches arrachées, fenêtre enjambée, attaque du joueur ; zombie du couloir droit → porte est (18 m).
+
+## 6. Retours d'impact, visibilité dans le noir, niveau 4
+
+- **Zombie touché** (issue #113) : à chaque balle (ou coup d'arme), gerbe de gouttes sombres au point d'impact (`Fx.Blood`, plus grosse à la tête), son de chair (`ProcAudio.Flesh`, craquement `ProcAudio.HeadCrack` à la tête) et petit recul de 12 cm dans le sens du tir (24 cm à la tête, `Zombie.flinchDistance`). Tir à la tête : la manette du pistolet vibre une deuxième fois, à fond (`Pistol.headshotHapticAmplitude` = 1, 0,2 s).
+- **Yeux lumineux** (issue #117, `ZombieEyes.cs`) : deux petites lueurs rouges sur le visage, invisibles à moins de 7 m, pleines au-delà de 9 m (8 m au milieu du fondu), cachées quand le zombie est de dos ou mort. Leur taille grandit avec la distance pour rester visibles dans le brouillard.
+- **Niveau 4** (issue #120) : le levier du générateur reste bloqué jusqu'à **6 zombies abattus** pendant le niveau **ou 60 s** passées dans le niveau (`WaveManager.generatorKills`, `generatorDelay`). Le panneau du générateur et l'écran d'annonces disent ce qu'il reste à faire ; une alarme courte et l'annonce « LE GÉNÉRATEUR EST PRÊT » signalent le déblocage. Les zombies tués par la sécurité « coincé » ne comptent pas.
+- **Bilan** (issue #122, `GameStats.cs`, `GameOverUI.cs`) : à la mort et à la victoire, sous le titre : zombies éliminés, % de tirs à la tête (balles dans une tête / balles tirées), planches posées, niveau atteint, temps total (vagues seulement, sans tutoriel ni pause). Gâchette pour rejouer après 3 s, sinon relance au bout de 15 s.
+
+Valeurs actuelles d'équilibrage (non modifiées, à revoir au playtest du 23/10, issue #124) : voir sections 2 et 3.

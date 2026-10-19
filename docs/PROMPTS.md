@@ -88,6 +88,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [077](#077--relire-rulesmd) | 2026-10-19 | Relire le rules.md | GitHub / organisation | Journal 071-077 ajouté, issues rattachées au projet n°2 |
 | [078](#078--correctifs-p0--poursuite-point-gauche-toit-zombie-coincé) | 2026-10-19 | Correctifs P0 : poursuite hors du bunker, point du couloir gauche, pas de toit aux niveaux 1-2, zombie coincé | Gameplay | Issues #92 à #95 ; testé en mode Play dans l'éditeur, pas au casque |
 | [079](#079--lisibilité-p1--écran-dannonces-caméra-sud-toit-tutoriel-zones-leviers) | 2026-10-19 | Lisibilité P1 : écran d'annonces fixe + alarme, caméra extérieure sud, poussière avant la chute du toit, « Visez la tête », contenu des zones, annonce du niveau 4, leviers physiques | Gameplay | Issues #102 à #107 et #111 ; testé en mode Play dans l'éditeur, pas au casque |
+| [080](#080--game-feel-p2-et-fin-de-partie--vibrations-impacts-yeux-lod-sondes-générateur-bilan) | 2026-10-19 | Game feel P2 et fin de partie : vibrations, impacts, éclats, yeux lumineux, LOD, sondes de lumière, générateur au niveau 4, bilan | Gameplay, rendu | Issues #112 à #120 et #122 ; testé en mode Play dans l'éditeur, pas au casque |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1353,3 +1354,38 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Testé dans l'éditeur en mode Play (captures) : textes sur l'écran fixe aux niveaux 2 et 4, panneaux, disjoncteur abaissé → caméras allumées, image de la caméra 05, zombie du toit (marche 5 s, attente 3,1 s avec poussière, puis saut), levier du générateur qui remonte seul, générateur démarré après 5 s tenu en bas → victoire. Le geste de la main sur le levier a été simulé (position imposée), **pas testé au casque**, ni le son (alarme, pas, gravats).
 - Incident : un script modifié pendant le mode Play a bloqué l'éditeur (rechargement à chaud, `WaveManager.Level` remis à 0) ; Unity a été fermé puis relancé, aucune perte.
 - Docs : `ZOMBIES.md` ; wiki : pages Niveaux et vagues, Zombies, Caméras de surveillance, Générateur et disjoncteur, Tutoriel.
+
+### 080 — Game feel P2 et fin de partie : vibrations, impacts, yeux, LOD, sondes, générateur, bilan
+
+**Prompt**
+
+> Implémenter une vibration de la manette de 0,6 à chaque coup de marteau et de 1,0 lorsque le clou est entièrement enfoncé.
+> Ajouter des particules d'impact, un son de chair, un léger recul sur le zombie touché, et un retour haptique renforcé en cas de tir à la tête.
+> Déclencher un son de clac et une vibration légère lors du calage d'une planche.
+> Activer une vibration sur les deux manettes lorsque le joueur subit un coup.
+> Provoquer des éclats de bois et un craquement lorsque la planche est arrachée.
+> Intégrer des yeux lumineux ou un contour subtil sur les zombies au-delà de 8 mètres pour les rendre visibles dans l'obscurité.
+> Configurer un système de LOD sur les objets massifs du décor pour alléger le rendu lointain.
+> Déployer plusieurs groupes de light probes dans les couloirs, la cuisine, la zone de stockage et le générateur pour éclairer correctement les zombies.
+> Conditionner l'activation du générateur au niveau 4 après l'élimination d'un nombre précis de zombies ou un délai de 60 secondes.
+> Concevoir un écran de fin affichant un bilan complet incluant les éliminations, le pourcentage de tirs à la tête, les planches posées, le niveau atteint et le temps total.
+
+(Un premier envoi contenait 4 demandes de plus : reprise au niveau atteint, tirage pondéré, équilibrage munitions / PV, accroupi désactivé par défaut. Elles ont été retirées de cette liste et n'ont pas été faites ici : issues #121, #123, #124, #125.)
+
+**Résultat** (code par l'IA, Claude Code)
+
+- **#112 Marteau** (`Nail.cs`, `Hammer.cs`) : vibration 0,6 (0,07 s) de la main qui tient le marteau à chaque coup, 1,0 (0,18 s) au coup qui enfonce le clou en entier.
+- **#113 Zombie touché** (`Zombie.HitFeedback`, `ZombieHitbox.cs`, `MeleeWeapon.cs`, `Pistol.cs`, nouveau `Fx.cs`, `ProcAudio.Flesh` / `HeadCrack`) : gouttes sombres au point d'impact, son de chair (craquement à la tête), recul de 12 cm (24 cm à la tête) ; tir à la tête : deuxième vibration à 1,0 pendant 0,2 s.
+- **#114 Calage** (`Plank.cs`, `ProcAudio.Clack`) : « clac » de bois et vibration 0,3 (0,05 s) de la main qui tient la planche.
+- **#115 Coup reçu** (`PlayerHealth.cs`, `VRInput.HapticBoth`) : les deux manettes vibrent (0,8 pendant 0,25 s ; 1,0 pendant 0,5 s pour le coup fatal).
+- **#116 Planche arrachée** (`Plank.Break`, `Fx.Splinters`, `ProcAudio.WoodCrack`) : éclats de bois sur toute la longueur, projetés vers l'intérieur, et craquement audible jusqu'à 25 m.
+- **#117 Yeux** (nouveau `ZombieEyes.cs`, ajouté par `Zombie.Awake`) : deux lueurs rouges additives, fondu entre 7 et 9 m, cachées de dos. Choix de l'IA : les yeux plutôt que le contour (moins coûteux, un seul quad par œil, pas de 2e passe de rendu).
+- **#118 LOD** (nouveau `Assets/Editor/LodBuilder.cs`, appelé par `RoomBuilder`) : 139 objets du décor à plus de 2 000 triangles reçoivent un LOD1 simplifié par regroupement des sommets (grille de 20 cases) : 764 472 triangles en LOD0, 189 774 en LOD1 (25 %). LOD0 tant que l'objet fait plus de 10 % de la hauteur de l'écran (environ 8 m pour un meuble de 1,8 m), LOD1 ensuite, rien sous 1,2 %. Choix de l'IA : simplification faite dans Unity (pas dans `export_map.py`) pour ne pas devoir réexporter la carte.
+- **#119 Sondes** (`RoomBuilder.BuildLightProbes`) : 7 groupes au lieu d'un (bunker 1,5 m, couloirs gauche et droit 1 m, cuisine 1,25 m, générateur 1 m, stockage 1,25 m, extérieur 3 m), sur 3 hauteurs dans les pièces : 1 871 sondes. Éclairage recuit.
+- **#120 Générateur** (`WaveManager.cs`, `Generator.cs`) : levier bloqué jusqu'à 6 zombies abattus pendant le niveau 4 ou 60 s ; panneau « DÉMARRAGE BLOQUÉ » avec ce qu'il reste, statut sur l'écran d'annonces, alarme courte et annonce au déblocage. Choix de l'IA : 6 zombies.
+- **#122 Bilan** (nouveau `GameStats.cs`, `GameOverUI.cs`) : à la mort et à la victoire (4 s après le démarrage du générateur). « % de tirs à la tête » = balles dans une tête / balles tirées (choix de l'IA). Gâchette pour rejouer après 3 s, sinon 15 s.
+- Matériaux des effets créés par code dans `Assets/Resources` (`Fx_Particules`, `Fx_Lueur`, texture `Fx_Point`) pour être inclus dans le build.
+- Scène reconstruite (**SAE501 → Build VR Scene**) et éclairage recuit.
+- Testé dans l'éditeur en mode Play (simulation par script et captures) : tirs tête et torse (particules, PV, recul), compteurs du bilan, planche posée puis arrachée (éclats, comptage une seule fois), levier bloqué puis débloqué après 6 zombies, panneau et statut, yeux visibles à 12 m (capture), écrans de mort et de victoire avec le bilan. LOD1 comparé au LOD0 sur une chaise (capture). **Pas testé au casque** : aucune vibration ni aucun son n'a été ressenti ou écouté, ni les fps.
+- Docs : `ZOMBIES.md` ; wiki : pages Retours de jeu (nouvelle), Zombies, Planches et clous, Niveaux et vagues, Générateur et disjoncteur, Optimisation et rendu.
+

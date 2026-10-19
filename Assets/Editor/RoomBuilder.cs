@@ -352,20 +352,39 @@ public static class RoomBuilder
         int thin = b.size.x <= b.size.z ? 0 : 2;
         var toCenter = B(-1.85f, -10.1f, 0f) - b.center;
         var front = Vector3.zero; front[thin] = Mathf.Sign(toCenter[thin]);
-        var lever = Box("Levier", box, Vector3.zero, new Vector3(0.04f, 0.12f, 0.04f), darkM, false);
-        lever.transform.SetParent(null, true);
-        lever.transform.position = b.center + front * (b.extents[thin] + 0.03f) + Vector3.down * 0.05f;
-        lever.transform.localScale = new Vector3(0.04f, 0.12f, 0.04f);
-        lever.transform.SetParent(box, true);
+        // [#111] levier physique : pivot sur la face avant, poignée vers le joueur ; on l'abaisse pour enclencher (Lever, Breaker)
+        var lever = MakeLever("Levier_Disjoncteur", box, b.center + front * (b.extents[thin] + 0.02f) + Vector3.down * 0.02f, front, 0.16f, false);
         var led = Box("Voyant", box, Vector3.zero, Vector3.one * 0.025f, lightM, false);
         led.transform.SetParent(null, true);
         led.transform.position = b.center + front * (b.extents[thin] + 0.015f) + Vector3.up * 0.15f;
         led.transform.localScale = Vector3.one * 0.025f;
         led.transform.SetParent(box, true);
-        var col = box.GetComponent<Collider>() ?? box.gameObject.AddComponent<BoxCollider>();
-        var it = box.gameObject.AddComponent<XRSimpleInteractable>();
         var br = box.gameObject.AddComponent<Breaker>();
-        br.lever = lever.transform; br.led = led.GetComponent<Renderer>(); br.front = front;
+        br.lever = lever; br.led = led.GetComponent<Renderer>();
+    }
+
+    // [#111] Levier physique : pivot (Lever, tourne autour de son x local) + tige + boule qu'on attrape (XRSimpleInteractable).
+    // front = côté du joueur : au repos la tige part vers lui ; levée de 50° (haut), abaissée de 50° (bas).
+    static Lever MakeLever(string name, Transform parent, Vector3 pivotPos, Vector3 front, float length, bool spring)
+    {
+        var right = Vector3.Cross(Vector3.up, front).normalized;
+        var pivot = new GameObject(name).transform;
+        pivot.SetParent(parent, true);
+        pivot.SetPositionAndRotation(pivotPos, Quaternion.LookRotation(front, Vector3.up));
+        Box("Axe", pivot, Vector3.zero, new Vector3(0.06f, 0.025f, 0.025f), metalM, false);
+        Box("Tige", pivot, new Vector3(0f, 0f, length / 2f), new Vector3(0.018f, 0.018f, length), metalM, false);
+        var knob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        knob.name = "Boule";
+        knob.transform.SetParent(pivot, false);
+        knob.transform.localPosition = new Vector3(0f, 0f, length);
+        knob.transform.localScale = Vector3.one * 0.05f;
+        knob.GetComponent<Renderer>().sharedMaterial = Mat(name + "_Boule", new Color(0.6f, 0.1f, 0.1f), 0.4f);
+        var sc = knob.GetComponent<SphereCollider>();
+        sc.radius = 1.6f;                                   // zone de prise : 16 cm de diamètre autour de la boule de 5 cm
+        var lv = pivot.gameObject.AddComponent<Lever>();
+        lv.handle = knob.AddComponent<XRSimpleInteractable>();
+        lv.springBack = spring;
+        return lv;
     }
 
     // ---------- ouvertures du bunker (zombies) : 2 portes, 2 fenêtres, 3 planches chacune ----------
@@ -437,6 +456,61 @@ public static class RoomBuilder
             link.agentTypeID = 0;
             link.area = Zombie.PassageArea;   // réservé aux zombies qui entrent (voir Zombie.WalkMask)
         }
+        if (name.StartsWith("Toit_"))
+        {
+            o.fromAbove = true;                  // [#104] le zombie prévient avant de tomber
+            o.dust = MakeDust(go.transform, new Vector3(center.x, 2.62f, center.z));
+        }
+    }
+
+    // [#104] poussière qui tombe d'un trou du toit, sous le plafond du bunker (jouée par Opening.WarnFromAbove)
+    static Material dustM;
+    static ParticleSystem MakeDust(Transform parent, Vector3 pos)
+    {
+        if (!dustM)
+        {
+            dustM = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+            dustM.SetFloat("_Surface", 1f); dustM.SetFloat("_Blend", 0f);
+            dustM.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha); dustM.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha); dustM.SetFloat("_ZWrite", 0f);
+            dustM.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            dustM.SetOverrideTag("RenderType", "Transparent");
+            dustM.renderQueue = (int)RenderQueue.Transparent;
+            var tex = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
+            if (tex) dustM.SetTexture("_BaseMap", tex);
+            dustM.SetColor("_BaseColor", Color.white);
+            AssetDatabase.CreateAsset(dustM, $"{Dir}/Poussiere_Toit.mat");
+        }
+        var g = new GameObject("Poussiere");
+        g.transform.SetParent(parent, false);
+        g.transform.SetPositionAndRotation(pos, Quaternion.identity);
+        var ps = g.AddComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var main = ps.main;
+        main.playOnAwake = false; main.loop = false; main.duration = 3.5f;
+        main.startLifetime = new ParticleSystem.MinMaxCurve(1.6f, 2.6f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0f, 0.15f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.1f);
+        main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.85f, 0.8f, 0.7f, 0.8f), new Color(0.6f, 0.55f, 0.48f, 0.95f));
+        main.gravityModifier = 0.25f;
+        main.maxParticles = 400;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        var em = ps.emission;
+        em.rateOverTime = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 60f, 1f, 160f));   // de plus en plus fort jusqu'à la chute
+        em.SetBursts(new[] { new ParticleSystem.Burst(0f, 40) });
+        var sh = ps.shape;
+        sh.shapeType = ParticleSystemShapeType.Box;
+        sh.scale = new Vector3(1.0f, 0.02f, 1.0f);                // le trou fait ~1,2 x 1,2 m
+        var col = ps.colorOverLifetime;
+        col.enabled = true;
+        var grad = new Gradient();
+        grad.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                     new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.7f), new GradientAlphaKey(0f, 1f) });
+        col.color = grad;
+        var r = g.GetComponent<ParticleSystemRenderer>();
+        r.sharedMaterial = dustM;
+        r.shadowCastingMode = ShadowCastingMode.Off;
+        r.receiveShadows = false;
+        return ps;
     }
 
     // ---------- planches ----------
@@ -465,14 +539,21 @@ public static class RoomBuilder
     }
 
     // ---------- caméras de surveillance : celles du fichier (couloir gauche, couloir droit, cuisine, stockage) ----------
+    // [#103] + une caméra ajoutée ici sur l'extérieur sud (zone d'arrivée du niveau 1 : les deux fenêtres et le point d'apparition)
+    public const string SouthCamName = "CCTV_Camera_05_Exterieur_Sud";
+    static readonly Vector3 SouthCamPos = new Vector3(7.3f, 2.6f, 15.6f);           // au-delà de l'angle sud-ouest du bunker (Blender (-7,3, -15,6)), à 1,5 m du mur
+    static readonly Vector3 SouthCamLook = new Vector3(0.5f, 0.4f, 15.6f);          // le long du mur sud : les deux fenêtres à gauche, le point d'apparition (1,85, 17,6) au centre
+
     static Camera[] BuildCameras()
     {
         var list = new List<Camera>();
-        foreach (var c in meta.cameras.OrderBy(x => x.name))
+        var infos = meta.cameras.OrderBy(x => x.name).Select(c => (c.name, pos: B(c.loc), rot: Quaternion.LookRotation(B(c.dir), B(c.up)), c.fov)).ToList();
+        infos.Add((SouthCamName, SouthCamPos, Quaternion.LookRotation(SouthCamLook - SouthCamPos, Vector3.up), 90f * Mathf.Deg2Rad));
+        foreach (var c in infos)
         {
             var g = new GameObject(c.name);
             g.transform.SetParent(mapRoot, false);
-            g.transform.SetPositionAndRotation(B(c.loc), Quaternion.LookRotation(B(c.dir), B(c.up)));
+            g.transform.SetPositionAndRotation(c.pos, c.rot);
             var cam = g.AddComponent<Camera>();
             // angle horizontal de Blender (90°) -> angle vertical Unity pour une image 16:9
             cam.fieldOfView = 2f * Mathf.Atan(Mathf.Tan(c.fov / 2f) * 9f / 16f) * Mathf.Rad2Deg;
@@ -577,7 +658,7 @@ public static class RoomBuilder
         gatesRoot = new GameObject("Portes_Niveaux");
         gatesRoot.transform.SetParent(mapRoot, false);
         // pos = centre du passage (au sol) ; viewer = côté d'où le joueur arrive (le panneau y est lisible)
-        void Gate(string name, string zone, int level, Vector3 pos, float width, Vector3 viewer)
+        void Gate(string name, string zone, string contents, int level, Vector3 pos, float width, Vector3 viewer)
         {
             var root = new GameObject("Porte_" + name).transform;
             root.SetParent(gatesRoot.transform, false);
@@ -598,12 +679,13 @@ public static class RoomBuilder
             door.leaf = leaf.transform; door.handle = hi; door.openSign = viewer.x > 0f ? 1f : -1f;
             var tm = MakeLabel("Panneau", root, pos + Vector3.up * 1.5f + viewer * 0.09f, Quaternion.LookRotation(-viewer), 0.012f, new Color(1f, 0.2f, 0.15f));
             var g = root.gameObject.AddComponent<ZoneGate>();
-            g.unlockLevel = level; g.zoneName = zone; g.door = leaf.transform; g.doorCollider = leaf.GetComponent<Collider>(); g.sign = tm; g.hinged = door;
+            g.unlockLevel = level; g.zoneName = zone; g.contents = contents; g.door = leaf.transform; g.doorCollider = leaf.GetComponent<Collider>(); g.sign = tm; g.hinged = door;
         }
-        Gate("Couloir_Gauche", "Couloir gauche et cuisine", 2, B(-7.43f, -10.1f, 0f), 1.4f, Vector3.left);
-        Gate("Couloir_Droit", "Couloir droit", 2, B(3.72f, -10.1f, 0f), 1.8f, Vector3.right);
-        Gate("Stockage", "Stockage", 3, B(10.58f, 6.5f, 0f), 1.85f, Vector3.right);
-        Gate("Generateur", "Générateur", 4, B(-14.58f, 2.5f, 0f), 1.25f, Vector3.left);
+        // [#106] contenu de chaque zone (panneau « VERROUILLÉ » et annonce du niveau) : ce que le joueur gagne à y aller
+        Gate("Couloir_Gauche", "Couloir gauche et cuisine", "Planches, chargeurs, batterie", 2, B(-7.43f, -10.1f, 0f), 1.4f, Vector3.left);
+        Gate("Couloir_Droit", "Couloir droit", "Passage vers le stockage", 2, B(3.72f, -10.1f, 0f), 1.8f, Vector3.right);
+        Gate("Stockage", "Stockage", "Planches, chargeurs, hache", 3, B(10.58f, 6.5f, 0f), 1.85f, Vector3.right);
+        Gate("Generateur", "Générateur", "Le générateur : votre sortie", 4, B(-14.58f, 2.5f, 0f), 1.25f, Vector3.left);
         // portes ouest / est du bunker : barricadables (planches de l'ouverture) et enfoncées par les zombies avant les planches
         foreach (var (gate, op) in new[] { ("Porte_Couloir_Gauche", "Ouverture_Ouest"), ("Porte_Couloir_Droit", "Ouverture_Est") })
         {
@@ -612,23 +694,20 @@ public static class RoomBuilder
             if (door && opening) { door.opening = opening; opening.door = door; }
         }
 
-        // le générateur du fichier : on rend son interrupteur actionnable (le maintenir 5 s)
+        // le générateur du fichier : [#111] un levier à ressort à la place de son petit interrupteur (l'abaisser et le tenir 5 s)
         var genNode = Find(roomRoot.transform, "Generator");
         var sw = Find(roomRoot.transform, "Generator_Switch");
         var gen = new GameObject("Generateur_Objectif").transform;
         gen.SetParent(mapRoot, false);
         gen.position = sw.position;
-        var btnGo = new GameObject("Interrupteur");
-        btnGo.transform.SetParent(gen, false);
-        var bc = btnGo.AddComponent<BoxCollider>();
-        bc.size = new Vector3(0.3f, 0.3f, 0.3f);              // zone de sélection plus grande que le petit levier
-        var btn = btnGo.AddComponent<XRSimpleInteractable>();
+        Box("Platine", gen, new Vector3(0f, 0.32f, 0.02f), new Vector3(0.16f, 0.24f, 0.03f), darkM, false);
+        var genLever = MakeLever("Levier_Generateur", gen, sw.position + new Vector3(0f, 0.35f, 0.06f), Vector3.forward, 0.28f, true);
         // panneau d'état au-dessus de l'interrupteur, lisible depuis l'entrée de la salle (côté sud du générateur)
         var label = MakeLabel("Etat", gen, sw.position + new Vector3(0f, 0.9f, 0.12f), Quaternion.LookRotation(Vector3.back), 0.01f, new Color(1f, 0.85f, 0.4f));
         label.text = "HORS SERVICE";
         var lamp = GameObject.Find("Light_GeneratorBulb");
         var g2 = gen.gameObject.AddComponent<Generator>();
-        g2.button = btn; g2.buttonRenderer = sw.GetComponent<Renderer>(); g2.label = label; g2.lamp = lamp ? lamp.GetComponent<Light>() : null;
+        g2.lever = genLever; g2.buttonRenderer = genLever.handle.GetComponent<Renderer>(); g2.label = label; g2.lamp = lamp ? lamp.GetComponent<Light>() : null;
         g2.roomLights = generatorLights.ToArray(); g2.roomLightLevels = generatorLightLevels.ToArray();
         if (genNode) GameObjectUtility.SetStaticEditorFlags(genNode.gameObject, StaticEditorFlags.BatchingStatic);
     }
@@ -661,6 +740,7 @@ public static class RoomBuilder
             // écran du fichier dont le nom finit comme la caméra (ex. CCTV_Camera_01_Corridor_Left -> CCTV_Screen_01_Corridor_Left)
             var suffix = feeds[i].name.Replace("CCTV_Camera_", "");
             var scr = Find(roomRoot.transform, "CCTV_Screen_" + suffix);
+            if (!scr && feeds[i].name == SouthCamName) scr = BuildExtraScreen(stationGo.transform, "CCTV_Screen_" + suffix);   // [#103] pas d'écran dans le fichier
             if (!scr) { Debug.LogWarning("Écran introuvable pour " + feeds[i].name); continue; }
             scr.GetComponent<Renderer>().sharedMaterial = sm;
             rr.screens[i] = scr.GetComponent<Renderer>();
@@ -689,6 +769,27 @@ public static class RoomBuilder
         station.overlayRenderer = q.GetComponent<Renderer>();
         q.SetActive(false);
         rr.overlay = q;
+    }
+
+    // [#103] 5e écran du pupitre (caméra extérieure sud) : moniteur posé sur le bureau de surveillance, à droite de l'écran 01,
+    // même hauteur et même orientation que lui (le joueur assis sur le tabouret le voit avec les autres).
+    static Transform BuildExtraScreen(Transform parent, string name)
+    {
+        var refScr = Find(roomRoot.transform, "CCTV_Screen_01_Corridor_Left");
+        var face = Quaternion.LookRotation(Vector3.back);                                      // face visible du Quad vers +z (le tabouret)
+        var pos = refScr ? refScr.GetComponent<Renderer>().bounds.center + Vector3.right * 0.52f : new Vector3(1.07f, 1.17f, 7.27f);
+        var mon = new GameObject("CCTV_Monitor_05").transform;
+        mon.SetParent(parent, false);
+        mon.SetPositionAndRotation(pos, face);
+        Box("Boitier", mon, new Vector3(0f, 0f, 0.035f), new Vector3(0.47f, 0.36f, 0.06f), darkM, false);
+        Box("Pied", mon, new Vector3(0f, -(pos.y - 0.79f) / 2f - 0.09f, 0.05f), new Vector3(0.05f, pos.y - 0.79f - 0.18f, 0.05f), metalM, false);
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = name;
+        q.transform.SetParent(mon, false);
+        q.transform.localPosition = Vector3.zero;
+        q.transform.localScale = new Vector3(0.42f, 0.2363f, 1f);                            // 16:9
+        Object.DestroyImmediate(q.GetComponent<MeshCollider>());
+        return q.transform;
     }
 
     // ---------- matériaux ----------
@@ -1043,6 +1144,18 @@ public static class RoomBuilder
         return tm;
     }
 
+    // [#102] écran fixe des annonces de vague : mur sud du bunker, au-dessus du râtelier à planches, entre les deux fenêtres.
+    // Face au point de départ du joueur ; les textes sont créés par WaveManager.
+    static Transform BuildAnnouncementScreen()
+    {
+        var root = new GameObject("Ecran_Annonces").transform;
+        root.SetParent(bunkerRoot, false);
+        root.SetPositionAndRotation(WaveManager.DefaultScreenPosition, Quaternion.LookRotation(Vector3.forward));
+        Box("Cadre", root, new Vector3(0f, 0f, 0.015f), new Vector3(2.04f, 0.79f, 0.03f), darkM, false);
+        Box("Fond", root, new Vector3(0f, 0f, -0.002f), new Vector3(1.96f, 0.71f, 0.01f), Mat("Ecran_Annonces", new Color(0.015f, 0.04f, 0.03f), 0f, "Universal Render Pipeline/Unlit"), false);
+        return root;
+    }
+
     static void BuildZombieSetup(GameObject rig)
     {
         rig.AddComponent<PlayerHealth>();
@@ -1056,6 +1169,7 @@ public static class RoomBuilder
         z.spawnOnStart = false;               // c'est le WaveManager qui fait apparaître les zombies
         var wm = sp.AddComponent<WaveManager>();
         wm.spawner = z;
+        wm.screen = BuildAnnouncementScreen();
         wm.startClip = SfxClip("Assets/Audio/Game/Lancement_Partie.mp3", AudioClipLoadType.CompressedInMemory, false);
     }
 

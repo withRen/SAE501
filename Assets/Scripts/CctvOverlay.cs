@@ -70,6 +70,7 @@ public class CctvOverlay : MonoBehaviour
             case "kitchen": place = "CUISINE"; break;
             case "storage": case "stockage": place = "STOCKAGE"; break;
             case "generator": place = "GÉNÉRATEUR"; break;
+            case "exterieur_sud": place = "EXTÉRIEUR SUD"; break;
             default: place = place.Replace('_', ' ').ToUpperInvariant(); break;
         }
         return "CAM " + num + "  " + place;

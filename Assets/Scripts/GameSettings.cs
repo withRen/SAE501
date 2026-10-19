@@ -11,7 +11,8 @@ public static class GameSettings
 
     public static float Music { get => PlayerPrefs.GetFloat("sae501.music", 0.5f); set { PlayerPrefs.SetFloat("sae501.music", Mathf.Clamp01(value)); Apply(); } }
     public static float Effects { get => PlayerPrefs.GetFloat("sae501.sfx", 0.8f); set { PlayerPrefs.SetFloat("sae501.sfx", Mathf.Clamp01(value)); Apply(); } }
-    public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 1) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
+    // rotation par crans par défaut (confort VR, demandé par la SAÉ) ; la rotation fluide reste au choix dans PARAMÈTRES
+    public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 0) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
     public static Level Difficulty { get => (Level)PlayerPrefs.GetInt("sae501.difficulty", 1); set => PlayerPrefs.SetInt("sae501.difficulty", (int)value); }
 

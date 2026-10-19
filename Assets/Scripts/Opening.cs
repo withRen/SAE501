@@ -14,6 +14,31 @@ public class Opening : MonoBehaviour
     public bool zombiesCanUse = true;   // faux tant que l'extérieur n'est pas accessible (fenêtres)
     public HingedDoor door;             // porte du bunker devant les planches (portes ouest / est) : le zombie l'enfonce d'abord
 
+    [Header("Trou du toit [#104]")]
+    public bool fromAbove;              // trou du toit : le zombie prévient avant de se laisser tomber (Zombie, état Lurking)
+    public ParticleSystem dust;         // poussière qui tombe du trou, dans le bunker
+    AudioSource dustSrc;
+    static AudioClip dustClip;
+
+    // un zombie va tomber par ce trou dans `seconds` : poussière et gravats qui tombent, bruit de ruissellement
+    public void WarnFromAbove(float seconds)
+    {
+        if (dust)
+        {
+            var main = dust.main;
+            main.duration = Mathf.Max(0.5f, seconds);
+            dust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            dust.Play(true);
+        }
+        if (!dustSrc)
+        {
+            dustSrc = (dust ? dust.gameObject : gameObject).AddComponent<AudioSource>();
+            dustSrc.spatialBlend = 1f; dustSrc.minDistance = 1.5f; dustSrc.maxDistance = 14f; dustSrc.playOnAwake = false;
+        }
+        if (!dustClip) dustClip = ProcAudio.DustFall();
+        dustSrc.PlayOneShot(dustClip, 1f);
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() => All.Clear();
 

@@ -7,12 +7,14 @@ using UnityEngine.AI;
 //             joueur hors du bunker, visible à moins de 3,5 m : il le poursuit (et le frappe) au lieu de l'ignorer
 //   Casse   : frappe les planches (un coup toutes les 2 s) : planche posée sans clou = 1 coup, clouée = 3 coups
 //   Attaque : ouverture libre -> entre dans le bunker et frappe le joueur
+//   [#104] Toit (niveau 3+) : plus de chute surprise. Ses pas résonnent sur le toit, puis il attend 3 à 4 s au bord du trou
+//             (état Lurking) pendant que de la poussière tombe dans le bunker (Opening.WarnFromAbove), et seulement ensuite il saute.
 //   Mort    : tête = mort immédiate ; torse (33 %) et jambes (20 %) retirent une part des PV (voir ZombieLevels)
 //             armes de corps à corps (MeleeWeapon) : dégâts propres à chaque arme
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {
-    public enum State { Walking, Breaking, Entering, Attacking, Chasing, Dead }
+    public enum State { Walking, Breaking, Entering, Attacking, Chasing, Lurking, Dead }
 
     [Header("Déplacement")]
     public float walkSpeed = 0.9f;          // vague 1 : très lent
@@ -32,6 +34,11 @@ public class Zombie : MonoBehaviour
     [Header("Poursuite hors du bunker")]
     public float chaseRange = 3.5f;         // joueur hors du bunker, visible à cette distance : le zombie le poursuit
     public float chaseLoseRange = 7f;       // au-delà (ou joueur rentré dans le bunker, ou caché 2 s) : il reprend sa marche vers son ouverture
+
+    [Header("Toit : avertissement avant la chute [#104]")]
+    public Vector2 dropWarning = new Vector2(3f, 4f);    // secondes de poussière avant de sauter par le trou
+    public float roofHeight = 2.2f;                      // au-dessus : il marche sur le toit (pas audibles)
+    public float roofStepInterval = 0.55f;
 
     [Header("Sécurité : zombie coincé")]
     [Tooltip("Immobile (moins de 0,5 m parcouru) depuis ce temps alors qu'il devrait marcher : il meurt, pour que la vague se termine toujours.")]
@@ -60,7 +67,9 @@ public class Zombie : MonoBehaviour
     PlayerHealth player;
     bool chasing;                           // l'attaque en cours vient d'une poursuite hors du bunker (pas d'une entrée)
     Vector3 stuckAnchor;
-    float stuckSince;
+    float stuckSince, lurkUntil, nextRoofStep;
+    AudioSource roofSrc;
+    static AudioClip roofStep;
     static readonly RaycastHit[] sightHits = new RaycastHit[8];
 
     // intérieur du bunker (repère Unity ; MAP.md : Blender x -7,5..3,8 · y -14,1..-6,1) : là, le joueur est protégé par ses barricades
@@ -135,7 +144,9 @@ public class Zombie : MonoBehaviour
             case State.Entering: UpdateEntering(); break;
             case State.Attacking: UpdateAttacking(); break;
             case State.Chasing: UpdateChasing(); break;
+            case State.Lurking: UpdateLurking(); break;
         }
+        RoofSteps();
         if (!Dead) CheckStuck();
     }
 
@@ -144,7 +155,7 @@ public class Zombie : MonoBehaviour
     // Casser des planches et frapper le joueur ne comptent pas : il est immobile mais il agit.
     void CheckStuck()
     {
-        bool busy = state == State.Breaking || state == State.Attacking;
+        bool busy = state == State.Breaking || state == State.Attacking || state == State.Lurking;
         if (busy || (transform.position - stuckAnchor).sqrMagnitude > 0.25f)
         {
             stuckAnchor = transform.position; stuckSince = Time.time;
@@ -169,7 +180,40 @@ public class Zombie : MonoBehaviour
         if (!Arrived()) return;
         agent.isStopped = true;
         if (target.IsBarricaded || target.DoorClosed) { state = State.Breaking; nextBreak = Time.time + 0.5f; }
+        else if (target.fromAbove) StartLurking();
         else StartEntering();
+    }
+
+    // ---------- toit : il prévient avant de tomber [#104] ----------
+    void StartLurking()
+    {
+        state = State.Lurking;
+        float wait = Random.Range(dropWarning.x, dropWarning.y);
+        lurkUntil = Time.time + wait;
+        target.WarnFromAbove(wait);
+    }
+
+    void UpdateLurking()
+    {
+        FaceToward(target.insidePoint ? target.insidePoint.position : target.transform.position);
+        if (Time.time >= lurkUntil) StartEntering();
+    }
+
+    // pas lourds sur le toit du bunker (en marche vers son trou et en attendant au bord) : on les entend de l'intérieur
+    void RoofSteps()
+    {
+        if (Dead || !agent.enabled || transform.position.y < roofHeight || Time.time < nextRoofStep) return;
+        bool moving = !agent.isStopped && agent.velocity.sqrMagnitude > 0.04f;
+        if (!moving && state != State.Lurking) return;
+        nextRoofStep = Time.time + roofStepInterval * Random.Range(0.85f, 1.15f) * (state == State.Lurking ? 1.4f : 1f);
+        if (!roofSrc)
+        {
+            roofSrc = gameObject.AddComponent<AudioSource>();
+            roofSrc.spatialBlend = 1f; roofSrc.minDistance = 2f; roofSrc.maxDistance = 16f; roofSrc.playOnAwake = false;
+        }
+        if (!roofStep) roofStep = ProcAudio.RoofStep();
+        roofSrc.pitch = Random.Range(0.85f, 1.1f);
+        roofSrc.PlayOneShot(roofStep, 1f);
     }
 
     void UpdateBreaking()

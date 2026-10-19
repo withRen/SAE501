@@ -3285,6 +3285,8 @@ MonoBehaviour:
   dropWarning: {x: 3, y: 4}
   roofHeight: 2.2
   roofStepInterval: 0.55
+  flinchDistance: 0.12
+  fleshVolume: 0.9
   stuckTimeout: 20
   typeName: Normal
   speedMultiplier: 1

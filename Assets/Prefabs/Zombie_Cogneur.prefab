@@ -1129,6 +1129,9 @@ MonoBehaviour:
   attackCooldown: 1.5
   attackDamage: 0.2
   attackHitDelay: 0.33
+  chaseRange: 3.5
+  chaseLoseRange: 7
+  stuckTimeout: 20
   typeName: Cogneur
   speedMultiplier: 0.9
   healthMultiplier: 1.5

@@ -3280,6 +3280,9 @@ MonoBehaviour:
   attackCooldown: 1.5
   attackDamage: 0.2
   attackHitDelay: 0.7
+  chaseRange: 3.5
+  chaseLoseRange: 7
+  stuckTimeout: 20
   typeName: Normal
   speedMultiplier: 1
   healthMultiplier: 1

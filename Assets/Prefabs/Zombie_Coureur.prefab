@@ -900,6 +900,9 @@ MonoBehaviour:
   attackCooldown: 1.5
   attackDamage: 0.2
   attackHitDelay: 0.53478265
+  chaseRange: 3.5
+  chaseLoseRange: 7
+  stuckTimeout: 20
   typeName: Coureur
   speedMultiplier: 1.6
   healthMultiplier: 0.7

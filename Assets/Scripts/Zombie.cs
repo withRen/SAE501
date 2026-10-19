@@ -4,6 +4,7 @@ using UnityEngine.AI;
 
 // Comportement d'un zombie (GDD : 4 états, très prévisibles) :
 //   Marche  : va vers l'ouverture accessible la plus proche (chemin NavMesh)
+//             joueur hors du bunker, visible à moins de 3,5 m : il le poursuit (et le frappe) au lieu de l'ignorer
 //   Casse   : frappe les planches (un coup toutes les 2 s) : planche posée sans clou = 1 coup, clouée = 3 coups
 //   Attaque : ouverture libre -> entre dans le bunker et frappe le joueur
 //   Mort    : tête = mort immédiate ; torse (33 %) et jambes (20 %) retirent une part des PV (voir ZombieLevels)
@@ -11,7 +12,7 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {
-    public enum State { Walking, Breaking, Entering, Attacking, Dead }
+    public enum State { Walking, Breaking, Entering, Attacking, Chasing, Dead }
 
     [Header("Déplacement")]
     public float walkSpeed = 0.9f;          // vague 1 : très lent
@@ -27,6 +28,14 @@ public class Zombie : MonoBehaviour
     [Tooltip("Part de la vie max du joueur retirée à chaque coup (0..1). Fixée par le niveau, voir ZombieLevels.")]
     public float attackDamage = 0.2f;
     public float attackHitDelay = 0.45f;    // moment du coup dans l'animation
+
+    [Header("Poursuite hors du bunker")]
+    public float chaseRange = 3.5f;         // joueur hors du bunker, visible à cette distance : le zombie le poursuit
+    public float chaseLoseRange = 7f;       // au-delà (ou joueur rentré dans le bunker, ou caché 2 s) : il reprend sa marche vers son ouverture
+
+    [Header("Sécurité : zombie coincé")]
+    [Tooltip("Immobile (moins de 0,5 m parcouru) depuis ce temps alors qu'il devrait marcher : il meurt, pour que la vague se termine toujours.")]
+    public float stuckTimeout = 20f;
 
     [Header("Type de zombie (voir ZombieVariants)")]
     public string typeName = "Normal";
@@ -46,9 +55,16 @@ public class Zombie : MonoBehaviour
 
     NavMeshAgent agent;
     ZombieAnimationBridge anim;
-    float slowUntil, nextBreak, nextAttack, hitAt = -1f, repath, nextChoose;
+    float slowUntil, nextBreak, nextAttack, hitAt = -1f, repath, nextChoose, nextSight, lastSeen;
     Plank pendingPlank;
     PlayerHealth player;
+    bool chasing;                           // l'attaque en cours vient d'une poursuite hors du bunker (pas d'une entrée)
+    Vector3 stuckAnchor;
+    float stuckSince;
+    static readonly RaycastHit[] sightHits = new RaycastHit[8];
+
+    // intérieur du bunker (repère Unity ; MAP.md : Blender x -7,5..3,8 · y -14,1..-6,1) : là, le joueur est protégé par ses barricades
+    public static readonly Bounds BunkerArea = new Bounds(new Vector3(1.85f, 1.5f, 10.1f), new Vector3(11.3f, 4f, 8f));
 
     // règle PV et dégâts selon le niveau (à appeler juste après la création, avant Start)
     public void ApplyLevel(int lvl)
@@ -76,6 +92,7 @@ public class Zombie : MonoBehaviour
         player = PlayerHealth.Instance;
         agent.speed = walkSpeed;
         agent.areaMask = WalkMask;
+        stuckAnchor = transform.position; stuckSince = Time.time;
         ChooseOpening();
     }
 
@@ -117,13 +134,32 @@ public class Zombie : MonoBehaviour
             case State.Breaking: UpdateBreaking(); break;
             case State.Entering: UpdateEntering(); break;
             case State.Attacking: UpdateAttacking(); break;
+            case State.Chasing: UpdateChasing(); break;
         }
+        if (!Dead) CheckStuck();
+    }
+
+    // Sécurité : un zombie qui devrait se déplacer (marche, entrée, poursuite) mais n'a pas bougé de 0,5 m depuis stuckTimeout
+    // est coincé (NavMesh, décor, ouverture inaccessible) : il meurt, sinon la vague ne se termine jamais.
+    // Casser des planches et frapper le joueur ne comptent pas : il est immobile mais il agit.
+    void CheckStuck()
+    {
+        bool busy = state == State.Breaking || state == State.Attacking;
+        if (busy || (transform.position - stuckAnchor).sqrMagnitude > 0.25f)
+        {
+            stuckAnchor = transform.position; stuckSince = Time.time;
+            return;
+        }
+        if (Time.time - stuckSince < stuckTimeout) return;
+        Debug.Log($"[Zombie] {name} immobile depuis {stuckTimeout:0} s ({state}) : éliminé pour que la vague se termine.");
+        Die();
     }
 
     bool Arrived() => !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.15f;
 
     void UpdateWalking()
     {
+        if (TryStartChase()) return;
         if (target == null)
         {
             // aucune ouverture accessible : on réessaie une fois par seconde (pas à chaque image)
@@ -138,6 +174,7 @@ public class Zombie : MonoBehaviour
 
     void UpdateBreaking()
     {
+        if (TryStartChase()) return;
         FaceToward(target.transform.position);
         // porte fermée devant les planches : il l'enfonce d'abord (HingedDoor : 3 coups)
         if (target.DoorClosed)
@@ -162,8 +199,78 @@ public class Zombie : MonoBehaviour
         }
     }
 
+    // ---------- poursuite hors du bunker ----------
+    // Hors du bunker, le joueur n'est protégé par rien : un zombie qui le voit à moins de chaseRange le poursuit.
+    // Il reste sur les zones de marche (WalkMask) : pas de passage par les fenêtres ni les trous du toit, et il lâche
+    // le joueur dès que celui-ci rentre dans le bunker (c'est alors aux barricades de jouer leur rôle).
+    bool PlayerOutsideBunker() => player != null && !player.Dead && !BunkerArea.Contains(player.HeadPosition);
+
+    bool CanSeePlayer(float range)
+    {
+        if (FlatDistanceToPlayer() > range) return false;
+        var eye = transform.position + Vector3.up * 1.5f;
+        var to = player.HeadPosition - eye;
+        int n = Physics.RaycastNonAlloc(eye, to.normalized, sightHits, to.magnitude, ~0, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < n; i++)
+        {
+            var t = sightHits[i].transform;
+            if (t.IsChildOf(transform) || t.GetComponentInParent<PlayerHealth>() != null) continue;    // lui-même, le joueur
+            if (t.GetComponentInParent<Zombie>() != null) continue;                                   // un autre zombie ne cache pas le joueur
+            return false;                                                                             // mur, porte, planche…
+        }
+        return true;
+    }
+
+    bool TryStartChase()
+    {
+        if (Time.time < nextSight) return false;
+        nextSight = Time.time + 0.25f;                      // pas à chaque image
+        if (!PlayerOutsideBunker() || !CanSeePlayer(chaseRange)) return false;
+        pendingPlank = null; hitAt = -1f;
+        StartChasing();
+        return true;
+    }
+
+    void StartChasing()
+    {
+        state = State.Chasing;
+        chasing = true;
+        agent.areaMask = WalkMask;
+        agent.isStopped = false;
+        repath = 0f;
+        lastSeen = Time.time;
+    }
+
+    void UpdateChasing()
+    {
+        if (!PlayerOutsideBunker() || FlatDistanceToPlayer() > chaseLoseRange) { StopChasing(); return; }
+        if (Time.time >= nextSight)
+        {
+            nextSight = Time.time + 0.25f;
+            if (CanSeePlayer(chaseLoseRange)) lastSeen = Time.time;
+            else if (Time.time - lastSeen > 2f) { StopChasing(); return; }
+        }
+        if (Time.time >= repath)
+        {
+            repath = Time.time + 0.25f;
+            var p = player.HeadPosition;
+            if (NavMesh.SamplePosition(new Vector3(p.x, transform.position.y, p.z), out var hit, 2f, WalkMask)) agent.SetDestination(hit.position);
+        }
+        if (FlatDistanceToPlayer() <= attackRange) { agent.isStopped = true; state = State.Attacking; nextAttack = Time.time; }
+    }
+
+    // le joueur s'est échappé : retour vers une ouverture du bunker
+    void StopChasing()
+    {
+        chasing = false;
+        state = State.Walking;
+        agent.isStopped = false;
+        ChooseOpening();                    // aucune ouverture accessible : UpdateWalking réessaie chaque seconde
+    }
+
     void StartEntering()
     {
+        chasing = false;
         state = State.Entering;
         agent.areaMask = NavMesh.AllAreas;           // il peut maintenant passer par sa fenêtre / le trou du toit
         if (target && target.door) target.door.ForceOpen();
@@ -188,7 +295,7 @@ public class Zombie : MonoBehaviour
         if (player == null || player.Dead) return;
         FaceToward(player.HeadPosition);
         float d = FlatDistanceToPlayer();
-        if (d > attackRange * 1.4f) { StartEntering(); return; }   // le joueur a reculé : on le poursuit
+        if (d > attackRange * 1.4f) { if (chasing) StartChasing(); else StartEntering(); return; }   // le joueur a reculé : on le poursuit
         if (Time.time >= nextAttack)
         {
             nextAttack = Time.time + attackCooldown;

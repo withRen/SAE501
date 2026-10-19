@@ -39,9 +39,12 @@ public class ZombieSpawner : MonoBehaviour
                     : where == Point.CouloirDroit ? points.rightCorridorEnd
                     : where == Point.Toit && points.roof ? points.roof
                     : points.exterior;
-        // terrain en relief : départ posé sur le NavMesh le plus proche (sinon l'agent ne se crée pas s'il est sous le sol)
+        // terrain en relief : départ posé sur le NavMesh le plus proche (sinon l'agent ne se crée pas s'il est sous le sol).
+        // D'abord tout près : avec un grand rayon, Unity préfère un NavMesh situé juste au-dessus (le toit du couloir droit,
+        // à 2,8 m) au sol situé à côté, et le zombie apparaissait sur le toit.
         var pos = p.position;
-        if (UnityEngine.AI.NavMesh.SamplePosition(pos, out var hit, 4f, UnityEngine.AI.NavMesh.AllAreas)) pos = hit.position;
+        if (UnityEngine.AI.NavMesh.SamplePosition(pos, out var hit, 1f, UnityEngine.AI.NavMesh.AllAreas)
+            || UnityEngine.AI.NavMesh.SamplePosition(pos, out hit, 4f, UnityEngine.AI.NavMesh.AllAreas)) pos = hit.position;
         var go = Instantiate(PickPrefab(), pos, p.rotation);
         var z = go.GetComponent<Zombie>();
         z.ApplyLevel(level);

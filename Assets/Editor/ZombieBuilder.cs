@@ -11,7 +11,7 @@ public static class ZombieBuilder
     public const string SpawnPointsPath = "Assets/Prefabs/ZombieSpawnPoints.prefab";
 
     // Prefab à part : les 3 points de départ des chemins NavMesh des zombies (carte Blender, repère Unity = (-x, z, -y) de Blender).
-    //   bout nord du couloir gauche, bout nord du couloir droit, extérieur au sud du bunker (devant les deux fenêtres).
+    //   fond de la cuisine (côté couloir gauche), bout nord du couloir droit, extérieur au sud du bunker (devant les deux fenêtres).
     [MenuItem("SAE501/Zombie/Reconstruire le prefab des points de départ")]
     public static GameObject BuildSpawnPoints()
     {
@@ -26,7 +26,9 @@ public static class ZombieBuilder
             t.rotation = Quaternion.LookRotation(look);     // les zombies regardent vers le bunker
             return t;
         }
-        sp.leftCorridorEnd = P("Spawn_Couloir_Gauche", new Vector3(12.0f, 0f, -3.7f), Vector3.forward);    // Blender (-12, 3,7)
+        // fond de la cuisine (zone du couloir gauche) : 11 m de l'interrupteur du générateur et hors de sa vue, 17,6 m de chemin jusqu'à la porte ouest.
+        // L'ancien point, au bout nord du couloir (Blender (-12, 3,7)), était à moins de 5 m du générateur.
+        sp.leftCorridorEnd = P("Spawn_Couloir_Gauche", new Vector3(21.5f, 0f, 6.8f), Vector3.left);        // Blender (-21,5, -6,8)
         sp.rightCorridorEnd = P("Spawn_Couloir_Droit", new Vector3(-7.1f, 0f, -7.0f), Vector3.forward);    // Blender (7,1, 7)
         sp.exterior = P("Spawn_Exterieur_Sud", new Vector3(1.85f, 0f, 17.6f), Vector3.back);               // Blender (-1,85, -17,6)
         sp.roof = P("Spawn_Toit_Bunker", new Vector3(1.5f, 2.8f, 10.0f), Vector3.back);                   // sur le toit du bunker, entre les deux trous

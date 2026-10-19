@@ -11,6 +11,8 @@ using UnityEngine.SceneManagement;
 // puis une pause pour réparer les barricades. Détails : wiki « Niveaux et vagues ».
 // [6.3] Courbe de difficulté : la vague 1 est lente, d'un seul côté et avec peu de zombies à la fois ;
 //   à chaque vague les zombies sont plus nombreux, plus rapides, et plus d'entre eux attaquent en même temps.
+// Niveaux 1 et 2 : pas de zombie sur le toit (ses trous ne se barricadent pas) : tout arrive par une fenêtre ou une porte.
+// Une vague se termine toujours : un zombie coincé meurt seul au bout de 20 s (Zombie.stuckTimeout).
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
@@ -53,9 +55,9 @@ public class WaveManager : MonoBehaviour
 
     static LevelDef[] DefaultLevels() => new[]
     {
-        new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.Toit },
+        new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur },
             banner = "NIVEAU 1\nRestez dans le bunker : les couloirs sont verrouillés.\nObjectif : survivre, puis activer le générateur." },
-        new LevelDef { zombies = 9, speed = 0.95f, maxAlive = 4, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
+        new LevelDef { zombies = 9, speed = 0.95f, maxAlive = 4, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 2\nCouloirs et cuisine déverrouillés." },
         new LevelDef { zombies = 12, speed = 1.05f, maxAlive = 5, spawnInterval = 6.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
             banner = "NIVEAU 3\nStockage déverrouillé." },

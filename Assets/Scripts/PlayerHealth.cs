@@ -5,6 +5,7 @@ using UnityEngine;
 // Régénération (GDD) : +25 PV (l'ancien « 1 PV sur 4 ») après 10 s sans dégât, 2 fois maximum par vague.
 // Sur le XR Origin. Les zombies appellent PlayerHealth.Instance.TakeDamage().
 // (UI : HealthVignette, GameOverUI.)
+// [#115] Chaque coup reçu fait vibrer les deux manettes : on le sent même sans voir le zombie (plus fort si le coup tue).
 public class PlayerHealth : MonoBehaviour
 {
     public static PlayerHealth Instance { get; private set; }
@@ -14,6 +15,10 @@ public class PlayerHealth : MonoBehaviour
     public float regenDelay = 10f;      // secondes sans dégât avant la régénération
     public float regenAmount = 25f;     // PV rendus à chaque régénération
     public int maxRegenPerWave = 2;     // nombre de régénérations par vague
+
+    [Header("Vibration au coup reçu [#115]")]
+    [Range(0f, 1f)] public float hitHaptic = 0.8f;
+    public float hitHapticDuration = 0.25f;
 
     public float Health { get; private set; }
     public bool IsDead => Health <= 0f;
@@ -74,6 +79,7 @@ public class PlayerHealth : MonoBehaviour
         Health = Mathf.Max(0f, Health - amount);
         if (Health < 0.01f) Health = 0f;      // évite qu'il reste 0,00001 PV après 3 coups d'un tiers
         sinceLastHit = 0f;
+        VRInput.HapticBoth(Health <= 0f ? 1f : hitHaptic, Health <= 0f ? hitHapticDuration * 2f : hitHapticDuration);
         Damaged?.Invoke(amount);
         Changed?.Invoke(Health, maxHealth);
 

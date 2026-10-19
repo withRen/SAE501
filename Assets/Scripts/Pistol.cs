@@ -22,6 +22,9 @@ public class Pistol : MonoBehaviour
     [Range(0f, 1f)] public float hapticAmplitude = 0.7f;
     public float hapticDuration = 0.08f;
     public float emptyHapticAmplitude = 0.15f;
+    [Tooltip("[#113] Tir à la tête : vibration forte et plus longue, pour sentir le coup mortel.")]
+    [Range(0f, 1f)] public float headshotHapticAmplitude = 1f;
+    public float headshotHapticDuration = 0.2f;
 
     ParticleSystem smoke;
 
@@ -95,6 +98,7 @@ public class Pistol : MonoBehaviour
         if (ammo <= 0) { src.PlayOneShot(dryFireClip ? dryFireClip : click); Haptic(interactor, emptyHapticAmplitude, 0.03f); return; }
 
         ammo--;
+        GameStats.Shot();
         UpdateHud();
         src.PlayOneShot(shotClip ? shotClip : shot);
         StartCoroutine(Flash());
@@ -116,7 +120,11 @@ public class Pistol : MonoBehaviour
         if (Physics.Raycast(muzzle.position, muzzle.forward, out var hit, range, ~0, QueryTriggerInteraction.Ignore))
         {
             if (hit.rigidbody) hit.rigidbody.AddForceAtPosition(muzzle.forward * 6f, hit.point, ForceMode.Impulse);
+            var hb = hit.collider.GetComponent<ZombieHitbox>();
+            bool head = hb && hb.zone == HitZone.Head && hb.zombie && !hb.zombie.Dead;
             hit.collider.SendMessage("OnShot", hit, SendMessageOptions.DontRequireReceiver);
+            // [#113] tête touchée : un deuxième retour, fort, juste après celui du recul de l'arme
+            if (head) StartCoroutine(HeadshotHaptic(interactor));
         }
     }
 
@@ -240,6 +248,12 @@ public class Pistol : MonoBehaviour
             else if (c.name.IndexOf("right", System.StringComparison.OrdinalIgnoreCase) >= 0) break;
         var dev = InputDevices.GetDeviceAtXRNode(left ? XRNode.LeftHand : XRNode.RightHand);
         if (dev.isValid) dev.SendHapticImpulse(0, amplitude, duration);
+    }
+
+    IEnumerator HeadshotHaptic(IXRActivateInteractor interactor)
+    {
+        yield return new WaitForSeconds(hapticDuration);
+        Haptic(interactor, headshotHapticAmplitude, headshotHapticDuration);
     }
 
     IEnumerator Flash()

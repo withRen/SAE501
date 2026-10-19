@@ -4,6 +4,8 @@ using UnityEngine;
 // [#111] Levier physique à ressort (Lever) : on l'attrape (grip), on l'ABAISSE jusqu'en bas et on le tient `holdSeconds` ;
 // lâché, il remonte tout seul et la jauge redescend.
 // À la fin : lumière de la salle rallumée, victoire (WaveManager.GeneratorActivated).
+// [#120] Au niveau 4, le levier reste bloqué tant que WaveManager.GeneratorReady est faux (X zombies abattus ou 60 s) ;
+// le panneau affiche ce qu'il reste à faire.
 public class Generator : MonoBehaviour
 {
     public Lever lever;
@@ -16,7 +18,7 @@ public class Generator : MonoBehaviour
     public float holdSeconds = 5f;
     public float releaseDecay = 0.5f;   // la jauge redescend à cette vitesse relative quand on lâche
 
-    float progress;
+    float progress, nextLabel;
     bool on;
     AudioSource hum;
     Color buttonOff = new Color(0.6f, 0.1f, 0.1f), buttonOn = new Color(0.2f, 1f, 0.3f);
@@ -45,8 +47,15 @@ public class Generator : MonoBehaviour
     {
         if (on) return;
         bool unlocked = WaveManager.Level >= unlockLevel;
-        if (lever) lever.locked = !unlocked;                 // avant le niveau 4 : levier bloqué en haut
+        var wm = WaveManager.Instance;
+        bool ready = unlocked && (wm == null || wm.GeneratorReady);
+        if (lever) lever.locked = !ready;                    // avant le niveau 4, puis tant que la condition n'est pas remplie : levier bloqué en haut
         if (!unlocked) { SetLabel("HORS SERVICE"); return; }
+        if (!ready)
+        {
+            if (Time.time >= nextLabel) { nextLabel = Time.time + 0.25f; SetLabel("DÉMARRAGE BLOQUÉ\n" + wm.GeneratorCondition); }
+            return;
+        }
 
         bool held = lever != null && lever.IsDown;           // levier à ressort : en bas seulement tant qu'on le tient
         progress = Mathf.Clamp(progress + (held ? 1f : -releaseDecay) * Time.deltaTime, 0f, holdSeconds);

@@ -1,6 +1,7 @@
 using UnityEngine;
 
 // Un clou : apparaît quand on a le marteau en main, s'enfonce à chaque coup (3 coups).
+// [#112] Chaque coup fait vibrer la manette du marteau (0,6) ; le coup qui enfonce le clou en entier vibre à fond (1,0).
 // Détection des coups sans physique : on teste le trajet de la tête du marteau (segment) contre la tête du clou.
 public class Nail : MonoBehaviour
 {
@@ -12,6 +13,12 @@ public class Nail : MonoBehaviour
     public float drivenZ = -0.025f;    // clou enfoncé
     public float minSpeed = 0.9f;      // m/s : en dessous, ce n'est pas un vrai coup
     public float sinkSpeed = 0.5f;     // m/s : vitesse à laquelle le clou s'enfonce visuellement
+
+    [Header("Vibration du marteau [#112]")]
+    [Range(0f, 1f)] public float hitHaptic = 0.6f;       // à chaque coup
+    [Range(0f, 1f)] public float drivenHaptic = 1f;      // clou entièrement enfoncé
+    public float hitHapticDuration = 0.07f;
+    public float drivenHapticDuration = 0.18f;
 
     int hits;
     float lastHit, z;
@@ -77,6 +84,8 @@ public class Nail : MonoBehaviour
         lastHit = Time.time;
         src.pitch = 0.9f + 0.1f * hits;
         src.PlayOneShot(hitClip);
+        if (Driven) VRInput.Haptic(Hammer.Hand, drivenHaptic, drivenHapticDuration);
+        else VRInput.Haptic(Hammer.Hand, hitHaptic, hitHapticDuration);
     }
 
     static float DistancePointSegment(Vector3 p, Vector3 a, Vector3 b)

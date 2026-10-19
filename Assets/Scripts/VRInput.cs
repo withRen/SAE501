@@ -39,6 +39,22 @@ public static class VRInput
         if (d.isValid) d.SendHapticImpulse(0, amplitude, duration);
     }
 
+    /// <summary>Vibration des deux manettes (coup reçu).</summary>
+    public static void HapticBoth(float amplitude, float duration)
+    {
+        Haptic(XRNode.LeftHand, amplitude, duration);
+        Haptic(XRNode.RightHand, amplitude, duration);
+    }
+
+    /// <summary>Main d'un interacteur XRI (son nom ou celui d'un parent contient « left » ou « right »).</summary>
+    public static XRNode HandOf(Component interactor)
+    {
+        for (var c = interactor ? interactor.transform : null; c != null; c = c.parent)
+            if (c.name.IndexOf("left", System.StringComparison.OrdinalIgnoreCase) >= 0) return XRNode.LeftHand;
+            else if (c.name.IndexOf("right", System.StringComparison.OrdinalIgnoreCase) >= 0) return XRNode.RightHand;
+        return XRNode.RightHand;
+    }
+
     /// <summary>Joystick gauche enfoncé (clic).</summary>
     public static bool LeftStickClick()
     {

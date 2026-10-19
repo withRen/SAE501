@@ -23,7 +23,7 @@ public class MeleeWeapon : MonoBehaviour
     XRGrabInteractable grab;
     AudioSource src;
     static AudioClip thud;
-    Vector3 lastPos;
+    Vector3 lastPos, swingDir;
     float speed;
     readonly Dictionary<Zombie, float> lastHit = new Dictionary<Zombie, float>();
     readonly Collider[] hits = new Collider[16];
@@ -47,6 +47,7 @@ public class MeleeWeapon : MonoBehaviour
         float dt = Mathf.Max(Time.deltaTime, 1e-4f);
         var p = striker.position;
         speed = Mathf.Max((p - lastPos).magnitude / dt, speed * 0.8f);   // vitesse lissée : reste « chaude » le temps du contact
+        if ((p - lastPos).sqrMagnitude > 1e-8f) swingDir = p - lastPos;
         lastPos = p;
         if (!BeltItem.InHand(grab) || speed < minSpeed) return;
         Strike();
@@ -64,6 +65,7 @@ public class MeleeWeapon : MonoBehaviour
             if (lastHit.TryGetValue(hb.zombie, out var t) && Time.time - t < cooldown) continue;
             lastHit[hb.zombie] = Time.time;
             float dmg = hb.zone == HitZone.Head ? headDamage : hb.zone == HitZone.Torso ? torsoDamage : legsDamage;
+            hb.zombie.HitFeedback(hits[i].ClosestPoint(striker.position), swingDir, hb.zone == HitZone.Head);   // [#113]
             hb.zombie.OnMeleeHit(hb.zone, dmg);
             src.pitch = Random.Range(0.6f, 0.8f);
             src.PlayOneShot(thud, 1f);

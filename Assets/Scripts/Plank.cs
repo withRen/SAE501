@@ -8,6 +8,9 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 //   Placed  : lâchée sur l'emplacement, elle y reste (pas besoin de la tenir). Sans clou : un coup de zombie la fait tomber.
 //             On peut encore la reprendre tant qu'aucun clou n'est enfoncé.
 //   Nailed  : au moins un clou enfoncé au marteau : elle ne se reprend plus, un zombie doit frapper 3 fois pour l'arracher.
+// [#114] Quand elle se cale sur l'ouverture : « clac » et vibration légère de la main qui la tient.
+// [#116] Arrachée par un zombie : éclats de bois (Fx.Splinters) et craquement, visibles et audibles de loin.
+// [#122] Chaque planche posée par le joueur compte dans le bilan (GameStats.PlanksPlaced).
 public class Plank : MonoBehaviour
 {
     public enum State { Free, Snapped, Placed, Nailed }
@@ -24,6 +27,12 @@ public class Plank : MonoBehaviour
     public bool stored;                    // posée sur le râtelier : immobile jusqu'à ce qu'on la prenne
     public BarricadeSlot startSlot;        // si renseigné : la planche est déjà clouée sur cet emplacement au début de la partie
 
+    [Header("Retours [#114] [#116]")]
+    [Range(0f, 1f)] public float snapHaptic = 0.3f;     // vibration légère au calage
+    public float snapHapticDuration = 0.05f;
+    [Range(0f, 1f)] public float clackVolume = 0.8f;
+    [Range(0f, 1f)] public float crackVolume = 1f;
+
     public State state { get; private set; }
     public bool InSlot => state == State.Placed || state == State.Nailed;     // barricade en place (pas tenue en main)
     public bool CanBeNailed => state != State.Free;                           // clous accessibles au marteau
@@ -35,7 +44,8 @@ public class Plank : MonoBehaviour
     Vector3 snapHand;                      // position de la main au moment où la planche s'est calée
     float push, pushVel;                   // recul de la planche quand un zombie frappe (ressort)
     AudioSource src;
-    static AudioClip thud;
+    static AudioClip thud, clack, crack;
+    bool placedCounted;                    // déjà comptée comme posée (bilan) : reprise et reposée sur le même emplacement = une seule fois
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics() { Held = null; All.Clear(); }
@@ -46,11 +56,13 @@ public class Plank : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         All.Add(this);
         grab.selectEntered.AddListener(_ => OnGrab());
-        grab.selectExited.AddListener(_ => OnRelease());
+        grab.selectExited.AddListener(a => OnRelease(a.interactorObject as Component));
         foreach (var n in nails) { n.plank = this; n.Refresh(false); }
         src = gameObject.AddComponent<AudioSource>();
         src.spatialBlend = 1f;
+        src.maxDistance = 25f;                             // le craquement s'entend du bout du bunker
         if (!thud) thud = ProcAudio.Hit();
+        if (!clack) { clack = ProcAudio.Clack(); crack = ProcAudio.WoodCrack(); }
     }
 
     void Start()
@@ -73,6 +85,7 @@ public class Plank : MonoBehaviour
     {
         TakeSlot(s);
         foreach (var n in nails) n.SetDriven();
+        placedCounted = true;                              // posée par le décor, pas par le joueur
         Settle();
     }
 
@@ -92,6 +105,11 @@ public class Plank : MonoBehaviour
     public void Break(Vector3 pushDirection)
     {
         if (!InSlot) return;
+        // [#116] éclats sur toute la longueur de la planche, projetés comme elle vers l'intérieur, et craquement
+        Fx.Splinters(transform.position, pushDirection, transform.right * halfLength * 0.8f);
+        src.pitch = Random.Range(0.85f, 1.1f);
+        src.PlayOneShot(crack, crackVolume);
+        placedCounted = false;
         ReleaseSlot();
         state = State.Free;
         Hits = 0;
@@ -113,7 +131,7 @@ public class Plank : MonoBehaviour
         if (state == State.Placed) { state = State.Snapped; grab.trackPosition = grab.trackRotation = false; }   // reprise sur l'emplacement
     }
 
-    void OnRelease()
+    void OnRelease(Component hand)
     {
         if (Held == this) Held = null;
         foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
@@ -121,7 +139,7 @@ public class Plank : MonoBehaviour
         {
             // lâchée près d'une ouverture libre : posée proprement sur l'emplacement le plus proche (pas besoin de viser juste)
             var near = BarricadeSlot.Best(transform, halfLength, releaseSnapDistance, 0f);
-            if (near) { Snap(near); Settle(); return; }
+            if (near) { Snap(near, hand); Settle(); return; }
             stored = false; rb.isKinematic = false;                                // sortie du râtelier : elle tombe normalement
         }
     }
@@ -134,7 +152,7 @@ public class Plank : MonoBehaviour
                 if (Held == this)
                 {
                     var s = BarricadeSlot.Best(transform, halfLength, snapDistance, 0.5f);
-                    if (s) Snap(s);
+                    if (s) Snap(s, grab.firstInteractorSelecting as Component);
                 }
                 break;
 
@@ -173,8 +191,12 @@ public class Plank : MonoBehaviour
         slot = null;
     }
 
-    void Snap(BarricadeSlot s)
+    void Snap(BarricadeSlot s, Component hand)
     {
+        // [#114] « clac » + vibration légère de la main qui tient (ou vient de lâcher) la planche
+        src.pitch = Random.Range(0.95f, 1.08f);
+        src.PlayOneShot(clack, clackVolume);
+        if (hand) VRInput.Haptic(VRInput.HandOf(hand), snapHaptic, snapHapticDuration);
         slot = s;
         snapHand = grab.isSelected ? grab.firstInteractorSelecting.GetAttachTransform(grab).position : transform.position;
         s.Occupied = true;
@@ -192,6 +214,7 @@ public class Plank : MonoBehaviour
         grab.trackPosition = grab.trackRotation = true;
         Hits = 0;
         stored = false;
+        if (!placedCounted) { placedCounted = true; GameStats.PlankPlaced(); }
         if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
         else { state = State.Placed; grab.enabled = true; }
         foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
@@ -199,6 +222,7 @@ public class Plank : MonoBehaviour
 
     void Unsnap()
     {
+        placedCounted = false;
         ReleaseSlot();
         state = State.Free;
         grab.trackPosition = true;

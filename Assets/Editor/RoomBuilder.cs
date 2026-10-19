@@ -44,6 +44,7 @@ public static class RoomBuilder
         // références gardées d'une reconstruction à l'autre : après un réimport de la carte elles pointeraient vers d'anciens matériaux (planches roses)
         plankMesh = null; plankMats = null; hammerGrab = null;
         MakeMaterials();
+        EnsureFxMaterials();
         blockM = Mat("Blockout", new Color(0.05f, 0.05f, 0.055f));
 
         bunkerRoot = new GameObject("Bunker").transform;
@@ -111,6 +112,7 @@ public static class RoomBuilder
         new GameObject("Menu_Pause").AddComponent<PauseMenu>();          // bouton menu de la manette gauche
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
+        LodBuilder.Build(roomRoot.transform);          // [#118] après le NavMesh : les LOD1 n'y entrent pas
         BuildLightProbes();
         UnbatchInteractables();
         LightBaker.ApplySettings();
@@ -130,26 +132,62 @@ public static class RoomBuilder
             }
     }
 
+    // [#119] Un groupe de sondes par zone (MAP.md), plus serré dans les couloirs et les petites salles où les zombies passent
+    // près des lampes, sur trois hauteurs (jambes, torse, tête) ; dehors, une grille large. Avant : un seul groupe tous les 2 m,
+    // trop lâche pour les couloirs de 1,4 m (zombies noirs ou trop clairs selon la sonde la plus proche).
+    // Zones en coordonnées Blender : (x min, x max, y min, y max, pas en m).
+    static readonly (string name, float x0, float x1, float y0, float y1, float step)[] ProbeZones =
+    {
+        ("Bunker", -7.5f, 3.8f, -14.1f, -6.1f, 1.5f),
+        ("Couloir_Gauche", -14.5f, -7.35f, -11.2f, 4.2f, 1f),
+        ("Cuisine", -22f, -16.65f, -8f, -1.65f, 1.25f),
+        ("Generateur", -19.7f, -14.5f, 0.35f, 4.65f, 1f),
+        ("Couloir_Droit", 3.65f, 10.5f, -11.2f, 7.6f, 1f),
+        ("Stockage", 10.5f, 16.8f, 3.85f, 9.15f, 1.25f),
+    };
+    static readonly float[] ProbeHeightsInside = { 0.4f, 1.2f, 1.9f };
+    static readonly float[] ProbeHeightsOutside = { 0.5f, 1.7f };
+
     static void BuildLightProbes()
     {
+        var root = new GameObject("Sondes_Lumiere").transform;
+        root.SetParent(mapRoot, false);
+        var zones = new List<Bounds>();
+        int total = 0;
+        foreach (var z in ProbeZones)
+        {
+            var a = B(z.x0, z.y0, 0f); var c = B(z.x1, z.y1, 0f);
+            var zb = new Bounds((a + c) / 2f, new Vector3(Mathf.Abs(a.x - c.x), 10f, Mathf.Abs(a.z - c.z)));
+            zones.Add(zb);
+            total += ProbeGroup(root, "Sondes_" + z.name, zb, z.step, ProbeHeightsInside, null);
+        }
+        // extérieur et reste de la carte : grille de 3 m, hors des zones déjà couvertes
         var b = new Bounds(roomRoot.transform.position, Vector3.zero);
         foreach (var r in roomRoot.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+        total += ProbeGroup(root, "Sondes_Exterieur", b, 3f, ProbeHeightsOutside, zones);
+        Debug.Log($"[RoomBuilder] {total} sondes de lumière en {ProbeZones.Length + 1} groupes");
+    }
+
+    static int ProbeGroup(Transform parent, string name, Bounds b, float step, float[] heights, List<Bounds> exclude)
+    {
         var pts = new List<Vector3>();
-        for (float x = b.min.x; x <= b.max.x; x += 2f)
-            for (float z = b.min.z; z <= b.max.z; z += 2f)
+        for (float x = b.min.x + step / 2f; x <= b.max.x; x += step)
+            for (float z = b.min.z + step / 2f; z <= b.max.z; z += step)
             {
+                if (exclude != null && exclude.Any(e => e.Contains(new Vector3(x, e.center.y, z)))) continue;
                 // sol sous le point (pièces : sous le plafond ; dehors : terrain)
                 if (!Physics.Raycast(new Vector3(x, 2.4f, z), Vector3.down, out var hit, 3f, ~0, QueryTriggerInteraction.Ignore)) continue;
-                foreach (var h in new[] { 0.5f, 1.7f })
+                foreach (var h in heights)
                 {
                     var p = hit.point + Vector3.up * h;
                     if (!Physics.CheckSphere(p, 0.15f, ~0, QueryTriggerInteraction.Ignore)) pts.Add(p);
                 }
             }
-        var go = new GameObject("Sondes_Lumiere");
-        go.transform.SetParent(mapRoot, false);
+        if (pts.Count == 0) return 0;
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
         go.AddComponent<LightProbeGroup>().probePositions = pts.ToArray();
-        Debug.Log($"[RoomBuilder] {pts.Count} sondes de lumière");
+        return pts.Count;
     }
 
     // ---------- lecture de la carte ----------
@@ -800,6 +838,52 @@ public static class RoomBuilder
         if (shader.EndsWith("Lit")) { m.SetFloat("_Smoothness", smooth); m.SetFloat("_Metallic", 0f); }
         AssetDatabase.CreateAsset(m, $"{Dir}/{name}.mat");
         return m;
+    }
+
+    // [#113] [#116] [#117] matériaux des effets (Fx, ZombieEyes), dans Resources pour être chargés en jeu et inclus dans le build :
+    //   Fx_Particules : particules en transparence (impacts, éclats de bois) ; Fx_Lueur : additif, pour les yeux des zombies.
+    static void EnsureFxMaterials()
+    {
+        const string texPath = "Assets/Resources/Fx_Point.png";
+        if (!File.Exists(texPath))
+        {
+            const int n = 32;
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x, y), new Vector2(n / 2f - 0.5f, n / 2f - 0.5f)) / (n / 2f);
+                    float a = Mathf.Clamp01(1f - d); a *= a;
+                    t.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
+            File.WriteAllBytes(texPath, t.EncodeToPNG());
+            Object.DestroyImmediate(t);
+            AssetDatabase.ImportAsset(texPath);
+            var imp = (TextureImporter)AssetImporter.GetAtPath(texPath);
+            imp.alphaIsTransparency = true; imp.mipmapEnabled = false; imp.wrapMode = TextureWrapMode.Clamp;
+            imp.SaveAndReimport();
+        }
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+        FxMat("Assets/Resources/Fx_Particules.mat", tex, false);
+        FxMat("Assets/Resources/Fx_Lueur.mat", tex, true);
+    }
+
+    static void FxMat(string path, Texture2D tex, bool additive)
+    {
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null) { m = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")); AssetDatabase.CreateAsset(m, path); }
+        m.SetTexture("_BaseMap", tex);
+        m.SetColor("_BaseColor", Color.white);
+        m.SetFloat("_Surface", 1f);                         // transparent
+        m.SetFloat("_Blend", additive ? 2f : 0f);           // 2 = additif, 0 = alpha
+        m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
+        m.SetFloat("_ZWrite", 0f);
+        m.SetFloat("_Cull", 0f);                            // visible des deux côtés
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        m.SetOverrideTag("RenderType", "Transparent");
+        m.renderQueue = (int)RenderQueue.Transparent;
+        EditorUtility.SetDirty(m);
     }
 
     static void MakeMaterials()

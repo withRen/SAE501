@@ -49,5 +49,35 @@ public static class ProcAudio
             return (lp * 1.6f + grit) * env * 0.7f;
         });
     }
+    // [#113] balle dans la chair : impact mat et grave, un peu « mouillé » (bruit adouci), sans résonance métallique
+    public static AudioClip Flesh()
+    {
+        float lp = 0f;
+        return Make("chair", 0.18f, t =>
+        {
+            lp += ((Random.value * 2 - 1) - lp) * 0.25f;
+            return lp * Mathf.Exp(-t * 30f) * 1.4f + Mathf.Sin(t * 95f * 6.2832f) * Mathf.Exp(-t * 35f) * 0.7f;
+        });
+    }
+    // [#113] tir à la tête : craquement sec (os) par-dessus l'impact de chair
+    public static AudioClip HeadCrack() => Make("tete", 0.22f, t =>
+    {
+        float crack = (Random.value * 2 - 1) * Mathf.Exp(-t * 70f) * 0.8f;
+        float t2 = t - 0.018f;
+        float crack2 = t2 > 0f ? (Random.value * 2 - 1) * Mathf.Exp(-t2 * 90f) * 0.5f : 0f;
+        return crack + crack2 + Mathf.Sin(t * 70f * 6.2832f) * Mathf.Exp(-t * 18f) * 0.8f;
+    });
+    // [#114] planche qui se cale sur l'ouverture : « clac » de bois sec (deux tons courts)
+    public static AudioClip Clack() => Make("clac", 0.09f, t =>
+        (Mathf.Sin(t * 520f * 6.2832f) * 0.6f + Mathf.Sin(t * 1240f * 6.2832f) * 0.3f) * Mathf.Exp(-t * 75f)
+        + (Random.value * 2 - 1) * Mathf.Exp(-t * 300f) * 0.5f);
+    // [#116] planche arrachée : craquement de bois (série de petits claquements serrés) puis le choc grave
+    public static AudioClip WoodCrack() => Make("craquement", 0.6f, t =>
+    {
+        float snaps = t < 0.25f && Random.value < 0.02f * (1f - t * 4f) ? (Random.value * 2 - 1) : 0f;
+        float noise = (Random.value * 2 - 1) * Mathf.Exp(-t * 14f) * 0.35f;
+        float body = Mathf.Sin(t * 140f * 6.2832f) * Mathf.Exp(-t * 12f) * 0.5f;
+        return snaps * 0.9f + noise + body;
+    });
     public static AudioClip Hit() => Make("hit", 0.12f, t => Mathf.Sin(t * 900f * 6.28f) * Mathf.Exp(-t * 45f) * 0.6f + (Random.value * 2 - 1) * Mathf.Exp(-t * 80f) * 0.4f);
 }

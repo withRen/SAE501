@@ -11,6 +11,8 @@ using UnityEngine.AI;
 //             (état Lurking) pendant que de la poussière tombe dans le bunker (Opening.WarnFromAbove), et seulement ensuite il saute.
 //   Mort    : tête = mort immédiate ; torse (33 %) et jambes (20 %) retirent une part des PV (voir ZombieLevels)
 //             armes de corps à corps (MeleeWeapon) : dégâts propres à chaque arme
+//   [#113] Touché : gerbe de particules au point d'impact (Fx.Blood), son de chair (craquement à la tête), petit recul.
+//   [#117] Yeux lumineux visibles au-delà de 8 m (ZombieEyes, ajouté ici s'il manque au prefab).
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {
@@ -40,6 +42,10 @@ public class Zombie : MonoBehaviour
     public float roofHeight = 2.2f;                      // au-dessus : il marche sur le toit (pas audibles)
     public float roofStepInterval = 0.55f;
 
+    [Header("Impact [#113]")]
+    public float flinchDistance = 0.12f;    // recul (m) à chaque balle ; double à la tête
+    [Range(0f, 1f)] public float fleshVolume = 0.9f;
+
     [Header("Sécurité : zombie coincé")]
     [Tooltip("Immobile (moins de 0,5 m parcouru) depuis ce temps alors qu'il devrait marcher : il meurt, pour que la vague se termine toujours.")]
     public float stuckTimeout = 20f;
@@ -68,8 +74,9 @@ public class Zombie : MonoBehaviour
     bool chasing;                           // l'attaque en cours vient d'une poursuite hors du bunker (pas d'une entrée)
     Vector3 stuckAnchor;
     float stuckSince, lurkUntil, nextRoofStep;
-    AudioSource roofSrc;
-    static AudioClip roofStep;
+    AudioSource roofSrc, hitSrc;
+    static AudioClip roofStep, flesh, headCrack;
+    Vector3 flinchDir; float flinchSpeed;
     static readonly RaycastHit[] sightHits = new RaycastHit[8];
 
     // intérieur du bunker (repère Unity ; MAP.md : Blender x -7,5..3,8 · y -14,1..-6,1) : là, le joueur est protégé par ses barricades
@@ -88,6 +95,7 @@ public class Zombie : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponent<ZombieAnimationBridge>();
+        if (!GetComponent<ZombieEyes>()) gameObject.AddComponent<ZombieEyes>();
     }
 
     // Liens de passage des fenêtres et des trous du toit (zone NavMesh 3) : réservés aux zombies qui ENTRENT.
@@ -147,6 +155,7 @@ public class Zombie : MonoBehaviour
             case State.Lurking: UpdateLurking(); break;
         }
         RoofSteps();
+        Flinch();
         if (!Dead) CheckStuck();
     }
 
@@ -163,7 +172,7 @@ public class Zombie : MonoBehaviour
         }
         if (Time.time - stuckSince < stuckTimeout) return;
         Debug.Log($"[Zombie] {name} immobile depuis {stuckTimeout:0} s ({state}) : éliminé pour que la vague se termine.");
-        Die();
+        Die();                              // pas compté dans le bilan : ce n'est pas le joueur qui l'a tué
     }
 
     bool Arrived() => !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.15f;
@@ -370,10 +379,10 @@ public class Zombie : MonoBehaviour
     public void OnHit(HitZone zone)
     {
         if (Dead) return;
-        if (zone == HitZone.Head) { Health = 0f; Die(); return; }
+        if (zone == HitZone.Head) { Health = 0f; Die(true); return; }
 
         Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
-        if (Health <= 0.01f) { Health = 0f; Die(); return; }
+        if (Health <= 0.01f) { Health = 0f; Die(true); return; }
         slowUntil = Time.time + (zone == HitZone.Legs ? slowDuration * 1.5f : slowDuration);     // touché : ralenti (plus longtemps aux jambes)
     }
 
@@ -382,13 +391,44 @@ public class Zombie : MonoBehaviour
     {
         if (Dead) return;
         Health -= ZombieLevels.BaseHealth * fractionOfBase;
-        if (Health <= 0.01f) { Health = 0f; Die(); return; }
+        if (Health <= 0.01f) { Health = 0f; Die(true); return; }
         slowUntil = Time.time + slowDuration;
     }
 
-    public void Die()
+    // [#113] retour d'impact (balle ou arme) : particules au point touché, son de chair, petit recul dans le sens du coup.
+    // Appelé avant OnHit / OnMeleeHit : le zombie qui meurt du coup a lui aussi sa gerbe et son son.
+    public void HitFeedback(Vector3 point, Vector3 direction, bool head)
     {
         if (Dead) return;
+        Fx.Blood(point, -direction, head);
+        if (!hitSrc)
+        {
+            hitSrc = gameObject.AddComponent<AudioSource>();
+            hitSrc.spatialBlend = 1f; hitSrc.minDistance = 1.5f; hitSrc.maxDistance = 25f; hitSrc.playOnAwake = false;
+        }
+        if (!flesh) { flesh = ProcAudio.Flesh(); headCrack = ProcAudio.HeadCrack(); }
+        hitSrc.pitch = Random.Range(0.85f, 1.1f);
+        hitSrc.PlayOneShot(head ? headCrack : flesh, fleshVolume);
+        direction.y = 0f;
+        if (direction.sqrMagnitude > 1e-4f)
+        {
+            flinchDir = direction.normalized;
+            flinchSpeed = (head ? 2f : 1f) * flinchDistance / 0.12f;      // le recul s'éteint en ~0,12 s
+        }
+    }
+
+    void Flinch()
+    {
+        if (flinchSpeed <= 0.01f) { flinchSpeed = 0f; return; }
+        if (agent.enabled && agent.isOnNavMesh && !agent.isOnOffMeshLink) agent.Move(flinchDir * flinchSpeed * Time.deltaTime);
+        flinchSpeed *= Mathf.Exp(-Time.deltaTime / 0.06f);
+    }
+
+    // byPlayer : tué par le joueur (compté dans le bilan) ; faux pour la sécurité « coincé » et la fin de partie
+    public void Die(bool byPlayer = false)
+    {
+        if (Dead) return;
+        if (byPlayer) GameStats.Kill();
         state = State.Dead;
         agent.isStopped = true;
         agent.enabled = false;

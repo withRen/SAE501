@@ -15,6 +15,9 @@ using UnityEngine.SceneManagement;
 // Une vague se termine toujours : un zombie coincé meurt seul au bout de 20 s (Zombie.stuckTimeout).
 // [#102] Annonces et statut sur un écran fixe du bunker (mur sud, au-dessus du râtelier), plus rien ne suit le regard ;
 //   une alarme retentit au début de chaque vague. [#106] L'annonce dit ce que contiennent les zones qui s'ouvrent (ZoneGate).
+// [#120] Niveau 4 : le générateur ne démarre qu'après generatorKills zombies éliminés OU generatorDelay secondes dans le niveau
+//   (on ne gagne plus en courant directement au levier). L'écran annonce le moment où il devient utilisable.
+// [#122] Le temps de jeu est compté pour le bilan (GameStats) ; la victoire affiche le bilan (GameOverUI.ShowVictory).
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
@@ -40,6 +43,10 @@ public class WaveManager : MonoBehaviour
     public int lastLevelMaxAlive = 9;
     public float victoryRestartDelay = 12f;
 
+    [Header("Niveau 4 : condition du générateur [#120]")]
+    public int generatorKills = 6;             // zombies à éliminer pendant le niveau 4…
+    public float generatorDelay = 60f;         // …ou secondes à tenir dans le niveau 4
+
     [Header("Écran d'annonces (fixe, dans le bunker)")]
     public Transform screen;                   // créé par RoomBuilder ; absent : écran posé au mur sud du bunker
     public static readonly Vector3 DefaultScreenPosition = new Vector3(1.85f, 2.25f, 13.80f);
@@ -64,6 +71,16 @@ public class WaveManager : MonoBehaviour
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
     public bool Victory => phase == Phase.Victory;
 
+    // [#120] progression du niveau en cours (remise à zéro à chaque niveau)
+    public int LevelKills { get; private set; }
+    public float LevelTime { get; private set; }
+    bool generatorAnnounced;
+    int killsAtLevelStart;
+    /// <summary>Le générateur peut démarrer : niveau 4 atteint et (assez de zombies éliminés ou délai écoulé).</summary>
+    public bool GeneratorReady => Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    public string GeneratorCondition => "Éliminez " + Mathf.Max(0, generatorKills - LevelKills) + " zombie" + (generatorKills - LevelKills > 1 ? "s" : "")
+                                      + "\nou tenez " + Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime)) + " s";
+
     static LevelDef[] DefaultLevels() => new[]
     {
         new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur },
@@ -74,7 +91,7 @@ public class WaveManager : MonoBehaviour
             banner = "NIVEAU 3" },
         new LevelDef { zombies = 15, speed = 1.2f, maxAlive = 7, spawnInterval = 5.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
             // [#107] où aller, quoi faire
-            banner = "NIVEAU 4 · OBJECTIF FINAL\nLe GÉNÉRATEUR est ouvert :\nporte ouest, couloir gauche,\ntout au bout après la cuisine.\nAbaissez son levier, tenez 5 s." },
+            banner = "NIVEAU 4 · OBJECTIF FINAL\nLe GÉNÉRATEUR est ouvert :\nporte ouest, couloir gauche,\ntout au bout après la cuisine.\nIl démarre après 6 zombies abattus\nou 60 s. Puis abaissez son levier 5 s." },
     };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -85,6 +102,7 @@ public class WaveManager : MonoBehaviour
         Instance = this;
         Level = 0;
         timer = firstDelay;
+        GameStats.Reset();                     // [#122] nouvelle partie (aussi après « rejouer ») : bilan remis à zéro
     }
 
     void Start()
@@ -123,6 +141,7 @@ public class WaveManager : MonoBehaviour
     {
         // pendant le tutoriel : rien ne bouge (pas de compte à rebours, pas de zombie), même si le WaveManager a été réactivé
         if (spawner == null || Tutorial.Running) return;
+        if (phase != Phase.Victory && !(PlayerHealth.Instance && PlayerHealth.Instance.Dead)) GameStats.Tick(Time.deltaTime);   // [#122] temps de jeu (figé à la fin)
         switch (phase)
         {
             case Phase.Waiting:
@@ -148,6 +167,7 @@ public class WaveManager : MonoBehaviour
         Level = Mathf.Clamp(lvl, 1, levels.Length);
         spawner.level = Level;
         spawned = 0; pointIndex = 0; spawnTimer = 1f; reinforceTimer = lastLevelReinforcementEvery;
+        killsAtLevelStart = GameStats.Kills; LevelKills = 0; LevelTime = 0f; generatorAnnounced = false;
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
@@ -170,6 +190,14 @@ public class WaveManager : MonoBehaviour
     {
         var def = levels[Level - 1];
         bool last = Level == levels.Length;
+        LevelTime += Time.deltaTime;
+        LevelKills = GameStats.Kills - killsAtLevelStart;
+        if (last && !generatorAnnounced && GeneratorReady)
+        {
+            generatorAnnounced = true;
+            if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume * 0.6f);
+            Announce("LE GÉNÉRATEUR EST PRÊT\nAbaissez son levier\net tenez-le 5 s.", 7f);
+        }
 
         if (spawned < def.zombies)
         {
@@ -191,7 +219,14 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned)))
+        if (last && !GeneratorReady)
+        {
+            // [#120] tant que le générateur est bloqué : ce qu'il reste à faire
+            int left = Mathf.Max(0, generatorKills - LevelKills), secs = Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime));
+            if (StatusChanged(3000 + left, secs))
+                SetStatus("Générateur bloqué · " + left + " zombie" + (left > 1 ? "s" : "") + " à abattre ou " + secs + " s");
+        }
+        else if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned)))
             SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
     }
 
@@ -212,7 +247,9 @@ public class WaveManager : MonoBehaviour
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
         Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
-        StartCoroutine(RestartAfter(victoryRestartDelay));
+        // [#122] bilan de fin (GameOverUI relance la partie) ; sans lui, relance simple
+        if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();
+        else StartCoroutine(RestartAfter(victoryRestartDelay));
     }
 
     IEnumerator RestartAfter(float s)

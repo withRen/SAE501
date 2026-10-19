@@ -70,6 +70,7 @@ Le prefab **`Assets/Prefabs/ZombieSpawnPoints.prefab`** regroupe les points de d
 ## 5. Poursuite hors du bunker et zombie coincé
 
 - **Poursuite** (issue #92) : un zombie qui marche vers son ouverture (ou casse ses planches) poursuit le joueur s'il le **voit à moins de 3,5 m** et que le joueur est **hors du bunker**. Il le frappe comme dans le bunker. Il le lâche si le joueur rentre dans le bunker, s'éloigne à plus de 7 m ou reste caché 2 s, et repart vers une ouverture. Pendant la poursuite il ne prend ni les fenêtres ni les trous du toit.
+- **Toit, plus de chute surprise** (issue #104, niveaux 3 et 4) : sur le toit, les pas du zombie résonnent (coup sourd toutes les ~0,55 s, entendu jusqu'à 16 m). Arrivé au bord de son trou, il attend **3 à 4 s** (état `Lurking`) : de la poussière tombe du trou dans le bunker avec un bruit de gravats (`Opening.WarnFromAbove`), puis il saute. Les trous ne se barricadent toujours pas.
 - **Zombie coincé** (issue #95) : un zombie qui devrait se déplacer (marche, entrée, poursuite) mais n'a pas parcouru 0,5 m en **20 s** meurt seul, pour que la vague se termine toujours. Casser des planches ou frapper ne compte pas comme « coincé ».
 
 Test dans l'éditeur (nouvelle carte) : zombie de l'extérieur → fenêtre sud-est, 3 planches arrachées, fenêtre enjambée, attaque du joueur ; zombie du couloir droit → porte est (18 m).

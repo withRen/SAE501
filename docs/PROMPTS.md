@@ -87,6 +87,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [076](#076--issues-github-des-modifications) | 2026-10-19 | Mettre tout ça dans les issues GitHub | GitHub / organisation | Issues #91 à #128, labels P0 à P4, ajoutées au projet SAE501 |
 | [077](#077--relire-rulesmd) | 2026-10-19 | Relire le rules.md | GitHub / organisation | Journal 071-077 ajouté, issues rattachées au projet n°2 |
 | [078](#078--correctifs-p0--poursuite-point-gauche-toit-zombie-coincé) | 2026-10-19 | Correctifs P0 : poursuite hors du bunker, point du couloir gauche, pas de toit aux niveaux 1-2, zombie coincé | Gameplay | Issues #92 à #95 ; testé en mode Play dans l'éditeur, pas au casque |
+| [079](#079--lisibilité-p1--écran-dannonces-caméra-sud-toit-tutoriel-zones-leviers) | 2026-10-19 | Lisibilité P1 : écran d'annonces fixe + alarme, caméra extérieure sud, poussière avant la chute du toit, « Visez la tête », contenu des zones, annonce du niveau 4, leviers physiques | Gameplay | Issues #102 à #107 et #111 ; testé en mode Play dans l'éditeur, pas au casque |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1320,3 +1321,35 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Scène reconstruite (**SAE501 → Build VR Scene**) : les niveaux sont enregistrés dans la scène.
 - Testé dans l'éditeur en mode Play : poursuite et coups, abandon quand le joueur rentre au bunker, point de la cuisine vers la porte ouest, point du couloir droit au sol, zombie bloqué éliminé. **Pas testé au casque.**
 - Docs : `ZOMBIES.md`, `MAP.md` ; wiki : pages Zombies et Niveaux et vagues.
+
+### 079 — Lisibilité P1 : écran d'annonces, caméra sud, toit, tutoriel, zones, leviers
+
+**Prompt**
+
+> Modifie WaveManager.cs (MakeText) pour remplacer les annonces collées à la tête par un écran fixe dans le bunker accompagné d'un son d'alarme
+>
+> Ajoute une caméra extérieure sud et un écran au pupitre dans RoomBuilder.cs (BuildCameras) et CctvRoundRobin pour voir les zones d'arrivée au niveau 1.
+>
+> Mets à jour Zombie.cs et ProcAudio.cs pour supprimer le spawn surprise sur le toit et ajouter de la poussière 3 à 4 secondes avant la chute (niveau 3+).
+>
+> Ajoute la règle "Visez la tête" à l'étape de la cible dans Tutorial.cs
+>
+> Affiche le contenu des zones sur le panneau « VERROUILLÉ » et dans l'annonce via ZoneGate.cs et WaveManager.cs.
+>
+> Rends l'annonce du niveau 4 explicite dans WaveManager.cs pour indiquer clairement où aller et quoi faire concernant l'objectif du générateur.
+>
+> Remplace l'interaction de type bouton par un levier physique à abaisser pour le générateur et le disjoncteur dans Generator.cs et Breaker.cs.
+
+**Résultat** (code par l'IA, Claude Code)
+
+- **#102 Écran d'annonces** (`WaveManager.cs`, `RoomBuilder.cs`) : annonces et statut de vague sur un écran fixe (2 x 0,8 m) au mur sud du bunker, au-dessus du râtelier à planches, face au point de départ. Plus aucun texte ne suit le regard. Alarme à deux tons (`ProcAudio.Alarm`, non spatialisée) au début de chaque vague. Choix de l'IA : un seul écran, dans le bunker ; hors du bunker, on entend l'alarme mais on ne lit pas l'annonce.
+- **#103 Caméra sud** (`RoomBuilder.cs`, `CctvOverlay.cs`) : 5e caméra « CAM 05 EXTÉRIEUR SUD », à 1,5 m de l'angle sud-ouest du bunker, le long du mur sud : les deux fenêtres et le point d'apparition extérieur. Le fichier Blender n'a pas de 5e écran : un moniteur est construit sur le bureau, à droite de l'écran 01. `CctvRoundRobin` n'a pas eu besoin de changer (il prend la liste) ; chaque écran passe de ~18 à ~14 images/s.
+- **#104 Toit** (`Zombie.cs`, `Opening.cs`, `ProcAudio.cs`) : pas audibles sur le toit, puis 3 à 4 s d'attente au bord du trou avec poussière et bruit de gravats avant la chute (nouvel état `Lurking`).
+- **#105 Tutoriel** (`Tutorial.cs`) : l'étape de la cible dit « RÈGLE : VISEZ LA TÊTE », puis un écran rappelle tête 1 tir, torse 3 tirs, jambes 5 tirs (calculés depuis `ZombieLevels`).
+- **#106 Zones** (`ZoneGate.cs`, `WaveManager.cs`, `RoomBuilder.cs`) : contenu sur les panneaux « VERROUILLÉ » (ex. « Planches, chargeurs, batterie ») et dans l'annonce du niveau qui ouvre la zone.
+- **#107 Niveau 4** (`WaveManager.cs`) : « Le GÉNÉRATEUR est ouvert : porte ouest, couloir gauche, tout au bout après la cuisine. Abaissez son levier, tenez 5 s. »
+- **#111 Leviers** (nouveau `Lever.cs`, `Generator.cs`, `Breaker.cs`, `ClickGrab.cs`, `InteractableOutline.cs`) : on attrape la boule (grip) et on abaisse la main, le levier suit. Disjoncteur : en bas = caméras allumées, remonté = coupées. Générateur : levier à ressort, il faut le tenir en bas 5 s (il remonte si on le lâche), comme l'ancienne règle « garder la main dessus ».
+- Scène reconstruite (**SAE501 → Build VR Scene**).
+- Testé dans l'éditeur en mode Play (captures) : textes sur l'écran fixe aux niveaux 2 et 4, panneaux, disjoncteur abaissé → caméras allumées, image de la caméra 05, zombie du toit (marche 5 s, attente 3,1 s avec poussière, puis saut), levier du générateur qui remonte seul, générateur démarré après 5 s tenu en bas → victoire. Le geste de la main sur le levier a été simulé (position imposée), **pas testé au casque**, ni le son (alarme, pas, gravats).
+- Incident : un script modifié pendant le mode Play a bloqué l'éditeur (rechargement à chaud, `WaveManager.Level` remis à 0) ; Unity a été fermé puis relancé, aucune perte.
+- Docs : `ZOMBIES.md` ; wiki : pages Niveaux et vagues, Zombies, Caméras de surveillance, Générateur et disjoncteur, Tutoriel.

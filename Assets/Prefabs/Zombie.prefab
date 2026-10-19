@@ -3282,6 +3282,9 @@ MonoBehaviour:
   attackHitDelay: 0.7
   chaseRange: 3.5
   chaseLoseRange: 7
+  dropWarning: {x: 3, y: 4}
+  roofHeight: 2.2
+  roofStepInterval: 0.55
   stuckTimeout: 20
   typeName: Normal
   speedMultiplier: 1

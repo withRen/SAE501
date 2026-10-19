@@ -1131,6 +1131,9 @@ MonoBehaviour:
   attackHitDelay: 0.33
   chaseRange: 3.5
   chaseLoseRange: 7
+  dropWarning: {x: 3, y: 4}
+  roofHeight: 2.2
+  roofStepInterval: 0.55
   stuckTimeout: 20
   typeName: Cogneur
   speedMultiplier: 0.9

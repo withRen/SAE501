@@ -86,6 +86,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [075](#075--tableau-des-modifications) | 2026-10-19 | Tableau de tout ce qui doit être modifié / ajusté | Analyse | Tableau unique de 38 lignes |
 | [076](#076--issues-github-des-modifications) | 2026-10-19 | Mettre tout ça dans les issues GitHub | GitHub / organisation | Issues #91 à #128, labels P0 à P4, ajoutées au projet SAE501 |
 | [077](#077--relire-rulesmd) | 2026-10-19 | Relire le rules.md | GitHub / organisation | Journal 071-077 ajouté, issues rattachées au projet n°2 |
+| [078](#078--correctifs-p0--poursuite-point-gauche-toit-zombie-coincé) | 2026-10-19 | Correctifs P0 : poursuite hors du bunker, point du couloir gauche, pas de toit aux niveaux 1-2, zombie coincé | Gameplay | Issues #92 à #95 ; testé en mode Play dans l'éditeur, pas au casque |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1297,3 +1298,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 - Écarts corrigés : les prompts 071 à 076 n'étaient pas dans ce journal (ajoutés, avec l'index) ; les issues #91 à #128 n'étaient pas dans le projet GitHub n°2 « SAE501 » (ajoutées).
 - Pas de page de wiki : aucune fonctionnalité n'a été ajoutée ou modifiée (analyse et suivi seulement).
+
+### 078 — Correctifs P0 : poursuite, point gauche, toit, zombie coincé
+
+**Prompt**
+
+> Dans Zombie.cs (UpdateWalking), fais en sorte que les zombies poursuivent le joueur hors du bunker dès qu'il est visible à moins de 3,5 m
+>
+> Déplace le point d'apparition Spawn_Couloir_Gauche à 10 m ou plus dans ZombieSpawnPoints.prefab et RoomBuilder.cs pour qu'aucun zombie n'apparaît en vue du générateur
+>
+> Mets à jour WaveManager.cs (DefaultLevels) pour retirer le spawn Toit des niveaux 1 et 2 afin qu'ils arrivent uniquement par des ouvertures barricadables.
+>
+> Ajoute une sécurité dans Zombie.cs / WaveManager.cs pour tuer automatiquement tout zombie immobile depuis 20 secondes afin que les vagues se finissent toujours.
+
+**Résultat** (code par l'IA, Claude Code)
+
+- **#92 Poursuite** (`Zombie.cs`) : nouvel état `Chasing`. En marche ou en train de casser, un zombie qui voit le joueur (lancer de rayon, murs et planches cachent) à moins de 3,5 m, joueur hors du bunker, le poursuit et le frappe. Il le lâche si le joueur rentre dans le bunker, s'éloigne à plus de 7 m ou reste caché 2 s. Il ne prend ni fenêtre ni trou du toit pendant la poursuite. Le seuil de 7 m et les 2 s sont des choix de l'IA.
+- **#93 Point du couloir gauche** : le point est construit dans `ZombieBuilder.cs` (et non `RoomBuilder.cs`, qui ne fait qu'instancier le prefab). Déplacé du bout nord du couloir (4,8 m de l'interrupteur) au **fond de la cuisine**, Blender (−21,5 ; −6,8) : 11,1 m de l'interrupteur, hors de sa vue, 17,6 m de chemin jusqu'à la porte ouest. Choix de l'IA : dans le couloir, aucun point à 10 m n'était assez loin de la porte ouest (moins de 7 m de chemin).
+- **#94 Toit** (`WaveManager.cs`) : niveau 1 = extérieur seulement ; niveau 2 = extérieur et 2 couloirs. **Bug trouvé en vérifiant** : les zombies du couloir droit apparaissaient sur le toit (Unity choisissait le NavMesh du toit, 2,8 m au-dessus du point). `ZombieSpawner.cs` cherche maintenant d'abord à 1 m.
+- **#95 Zombie coincé** (`Zombie.cs`) : immobile (moins de 0,5 m) depuis 20 s alors qu'il devrait marcher, entrer ou poursuivre → il meurt. Casser et frapper ne comptent pas. Aucun changement dans `WaveManager.cs` : un zombie mort sort déjà du compte des vivants.
+- Scène reconstruite (**SAE501 → Build VR Scene**) : les niveaux sont enregistrés dans la scène.
+- Testé dans l'éditeur en mode Play : poursuite et coups, abandon quand le joueur rentre au bunker, point de la cuisine vers la porte ouest, point du couloir droit au sol, zombie bloqué éliminé. **Pas testé au casque.**
+- Docs : `ZOMBIES.md`, `MAP.md` ; wiki : pages Zombies et Niveaux et vagues.

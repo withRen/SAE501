@@ -59,8 +59,8 @@ Les emplacements des fenêtres viennent des repères du fichier (`Bunker_PlankSl
 
 | Point | Blender | Chemin mesuré jusqu'au bunker |
 |---|---|---|
-| Bout du couloir gauche | (−12 ; 3,7) | 16,3 m jusqu'à la porte ouest |
-| Bout du couloir droit | (7,1 ; 7) | 18,7 m jusqu'à la porte est |
+| Fond de la cuisine (côté couloir gauche) | (−21,5 ; −6,8) | 17,6 m jusqu'à la porte ouest ; 11,1 m de l'interrupteur du générateur, hors de sa vue |
+| Bout du couloir droit | (7,1 ; 7) | 18 m jusqu'à la porte est |
 | Extérieur sud | (−1,85 ; −17,6) | 3,7 m jusqu'à chaque fenêtre |
 
 ## NavMesh

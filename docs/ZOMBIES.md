@@ -57,11 +57,19 @@ Le prefab **`Assets/Prefabs/ZombieSpawnPoints.prefab`** regroupe les points de d
 
 | Point | Position (Blender) | Chemin vers… | Longueur (mesurée) |
 |---|---|---|---|
-| `Spawn_Couloir_Gauche` | (−12 ; 3,7) | porte ouest du bunker | 16,3 m |
-| `Spawn_Couloir_Droit` | (7,1 ; 7) | porte est du bunker | 18,7 m |
+| `Spawn_Couloir_Gauche` | (−21,5 ; −6,8), fond de la cuisine | porte ouest du bunker | 17,6 m |
+| `Spawn_Couloir_Droit` | (7,1 ; 7) | porte est du bunker | 18 m |
 | `Spawn_Exterieur_Sud` | (−1,85 ; −17,6) | fenêtres sud-ouest et sud-est | 3,7 m |
+| `Spawn_Toit_Bunker` | (−1,5 ; −10), sur le toit | trous du toit | niveaux 3 et 4 seulement |
 
 - Les fenêtres sont franchies par des **liens NavMesh** (extérieur → intérieur).
 - Chaque zombie choisit l'ouverture la plus proche **par le chemin réel**.
+- `Spawn_Couloir_Gauche` était au bout nord du couloir (−12 ; 3,7), à moins de 5 m de l'interrupteur du générateur : déplacé au fond de la cuisine, à **11,1 m** de l'interrupteur et hors de sa vue (issue #93).
+- Le départ est posé sur le NavMesh le plus proche **dans un rayon de 1 m d'abord** : avec 4 m d'emblée, Unity choisissait le toit du couloir droit (2,8 m au-dessus) et ces zombies arrivaient par le toit.
+
+## 5. Poursuite hors du bunker et zombie coincé
+
+- **Poursuite** (issue #92) : un zombie qui marche vers son ouverture (ou casse ses planches) poursuit le joueur s'il le **voit à moins de 3,5 m** et que le joueur est **hors du bunker**. Il le frappe comme dans le bunker. Il le lâche si le joueur rentre dans le bunker, s'éloigne à plus de 7 m ou reste caché 2 s, et repart vers une ouverture. Pendant la poursuite il ne prend ni les fenêtres ni les trous du toit.
+- **Zombie coincé** (issue #95) : un zombie qui devrait se déplacer (marche, entrée, poursuite) mais n'a pas parcouru 0,5 m en **20 s** meurt seul, pour que la vague se termine toujours. Casser des planches ou frapper ne compte pas comme « coincé ».
 
 Test dans l'éditeur (nouvelle carte) : zombie de l'extérieur → fenêtre sud-est, 3 planches arrachées, fenêtre enjambée, attaque du joueur ; zombie du couloir droit → porte est (18 m).

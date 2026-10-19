@@ -1,14 +1,13 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Objectif du jeu : activer le générateur (salle Générateur, déverrouillée au niveau 4).
-// Il faut actionner l'interrupteur (un appui sur grip, prise par clic : ClickGrab) et garder la main dessus pendant `holdSeconds` ;
-// si on retire la main ou qu'on rappuie, la jauge redescend.
+// [#111] Levier physique à ressort (Lever) : on l'attrape (grip), on l'ABAISSE jusqu'en bas et on le tient `holdSeconds` ;
+// lâché, il remonte tout seul et la jauge redescend.
 // À la fin : lumière de la salle rallumée, victoire (WaveManager.GeneratorActivated).
 public class Generator : MonoBehaviour
 {
-    public XRSimpleInteractable button;
-    public Renderer buttonRenderer;
+    public Lever lever;
+    public Renderer buttonRenderer;     // voyant (boule du levier) : rouge -> orange pendant le démarrage -> vert
     public TextMesh label;
     public Light lamp;                  // lumière de la salle
     public Light[] roomLights;          // autres lumières de la salle, presque éteintes avant le démarrage
@@ -44,16 +43,14 @@ public class Generator : MonoBehaviour
 
     void Update()
     {
-        // prise par clic : la sélection ne s'arrête plus en relâchant grip, donc on la coupe si la main s'éloigne
-        if (button != null && button.isSelected && !button.isHovered)
-            button.interactionManager.SelectExit(button.firstInteractorSelecting, button);
         if (on) return;
         bool unlocked = WaveManager.Level >= unlockLevel;
+        if (lever) lever.locked = !unlocked;                 // avant le niveau 4 : levier bloqué en haut
         if (!unlocked) { SetLabel("HORS SERVICE"); return; }
 
-        bool held = button != null && button.isSelected;
+        bool held = lever != null && lever.IsDown;           // levier à ressort : en bas seulement tant qu'on le tient
         progress = Mathf.Clamp(progress + (held ? 1f : -releaseDecay) * Time.deltaTime, 0f, holdSeconds);
-        SetLabel(progress <= 0f ? "APPUYEZ SUR L'INTERRUPTEUR\net gardez la main dessus" : "DÉMARRAGE… " + Mathf.RoundToInt(progress / holdSeconds * 100f) + " %");
+        SetLabel(progress <= 0f ? "ABAISSEZ LE LEVIER\net tenez-le en bas " + holdSeconds.ToString("0") + " s" : "DÉMARRAGE… " + Mathf.RoundToInt(progress / holdSeconds * 100f) + " %");
         SetButtonColor(Color.Lerp(buttonOff, new Color(1f, 0.7f, 0.1f), progress / holdSeconds));
 
         if (progress >= holdSeconds) Activate();
@@ -62,6 +59,7 @@ public class Generator : MonoBehaviour
     public void Activate()
     {
         on = true;
+        if (lever) { lever.Snap(true); lever.locked = true; }      // le levier reste en bas
         SetLabel("GÉNÉRATEUR ACTIVÉ");
         SetButtonColor(buttonOn);
         if (lamp) { lamp.color = new Color(1f, 0.8f, 0.5f); lamp.intensity = 3f; lamp.range = 9f; }

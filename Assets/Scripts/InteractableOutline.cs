@@ -41,8 +41,8 @@ public class InteractableOutline : MonoBehaviour
             if (it.GetComponent<InteractableOutline>() || it.GetComponent<MonitorOverlayClose>()) continue;   // pas la vue plein écran
             var o = it.gameObject.AddComponent<InteractableOutline>();
             o.interactable = it;
-            var gen = it.GetComponentInParent<Generator>();
-            if (gen && gen.buttonRenderer) o.targets = new[] { gen.buttonRenderer };   // l'interrupteur est un levier à côté de sa zone
+            var lever = it.GetComponentInParent<Lever>();
+            if (lever) o.targets = lever.GetComponentsInChildren<Renderer>(true);      // levier (générateur, disjoncteur) : tige et boule
         }
     }
 

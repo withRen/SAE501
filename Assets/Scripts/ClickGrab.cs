@@ -5,8 +5,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 // Prise par clic : un appui sur le bouton latéral (grip) attrape l'objet, un 2e appui le lâche.
 // Plus besoin de garder le bouton enfoncé. À mettre sur les interacteurs des mains (SetupVRScene).
-// Les boutons/écrans (XRSimpleInteractable) ne restent pas « tenus » : on les relâche aussitôt, sauf l'interrupteur
-// du générateur, qui reste actionné tant que la main est dessus (voir Generator).
+// Les boutons/écrans (XRSimpleInteractable) ne restent pas « tenus » : on les relâche aussitôt, sauf les leviers
+// (générateur, disjoncteur : Lever) et les poignées de porte, qu'on tient pour les déplacer.
 [RequireComponent(typeof(XRBaseInputInteractor))]
 public class ClickGrab : MonoBehaviour
 {
@@ -25,7 +25,7 @@ public class ClickGrab : MonoBehaviour
     void OnSelect(SelectEnterEventArgs a)
     {
         if (a.interactableObject is XRGrabInteractable) return;
-        if (a.interactableObject.transform.GetComponentInParent<Generator>()) return;
+        if (a.interactableObject.transform.GetComponentInParent<Lever>()) return;       // levier (générateur, disjoncteur) : tenu tant qu'on l'abaisse
         if (a.interactableObject.transform.GetComponentInParent<HingedDoor>()) return;   // poignée de porte : tenue tant qu'on tire
         pending = a.interactableObject;                // relâché à la fin de l'image (pas pendant l'événement)
     }

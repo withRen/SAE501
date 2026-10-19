@@ -37,12 +37,27 @@ public static class SetupVRScene
 
         var path = "Assets/Scenes/MainScene.unity";
         EditorSceneManager.SaveScene(scene, path);
+        BakeOcclusion(scene, path);
         // le menu d'accueil (SAE501 > Build Menu Scene) reste la 1re scène s'il existe, puis le jeu
         var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
         if (System.IO.File.Exists(MenuBuilder.ScenePath)) scenes.Add(new EditorBuildSettingsScene(MenuBuilder.ScenePath, true));
         scenes.Add(new EditorBuildSettingsScene(path, true));
         EditorBuildSettings.scenes = scenes.ToArray();
         Debug.Log("SAE501: scene built");
+    }
+
+    // [Perf] occlusion précalculée : les pièces cachées derrière les murs ne sont plus dessinées (carte d'environ 700 000 triangles).
+    // Les murs, sols et plafonds de la carte sont marqués « Occluder » par RoomBuilder (MakeMapColliders).
+    // Réglages pour des pièces intérieures : un mur de 1 m cache déjà ; les trous de moins de 10 cm ne laissent pas voir à travers.
+    // Le calcul prend un peu de temps (barre de progression) ; ses données sont enregistrées à côté de la scène.
+    static void BakeOcclusion(Scene scene, string path)
+    {
+        StaticOcclusionCulling.smallestOccluder = 1f;
+        StaticOcclusionCulling.smallestHole = 0.1f;
+        StaticOcclusionCulling.backfaceThreshold = 100f;
+        if (!StaticOcclusionCulling.Compute()) { Debug.LogWarning("SAE501: calcul de l'occlusion annulé ou impossible"); return; }
+        EditorSceneManager.SaveScene(scene, path);
+        Debug.Log("SAE501: occlusion précalculée");
     }
 
     static void AddHand(GameObject rig, string controllerName, string side, string map, InputActionAsset actions)
@@ -68,9 +83,9 @@ public static class SetupVRScene
         anim.gripValue = new InputActionProperty(Ref(actions, map, "Select Value"));
     }
 
-    // Rotation fluide (demande de l'équipe) au lieu des crans du Starter Assets.
-    // Remarque : le document de la SAÉ recommande la rotation par crans pour le confort -> remettre false pour revenir aux crans.
-    const bool SmoothTurn = true;
+    // Rotation par crans dans la scène (confort, recommandé par la SAÉ). Au lancement, GameSettings applique le choix
+    // du joueur (PARAMÈTRES > Rotation), par crans par défaut.
+    const bool SmoothTurn = false;
 
     // Même configuration que "My project" : on attrape uniquement à portée de main.
     // - le Near-Far Interactor des Starter Assets (rayon qui attrape de loin, objet tenu à distance, joystick qui

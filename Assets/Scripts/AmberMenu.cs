@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Base commune des menus « terminal de bunker » ambre (menu d'accueil MainMenu, menu pause PauseMenu) :
-// panneau, gros boutons, page PARAMÈTRES (son, confort VR, difficulté) et briques (curseurs, choix).
+// panneau, gros boutons, page PARAMÈTRES (son, confort VR dont la téléportation, difficulté) et briques (curseurs, choix).
 // Tout est construit en code (UiKit) ; le pointeur est MenuPointer.
 public abstract class AmberMenu : MonoBehaviour
 {
@@ -28,6 +28,7 @@ public abstract class AmberMenu : MonoBehaviour
         Section(p, ref y, "CONFORT VR");
         Choice(p, ref y, "Rotation", new[] { "PAR À-COUPS", "FLUIDE" }, () => GameSettings.SmoothTurn ? 1 : 0, i => GameSettings.SmoothTurn = i == 1);
         Choice(p, ref y, "Bords sombres", new[] { "OUI", "NON" }, () => GameSettings.ComfortVignette ? 0 : 1, i => GameSettings.ComfortVignette = i == 0);
+        Choice(p, ref y, "Téléportation", new[] { "OUI", "NON" }, () => GameSettings.Teleport ? 0 : 1, i => GameSettings.Teleport = i == 0);
         Choice(p, ref y, "Vue", new[] { "RECENTRER" }, () => -1, i => GameSettings.Recenter());
         Section(p, ref y, "JEU");
         Choice(p, ref y, "Difficulté", new[] { "FACILE", "NORMAL", "DIFFICILE" }, () => (int)GameSettings.Difficulty, i => GameSettings.Difficulty = (GameSettings.Level)i);

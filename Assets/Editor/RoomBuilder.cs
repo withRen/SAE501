@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 
 // Construit la scène de jeu à partir de la carte Blender (Assets/Room, exportée par Tools/blender/export_map.py)
 // + tout le gameplay (planches, marteau, écrans de surveillance, ceinture, portes de niveau, générateur, zombies).
@@ -85,6 +86,8 @@ public static class RoomBuilder
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
+        BuildTeleportFloors(roomRoot.transform);
+        rig.AddComponent<TeleportGuard>();          // pas de téléportation dans une zone fermée ni dehors
         BuildExterior();
         BuildPlanks(planks);
         BuildHammer(hammerNode);
@@ -155,16 +158,44 @@ public static class RoomBuilder
     // structure : collider exact (murs percés de portes et de fenêtres, sols en L)
     static readonly string[] Structural = { "Wall", "Floor", "Trim", "Stub" };
 
+    // [Perf] occlusion précalculée (SetupVRScene) : les murs, sols et plafonds cachent ce qui est derrière eux (Occluder),
+    // tout le décor de la carte peut être caché (Occludee). Les objets qui bougent (portes de niveau, objets à attraper)
+    // ne sont pas dans la carte du fichier : ils ne sont pas marqués.
+    static readonly string[] Occluders = { "Wall", "Floor", "Ceiling", "Stub" };
+
     static void MakeMapColliders(Transform root)
     {
         foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true))
         {
-            GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic);
             var n = r.name;
+            var flags = StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic;
+            if (Occluders.Any(k => n.Contains(k)) && !IsTransparent(r)) flags |= StaticEditorFlags.OccluderStatic;
+            GameObjectUtility.SetStaticEditorFlags(r.gameObject, flags);
             if (NoCollider.Any(k => n.Contains(k))) continue;
             if (Structural.Any(k => n.Contains(k))) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
             else r.gameObject.AddComponent<BoxCollider>();
         }
+    }
+
+    static bool IsTransparent(Renderer r) => r.sharedMaterials.Any(m => m != null && m.renderQueue >= (int)RenderQueue.AlphaTest);
+
+    // [Confort] téléportation en option : chaque sol de la carte devient une zone de téléportation (couche « Teleport »),
+    // active seulement si l'option est choisie et si la zone du sol est ouverte (TeleportFloor, MapZones).
+    static void BuildTeleportFloors(Transform root)
+    {
+        int tp = InteractionLayerMask.GetMask("Teleport");
+        int n = 0;
+        foreach (var col in root.GetComponentsInChildren<MeshCollider>(true))
+        {
+            if (!col.name.Contains("Floor")) continue;
+            var area = col.gameObject.AddComponent<TeleportationArea>();
+            if (tp != 0) area.interactionLayers = tp;
+            area.enabled = false;                                   // TeleportFloor l'active selon l'option et le niveau
+            col.gameObject.AddComponent<TeleportFloor>().unlockLevel = MapZones.LevelAt(col.bounds.center);
+            n++;
+        }
+        if (tp == 0) Debug.LogWarning("Téléportation : couche d'interaction « Teleport » introuvable (Project Settings > XR Interaction Toolkit).");
+        Debug.Log($"Téléportation : {n} sols téléportables (option PARAMÈTRES).");
     }
 
     // ---------- lumières du fichier ----------
@@ -543,12 +574,13 @@ public static class RoomBuilder
             ms.index = i;
         }
 
-        // overlay plein écran, accroché à la caméra du joueur
+        // [Confort] grand écran FIXE, au mur au-dessus du pupitre (avant : collé au visage à 0,5 m, inconfortable en VR).
+        // Toucher un petit écran l'y affiche en grand ; le retoucher (ou toucher le grand écran) le referme.
         var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
         q.name = "MonitorOverlay";
-        q.transform.SetParent(head.transform, false);
-        q.transform.localPosition = new Vector3(0, 0, 0.5f);        // à portée de main pour le toucher et le fermer
-        q.transform.localScale = new Vector3(1.07f, 0.6f, 1f);     // même taille apparente qu'avant (1,6 x 0,9 à 0,75 m)
+        q.transform.SetParent(stationGo.transform, false);
+        PlaceBigScreen(q.transform, rr.screens);
+        q.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
         Object.DestroyImmediate(q.GetComponent<MeshCollider>());
         var obc = q.AddComponent<BoxCollider>();
         obc.size = new Vector3(1f, 1f, 0.05f);
@@ -558,6 +590,30 @@ public static class RoomBuilder
         station.overlayRenderer = q.GetComponent<Renderer>();
         q.SetActive(false);
         rr.overlay = q;
+    }
+
+    // largeur du grand écran (16:9) et espace entre le haut des petits écrans et le bas du grand (à ajuster au casque)
+    const float BigScreenWidth = 1.2f, BigScreenGap = 0.08f;
+
+    // Au-dessus des petits écrans, plaqué sur le mur derrière le pupitre (trouvé par un rayon) ; tourné vers le centre du bunker.
+    static void PlaceBigScreen(Transform q, Renderer[] screens)
+    {
+        var centre = Vector3.zero; int n = 0; float top = 0f;
+        foreach (var s in screens) if (s) { centre += s.bounds.center; top = Mathf.Max(top, s.bounds.max.y); n++; }
+        if (n == 0) { centre = B(-1.05f, -7.4f, 1.1f); top = centre.y + 0.3f; }   // pupitre des caméras (repère de la carte)
+        else centre /= n;
+        float height = BigScreenWidth * 9f / 16f;
+        float raise = top + BigScreenGap + height / 2f - centre.y;     // le grand écran commence juste au-dessus des petits
+        var toRoom = B(-1.85f, -10.1f, 0f) - centre; toRoom.y = 0f;    // vers le centre du bunker, là où se tient le joueur
+        toRoom = toRoom.sqrMagnitude > 0.01f ? toRoom.normalized : Vector3.back;
+
+        var pos = centre + Vector3.up * raise - toRoom * 0.3f;           // par défaut : un peu derrière les petits écrans
+        Physics.SyncTransforms();
+        if (Physics.Raycast(centre + Vector3.up * raise, -toRoom, out var hit, 3f) && hit.collider.name.Contains("Wall"))
+            pos = hit.point + toRoom * 0.03f;                          // plaqué sur le mur, 3 cm devant
+        q.position = pos;
+        q.rotation = Quaternion.LookRotation(-toRoom);                  // la face visible du quad regarde le joueur
+        q.localScale = new Vector3(BigScreenWidth, height, 1f);
     }
 
     // ---------- matériaux ----------

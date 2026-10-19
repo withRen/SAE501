@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Réglages du joueur (menu PARAMÈTRES), enregistrés d'une partie à l'autre (PlayerPrefs) et appliqués à chaque scène chargée :
-//   musique / effets, rotation fluide ou par à-coups, bords sombres en mouvement, difficulté.
+//   musique / effets, rotation fluide ou par à-coups, bords sombres en mouvement, téléportation, difficulté.
 public static class GameSettings
 {
     public enum Level { Facile, Normal, Difficile }
@@ -13,6 +13,8 @@ public static class GameSettings
     public static float Effects { get => PlayerPrefs.GetFloat("sae501.sfx", 0.8f); set { PlayerPrefs.SetFloat("sae501.sfx", Mathf.Clamp01(value)); Apply(); } }
     // rotation par crans par défaut (confort VR, demandé par la SAÉ) ; la rotation fluide reste au choix dans PARAMÈTRES
     public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 0) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
+    // téléportation en plus du déplacement continu (joystick droit vers l'avant), désactivée par défaut (voir TeleportFloor)
+    public static bool Teleport { get => PlayerPrefs.GetInt("sae501.teleport", 0) == 1; set { PlayerPrefs.SetInt("sae501.teleport", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
     public static Level Difficulty { get => (Level)PlayerPrefs.GetInt("sae501.difficulty", 1); set => PlayerPrefs.SetInt("sae501.difficulty", (int)value); }
 
@@ -47,6 +49,13 @@ public static class GameSettings
             if (mb.GetType().Name != "ControllerInputActionManager") continue;
             var p = mb.GetType().GetProperty("smoothTurnEnabled", BindingFlags.Public | BindingFlags.Instance);
             if (p != null && p.CanWrite) p.SetValue(mb, SmoothTurn);
+            // téléportation : la manette droite passe en mode « téléportation » (joystick vers l'avant = rayon courbe).
+            // La gauche garde le déplacement continu. Option désactivée : on ne touche à rien (les sols ne sont pas téléportables).
+            if (Teleport && IsRightHand(mb.transform))
+            {
+                var sm = mb.GetType().GetProperty("smoothMotionEnabled", BindingFlags.Public | BindingFlags.Instance);
+                if (sm != null && sm.CanWrite) sm.SetValue(mb, false);
+            }
         }
 
         // vignette de confort des Starter Assets (si présente dans le rig)
@@ -69,6 +78,12 @@ public static class GameSettings
             foreach (var l in wm.levels) { l.zombies = Mathf.Max(1, Mathf.RoundToInt(l.zombies * count)); l.spawnInterval *= interval; }
         var sp = Object.FindFirstObjectByType<ZombieSpawner>();
         if (sp) sp.zombieSpeed *= speed;
+    }
+
+    static bool IsRightHand(Transform t)
+    {
+        for (; t != null; t = t.parent) if (t.name.Contains("Right")) return true;
+        return false;
     }
 
     /// <summary>Recentre la vue (bouton « RECENTRER » du menu).</summary>

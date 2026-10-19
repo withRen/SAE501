@@ -79,6 +79,13 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [068](#068--lampe-planches-chute-du-joueur-tutoriel-dans-la-carte) | 2026-10-09 | Lampe encore pixelisée, planches difficiles à poser, chute sous la carte, zombies pendant le tuto, tuto en panneaux dans la carte | Correctif | Rendu Forward + textures filtrées, pose des planches refaite, joueur protégé, vagues bloquées, panneaux uGUI |
 | [069](#069--saccroupir-gâchette-gauche) | 2026-10-09 | S'accroupir avec la gâchette gauche | Contrôles | Gâchette gauche maintenue = vue 55 cm plus bas (sauf pistolet ou lampe en main gauche) |
 | [070](#070--saccroupir-joystick-gauche) | 2026-10-09 | Correction : s'accroupir avec le joystick gauche, pas la gâchette | Contrôles | Joystick gauche enfoncé (maintenu) = accroupi ; gâchette gauche rendue à son rôle |
+| [071](#071--analyse-critique-du-jeu-level-design-et-game-design) | 2026-10-19 | Analyse critique du jeu : points forts et faibles (Level Designer, Game Designer) | Analyse | Rapport : boucle solide, 3 problèmes majeurs (zombies hors bunker, générateur, toit) |
+| [072](#072--logique-de-jeu-et-game-feel) | 2026-10-19 | Le jeu est-il simple à comprendre, logique, avec un bon game feel ? | Analyse | Partie ajoutée au rapport : marteau sans vibration, impacts invisibles, mort par tir près du visage |
+| [073](#073--liste-des-patchs) | 2026-10-19 | Liste de tout ce qu'il faut modifier pour rendre le jeu logique | Analyse | 28 modifications classées P0 à P4 |
+| [074](#074--évaluation-avec-une-grille-pro) | 2026-10-19 | Grille d'évaluation pro (3C, level design, tech art, pondération) | Analyse | Note ≈ 5,7 / 10, red flags : confort, UI collée à la tête, feedback, perf non mesurée |
+| [075](#075--tableau-des-modifications) | 2026-10-19 | Tableau de tout ce qui doit être modifié / ajusté | Analyse | Tableau unique de 38 lignes |
+| [076](#076--issues-github-des-modifications) | 2026-10-19 | Mettre tout ça dans les issues GitHub | GitHub / organisation | Issues #91 à #128, labels P0 à P4, ajoutées au projet SAE501 |
+| [077](#077--relire-rulesmd) | 2026-10-19 | Relire le rules.md | GitHub / organisation | Journal 071-077 ajouté, issues rattachées au projet n°2 |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1172,3 +1179,121 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `Crouch.cs` : on s'accroupit tant que le **joystick gauche est enfoncé** (clic maintenu), vue 55 cm plus bas ; relâché, on se relève. La gâchette gauche retrouve son rôle normal (tirer, allumer, valider). Éditeur : touche C.
 - Pas de conflit : dans les actions des Starter Assets, le clic du joystick gauche ne sert qu'au « Scale Toggle » du rayon Near-Far (supprimé) et à une action « Crouch » utilisée par aucun script du rig.
 - Testé dans l'éditeur (caméra 1,36 → 0,81 → 1,36 m). **Pas testé au casque.** Schéma des commandes et wiki mis à jour.
+
+### 071 — Analyse critique du jeu (level design et game design)
+
+**Prompt**
+
+> Je veux que tu analyses actuellement le jeu, que tu me donnes ses points forts et faiblesses, avec un esprit critique de Level Designer, Game Designer
+
+**Résultat** (analyse par l'IA, Claude Code)
+
+- Analyse faite à partir du code (`Assets/Scripts`, `RoomBuilder.cs`, `SetupVRScene.cs`, `map_meta.json`) de la branche `feature/map-finale`, **sans partie au casque**. Rien n'a été modifié dans le projet.
+- Points forts : geste du marteau, états de planche lisibles (posée = 1 coup, clouée = 3), planche arrachée réutilisable, tête = one-shot, plafond de zombies vivants, types de zombie introduits progressivement, râtelier entre les fenêtres, portes barricadables qui obligent à défaire sa défense pour sortir.
+- Trois problèmes majeurs : les zombies ignorent le joueur hors du bunker (ils ne le poursuivent qu'après avoir franchi une ouverture) ; le point d'apparition du couloir gauche est à ~3 m du générateur ; les trous du toit (dès le niveau 1) ne se barricadent pas et aucune caméra ne les filme, ni l'extérieur sud.
+- Autres : économie de munitions (≈ 204 balles nécessaires au torse, ≈ 96 en moyenne dans la carte), pas de score, rotation fluide par défaut, textes collés à la tête, GDD qui classe l'exploration en « NE FERA PAS ».
+- Rapport : `Analyse_LD_GD_The_Last_Escapor.md` (Fichier dans les fichiers du projet Claude (bibliothèque), pas dans le dépôt).
+
+### 072 — Logique de jeu et game feel
+
+**Prompt**
+
+> Et niveau game logic ? En gros le jeu est simple à comprendre, le jeu est logique, un bon game feel
+
+**Résultat** (analyse par l'IA, Claude Code)
+
+- Partie 4 ajoutée au rapport du 071. Simple à comprendre pour la boucle de base, pas pour le reste (viser la tête, intérêt des zones, générateur). Règles cohérentes entre elles, mais situations contradictoires (toit, zombies qui ignorent le joueur, chargeurs aléatoires).
+- Trouvé : **tirer avec le canon à moins de 35 cm du visage tue le joueur** (`Pistol.AimedAtOwnHead`).
+- Game feel : tir complet (vibration, flash, douille, glissière) ; **coup de marteau sans vibration** ; **zombie touché sans aucun impact** visible ni sonore.
+
+### 073 — Liste des patchs
+
+**Prompt**
+
+> Fait une liste donc de tout ce qu'il faut modifier / patch pour rendre ça logique
+
+**Résultat** (document par l'IA, Claude Code)
+
+- `Liste_patchs_logique_de_jeu.md` (Fichier dans les fichiers du projet Claude (bibliothèque), pas dans le dépôt) : 28 modifications classées P0 (avant le playtest) à P4 (documents), avec fichiers, critère « terminé quand » et effort.
+
+### 074 — Évaluation avec une grille pro
+
+**Prompt**
+
+> ## 1. Game Design & Ergonomie VR (3C : Camera, Character, Controls)
+>
+> | Critère | Indicateur de réussite (Standard Pro) | Seuil critique / Échec (Red Flag) |
+> | --- | --- | --- |
+> | **Affordance & Interactions physiques** | Les objets interactifs répondent naturellement (grab, poids simulé, points d'ancrage précis). L'intention du joueur est lue sans friction. | Objets qui traversent les mains, collisionneurs mal ajustés, nécessité d'appuyer sur un bouton abstrait pour une action physique simple. |
+> | **Gestion de la cinétose (Motion Sickness)** | Framerate verrouillé (72/90/120 Hz selon le casque), options de confort (vignette, snap turn, téléportation), aucune accélération non sollicitée de la caméra. | Mouvement forcé de la caméra (head-bobbing, cinématique qui déplace la tête du joueur), chutes de FPS sous le seuil de reprojection. |
+> | **UI / UX Diégétique et Spatiale** | Interfaces intégrées à l'environnement ou au corps (montre, arme, établi). Textes placés entre **1,5 m et 3 m** pour éviter la fatigue de convergence oculaire. | HUD plaqué sur l'écran (Screen-Space) illisible en périphérie, menus flottants qui traversent les murs (clipping). |
+> | **Feedback Multimodal** | Chaque action majeure combine 3 retours : visuel (particules/animation), sonore (audio 3D spatialisé) et haptique (vibration calibrée en fréquence et durée). | Interactions "fantômes" sans vibration ni son d'impact, obligeant le joueur à deviner si l'action a été validée. |
+>
+> ---
+>
+> ## 2. Level Design & Architecture Spatiale
+>
+> | Critère | Indicateur de réussite (Standard Pro) | Seuil critique / Échec (Red Flag) |
+> | --- | --- | --- |
+> | **Échelle et Proportions (1:1)** | Respect strict des métriques humaines en VR (portes à 2,10 m, tables à 0,75 m). Sensation immédiate de présence physique dans le volume. | Syndrome de la "maison de poupée" ou du monde géant dû à un mauvais import d'échelle (FBX scale factor). |
+> | **Zonage d'Interaction (Comfort Zone)** | 80 % des interactions principales se situent entre les hanches et les épaules, à une distance de **0,4 m à 0,8 m** du torse. | Objets clés au sol (problème de tracking bas / sol mal calibré) ou trop hauts, forçant des postures fatigantes sur la durée. |
+> | **Guidage Visuel & Audio (Signposting)** | Utilisation de la lumière, des lignes de fuite et du son spatialisé à 360° pour attirer le regard du joueur vers les menaces ou objectifs sans flèche artificielle. | Joueur perdu qui regarde du mauvais côté lors d'un événement clé ou d'une vague d'ennemis. |
+> | **Gestion de l'Occlusion et Culling** | Architecture pensée pour couper les lignes de vue trop longues (murs, cloisons, barricades) afin de préserver les performances sans casser l'immersion. | Grandes zones ouvertes vides mais coûteuses en rendu, ou pop-in visible d'objets à moyenne distance. |
+>
+> ---
+>
+> ## 3. Game Art & Performance Technique (Tech Art)
+>
+> | Critère | Indicateur de réussite (Standard Pro) | Seuil critique / Échec (Red Flag) |
+> | --- | --- | --- |
+> | **Lisibilité Stéréoscopique** | Utilisation de la vraie géométrie (chamfers, reliefs) pour les objets proches des yeux. Les textures restent nettes à 15 cm du visage (haute densité de Texels sur les armes/outils). | Abus de Normal Maps plates sur les objets tenus en main (l'effet de relief disparaît en vision stéréoscopique). |
+> | **Anti-Aliasing & Stabilité Visuelle** | Matériaux mats ou rugosité maîtrisée, MSAA 4x actif, absence de scintillement (shimmering) sur les bords fins ou les grilles à distance. | Spécularité agressive, grilles fines ou feuillages alpha-testés qui clignotent dans le casque. |
+> | **Lighting & Contraste** | Éclairage précalculé (Baked Lightmaps) couplé à des Light Probes pour les objets dynamiques. Lisibilité immédiate des silhouettes dans la pénombre. | Éclairage 100 % temps réel non optimisé qui détruit le temps de frame GPU, ou scènes totalement plates sans ombres de contact. |
+> | **Budget Technique (Frame Timing)** | Temps de rendu maintenu sous **11,1 ms** (90 Hz) ou **13,8 ms** (72 Hz). Utilisation du rendu fovéal, du Single Pass Instanced et d'atlas de textures (Draw Calls maîtrisés). | Surcharge de shaders transparents (overdraw massif sur les VFX de fumée/sang), provoquant une activation constante de l'ASW/Reprojection. |
+>
+> ---
+>
+> ## Grille de notation rapide (Pondération recommandée)
+>
+> * **Confort & Stabilité technique (30 %)** : Si le jeu rend malade ou tourne à 40 FPS, le reste est disqualifié.
+> * **Qualité des interactions VR / 3C (30 %)** : Pertinence de l'usage de la VR (le jeu justifie-t-il l'usage d'un casque plutôt qu'un écran plat ?).
+> * **Level Design & Lisibilité spatiale (20 %)** : Gestion de l'espace physique, du rythme et du guidage.
+> * **Direction Artistique & Immersion (20 %)** : Cohérence visuelle, fidélité des matériaux de près et ambiance sonore.
+
+**Résultat** (analyse par l'IA, Claude Code)
+
+- Réglages relevés : MSAA 4x, Single Pass Instanced (OpenXR), rendu fovéal au maximum, rendu Forward, éclairage précalculé (25 lumières précalculées, 8 temps réel), 1 groupe de light probes, **occlusion culling non précalculé**, **aucun LOD** sur la carte, **aucune mesure de fps au casque**.
+- Note pondérée ≈ **5,7 / 10** (confort 5, 3C 6,5, level design 5, DA 6). Red flags : rotation fluide par défaut et pas de téléportation, vue caméra plein écran collée à la tête à 0,5 m, annonces collées à la tête, marteau sans vibration, impacts invisibles, perf non mesurée.
+- `Evaluation_grille_pro.md` (Fichier dans les fichiers du projet Claude (bibliothèque), pas dans le dépôt).
+
+### 075 — Tableau des modifications
+
+**Prompt**
+
+> Fait moi un tableau listé de tout ce qui doit être modifié / ajusté
+
+**Résultat** (document par l'IA, Claude Code)
+
+- `Tableau_modifications.md` (Fichier dans les fichiers du projet Claude (bibliothèque), pas dans le dépôt) : fusion des 073 et 074 en un tableau de **38 lignes** (priorité, catégorie, problème, modification, fichiers, terminé quand, effort, bloc de la grille) + ordre conseillé.
+
+### 076 — Issues GitHub des modifications
+
+**Prompt**
+
+> met moi tout ça dans les issues Github (pas besoin de les assigns pour l'instant, ni de temporalité)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **38 issues** créées : #91 à #128, titre « [P0-01] … » (priorité + n° de ligne du tableau), corps avec problème, modification, fichiers, terminé quand, effort. Sans assigné, sans date ni milestone.
+- 5 labels créés : `P0` bloquant, `P1` lisibilité, `P2` game feel, `P3` équilibrage, `P4` documents ; labels existants réutilisés (gameplay, VR, ui, optimisation, environnement, IA, audio, documentation).
+
+### 077 — Relire le rules.md
+
+**Prompt**
+
+> relis le rules.md
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Écarts corrigés : les prompts 071 à 076 n'étaient pas dans ce journal (ajoutés, avec l'index) ; les issues #91 à #128 n'étaient pas dans le projet GitHub n°2 « SAE501 » (ajoutées).
+- Pas de page de wiki : aucune fonctionnalité n'a été ajoutée ou modifiée (analyse et suivi seulement).

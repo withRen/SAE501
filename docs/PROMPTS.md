@@ -89,6 +89,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [078](#078--correctifs-p0--poursuite-point-gauche-toit-zombie-coincé) | 2026-10-19 | Correctifs P0 : poursuite hors du bunker, point du couloir gauche, pas de toit aux niveaux 1-2, zombie coincé | Gameplay | Issues #92 à #95 ; testé en mode Play dans l'éditeur, pas au casque |
 | [079](#079--lisibilité-p1--écran-dannonces-caméra-sud-toit-tutoriel-zones-leviers) | 2026-10-19 | Lisibilité P1 : écran d'annonces fixe + alarme, caméra extérieure sud, poussière avant la chute du toit, « Visez la tête », contenu des zones, annonce du niveau 4, leviers physiques | Gameplay | Issues #102 à #107 et #111 ; testé en mode Play dans l'éditeur, pas au casque |
 | [080](#080--game-feel-p2-et-fin-de-partie--vibrations-impacts-yeux-lod-sondes-générateur-bilan) | 2026-10-19 | Game feel P2 et fin de partie : vibrations, impacts, éclats, yeux lumineux, LOD, sondes de lumière, générateur au niveau 4, bilan | Gameplay, rendu | Issues #112 à #120 et #122 ; testé en mode Play dans l'éditeur, pas au casque |
+| [081](#081--validation-et-push-dans-main) | 2026-10-19 | Valider les issues #112 à #120 et #122, les assigner, pousser la version dans main | GitHub | Issues assignées et fermées ; `feature/map-finale` poussée dans `main` |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1388,4 +1389,16 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Scène reconstruite (**SAE501 → Build VR Scene**) et éclairage recuit.
 - Testé dans l'éditeur en mode Play (simulation par script et captures) : tirs tête et torse (particules, PV, recul), compteurs du bilan, planche posée puis arrachée (éclats, comptage une seule fois), levier bloqué puis débloqué après 6 zombies, panneau et statut, yeux visibles à 12 m (capture), écrans de mort et de victoire avec le bilan. LOD1 comparé au LOD0 sur une chaise (capture). **Pas testé au casque** : aucune vibration ni aucun son n'a été ressenti ou écouté, ni les fps.
 - Docs : `ZOMBIES.md` ; wiki : pages Retours de jeu (nouvelle), Zombies, Planches et clous, Niveaux et vagues, Générateur et disjoncteur, Optimisation et rendu.
+
+### 081 — Validation et push dans main
+
+**Prompt**
+
+> C'est tout bon, assign moi les isses qu'on vient de patch et valide les, pour ce qui est de cette version push la dans le main
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Issues #112 à #120 et #122 assignées à withRen et fermées (« terminée »), avec un commentaire qui renvoie aux commits et aux pages du wiki.
+- `feature/map-finale` poussée sur GitHub, puis dans `main` en avance rapide (aucun commit de `main` n'était absent de la branche) ; wiki poussé.
+- Les issues retirées de la demande 080 (#121, #123, #124, #125) restent ouvertes.
 

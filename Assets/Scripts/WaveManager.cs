@@ -18,10 +18,19 @@ using UnityEngine.SceneManagement;
 // [#120] Niveau 4 : le générateur ne démarre qu'après generatorKills zombies éliminés OU generatorDelay secondes dans le niveau
 //   (on ne gagne plus en courant directement au levier). L'écran annonce le moment où il devient utilisable.
 // [#122] Le temps de jeu est compté pour le bilan (GameStats) ; la victoire affiche le bilan (GameOverUI.ShowVictory).
+// Rééquilibrage (docs/PROMPTS.md 085-088) :
+//   - pause entre deux vagues : +breakHeal PV (la vie perdue ne s'accumule plus jusqu'au niveau 4) ;
+//   - [#123] point d'apparition tiré au sort avec un poids par point (SpawnWeights) au lieu d'un tour fixe ;
+//   - niveau 4 : dès que le générateur est prêt, les zombies traquent le joueur hors du bunker (Zombie.HuntPlayer) ;
+//   - [#121] après une mort au niveau 2 ou plus, on peut reprendre au début du niveau atteint (ResumeLevel, GameOverUI) ;
+//   - une ligne « [Bilan] » dans le log à chaque vague terminée et à la mort (GameStats.LogLine) pour régler après un playtest.
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
     public static int Level { get; private set; }          // 0 = partie pas commencée
+    // [#121] niveau où reprendre au prochain chargement de la scène (0 : partie normale) ; posé par GameOverUI
+    public static int ResumeLevel;
+    public static bool Resumed { get; private set; }       // cette partie est une reprise : pas de tutoriel
 
     [Serializable]
     public class LevelDef
@@ -45,6 +54,8 @@ public class WaveManager : MonoBehaviour
     public float lastLevelReinforcementEvery = 15f;   // niveau 4 : un renfort tant que le générateur n'est pas actif
     public int lastLevelMaxAlive = 9;
     public float victoryRestartDelay = 12f;
+    public float breakHeal = 50f;              // PV rendus au début de chaque pause
+    public float resumeDelay = 40f;            // [#121] reprise : temps pour se préparer (les barricades sont remises à zéro)
 
     [Header("Niveau 4 : condition du générateur [#120]")]
     public int generatorKills = 6;             // zombies à éliminer pendant le niveau 4…
@@ -87,7 +98,7 @@ public class WaveManager : MonoBehaviour
     static LevelDef[] DefaultLevels() => new[]
     {
         new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur },
-            banner = "NIVEAU 1\nRestez dans le bunker :\nles couloirs sont verrouillés." },
+            banner = "NIVEAU 1\nRestez dans le bunker :\nles couloirs sont verrouillés.\nBalles rares : la hache\net le pied de biche ne s'usent pas." },
         new LevelDef { zombies = 9, speed = 0.95f, maxAlive = 4, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
             banner = "NIVEAU 2" },
         new LevelDef { zombies = 12, speed = 1.05f, maxAlive = 5, spawnInterval = 6.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
@@ -98,19 +109,24 @@ public class WaveManager : MonoBehaviour
     };
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Level = 0; Instance = null; }
+    static void ResetStatics() { Level = 0; Instance = null; ResumeLevel = 0; Resumed = false; }
 
     void Awake()
     {
         Instance = this;
         Level = 0;
+        Zombie.HuntPlayer = false;
+        // [#121] reprise : on commence directement au niveau atteint, avec plus de temps pour se préparer
+        Resumed = ResumeLevel > 1;
+        if (Resumed) { startLevel = Mathf.Clamp(ResumeLevel, 1, levels.Length); firstDelay = Mathf.Max(firstDelay, resumeDelay); }
+        ResumeLevel = 0;
         timer = firstDelay;
         GameStats.Reset();                     // [#122] nouvelle partie (aussi après « rejouer ») : bilan remis à zéro
     }
 
     void Start()
     {
-        ZoneGate.UpdateAll(0);
+        ZoneGate.UpdateAll(Resumed ? startLevel - 1 : 0);      // reprise : les zones des niveaux déjà passés sont ouvertes
         if (!screen)
         {
             screen = new GameObject("Ecran_Annonces").transform;
@@ -126,6 +142,8 @@ public class WaveManager : MonoBehaviour
         sfx.playOnAwake = false; sfx.spatialBlend = 0f;
         alarm = ProcAudio.Alarm();
         if (startClip) sfx.PlayOneShot(startClip, startVolume);
+        if (Resumed) Announce("REPRISE AU NIVEAU " + startLevel + "\nBarricadez-vous :\nla vague arrive dans " + Mathf.CeilToInt(firstDelay) + " s.", 8f);
+        if (PlayerHealth.Instance) PlayerHealth.Instance.Died += OnPlayerDied;
     }
 
     static TextMesh MakeText(string name, Transform parent, Vector3 localPos, float charSize, int fontSize, TextAnchor anchor, Color c)
@@ -185,6 +203,7 @@ public class WaveManager : MonoBehaviour
         spawner.level = Level;
         spawned = 0; pointIndex = 0; spawnTimer = 1f; reinforceTimer = lastLevelReinforcementEvery;
         killsAtLevelStart = GameStats.Kills; LevelKills = 0; LevelTime = 0f; generatorAnnounced = false;
+        Zombie.HuntPlayer = false;
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
@@ -212,8 +231,9 @@ public class WaveManager : MonoBehaviour
         if (last && !generatorAnnounced && GeneratorReady)
         {
             generatorAnnounced = true;
+            Zombie.HuntPlayer = true;          // la course finale : hors du bunker, tous les zombies vous traquent
             if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume * 0.6f);
-            Announce("LE GÉNÉRATEUR EST PRÊT\nAbaissez son levier\net tenez-le 5 s.", 7f);
+            Announce("LE GÉNÉRATEUR EST PRÊT\nAbaissez son levier\net tenez-le 5 s.\nDehors, ILS VOUS TRAQUENT.", 7f);
         }
 
         if (spawned < def.zombies)
@@ -232,7 +252,9 @@ public class WaveManager : MonoBehaviour
         {
             phase = Phase.Break;
             timer = breakBetweenLevels;
-            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.", 5f);
+            Debug.Log(GameStats.LogLine("vague terminée", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
+            if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(breakHeal);
+            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(breakHeal) + " PV", 5f);
             return;
         }
 
@@ -247,9 +269,31 @@ public class WaveManager : MonoBehaviour
             SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
     }
 
+    // [#123] poids des points d'apparition par niveau, dans l'ordre de LevelDef.points (Extérieur, couloir gauche, couloir droit, toit).
+    // Dans le code et pas dans la scène : un réglage ici s'applique sans reconstruire MainScene.
+    // Le toit (non barricadable) pèse peu au niveau 3 et plus au niveau 4.
+    static readonly float[][] SpawnWeights =
+    {
+        new[] { 1f },
+        new[] { 0.4f, 0.3f, 0.3f },
+        new[] { 0.35f, 0.25f, 0.25f, 0.15f },
+        new[] { 0.3f, 0.225f, 0.225f, 0.25f },
+    };
+
+    ZombieSpawner.Point PickPoint(LevelDef def)
+    {
+        var w = Level >= 1 && Level <= SpawnWeights.Length ? SpawnWeights[Level - 1] : null;
+        if (w == null || w.Length != def.points.Length) return def.points[pointIndex++ % def.points.Length];   // points changés dans la scène : tour fixe
+        float total = 0f;
+        foreach (var x in w) total += x;
+        float r = UnityEngine.Random.value * total;
+        for (int i = 0; i < w.Length; i++) { r -= w[i]; if (r <= 0f) return def.points[i]; }
+        return def.points[def.points.Length - 1];
+    }
+
     void SpawnOne(LevelDef def)
     {
-        var p = def.points[pointIndex++ % def.points.Length];
+        var p = PickPoint(def);
         var z = spawner.Spawn(p);
         if (def.speed > 0f) z.walkSpeed *= def.speed;      // le spawner a mis sa vitesse (déjà réglée par la difficulté du menu)
         alive.Add(z);
@@ -261,6 +305,8 @@ public class WaveManager : MonoBehaviour
     {
         if (phase == Phase.Victory) return;
         phase = Phase.Victory;
+        Zombie.HuntPlayer = false;
+        Debug.Log(GameStats.LogLine("victoire", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
         Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
@@ -273,6 +319,16 @@ public class WaveManager : MonoBehaviour
     {
         yield return new WaitForSeconds(s);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    void OnDestroy() { if (PlayerHealth.Instance) PlayerHealth.Instance.Died -= OnPlayerDied; }
+
+    void OnPlayerDied() => Debug.Log(GameStats.LogLine("mort", Level, 0f, AmmoInGun()));
+
+    static int AmmoInGun()
+    {
+        var p = FindFirstObjectByType<Pistol>();
+        return p ? p.ammo : -1;
     }
 
     // pour les tests / le debug : saute directement à un niveau

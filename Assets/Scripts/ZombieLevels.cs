@@ -24,7 +24,7 @@ public static class ZombieLevels
         new Stats { hpMultiplier = 1.0f, playerDamage = 0.20f },       // niveau 1
         new Stats { hpMultiplier = 1.3f, playerDamage = 0.20f },       // niveau 2
         new Stats { hpMultiplier = 1.6f, playerDamage = 1f / 3f },     // niveau 3
-        new Stats { hpMultiplier = 2.0f, playerDamage = 0.50f },       // niveau 4
+        new Stats { hpMultiplier = 2.0f, playerDamage = 0.40f },       // niveau 4 : 3 coups pour mourir (50 % = 2 coups faisait une marche trop brutale)
     };
 
     // Au-delà du niveau 4, on garde les valeurs du niveau 4.

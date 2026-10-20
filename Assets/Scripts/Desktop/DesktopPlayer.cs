@@ -333,7 +333,7 @@ public class DesktopPlayer : MonoBehaviour
             var mag = Either<Magazine>();
             if (!mag) { var s = Socket(BeltItemType.Magazine); if (s && s.hasSelection) mag = (s.firstInteractableSelected as Component)?.GetComponent<Magazine>(); }
             if (!mag) mag = Nearest<Magazine>();
-            if (mag) { pistol.Load(mag.rounds); mag.Consume(); }           // comme MagWell.Insert
+            if (mag) { int left = pistol.Load(mag.rounds); if (left > 0) mag.rounds = left; else mag.Consume(); }   // comme MagWell.Insert (le reste reste dans le chargeur)
             return;
         }
         var battery = Either<Battery>();

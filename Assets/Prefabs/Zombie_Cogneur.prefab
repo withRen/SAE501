@@ -1125,6 +1125,8 @@ MonoBehaviour:
   slowFactor: 0.5
   slowDuration: 1.8
   breakInterval: 2
+  barricadeReach: 1.6
+  barricadeDamageFactor: 0.5
   attackRange: 1.15
   attackCooldown: 1.5
   attackDamage: 0.2

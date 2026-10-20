@@ -13,6 +13,8 @@ using UnityEngine.AI;
 //             armes de corps à corps (MeleeWeapon) : dégâts propres à chaque arme
 //   [#113] Touché : gerbe de particules au point d'impact (Fx.Blood), son de chair (craquement à la tête), petit recul.
 //   [#117] Yeux lumineux visibles au-delà de 8 m (ZombieEyes, ajouté ici s'il manque au prefab).
+//   Rééquilibrage : à la barricade, il frappe le joueur trop proche à travers l'ouverture (bras passés entre les planches) ;
+//             au niveau 4, dès que le générateur est prêt (HuntPlayer), il traque le joueur hors du bunker sans le lâcher.
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {
@@ -25,6 +27,9 @@ public class Zombie : MonoBehaviour
 
     [Header("Barricades")]
     public float breakInterval = 2f;        // un coup toutes les 2 s : planche posée sans clou = 1 coup, planche clouée = 3 coups
+    [Tooltip("Joueur à moins de cette distance (à plat) pendant qu'il casse : il le frappe à travers l'ouverture au lieu de taper la planche.")]
+    public float barricadeReach = 1.6f;     // il se tient ~1 m devant l'ouverture : le joueur doit rester à ~60 cm en retrait
+    [Range(0f, 1f)] public float barricadeDamageFactor = 0.5f;   // coup à travers les planches : moitié des dégâts du niveau
 
     [Header("Attaque")]
     public float attackRange = 1.15f;
@@ -36,6 +41,10 @@ public class Zombie : MonoBehaviour
     [Header("Poursuite hors du bunker")]
     public float chaseRange = 3.5f;         // joueur hors du bunker, visible à cette distance : le zombie le poursuit
     public float chaseLoseRange = 7f;       // au-delà (ou joueur rentré dans le bunker, ou caché 2 s) : il reprend sa marche vers son ouverture
+    // Niveau 4, générateur prêt (WaveManager) : tous les zombies traquent le joueur dès qu'il quitte le bunker, sans distance ni vue
+    public static bool HuntPlayer;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => HuntPlayer = false;
 
     [Header("Toit : avertissement avant la chute [#104]")]
     public Vector2 dropWarning = new Vector2(3f, 4f);    // secondes de poussière avant de sauter par le trou
@@ -72,6 +81,9 @@ public class Zombie : MonoBehaviour
     Plank pendingPlank;
     PlayerHealth player;
     bool chasing;                           // l'attaque en cours vient d'une poursuite hors du bunker (pas d'une entrée)
+    bool pendingPlayerHit;                  // coup en cours à travers l'ouverture (barricade)
+    bool lastHitWasPlayer;                  // dernier coup à la barricade porté au joueur : le suivant va à une planche (alternance)
+    bool lastHitMelee;                      // dernier coup reçu : arme de mêlée (pour le bilan)
     Vector3 stuckAnchor;
     float stuckSince, lurkUntil, nextRoofStep;
     AudioSource roofSrc, hitSrc;
@@ -88,7 +100,7 @@ public class Zombie : MonoBehaviour
         level = Mathf.Clamp(lvl, 1, ZombieLevels.MaxLevel);
         var st = ZombieLevels.For(level);
         MaxHealth = Health = ZombieLevels.BaseHealth * st.hpMultiplier * Mathf.Max(0.1f, healthMultiplier);
-        attackDamage = st.playerDamage;
+        attackDamage = st.playerDamage * GameSettings.DamageMultiplier;    // difficulté du menu : Facile x0,75, Difficile x1,25
     }
 
     void Awake()
@@ -229,6 +241,27 @@ public class Zombie : MonoBehaviour
     {
         if (TryStartChase()) return;
         FaceToward(target.transform.position);
+        // joueur collé à l'ouverture : il passe les bras entre les planches et le frappe (moitié des dégâts) au lieu de taper la planche.
+        // Sans ça, tuer un zombie à la barricade (hache, pistolet à bout portant) ne coûtait rien.
+        // Un coup sur deux seulement : le joueur ne protège pas ses planches avec son corps (le coup suivant va à une planche).
+        if (pendingPlayerHit)
+        {
+            if (Time.time < hitAt) return;
+            hitAt = -1f; pendingPlayerHit = false; lastHitWasPlayer = true;
+            if (player != null && !player.Dead && FlatDistanceToPlayer() <= barricadeReach * 1.15f)
+                player.TakeDamageFraction(attackDamage * barricadeDamageFactor);
+            return;
+        }
+        if (!target.DoorClosed && pendingPlank == null && hitAt < 0f && !lastHitWasPlayer && Time.time >= nextBreak
+            && player != null && !player.Dead && FlatDistanceToPlayer() <= barricadeReach)
+        {
+            pendingPlayerHit = true;
+            FaceToward(player.HeadPosition);
+            anim?.Attack();
+            hitAt = Time.time + attackHitDelay;
+            nextBreak = Time.time + breakInterval;
+            return;
+        }
         // porte fermée devant les planches : il l'enfonce d'abord (HingedDoor : 3 coups)
         if (target.DoorClosed)
         {
@@ -247,7 +280,8 @@ public class Zombie : MonoBehaviour
         if (pendingPlank != null && Time.time >= hitAt)
         {
             pendingPlank.TakeHit((target.approachPoint.position - target.transform.position).normalized * -1f);   // si elle cède, elle part vers l'intérieur
-            pendingPlank = null;
+            pendingPlank = null; hitAt = -1f;      // coup suivant : de nouveau possible sur le joueur
+            lastHitWasPlayer = false;
             if (!target.IsBarricaded) StartEntering();
         }
     }
@@ -278,8 +312,8 @@ public class Zombie : MonoBehaviour
     {
         if (Time.time < nextSight) return false;
         nextSight = Time.time + 0.25f;                      // pas à chaque image
-        if (!PlayerOutsideBunker() || !CanSeePlayer(chaseRange)) return false;
-        pendingPlank = null; hitAt = -1f;
+        if (!PlayerOutsideBunker() || (!HuntPlayer && !CanSeePlayer(chaseRange))) return false;
+        pendingPlank = null; pendingPlayerHit = false; hitAt = -1f;
         StartChasing();
         return true;
     }
@@ -296,8 +330,10 @@ public class Zombie : MonoBehaviour
 
     void UpdateChasing()
     {
-        if (!PlayerOutsideBunker() || FlatDistanceToPlayer() > chaseLoseRange) { StopChasing(); return; }
-        if (Time.time >= nextSight)
+        if (!PlayerOutsideBunker()) { StopChasing(); return; }
+        // générateur prêt : la traque ne s'arrête que si le joueur rentre dans le bunker
+        if (!HuntPlayer && FlatDistanceToPlayer() > chaseLoseRange) { StopChasing(); return; }
+        if (!HuntPlayer && Time.time >= nextSight)
         {
             nextSight = Time.time + 0.25f;
             if (CanSeePlayer(chaseLoseRange)) lastSeen = Time.time;
@@ -379,6 +415,7 @@ public class Zombie : MonoBehaviour
     public void OnHit(HitZone zone)
     {
         if (Dead) return;
+        lastHitMelee = false;
         if (zone == HitZone.Head) { Health = 0f; Die(true); return; }
 
         Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
@@ -390,6 +427,7 @@ public class Zombie : MonoBehaviour
     public void OnMeleeHit(HitZone zone, float fractionOfBase)
     {
         if (Dead) return;
+        lastHitMelee = true;
         Health -= ZombieLevels.BaseHealth * fractionOfBase;
         if (Health <= 0.01f) { Health = 0f; Die(true); return; }
         slowUntil = Time.time + slowDuration;
@@ -428,7 +466,7 @@ public class Zombie : MonoBehaviour
     public void Die(bool byPlayer = false)
     {
         if (Dead) return;
-        if (byPlayer) GameStats.Kill();
+        if (byPlayer) GameStats.Kill(lastHitMelee);
         state = State.Dead;
         agent.isStopped = true;
         agent.enabled = false;

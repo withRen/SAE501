@@ -50,6 +50,7 @@ public class Tutorial : MonoBehaviour
     static void Create()
     {
         if (!WaveManager.Instance || FindFirstObjectByType<Tutorial>()) return;
+        if (WaveManager.Resumed) return;            // [#121] reprise au niveau atteint : ni tutoriel ni proposition de le revoir
         var t = new GameObject("Tutoriel").AddComponent<Tutorial>();
         t.replayOnly = Done && !forceNext;
         forceNext = false;

@@ -1095,7 +1095,8 @@ public static class RoomBuilder
     }
 
     // chargeurs pleins posés dans la carte (coordonnées Blender : x, y, hauteur de la surface)
-    // chacun n'apparaît qu'avec une probabilité MagazineChance, tirée au sort à chaque partie (RandomSpawn)
+    // chacun n'apparaît qu'avec une probabilité MagazineChance, tirée au sort à chaque partie (RandomSpawn) et ajustée par la difficulté.
+    // Rééquilibrage : les chargeurs du bunker sont garantis (avant : 1 chance sur 4 de n'en trouver aucun au niveau 1).
     const float MagazineChance = 0.5f;
     static void BuildMagazines()
     {
@@ -1118,7 +1119,9 @@ public static class RoomBuilder
         {
             var g = MakeMagazine(B(s.x, s.y, s.z + 0.015f));
             g.transform.rotation = Quaternion.Euler(0f, s.yaw, 90f);   // couché sur le flanc
-            g.gameObject.AddComponent<RandomSpawn>().chance = MagazineChance;
+            if (s.where.StartsWith("bunker")) continue;               // garanti
+            var rs = g.gameObject.AddComponent<RandomSpawn>();
+            rs.chance = MagazineChance; rs.scaledByDifficulty = true;
         }
     }
 

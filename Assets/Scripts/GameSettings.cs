@@ -17,6 +17,9 @@ public static class GameSettings
     public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 1) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
     public static Level Difficulty { get => (Level)PlayerPrefs.GetInt("sae501.difficulty", 1); set => PlayerPrefs.SetInt("sae501.difficulty", (int)value); }
+    // Rééquilibrage : la difficulté change aussi les dégâts reçus (Zombie.ApplyLevel) et la chance de trouver un chargeur dans la carte (RandomSpawn)
+    public static float DamageMultiplier => Difficulty == Level.Facile ? 0.75f : Difficulty == Level.Difficile ? 1.25f : 1f;
+    public static float MagazineChanceFactor => Difficulty == Level.Facile ? 1.5f : Difficulty == Level.Difficile ? 0.7f : 1f;   // 50 % -> 75 % / 35 %
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Init()

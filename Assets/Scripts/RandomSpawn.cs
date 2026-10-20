@@ -5,10 +5,12 @@ using UnityEngine;
 public class RandomSpawn : MonoBehaviour
 {
     [Range(0f, 1f)] public float chance = 0.5f;
+    public bool scaledByDifficulty;       // chargeurs : chance x GameSettings.MagazineChanceFactor (Facile 75 %, Normal 50 %, Difficile 35 %)
 
     void Awake()
     {
-        if (Random.value <= chance) return;
+        float c = scaledByDifficulty ? Mathf.Clamp01(chance * GameSettings.MagazineChanceFactor) : chance;
+        if (Random.value <= c) return;
         gameObject.SetActive(false);      // tout de suite (pas de contour, pas d'interaction)
         Destroy(gameObject);
     }

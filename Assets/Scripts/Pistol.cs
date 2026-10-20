@@ -264,11 +264,18 @@ public class Pistol : MonoBehaviour
         flash.enabled = false;
     }
 
-    public void Load(int rounds)
+    // Recharge avec un chargeur de `rounds` balles. Rééquilibrage : les balles restantes ne sont plus perdues.
+    // Comme en vrai, l'ancien chargeur sort avec ce qu'il lui restait : le pistolet prend ce qu'il peut (12 au plus)
+    // et le reste est rendu (MagWell remet ces balles dans le chargeur qu'il éjecte). Renvoie ce reste (0 : chargeur vide, consommé).
+    public int Load(int rounds)
     {
-        ammo = Mathf.Min(rounds, maxAmmo);
+        int total = ammo + Mathf.Max(0, rounds);
+        int loaded = Mathf.Min(total, maxAmmo);
+        GameStats.Loaded(Mathf.Max(0, loaded - ammo));
+        ammo = loaded;
         src.PlayOneShot(reloadClip ? reloadClip : click);
         UpdateHud();
+        return total - loaded;
     }
 
     void UpdateHud()

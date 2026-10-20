@@ -3,6 +3,7 @@ using UnityEngine;
 
 // Logique de santé du joueur : 100 PV (= 100 %). Les zombies retirent un pourcentage de la vie max (voir ZombieLevels).
 // Régénération (GDD) : +25 PV (l'ancien « 1 PV sur 4 ») après 10 s sans dégât, 2 fois maximum par vague.
+// Rééquilibrage : +50 PV au début de chaque pause entre deux vagues (Heal, appelé par WaveManager) ; dégâts comptés pour le bilan.
 // Sur le XR Origin. Les zombies appellent PlayerHealth.Instance.TakeDamage().
 // (UI : HealthVignette, GameOverUI.)
 // [#115] Chaque coup reçu fait vibrer les deux manettes : on le sent même sans voir le zombie (plus fort si le coup tue).
@@ -76,6 +77,7 @@ public class PlayerHealth : MonoBehaviour
     {
         if (IsDead) return;
 
+        GameStats.Damage(Mathf.Min(amount, Health));
         Health = Mathf.Max(0f, Health - amount);
         if (Health < 0.01f) Health = 0f;      // évite qu'il reste 0,00001 PV après 3 coups d'un tiers
         sinceLastHit = 0f;
@@ -91,6 +93,14 @@ public class PlayerHealth : MonoBehaviour
     {
         if (IsDead) return;
         TakeDamage(Health);
+    }
+
+    // Soin (WaveManager : début de la pause entre deux vagues). Rien si le joueur est mort.
+    public void Heal(float amount)
+    {
+        if (IsDead || amount <= 0f || Health >= maxHealth) return;
+        Health = Mathf.Min(maxHealth, Health + amount);
+        Changed?.Invoke(Health, maxHealth);
     }
 
     // À appeler au début de chaque vague (WaveManager) : remet le quota de régénération à zéro.

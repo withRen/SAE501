@@ -39,6 +39,9 @@ public class WaveManager : MonoBehaviour
     public int startLevel = 1;                 // test : commencer à un autre niveau
     public float firstDelay = 15f;             // temps pour se préparer avant la 1re vague
     public float breakBetweenLevels = 35f;     // pause entre deux vagues (réparer les barricades, aller chercher des planches)
+    public float skipHoldTime = 1f;            // maintenir B (manette droite) ce temps pour passer l'attente et lancer la vague
+    const string SkipHint = "\nMaintenir B : lancer la vague";
+    float skipHeld;
     public float lastLevelReinforcementEvery = 15f;   // niveau 4 : un renfort tant que le générateur n'est pas actif
     public int lastLevelMaxAlive = 9;
     public float victoryRestartDelay = 12f;
@@ -147,7 +150,8 @@ public class WaveManager : MonoBehaviour
             case Phase.Waiting:
                 timer -= Time.deltaTime;
                 if (StatusChanged(0, Mathf.CeilToInt(Mathf.Max(0f, timer))))
-                    SetStatus("Préparez-vous… " + statusValue + " s");
+                    SetStatus("Préparez-vous… " + statusValue + " s" + SkipHint);
+                if (SkipPressed()) timer = 0f;
                 if (timer <= 0f) StartLevel(startLevel);
                 break;
 
@@ -156,10 +160,23 @@ public class WaveManager : MonoBehaviour
             case Phase.Break:
                 timer -= Time.deltaTime;
                 if (StatusChanged(1000 + Level, Mathf.CeilToInt(Mathf.Max(0f, timer))))
-                    SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !");
+                    SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !" + SkipHint);
+                if (SkipPressed()) timer = 0f;
                 if (timer <= 0f) StartLevel(Level + 1);
                 break;
         }
+    }
+
+    // Passer l'attente (préparation ou pause entre deux vagues) : maintenir B 1 s, pour ne pas la lancer par erreur.
+    // Rien pendant le menu pause. Après un passage, il faut relâcher B avant de pouvoir recommencer.
+    bool SkipPressed()
+    {
+        if (PauseMenu.Paused || !VRInput.RightB()) { skipHeld = 0f; return false; }
+        if (skipHeld < 0f) return false;                   // déjà utilisé : attendre que B soit relâché
+        skipHeld += Time.unscaledDeltaTime;
+        if (skipHeld < skipHoldTime) return false;
+        skipHeld = -1f;
+        return true;
     }
 
     void StartLevel(int lvl)

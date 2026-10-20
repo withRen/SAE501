@@ -103,6 +103,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [091](#091--rendu-à-8-m-et-réduction-des-polygones) | 2026-10-20 | Comment marche le rendu à 8 m, comment réduire les polygones | Rendu, Optimisation | Explication seulement : yeux lumineux 7-9 m, LOD du décor (bascule réelle ≈ 16 m à cause de `lodBias 2`), caméra 60 m, brouillard ; pistes (occlusion culling, LOD des zombies, coupe par calque) ; rien modifié |
 | [092](#092--textures-et-distance-mipmaps) | 2026-10-20 | Les textures baissent-elles en qualité avec la distance ? | Rendu, Optimisation | Explication seulement : oui, par les mipmaps (243 textures sur 246), trilinéaire + anisotrope ×4 sur la carte, 1024 px max, streaming des mipmaps coupé ; rien modifié |
 | [094](#094--fermer-les-pull-requests-et-pousser-dans-main) | 2026-10-20 | Fermer toutes les pull requests et pousser dans main la version actuelle du jeu | GitHub | Scène reconstruite et éclairage recuit, `main` poussée en avance rapide, wiki poussé, 7 PR fermées |
+| [095](#095--page-wiki-optimisations) | 2026-10-20 | Page wiki sur tout ce qui a été fait en optimisation | Wiki, Optimisation | Nouvelle page `Optimisations` (rendu au casque, lumière précalculée, LOD, textures, culling, caméras de surveillance, code, pistes), Home et barre latérale ; wiki poussé ; rien modifié dans le jeu |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1749,3 +1750,16 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - PR fermées avec un commentaire : #131 et #132 (intégrées dans `main`), #129, #87, #78, #69, #67 (anciennes, fermées sur demande de Rahim sans fusion de leur branche).
 - Pas testé au casque par l'IA.
 
+---
+
+## 095 — Page wiki Optimisations
+
+**Date** : 2026-10-20 · **Domaine** : Wiki, Optimisation
+
+> Dans le wiki rajoute une page Optimizations, et explique tout ce que l'on a fait en optimization, le culling, les textures, le fast rendering etc
+
+**Résultat** (page écrite par l'IA, Claude Code, après relecture de `main` au commit `88608d9` : scripts, `Quest_RPAsset`, `QualitySettings`, réglages OpenXR, `MainScene.unity`, journal)
+
+- Nouvelle page de wiki **`Optimisations`** (titre en français comme les autres pages) : rendu au casque (Single Pass Instanced, rendu fovéal au maximum, niveau de qualité Quest et son pipeline, pas de post-traitement), lumière précalculée et sondes, simplification à l'export et LOD du décor (avec le `lodBias 2` qui repousse la bascule vers 16 m), distance d'affichage et brouillard, textures (1024 px, mipmaps, trilinéaire, anisotrope), culling (champ de vision, distance, LOD, faces arrière, caméras de surveillance ; occlusion culling absent), SRP Batcher et regroupement statique, zombies et code. Courte section « Pistes non faites ».
+- `Home.md` (nouvelle section « Technique ») et `_Sidebar.md` mis à jour. Wiki poussé (commit `7a3d4ab`).
+- Rien modifié dans le jeu ; rien mesuré au casque (dit en tête de page).

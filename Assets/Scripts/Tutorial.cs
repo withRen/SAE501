@@ -120,7 +120,9 @@ public class Tutorial : MonoBehaviour
         yield return Info("BIENVENUE DANS LE BUNKER",
             "Les zombies vont attaquer par les fenêtres.\nApprenons d'abord à les barricader\net à nous défendre.", 5f);
 
-        yield return Step(1, total, "Prenez une planche :\napprochez la main et appuyez une fois\nsur le bouton latéral (grip).\nUn 2e appui la lâche.",
+        yield return Step(1, total, GameSettings.HoldToGrab
+                ? "Prenez une planche :\napprochez la main et gardez enfoncé\nle bouton latéral (grip).\nRelâchez-le pour la lâcher."
+                : "Prenez une planche :\napprochez la main et appuyez une fois\nsur le bouton latéral (grip).\nUn 2e appui la lâche.",
             () => Plank.Held != null, () => NearestFreePlank(), "PLANCHE");
 
         yield return Step(2, total, "Approchez la planche d'une fenêtre\n(planche fantôme) et lâchez-la :\nelle se pose toute seule.",

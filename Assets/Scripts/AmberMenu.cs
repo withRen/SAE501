@@ -39,6 +39,7 @@ public abstract class AmberMenu : MonoBehaviour
         {
             Section(p, ref y, "CONFORT VR");
             Choice(p, ref y, "Déplacement", new[] { "CONTINU", "TÉLÉPORTATION" }, () => GameSettings.Teleport ? 1 : 0, i => GameSettings.Teleport = i == 1);
+            Choice(p, ref y, "Prise (grip)", new[] { "UN CLIC", "MAINTENIR" }, () => GameSettings.HoldToGrab ? 1 : 0, i => GameSettings.HoldToGrab = i == 1);
             Choice(p, ref y, "Rotation", new[] { "PAR À-COUPS", "FLUIDE" }, () => GameSettings.SmoothTurn ? 1 : 0, i => GameSettings.SmoothTurn = i == 1);
             Choice(p, ref y, "Bords sombres", new[] { "OUI", "NON" }, () => GameSettings.ComfortVignette ? 0 : 1, i => GameSettings.ComfortVignette = i == 0);
             // RECENTRER est descendu à côté de RETOUR : la ligne « Déplacement » a pris sa place

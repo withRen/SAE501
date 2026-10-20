@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Réglages du joueur (menu PARAMÈTRES), enregistrés d'une partie à l'autre (PlayerPrefs) et appliqués à chaque scène chargée :
-//   musique / effets / cris des zombies, rotation fluide ou par à-coups, déplacement continu ou téléportation,
+//   musique / effets / cris des zombies, rotation fluide ou par à-coups, déplacement continu ou téléportation, prise par clic ou maintenue,
 //   bords sombres en mouvement, difficulté,
 //   champ de vision (version PC seulement : au casque, c'est le Quest qui impose le champ de vision des lentilles).
 public static class GameSettings
@@ -19,6 +19,8 @@ public static class GameSettings
     public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 1) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
     // téléportation (au casque) : joystick vers l'avant = viser le sol, relâcher = s'y rendre ; sinon déplacement continu
     public static bool Teleport { get => PlayerPrefs.GetInt("sae501.teleport", 0) == 1; set { PlayerPrefs.SetInt("sae501.teleport", value ? 1 : 0); Apply(); } }
+    // prise des objets (grip) : un clic pour prendre, un clic pour lâcher (défaut) ou tenir tant que le grip est enfoncé
+    public static bool HoldToGrab { get => PlayerPrefs.GetInt("sae501.holdgrab", 0) == 1; set { PlayerPrefs.SetInt("sae501.holdgrab", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
     // champ de vision vertical de la caméra, en degrés (Camera.fieldOfView) ; 60 = valeur d'origine
     public static readonly int[] FieldOfViews = { 50, 60, 70, 80, 90 };
@@ -73,6 +75,9 @@ public static class GameSettings
             tp.gameObject.SetActive(teleport);
             if (teleport) NavTeleportArea.Ensure(tp);
         }
+
+        // prise par clic ou en maintenant le grip (ClickGrab, sur les deux mains)
+        foreach (var cg in Object.FindObjectsByType<ClickGrab>(FindObjectsInactive.Include, FindObjectsSortMode.None)) cg.ApplyMode();
 
         // vignette de confort des Starter Assets (si présente dans le rig)
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))

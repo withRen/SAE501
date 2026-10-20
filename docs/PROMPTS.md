@@ -99,6 +99,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [088](#088--rééquilibrage-du-jeu) | 2026-10-20 | Implémenter tout le rééquilibrage proposé en 085 | Gameplay / Équilibrage | Chargeurs du bunker garantis, recharge sans perte, coup à la barricade (1,6 m, 50 %, alternance), +50 PV par pause, niveau 4 à 40 %, traque au niveau 4, points pondérés (#123), difficulté, mesures [Bilan], reprise au niveau atteint (#121) ; tests a-f en mode Play ; pas poussé |
 | [089](#089--champ-de-vision-et-brouillard) | 2026-10-20 | Option FOV dans les paramètres, brouillard pour cacher la distance d'affichage | Rendu, Menus | Champ de vision 50 à 90° (version PC ; au casque, imposé par le Quest), brouillard bleu nuit et brume au bas du ciel ; testé en mode Play ; pas poussé |
 | [090](#090--téléportation-et-saut) | 2026-10-20 | Option de téléportation, remettre une touche de saut | Joueur, Menus | Option Déplacement : continu / téléportation (casque, point d'arrivée contrôlé par le NavMesh), saut remis (A, Espace sur PC) mais petit (≈ 0,33 m) ; testé en mode Play ; pas poussé |
+| [091](#091--prise-par-clic-ou-maintenue) | 2026-10-20 | Option pour tenir un objet : maintenir ou un clic | Mains, Menus | Option Prise (grip) : UN CLIC (défaut) / MAINTENIR, au casque ; la prise est sur le grip, pas la gâchette ; testé en mode Play ; pas poussé |
 | [091](#091--rendu-à-8-m-et-réduction-des-polygones) | 2026-10-20 | Comment marche le rendu à 8 m, comment réduire les polygones | Rendu, Optimisation | Explication seulement : yeux lumineux 7-9 m, LOD du décor (bascule réelle ≈ 16 m à cause de `lodBias 2`), caméra 60 m, brouillard ; pistes (occlusion culling, LOD des zombies, coupe par calque) ; rien modifié |
 | [092](#092--textures-et-distance-mipmaps) | 2026-10-20 | Les textures baissent-elles en qualité avec la distance ? | Rendu, Optimisation | Explication seulement : oui, par les mipmaps (243 textures sur 246), trilinéaire + anisotrope ×4 sur la carte, 1024 px max, streaming des mipmaps coupé ; rien modifié |
 
@@ -1712,3 +1713,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Oui, par les **mipmaps** : chaque texture a des copies de plus en plus petites (1024, 512, 256…) et le GPU choisit, pixel par pixel, celle qui correspond à la taille à l'écran. Automatique, sans script.
 - Relevé : 243 textures du projet sur 246 ont les mipmaps (les 3 sans sont des textures d'effets ou d'interface). Les textures de la carte (`RoomImport`) : 1024 px max, filtrage trilinéaire, anisotrope ×4 (sols vus en biais). 15 textures limitées à 1024 px sur Android (entrée 027).
 - Le **streaming des mipmaps** est coupé (`streamingMipmapsActive: 0`) : toutes les tailles restent en mémoire. Il ne ferait gagner que de la mémoire, pas des fps ; inutile vu la taille des textures.
+
+---
+
+## 091 — Prise par clic ou maintenue
+
+**Date** : 2026-10-20 · **Domaine** : Mains, Menus
+
+> Pour tenir un objet rajoute en option :
+> Soit maintenant la gachette
+> soit juste toggle avec un clique avec la gachette
+
+**Résultat** (code écrit par l'IA, Claude Code ; testé en mode Play dans l'éditeur, pas au casque)
+
+- Dans le jeu, on prend les objets avec le **grip** (bouton latéral), pas avec la gâchette, qui sert à tirer et à utiliser. L'option porte donc sur le grip ; la gâchette ne change pas.
+- Nouvelle ligne **Prise (grip) : UN CLIC / MAINTENIR** dans CONFORT VR (`GameSettings.HoldToGrab`). UN CLIC reste le défaut (comportement actuel et texte du tutoriel) ; MAINTENIR = on tient tant que le grip est enfoncé (`ClickGrab.ApplyMode` : mode XRI StateChange au lieu de Toggle). Le tutoriel (étape 1) adapte sa phrase. En version PC, l'option n'apparaît pas (prise toujours par clic).
+- Vérifié en mode Play avec une manette simulée sur une planche du râtelier : UN CLIC → tenue après un clic relâché, lâchée au 2e clic ; MAINTENIR → tenue grip enfoncé, lâchée au relâchement ; page PARAMÈTRES capturée (pas de chevauchement). Non vérifié : leviers et portes en mode MAINTENIR, vraies manettes.
+- **Pas testé au casque.** Commit local, pas poussé.

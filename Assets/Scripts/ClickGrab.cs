@@ -5,6 +5,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 // Prise par clic : un appui sur le bouton latéral (grip) attrape l'objet, un 2e appui le lâche.
 // Plus besoin de garder le bouton enfoncé. À mettre sur les interacteurs des mains (SetupVRScene).
+// Option des PARAMÈTRES « Prise : MAINTENIR » (GameSettings.HoldToGrab, au casque) : on tient tant que le grip est enfoncé.
+// La version PC reste en prise par clic (DesktopPlayer prend et lâche lui-même les objets).
 // Les boutons/écrans (XRSimpleInteractable) ne restent pas « tenus » : on les relâche aussitôt, sauf les leviers
 // (générateur, disjoncteur : Lever) et les poignées de porte, qu'on tient pour les déplacer.
 [RequireComponent(typeof(XRBaseInputInteractor))]
@@ -16,8 +18,17 @@ public class ClickGrab : MonoBehaviour
     void Awake()
     {
         interactor = GetComponent<XRBaseInputInteractor>();
-        interactor.selectActionTrigger = XRBaseInputInteractor.InputTriggerType.Toggle;
+        ApplyMode();
         interactor.selectEntered.AddListener(OnSelect);
+    }
+
+    /// <summary>Clic (Toggle) ou maintien (StateChange) selon les paramètres. Appelé aussi par GameSettings.Apply.</summary>
+    public void ApplyMode()
+    {
+        if (!interactor) interactor = GetComponent<XRBaseInputInteractor>();     // manette encore éteinte : Awake pas encore passé
+        interactor.selectActionTrigger = GameSettings.HoldToGrab && !DesktopMode.On
+            ? XRBaseInputInteractor.InputTriggerType.StateChange
+            : XRBaseInputInteractor.InputTriggerType.Toggle;
     }
 
     void OnDestroy() => interactor.selectEntered.RemoveListener(OnSelect);

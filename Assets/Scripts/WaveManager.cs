@@ -18,10 +18,17 @@ using UnityEngine.SceneManagement;
 // [#120] Niveau 4 : le générateur ne démarre qu'après generatorKills zombies éliminés OU generatorDelay secondes dans le niveau
 //   (on ne gagne plus en courant directement au levier). L'écran annonce le moment où il devient utilisable.
 // [#122] Le temps de jeu est compté pour le bilan (GameStats) ; la victoire affiche le bilan (GameOverUI.ShowVictory).
+// [Survie] Mode « vagues infinies » (choisi dans le menu SOLO, voir Endless) : plus de niveau final ni de victoire, le but est de tenir le plus longtemps.
+//   Les 4 vagues définies dans `levels` servent de base (mêmes zombies, même rythme) ; au-delà, BuildEndlessWave() prolonge chaque
+//   réglage par une formule (suite arithmétique pour le nombre de zombies, approche d'un plafond pour la vitesse, le nombre de zombies
+//   vivants en même temps et le délai entre deux apparitions). Aucun tableau de vagues à remplir à la main.
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
-    public static int Level { get; private set; }          // 0 = partie pas commencée
+    public static int Level { get; private set; }          // 0 = partie pas commencée (en mode survie : numéro de la vague, sans limite)
+
+    /// <summary>Mode vagues infinies. Fixé par le menu (MainMenu) avant de charger la scène de jeu ; reste vrai pour « rejouer ».</summary>
+    public static bool Endless { get; set; }
 
     [Serializable]
     public class LevelDef
@@ -43,6 +50,24 @@ public class WaveManager : MonoBehaviour
     public int lastLevelMaxAlive = 9;
     public float victoryRestartDelay = 12f;
 
+    [Header("Mode survie : vagues infinies")]
+    [Tooltip("Test : lance la scène de jeu directement en mode survie (sans passer par le menu).")]
+    public bool forceEndless = false;
+    [Tooltip("Plafond de la vitesse des zombies (multiplicateur, comme LevelDef.speed). La vitesse s'en approche sans jamais le dépasser.")]
+    public float endlessSpeedCap = 2f;
+    [Tooltip("Plafond de zombies vivants en même temps (performances du casque).")]
+    public int endlessMaxAliveCap = 20;
+    [Tooltip("Délai minimal entre deux apparitions (secondes) : l'intervalle s'en approche sans jamais l'atteindre.")]
+    public float endlessMinInterval = 1.5f;
+    [Tooltip("Au-delà de la dernière vague définie : PV en plus par vague (0,1 = +10 %), et plafond du multiplicateur.")]
+    public float endlessHpPerWave = 0.10f, endlessHpCap = 3f;
+    [Tooltip("Idem pour les dégâts infligés au joueur.")]
+    public float endlessDamagePerWave = 0.04f, endlessDamageCap = 1.5f;
+    [Tooltip("La pause entre deux vagues raccourcit de ce nombre de secondes par vague (au-delà de la dernière définie), jusqu'au minimum.")]
+    public float endlessBreakShrink = 1.5f, endlessBreakMin = 20f;
+    [Tooltip("Ajuste le nombre de zombies et de zombies simultanés selon la difficulté du menu : FACILE, NORMAL, DIFFICILE. NORMAL = vagues définies telles quelles.")]
+    public float[] endlessDifficultyScale = { 0.85f, 1f, 1.2f };
+
     [Header("Niveau 4 : condition du générateur [#120]")]
     public int generatorKills = 6;             // zombies à éliminer pendant le niveau 4…
     public float generatorDelay = 60f;         // …ou secondes à tenir dans le niveau 4
@@ -58,6 +83,7 @@ public class WaveManager : MonoBehaviour
 
     enum Phase { Waiting, Wave, Break, Victory }
     Phase phase = Phase.Waiting;
+    LevelDef cur;                              // vague en cours (celle de `levels`, ou celle calculée en mode survie)
     float timer, spawnTimer, reinforceTimer;
     int spawned, pointIndex;
     readonly List<Zombie> alive = new List<Zombie>();
@@ -77,7 +103,7 @@ public class WaveManager : MonoBehaviour
     bool generatorAnnounced;
     int killsAtLevelStart;
     /// <summary>Le générateur peut démarrer : niveau 4 atteint et (assez de zombies éliminés ou délai écoulé).</summary>
-    public bool GeneratorReady => Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    public bool GeneratorReady => !Endless && Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
     public string GeneratorCondition => "Éliminez " + Mathf.Max(0, generatorKills - LevelKills) + " zombie" + (generatorKills - LevelKills > 1 ? "s" : "")
                                       + "\nou tenez " + Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime)) + " s";
 
@@ -101,8 +127,16 @@ public class WaveManager : MonoBehaviour
     {
         Instance = this;
         Level = 0;
+        if (forceEndless) Endless = true;
         timer = firstDelay;
-        GameStats.Reset();                     // [#122] nouvelle partie (aussi après « rejouer ») : bilan remis à zéro
+        GameStats.Reset();
+        EndlessRecord.BeginRun();              // record du mode survie : on mémorise celui d'avant la partie                     // [#122] nouvelle partie (aussi après « rejouer ») : bilan remis à zéro
+    }
+
+    // quitter la partie (menu pause, rejouer…) : la progression du mode survie compte pour le record
+    void OnDestroy()
+    {
+        if (Endless && Level >= 1) EndlessRecord.Submit(Level, GameStats.Time);
     }
 
     void Start()
@@ -156,7 +190,7 @@ public class WaveManager : MonoBehaviour
             case Phase.Break:
                 timer -= Time.deltaTime;
                 if (StatusChanged(1000 + Level, Mathf.CeilToInt(Mathf.Max(0f, timer))))
-                    SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !");
+                    SetStatus((Endless ? "Vague " : "Niveau ") + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !");
                 if (timer <= 0f) StartLevel(Level + 1);
                 break;
         }
@@ -164,21 +198,29 @@ public class WaveManager : MonoBehaviour
 
     void StartLevel(int lvl)
     {
-        Level = Mathf.Clamp(lvl, 1, levels.Length);
-        spawner.level = Level;
+        Level = Endless ? Mathf.Max(1, lvl) : Mathf.Clamp(lvl, 1, levels.Length);
+        cur = Endless ? BuildEndlessWave(Level) : levels[Level - 1];
+        spawner.level = Mathf.Min(Level, levels.Length);   // le spawner et ZombieLevels s'arrêtent au dernier niveau défini ; la suite est gérée ici (ApplyEndlessScaling)
         spawned = 0; pointIndex = 0; spawnTimer = 1f; reinforceTimer = lastLevelReinforcementEvery;
         killsAtLevelStart = GameStats.Kills; LevelKills = 0; LevelTime = 0f; generatorAnnounced = false;
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
         if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
-        Announce(levels[Level - 1].banner + ZonesOpenedText(Level), 8f);
+        if (Endless) EndlessRecord.Submit(Level, GameStats.Time);
+        Announce((Endless ? EndlessBanner(Level) : cur.banner) + ZonesOpenedText(Level), 8f);
+    }
+
+    static string EndlessBanner(int n)
+    {
+        if (n == 1) return "VAGUE 1 · MODE SURVIE\nTenez le plus longtemps possible.\nLes couloirs sont verrouillés.";
+        return "VAGUE " + n;
     }
 
     // [#106] zones ouvertes à ce niveau et ce qu'on y trouve (ZoneGate.contents)
     static string ZonesOpenedText(int lvl)
     {
-        if (lvl >= ZombieLevels.MaxLevel) return "";            // niveau 4 : l'annonce dit déjà où aller
+        if (!Endless && lvl >= ZombieLevels.MaxLevel) return "";   // niveau 4 : l'annonce dit déjà où aller (en mode survie, la zone est annoncée comme les autres)
         var sb = new System.Text.StringBuilder();
         foreach (var g in ZoneGate.All)
             if (g.unlockLevel == lvl)
@@ -188,8 +230,8 @@ public class WaveManager : MonoBehaviour
 
     void UpdateWave()
     {
-        var def = levels[Level - 1];
-        bool last = Level == levels.Length;
+        var def = cur;
+        bool last = !Endless && Level == levels.Length;      // mode survie : jamais de dernier niveau
         LevelTime += Time.deltaTime;
         LevelKills = GameStats.Kills - killsAtLevelStart;
         if (last && !generatorAnnounced && GeneratorReady)
@@ -214,7 +256,7 @@ public class WaveManager : MonoBehaviour
         else if (Alive == 0)
         {
             phase = Phase.Break;
-            timer = breakBetweenLevels;
+            timer = Endless ? EndlessBreak(Level) : breakBetweenLevels;
             Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.", 5f);
             return;
         }
@@ -226,15 +268,85 @@ public class WaveManager : MonoBehaviour
             if (StatusChanged(3000 + left, secs))
                 SetStatus("Générateur bloqué · " + left + " zombie" + (left > 1 ? "s" : "") + " à abattre ou " + secs + " s");
         }
+        else if (Endless)
+        {
+            // survie : numéro de la vague, zombies restants et temps tenu (la ligne change chaque seconde)
+            if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned), Mathf.FloorToInt(GameStats.Time)))
+                SetStatus("Vague " + Level + " · zombies : " + statusValue + " · " + ShortTime(GameStats.Time));
+        }
         else if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned)))
             SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
     }
+
+    // ---------- mode survie : vagues générées par formule ----------
+    // Les vagues 1 à L (L = levels.Length, 4 aujourd'hui) sont celles de `levels`, avec le réglage de difficulté du menu.
+    // Au-delà, chaque réglage prolonge la tendance de ces L vagues (k = numéro de la vague - L) :
+    //   zombies de la vague        suite arithmétique : même progression que les vagues définies (+3 par vague aujourd'hui)
+    //   vitesse / zombies vivants  s'approchent d'un plafond : au début la même pente que les vagues définies, puis ça ralentit
+    //   délai entre apparitions    s'approche d'un plancher, de la même façon
+    // Si on modifie `levels` (nombre de zombies, vitesse…), la suite infinie s'adapte toute seule.
+    LevelDef BuildEndlessWave(int n)
+    {
+        int L = levels.Length;
+        var first = levels[0];
+        var last = levels[L - 1];
+        float diff = EndlessDifficulty();
+
+        var d = new LevelDef();
+        if (n <= L)
+        {
+            var src = levels[n - 1];
+            d.zombies = src.zombies; d.speed = src.speed; d.maxAlive = src.maxAlive; d.spawnInterval = src.spawnInterval;
+            d.points = src.points;
+        }
+        else
+        {
+            int k = n - L;
+            d.zombies = Mathf.RoundToInt(last.zombies + (L > 1 ? (last.zombies - first.zombies) / (float)(L - 1) : 3f) * k);
+            d.speed = Approach(first.speed, last.speed, L, endlessSpeedCap, k);
+            d.maxAlive = Mathf.RoundToInt(Approach(first.maxAlive, last.maxAlive, L, endlessMaxAliveCap, k));
+            d.spawnInterval = Approach(first.spawnInterval, last.spawnInterval, L, endlessMinInterval, k);
+            d.points = last.points;                       // toutes les zones de spawn, toit compris
+        }
+        // difficulté du menu : plus ou moins de zombies, et de zombies en même temps (NORMAL = inchangé)
+        d.zombies = Mathf.Max(1, Mathf.RoundToInt(d.zombies * diff));
+        d.maxAlive = Mathf.Max(1, Mathf.RoundToInt(d.maxAlive * diff));
+        d.banner = EndlessBanner(n);
+        return d;
+    }
+
+    // Prolonge un réglage : même pente moyenne que les vagues définies (first -> last sur L vagues) pour la 1re vague de plus,
+    // puis la pente diminue (suite géométrique de raison r) et la valeur tend vers `cap` sans jamais l'atteindre.
+    //   valeur(k) = cap + (last - cap) * r^k        avec r = 1 - pente / (cap - last)
+    static float Approach(float first, float last, int L, float cap, int k)
+    {
+        float slope = L > 1 ? (last - first) / (L - 1) : 0f;
+        float gap = cap - last;
+        if (Mathf.Abs(gap) < 1e-4f || Mathf.Abs(slope) < 1e-6f || slope * gap <= 0f) return last;   // déjà au plafond, ou pas de tendance
+        float r = Mathf.Clamp(1f - slope / gap, 0.5f, 0.98f);
+        return cap + (last - cap) * Mathf.Pow(r, k);
+    }
+
+    float EndlessDifficulty()
+    {
+        if (endlessDifficultyScale == null || endlessDifficultyScale.Length == 0) return 1f;
+        int i = Mathf.Clamp((int)GameSettings.Difficulty, 0, endlessDifficultyScale.Length - 1);     // 0 facile, 1 normal, 2 difficile
+        return Mathf.Max(0.1f, endlessDifficultyScale[i]);
+    }
+
+    float EndlessBreak(int n) => Mathf.Max(endlessBreakMin, breakBetweenLevels - endlessBreakShrink * Mathf.Max(0, n - levels.Length));
 
     void SpawnOne(LevelDef def)
     {
         var p = def.points[pointIndex++ % def.points.Length];
         var z = spawner.Spawn(p);
         if (def.speed > 0f) z.walkSpeed *= def.speed;      // le spawner a mis sa vitesse (déjà réglée par la difficulté du menu)
+        if (Endless && Level > levels.Length)
+        {
+            // au-delà du dernier niveau défini, ZombieLevels n'augmente plus rien : PV et dégâts continuent ici
+            int k = Level - levels.Length;
+            z.ApplyEndlessScaling(Mathf.Min(endlessHpCap, 1f + endlessHpPerWave * k), Mathf.Min(endlessDamageCap, 1f + endlessDamagePerWave * k));
+        }
         alive.Add(z);
         spawned++;
     }
@@ -242,7 +354,7 @@ public class WaveManager : MonoBehaviour
     // le joueur a activé le générateur
     public void GeneratorActivated()
     {
-        if (phase == Phase.Victory) return;
+        if (Endless || phase == Phase.Victory) return;      // mode survie : pas de victoire, le générateur est hors service
         phase = Phase.Victory;
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
@@ -264,12 +376,18 @@ public class WaveManager : MonoBehaviour
     void SetStatus(string s) { if (status && status.text != s) status.text = s; }
 
     // le texte de statut n'est reconstruit que si ce qu'il affiche a changé (évite une chaîne neuve à chaque image)
-    int statusKey = -1, statusValue = -1;
-    bool StatusChanged(int key, int value)
+    int statusKey = -1, statusValue = -1, statusExtra = -1;
+    bool StatusChanged(int key, int value, int extra = 0)
     {
-        if (key == statusKey && value == statusValue) return false;
-        statusKey = key; statusValue = value;
+        if (key == statusKey && value == statusValue && extra == statusExtra) return false;
+        statusKey = key; statusValue = value; statusExtra = extra;
         return true;
+    }
+
+    static string ShortTime(float s)
+    {
+        int t = Mathf.FloorToInt(s);
+        return (t / 60) + ":" + (t % 60).ToString("00");
     }
 
     void Announce(string text, float seconds)

@@ -46,6 +46,8 @@ public class Generator : MonoBehaviour
     void Update()
     {
         if (on) return;
+        // mode survie (vagues infinies) : pas d'objectif, le générateur reste hors service
+        if (WaveManager.Endless) { if (lever) lever.locked = true; SetLabel("HORS SERVICE"); return; }
         bool unlocked = WaveManager.Level >= unlockLevel;
         var wm = WaveManager.Instance;
         bool ready = unlocked && (wm == null || wm.GeneratorReady);

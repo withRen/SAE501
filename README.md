@@ -1,5 +1,7 @@
 # The Last Escapor
 
+![The Last Escapor : le bunker barricadé de nuit, des zombies aux yeux rouges approchent](docs/images/cover.png)
+
 > Seul dans un bunker sombre, tu barricades les ouvertures à coups de marteau et tu tires sur les zombies qui arrivent par les couloirs, en surveillant les caméras.
 
 Jeu vidéo en **réalité virtuelle** (Meta Quest 3) développé avec **Unity 6** pour la SAÉ 5.D.01 « Dispositifs interactifs » du BUT MMI 3e année. Rendu le **vendredi 13 novembre 2026**.

@@ -105,6 +105,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [094](#094--fermer-les-pull-requests-et-pousser-dans-main) | 2026-10-20 | Fermer toutes les pull requests et pousser dans main la version actuelle du jeu | GitHub | Scène reconstruite et éclairage recuit, `main` poussée en avance rapide, wiki poussé, 7 PR fermées |
 | [095](#095--page-wiki-optimisations) | 2026-10-20 | Page wiki sur tout ce qui a été fait en optimisation | Wiki, Optimisation | Nouvelle page `Optimisations` (rendu au casque, lumière précalculée, LOD, textures, culling, caméras de surveillance, code, pistes), Home et barre latérale ; wiki poussé ; rien modifié dans le jeu |
 | [096](#096--image-de-couverture-github) | 2026-10-20 | Image de cover du jeu pour le dépôt GitHub | Communication, Rendu | Image 1280 × 640 rendue depuis `MainScene` (zombies, planches et lumières temporaires, rien sauvegardé) puis titre et accroche ajoutés ; à poser à la main dans Settings > Social preview |
+| [097](#097--cover-dans-le-readme) | 2026-10-20 | Mettre la cover en tête du README | Documentation | Image copiée dans `docs/images/cover.png` (Git LFS) et affichée sous le titre du README |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1779,4 +1780,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Rendu fait dans l'éditeur à partir de la vraie `MainScene`, avec une caméra, des zombies (prefab `Zombie`, poses de marche et d'attaque figées), des planches et quelques lumières **temporaires**, puis la scène rechargée depuis le disque sans enregistrer. Les yeux sont dessinés comme ceux de `ZombieEyes` (le script ne tourne qu'en jeu). Retouches en 2D : étalonnage bleu nuit, halo des yeux et des fenêtres, vignette, grain.
 - Les zombies Cogneur et Coureur ressortaient en magenta dans ce rendu hors jeu (vêtements) : seuls des zombies « Rôdeur » sont dans l'image. Pas vérifié si le problème existe en jeu.
 - Rien modifié dans le projet. L'image ne peut pas être posée par l'IA : à faire dans GitHub, **Settings > General > Social preview > Edit > Upload an image**.
+
+---
+
+## 097 — Cover dans le README
+
+**Date** : 2026-10-20 · **Domaine** : Documentation
+
+> Met le dans le readme en cover
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- L'image de l'entrée 096 est copiée dans `docs/images/cover.png` (suivie par Git LFS, comme tous les PNG) et affichée juste sous le titre du `README.md`, avec un texte alternatif.
+- Commit local ; visible sur GitHub une fois poussé.
 

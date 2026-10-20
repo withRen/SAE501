@@ -100,6 +100,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [089](#089--champ-de-vision-et-brouillard) | 2026-10-20 | Option FOV dans les paramètres, brouillard pour cacher la distance d'affichage | Rendu, Menus | Champ de vision 50 à 90° (version PC ; au casque, imposé par le Quest), brouillard bleu nuit et brume au bas du ciel ; testé en mode Play ; pas poussé |
 | [090](#090--téléportation-et-saut) | 2026-10-20 | Option de téléportation, remettre une touche de saut | Joueur, Menus | Option Déplacement : continu / téléportation (casque, point d'arrivée contrôlé par le NavMesh), saut remis (A, Espace sur PC) mais petit (≈ 0,33 m) ; testé en mode Play ; pas poussé |
 | [091](#091--rendu-à-8-m-et-réduction-des-polygones) | 2026-10-20 | Comment marche le rendu à 8 m, comment réduire les polygones | Rendu, Optimisation | Explication seulement : yeux lumineux 7-9 m, LOD du décor (bascule réelle ≈ 16 m à cause de `lodBias 2`), caméra 60 m, brouillard ; pistes (occlusion culling, LOD des zombies, coupe par calque) ; rien modifié |
+| [092](#092--textures-et-distance-mipmaps) | 2026-10-20 | Les textures baissent-elles en qualité avec la distance ? | Rendu, Optimisation | Explication seulement : oui, par les mipmaps (243 textures sur 246), trilinéaire + anisotrope ×4 sur la carte, 1024 px max, streaming des mipmaps coupé ; rien modifié |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1697,3 +1698,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Caméra du joueur limitée à 60 m ; le brouillard (0,06, exponentiel carré) laisse 79 % d'un objet visible à 8 m, 10 % à 25 m, 1 % à 35 m, mais n'enlève aucun objet du rendu.
 - Pistes proposées : `lodBias` à 1 (ou seuil LOD0 à 0,2), caméra à 35-40 m, occlusion culling à réessayer (retiré en 027 pour les lumières de lune, l'éclairage est maintenant précalculé), coupe par calque des petits objets, LOD des zombies, meilleure décimation (Blender), et surtout mesure au casque d'abord.
 - Rien testé, rien modifié ; aucun chiffre au casque.
+
+---
+
+## 092 — Textures et distance (mipmaps)
+
+**Date** : 2026-10-20 · **Domaine** : Rendu, Optimisation
+
+> et les textures se réduisent par rapport à la distance (en qualité ?)
+
+**Résultat** (explication écrite par l'IA, Claude Code, après lecture des `.meta` des textures, de `RoomImport.cs` et de `QualitySettings.asset` ; rien modifié)
+
+- Oui, par les **mipmaps** : chaque texture a des copies de plus en plus petites (1024, 512, 256…) et le GPU choisit, pixel par pixel, celle qui correspond à la taille à l'écran. Automatique, sans script.
+- Relevé : 243 textures du projet sur 246 ont les mipmaps (les 3 sans sont des textures d'effets ou d'interface). Les textures de la carte (`RoomImport`) : 1024 px max, filtrage trilinéaire, anisotrope ×4 (sols vus en biais). 15 textures limitées à 1024 px sur Android (entrée 027).
+- Le **streaming des mipmaps** est coupé (`streamingMipmapsActive: 0`) : toutes les tailles restent en mémoire. Il ne ferait gagner que de la mémoire, pas des fps ; inutile vu la taille des textures.

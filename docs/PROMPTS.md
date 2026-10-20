@@ -102,6 +102,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [091](#091--prise-par-clic-ou-maintenue) | 2026-10-20 | Option pour tenir un objet : maintenir ou un clic | Mains, Menus | Option Prise (grip) : UN CLIC (défaut) / MAINTENIR, au casque ; la prise est sur le grip, pas la gâchette ; testé en mode Play ; pas poussé |
 | [091](#091--rendu-à-8-m-et-réduction-des-polygones) | 2026-10-20 | Comment marche le rendu à 8 m, comment réduire les polygones | Rendu, Optimisation | Explication seulement : yeux lumineux 7-9 m, LOD du décor (bascule réelle ≈ 16 m à cause de `lodBias 2`), caméra 60 m, brouillard ; pistes (occlusion culling, LOD des zombies, coupe par calque) ; rien modifié |
 | [092](#092--textures-et-distance-mipmaps) | 2026-10-20 | Les textures baissent-elles en qualité avec la distance ? | Rendu, Optimisation | Explication seulement : oui, par les mipmaps (243 textures sur 246), trilinéaire + anisotrope ×4 sur la carte, 1024 px max, streaming des mipmaps coupé ; rien modifié |
+| [094](#094--fermer-les-pull-requests-et-pousser-dans-main) | 2026-10-20 | Fermer toutes les pull requests et pousser dans main la version actuelle du jeu | GitHub | Scène reconstruite et éclairage recuit, `main` poussée en avance rapide, wiki poussé, 7 PR fermées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1730,3 +1731,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Nouvelle ligne **Prise (grip) : UN CLIC / MAINTENIR** dans CONFORT VR (`GameSettings.HoldToGrab`). UN CLIC reste le défaut (comportement actuel et texte du tutoriel) ; MAINTENIR = on tient tant que le grip est enfoncé (`ClickGrab.ApplyMode` : mode XRI StateChange au lieu de Toggle). Le tutoriel (étape 1) adapte sa phrase. En version PC, l'option n'apparaît pas (prise toujours par clic).
 - Vérifié en mode Play avec une manette simulée sur une planche du râtelier : UN CLIC → tenue après un clic relâché, lâchée au 2e clic ; MAINTENIR → tenue grip enfoncé, lâchée au relâchement ; page PARAMÈTRES capturée (pas de chevauchement). Non vérifié : leviers et portes en mode MAINTENIR, vraies manettes.
 - **Pas testé au casque.** Commit local, pas poussé.
+
+---
+
+## 094 — Fermer les pull requests et pousser dans main
+
+**Date** : 2026-10-20 · **Domaine** : GitHub
+
+> ferme toutes les pull requests du github, et push dans le main la version actuelle du jeu
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Scène `MainScene` reconstruite (**SAE501 → Build VR Scene**) et éclairage recuit : la scène réenregistrée à 14 h 12 n'avait plus ses lightmaps.
+- Branche locale `claude/project-thread-6whioa` (PR #131 et #132 d'Al Amine, version PC, rééquilibrage, champ de vision et brouillard, téléportation et saut, option de prise, journaux 082 à 094) poussée dans `main` en avance rapide, sans forcer.
+- Non commités, laissés en local : réglages URP, `RuntimeActionBindings.json` supprimé, `Protection_suite`, `scripts/`.
+- Wiki poussé, avec la page `Radio-de-ravitaillement` et les ajouts sur le bouton B (Niveaux et vagues, Tutoriel).
+- PR fermées avec un commentaire : #131 et #132 (intégrées dans `main`), #129, #87, #78, #69, #67 (anciennes, fermées sur demande de Rahim sans fusion de leur branche).
+- Pas testé au casque par l'IA.
+

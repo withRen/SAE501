@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Base commune des menus « terminal de bunker » ambre (menu d'accueil MainMenu, menu pause PauseMenu) :
-// panneau, gros boutons, page PARAMÈTRES (son, confort VR, difficulté) et briques (curseurs, choix).
+// panneau, gros boutons, page PARAMÈTRES (son, confort VR ou affichage PC, difficulté) et briques (curseurs, choix).
 // Tout est construit en code (UiKit) ; le pointeur est MenuPointer.
 public abstract class AmberMenu : MonoBehaviour
 {
@@ -26,10 +26,22 @@ public abstract class AmberMenu : MonoBehaviour
         Slider(p, ref y, "Musique", () => GameSettings.Music, v => GameSettings.Music = v);
         Slider(p, ref y, "Effets", () => GameSettings.Effects, v => GameSettings.Effects = v);
         Slider(p, ref y, "Zombies", () => GameSettings.Zombies, v => GameSettings.Zombies = v);
-        Section(p, ref y, "CONFORT VR");
-        Choice(p, ref y, "Rotation", new[] { "PAR À-COUPS", "FLUIDE" }, () => GameSettings.SmoothTurn ? 1 : 0, i => GameSettings.SmoothTurn = i == 1);
-        Choice(p, ref y, "Bords sombres", new[] { "OUI", "NON" }, () => GameSettings.ComfortVignette ? 0 : 1, i => GameSettings.ComfortVignette = i == 0);
-        Choice(p, ref y, "Vue", new[] { "RECENTRER" }, () => -1, i => GameSettings.Recenter());
+        if (DesktopMode.On)
+        {
+            // version PC : les réglages du casque n'ont pas de sens, on règle le champ de vision à la place
+            // (au casque, il est imposé par le Quest : l'option n'y apparaît pas)
+            Section(p, ref y, "AFFICHAGE");
+            var fovs = GameSettings.FieldOfViews;
+            Choice(p, ref y, "Champ de vision", System.Array.ConvertAll(fovs, f => f + "°"),
+                   () => System.Array.IndexOf(fovs, GameSettings.FieldOfView), i => GameSettings.FieldOfView = fovs[i]);
+        }
+        else
+        {
+            Section(p, ref y, "CONFORT VR");
+            Choice(p, ref y, "Rotation", new[] { "PAR À-COUPS", "FLUIDE" }, () => GameSettings.SmoothTurn ? 1 : 0, i => GameSettings.SmoothTurn = i == 1);
+            Choice(p, ref y, "Bords sombres", new[] { "OUI", "NON" }, () => GameSettings.ComfortVignette ? 0 : 1, i => GameSettings.ComfortVignette = i == 0);
+            Choice(p, ref y, "Vue", new[] { "RECENTRER" }, () => -1, i => GameSettings.Recenter());
+        }
         Section(p, ref y, "JEU");
         Choice(p, ref y, "Difficulté", new[] { "FACILE", "NORMAL", "DIFFICILE" }, () => (int)GameSettings.Difficulty, i => GameSettings.Difficulty = (GameSettings.Level)i);
 

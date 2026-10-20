@@ -60,7 +60,7 @@ public static class RoomBuilder
         RenderSettings.ambientLight = new Color(0.0008f, 0.0008f, 0.0012f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogColor = new Color(0.003f, 0.003f, 0.004f);
+        RenderSettings.fogColor = new Color(0.06f, 0.075f, 0.1f);       // bleu nuit : le décor au loin se fond dans la brume au bas du ciel (SkySphere)
         RenderSettings.fogDensity = 0.06f;                   // léger : la profondeur reste lisible (rendu proche de Cycles)
 
         var cam = rig.GetComponentInChildren<Camera>();

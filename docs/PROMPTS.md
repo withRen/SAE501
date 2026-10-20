@@ -97,6 +97,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [086](#086--intégration-des-pr-131-radio-et-132-passer-lattente) | 2026-10-20 | Intégrer en local les PR d'Al Amine : radio de ravitaillement (#131) et passer l'attente avec B (#132) | Gameplay, GitHub | Fusion sans conflit sur une branche locale, compilation sans erreur, scène reconstruite et éclairage recuit ; pas encore poussé, en attente du test au casque |
 | [087](#087--version-pc-sans-casque-clavier-et-souris) | 2026-10-20 | Préparer une version non VR pour tester sur PC (ZQSD), sans toucher à la version VR | Joueur, Outils | Scène de lancement `MainScene_PC` + contrôleur clavier/souris qui pilote les mains XRI du rig ; testé en mode Play (tir, recharge, planche clouée, levier, radio) ; MainScene inchangée ; pas encore commité ni poussé |
 | [088](#088--rééquilibrage-du-jeu) | 2026-10-20 | Implémenter tout le rééquilibrage proposé en 085 | Gameplay / Équilibrage | Chargeurs du bunker garantis, recharge sans perte, coup à la barricade (1,6 m, 50 %, alternance), +50 PV par pause, niveau 4 à 40 %, traque au niveau 4, points pondérés (#123), difficulté, mesures [Bilan], reprise au niveau atteint (#121) ; tests a-f en mode Play ; pas poussé |
+| [089](#089--champ-de-vision-et-brouillard) | 2026-10-20 | Option FOV dans les paramètres, brouillard pour cacher la distance d'affichage | Rendu, Menus | Champ de vision 50 à 90° (version PC ; au casque, imposé par le Quest), brouillard bleu nuit et brume au bas du ciel ; testé en mode Play ; pas poussé |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1642,3 +1643,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Économie de munitions : 24 balles sûres (arme + chargeur de départ) + 24 du bunker + ≈ 60 en moyenne dans la carte + jusqu'à 48 par la radio.
 - Tests en mode Play dans l'éditeur (simulation) : (a) recharge 5 + 12 → 12 et chargeur éjecté à 5 ; (b) 2 chargeurs du bunker présents ; (c) joueur à 1,3 m frappé un coup sur deux (10 PV), les planches tombent quand même, rien à 2,2 m ; un premier essai a trouvé un bug (après un coup sur une planche, plus de coup au joueur) corrigé avant le commit ; (d) fin de vague : ligne `[Bilan]` puis 40 → 90 PV ; (e) `SkipToLevel(4)` + générateur prêt : `HuntPlayer` vrai, zombie à 21,7 m qui poursuit le joueur dans la cuisine ; (f) mort au niveau 3 → rechargement, départ au niveau 3 sans tutoriel, zones du niveau 2 ouvertes. Scène reconstruite et éclairage recuit, scène PC reconstruite.
 - **Pas testé au casque.** Commits locaux, pas poussé.
+
+---
+
+## 089 — Champ de vision et brouillard
+
+**Date** : 2026-10-20 · **Domaine** : Rendu, Menus
+
+> Rajoute dans les paramètres l'option de changer le FOV
+> Et aussi rajoute un petit effet de brouillard sur la map pour éviter qu'on voit qu'il y a une render distance courte
+
+**Résultat** (code écrit par l'IA, Claude Code ; testé en mode Play dans l'éditeur, pas au casque)
+
+- **Champ de vision** : nouvelle ligne « Champ de vision » (50°, 60°, 70°, 80°, 90°, verticaux ; 60° par défaut, gardé d'une partie à l'autre) dans une section **AFFICHAGE** de la page PARAMÈTRES, **en version PC seulement** (`GameSettings.FieldOfView`, `AmberMenu.BuildSettings`). Au casque, le champ de vision est imposé par les lentilles du Quest (Unity ignore `Camera.fieldOfView`) : la section CONFORT VR reste comme avant et l'option n'apparaît pas. En version PC, la section CONFORT VR (rotation, bords sombres, recentrer, sans effet au clavier) est remplacée par AFFICHAGE.
+- **Brouillard** : la carte avait déjà un brouillard, mais presque noir ; au loin le sol devenait noir puis le ciel (panorama d'Alban, sans brouillard) reprenait d'un coup, ce qui marquait la limite d'affichage. Le brouillard passe en bleu nuit (0,06 ; 0,075 ; 0,10), même densité qu'avant (0,06, exponentiel carré), et le bas du ciel se fond dans la couleur du brouillard (`SkySphere.shader` : tout brouillard sous l'horizon, ciel intact au-dessus de ≈ 17°). Le décor au loin et le ciel se rejoignent dans la même brume. Réglé dans `RoomBuilder` (survit à **Build VR Scene**) ; la scène a été mise à jour directement (une ligne, sans reconstruire ni recuire l'éclairage, qui ne dépend pas du brouillard).
+- Coût au casque : aucun calcul en plus pour le décor (le brouillard existait déjà) ; trois instructions de plus dans le shader du ciel.
+- Vérifié en mode Play : version PC, clic sur 70° → caméra à 70°, 50° et 90° vus en capture ; version VR, page PARAMÈTRES inchangée ; aucune erreur dans la console. Captures dehors (4 directions) avant / après comparées. Densité inchangée, donc la lisibilité des zombies au loin reste celle réglée avant (non revérifiée avec un zombie en jeu).
+- **Pas testé au casque.** Commit local, pas poussé.

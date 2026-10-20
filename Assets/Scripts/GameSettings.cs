@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Réglages du joueur (menu PARAMÈTRES), enregistrés d'une partie à l'autre (PlayerPrefs) et appliqués à chaque scène chargée :
-//   musique / effets / cris des zombies, rotation fluide ou par à-coups, bords sombres en mouvement, difficulté.
+//   musique / effets / cris des zombies, rotation fluide ou par à-coups, bords sombres en mouvement, difficulté,
+//   champ de vision (version PC seulement : au casque, c'est le Quest qui impose le champ de vision des lentilles).
 public static class GameSettings
 {
     public enum Level { Facile, Normal, Difficile }
@@ -16,6 +17,9 @@ public static class GameSettings
     public static float Effects { get => PlayerPrefs.GetFloat("sae501.sfx", 0.8f); set { PlayerPrefs.SetFloat("sae501.sfx", Mathf.Clamp01(value)); Apply(); } }
     public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 1) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
+    // champ de vision vertical de la caméra, en degrés (Camera.fieldOfView) ; 60 = valeur d'origine
+    public static readonly int[] FieldOfViews = { 50, 60, 70, 80, 90 };
+    public static int FieldOfView { get => PlayerPrefs.GetInt("sae501.fov", 60); set { PlayerPrefs.SetInt("sae501.fov", Mathf.Clamp(value, 40, 100)); Apply(); } }
     public static Level Difficulty { get => (Level)PlayerPrefs.GetInt("sae501.difficulty", 1); set => PlayerPrefs.SetInt("sae501.difficulty", (int)value); }
     // Rééquilibrage : la difficulté change aussi les dégâts reçus (Zombie.ApplyLevel) et la chance de trouver un chargeur dans la carte (RandomSpawn)
     public static float DamageMultiplier => Difficulty == Level.Facile ? 0.75f : Difficulty == Level.Difficile ? 1.25f : 1f;
@@ -38,7 +42,7 @@ public static class GameSettings
         ApplyDifficulty();
     }
 
-    /// <summary>Volume, rotation et confort : appliqués tout de suite (aussi depuis le menu).</summary>
+    /// <summary>Volume, rotation, confort et champ de vision : appliqués tout de suite (aussi depuis le menu).</summary>
     public static void Apply()
     {
         AudioListener.volume = Effects;
@@ -58,6 +62,11 @@ public static class GameSettings
         // vignette de confort des Starter Assets (si présente dans le rig)
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (t.name.Contains("TunnelingVignette")) t.gameObject.SetActive(ComfortVignette);
+
+        // champ de vision : version PC seulement (au casque, Unity ignore fieldOfView) ; caméra du joueur, pas celles des CCTV
+        if (DesktopMode.On)
+            foreach (var o in Object.FindObjectsByType<Unity.XR.CoreUtils.XROrigin>(FindObjectsSortMode.None))
+                if (o.Camera) o.Camera.fieldOfView = FieldOfView;
     }
 
     /// <summary>Difficulté : nombre de zombies, temps entre deux apparitions, vitesse.</summary>

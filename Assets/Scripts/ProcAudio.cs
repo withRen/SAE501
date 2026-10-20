@@ -79,5 +79,20 @@ public static class ProcAudio
         float body = Mathf.Sin(t * 140f * 6.2832f) * Mathf.Exp(-t * 12f) * 0.5f;
         return snaps * 0.9f + noise + body;
     });
+    // radio de ravitaillement : deux bips montants sur un fond de grésillement
+    public static AudioClip RadioChirp() => Make("radio_chirp", 0.7f, t =>
+    {
+        float noise = (Random.value * 2 - 1) * 0.18f * (0.6f + 0.4f * Mathf.Sin(t * 37f));
+        float beep = 0f;
+        if (t > 0.15f && t < 0.27f) beep = Mathf.Sin(t * 1200f * 6.28f) * 0.45f;
+        if (t > 0.35f && t < 0.47f) beep = Mathf.Sin(t * 1600f * 6.28f) * 0.45f;
+        return noise * Mathf.Clamp01(1.4f - t * 1.8f) + beep;
+    });
+    // souffle qui monte puis retombe : la caisse arrive par le toit
+    public static AudioClip Whoosh() => Make("whoosh", 1.2f, t =>
+        (Random.value * 2 - 1) * 0.6f * Mathf.Sin(Mathf.Clamp01(t / 1.2f) * Mathf.PI) * (0.6f + 0.4f * Mathf.Sin(t * 18f)));
+    // caisse qui tombe sur le sol : coup grave et sourd
+    public static AudioClip Thud() => Make("caisse", 0.5f, t =>
+        Mathf.Sin(t * 70f * 6.28f) * Mathf.Exp(-t * 9f) * 0.9f + (Random.value * 2 - 1) * Mathf.Exp(-t * 35f) * 0.5f);
     public static AudioClip Hit() => Make("hit", 0.12f, t => Mathf.Sin(t * 900f * 6.28f) * Mathf.Exp(-t * 45f) * 0.6f + (Random.value * 2 - 1) * Mathf.Exp(-t * 80f) * 0.4f);
 }

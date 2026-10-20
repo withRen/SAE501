@@ -102,6 +102,7 @@ public static class RoomBuilder
         BuildBreaker();
         BuildBatteries();
         BuildMagazines();
+        BuildSupplyRadio();
         BuildBelt(rig, cam);
         BuildBunkerOpenings(slots);
         BuildGatesAndGenerator();
@@ -1396,6 +1397,81 @@ public static class RoomBuilder
         mw.pistol = pi;
         mw.showInteractableHoverMeshes = false;
         return grab;
+    }
+
+    // ---------- radio de ravitaillement (SupplyRadio) ----------
+    // Une radio fixée au mur du bunker : bouton rouge = commander des chargeurs. Après une attente (selon la difficulté),
+    // une caisse tombe par le trou du toit au-dessus de l'établi (Toit_Etabli, voir BuildBunkerOpenings) avec les chargeurs dedans.
+    // La caisse et le chargeur sont des modèles cachés, copiés à chaque livraison.
+    static readonly Vector3 SupplyDrop = new Vector3(-1.05f, 4.0f, 12.15f);     // au-dessus du trou du toit côté établi
+
+    static void BuildSupplyRadio()
+    {
+        var radioM = Mat("Radio", new Color(0.22f, 0.26f, 0.16f), 0.25f);        // vert olive militaire
+        var buttonM = Mat("Radio_Bouton", new Color(0.8f, 0.1f, 0.08f), 0.5f);
+        var screenM = Mat("Radio_Ecran", new Color(0.01f, 0.02f, 0.015f), 0.8f);
+
+        // place : premier mur touché par un rayon à hauteur de poitrine (murs est et ouest du bunker, loin des fenêtres)
+        var tries = new[]
+        {
+            (B(1.5f, -8.0f, 1.25f), new Vector3(-1f, 0f, 0f)),
+            (B(-5.5f, -8.0f, 1.25f), new Vector3(1f, 0f, 0f)),
+            (B(1.5f, -12.8f, 1.25f), new Vector3(-1f, 0f, 0f)),
+            (B(-5.5f, -12.8f, 1.25f), new Vector3(1f, 0f, 0f)),
+        };
+        Vector3 pos = B(-1.5f, -12.2f, 1.0f), normal = Vector3.back;           // secours : au-dessus de l'établi
+        Physics.SyncTransforms();
+        foreach (var (o, d) in tries)
+            if (Physics.Raycast(o, d, out var hit, 4f) && hit.collider.name.Contains("Wall") && hit.distance > 0.3f)
+            {
+                normal = hit.normal; normal.y = 0f; normal.Normalize();
+                pos = hit.point;
+                break;
+            }
+
+        var root = new GameObject("Radio_Ravitaillement").transform;
+        root.SetParent(bunkerRoot, false);
+        root.SetPositionAndRotation(pos, Quaternion.LookRotation(normal));       // +Z = vers la pièce
+        Box("Etagere", root, new Vector3(0f, -0.12f, 0.12f), new Vector3(0.42f, 0.03f, 0.24f), metalM);
+        Box("Corps", root, new Vector3(0f, 0f, 0.1f), new Vector3(0.36f, 0.2f, 0.14f), radioM);
+        Box("Antenne", root, new Vector3(0.14f, 0.22f, 0.1f), new Vector3(0.012f, 0.25f, 0.012f), darkM, false);
+        Box("Ecran", root, new Vector3(-0.06f, 0.03f, 0.172f), new Vector3(0.19f, 0.11f, 0.005f), screenM, false);
+        var display = MakeLabel("Affichage", root, root.TransformPoint(new Vector3(-0.06f, 0.03f, 0.176f)), Quaternion.LookRotation(-normal), 0.0032f, new Color(1f, 0.75f, 0.27f));
+        display.text = "RAVITAILLEMENT";
+        var btn = Box("Bouton", root, new Vector3(0.11f, 0.02f, 0.185f), new Vector3(0.06f, 0.06f, 0.03f), buttonM);
+        ((BoxCollider)btn.GetComponent<Collider>()).size = new Vector3(1.8f, 1.8f, 2.5f);   // zone à toucher plus grande que le bouton
+        var inter = btn.AddComponent<XRSimpleInteractable>();
+        var tag = MakeLabel("Etiquette", root, root.TransformPoint(new Vector3(0.11f, -0.045f, 0.176f)), Quaternion.LookRotation(-normal), 0.0022f, new Color(0.85f, 0.85f, 0.8f));
+        tag.text = "APPEL";
+
+        // modèle de caisse (bac ouvert, les chargeurs tombent dedans)
+        var crate = new GameObject("Modele_Caisse");
+        crate.transform.SetParent(root, false);
+        Box("Fond", crate.transform, Vector3.zero, new Vector3(0.5f, 0.03f, 0.36f), radioM);
+        Box("Bord_A", crate.transform, new Vector3(0f, 0.11f, 0.165f), new Vector3(0.5f, 0.22f, 0.03f), radioM);
+        Box("Bord_B", crate.transform, new Vector3(0f, 0.11f, -0.165f), new Vector3(0.5f, 0.22f, 0.03f), radioM);
+        Box("Bord_C", crate.transform, new Vector3(0.235f, 0.11f, 0f), new Vector3(0.03f, 0.22f, 0.33f), radioM);
+        Box("Bord_D", crate.transform, new Vector3(-0.235f, 0.11f, 0f), new Vector3(0.03f, 0.22f, 0.33f), radioM);
+        var crb = crate.AddComponent<Rigidbody>();
+        crb.mass = 20f;
+        crb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        crate.AddComponent<IgnorePlayer>();                                    // ne pousse pas le joueur s'il est dessous
+        crate.AddComponent<SupplyCrate>();
+        crate.SetActive(false);
+
+        // modèle de chargeur
+        var mag = MakeMagazine(root.position).gameObject;
+        mag.name = "Modele_Chargeur";
+        mag.transform.SetParent(root, true);
+        mag.SetActive(false);
+
+        var drop = new GameObject("Point_Largage").transform;
+        drop.SetParent(root, true);
+        drop.position = SupplyDrop;
+
+        var radio = root.gameObject.AddComponent<SupplyRadio>();
+        radio.button = inter; radio.buttonRenderer = btn.GetComponent<Renderer>(); radio.display = display;
+        radio.dropFrom = drop; radio.crateTemplate = crate; radio.magazineTemplate = mag;
     }
 
     static XRGrabInteractable MakeMagazine(Vector3 pos)

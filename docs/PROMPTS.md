@@ -96,6 +96,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [085](#085--ce-qui-manque-pour-léquilibrage) | 2026-10-20 | Ce qui manque au jeu Unity pour être équilibré | Game design | Valeurs réelles du code relevées : ≈ 96 balles pour ≈ 225 au torse, mêlée sans risque à la barricade, saut de difficulté au niveau 4, pas de mesures ; 8 manques classés ; rien modifié |
 | [086](#086--intégration-des-pr-131-radio-et-132-passer-lattente) | 2026-10-20 | Intégrer en local les PR d'Al Amine : radio de ravitaillement (#131) et passer l'attente avec B (#132) | Gameplay, GitHub | Fusion sans conflit sur une branche locale, compilation sans erreur, scène reconstruite et éclairage recuit ; pas encore poussé, en attente du test au casque |
 | [087](#087--version-pc-sans-casque-clavier-et-souris) | 2026-10-20 | Préparer une version non VR pour tester sur PC (ZQSD), sans toucher à la version VR | Joueur, Outils | Scène de lancement `MainScene_PC` + contrôleur clavier/souris qui pilote les mains XRI du rig ; testé en mode Play (tir, recharge, planche clouée, levier, radio) ; MainScene inchangée ; pas encore commité ni poussé |
+| [088](#088--rééquilibrage-du-jeu) | 2026-10-20 | Implémenter tout le rééquilibrage proposé en 085 | Gameplay / Équilibrage | Chargeurs du bunker garantis, recharge sans perte, coup à la barricade (1,6 m, 50 %, alternance), +50 PV par pause, niveau 4 à 40 %, traque au niveau 4, points pondérés (#123), difficulté, mesures [Bilan], reprise au niveau atteint (#121) ; tests a-f en mode Play ; pas poussé |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1616,3 +1617,28 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Seule modification d'un script existant : `VRInput.RightB` accepte aussi la touche B quand la version PC est active.
 - Vérifié en mode Play (entrées simulées) : déplacement, pistolet sorti et rangé à la ceinture, tir au clic, recharge, planche prise puis posée sur la fenêtre sud-ouest, 2 clous enfoncés en 3 coups de marteau chacun (fenêtre barricadée), levier du disjoncteur abaissé (caméras allumées), bouton de la radio. Non vérifié : partie complète, menu principal à la souris, souris réelle (tests par entrées simulées).
 
+---
+
+## 088 — Rééquilibrage du jeu
+
+**Date** : 2026-10-20 · **Domaine** : Gameplay / Équilibrage
+
+> ok, implémente moi tout ce rééquilibrage
+
+**Résultat** (code écrit par l'IA, Claude Code ; testé en mode Play dans l'éditeur, pas au casque)
+
+- **Chargeurs du bunker garantis** : les 2 chargeurs du bunker (pupitre des caméras, établi) apparaissent toujours ; les 10 autres de la carte gardent leur tirage (`RoomBuilder.BuildMagazines`).
+- **Recharger ne jette plus les balles** : l'arme prend 12 balles au plus et le chargeur ressort sous l'arme avec le reste (ex. 5 dans l'arme + chargeur de 12 → 12 dans l'arme, chargeur éjecté avec 5) ; il ne peut pas être repris tout de suite par l'emplacement (`Pistol.Load`, `MagWell`, `Magazine.Eject`, `DesktopPlayer`).
+- **Zombie à la barricade** : il frappe le joueur à moins de 1,6 m (à plat) à travers l'ouverture, 50 % des dégâts du niveau, **en alternance** avec les planches (le joueur ne protège pas ses planches avec son corps) (`Zombie.UpdateBreaking`).
+- **+50 PV** au début de chaque pause entre deux vagues (`PlayerHealth.Heal`, `WaveManager.breakHeal`).
+- **Niveau 4 à 40 %** de dégâts par coup (3 coups pour mourir au lieu de 2, `ZombieLevels`).
+- **Traque** : au niveau 4, dès que le générateur est prêt, tous les zombies poursuivent le joueur hors du bunker sans distance ni vue (`Zombie.HuntPlayer`).
+- **Tirage pondéré des points d'apparition** (issue #123, `WaveManager.SpawnWeights`).
+- **Difficulté** : dégâts reçus ×0,75 / ×1 / ×1,25 et chance des chargeurs de la carte 75 / 50 / 35 % (Facile / Normal / Difficile, `GameSettings`).
+- **Mesures** : `GameStats` compte les éliminations à la mêlée, les dégâts reçus par niveau et les balles chargées ; une ligne `[Bilan]` est écrite dans le log à chaque vague terminée, à la mort et à la victoire.
+- **Reprise au niveau atteint** (issue #121) : après une mort au niveau 2 ou plus, la gâchette (ou l'attente) reprend au début de ce niveau, sans tutoriel, zones déjà passées ouvertes, 40 s pour se barricader ; maintenir B recommence au niveau 1 (`GameOverUI`, `WaveManager.ResumeLevel`).
+- Annonce du niveau 1 : « Balles rares : la hache et le pied de biche ne s'usent pas. »
+- Radio d'Al Amine (#131) gardée telle quelle, pas de chargeur gratuit en plus.
+- Économie de munitions : 24 balles sûres (arme + chargeur de départ) + 24 du bunker + ≈ 60 en moyenne dans la carte + jusqu'à 48 par la radio.
+- Tests en mode Play dans l'éditeur (simulation) : (a) recharge 5 + 12 → 12 et chargeur éjecté à 5 ; (b) 2 chargeurs du bunker présents ; (c) joueur à 1,3 m frappé un coup sur deux (10 PV), les planches tombent quand même, rien à 2,2 m ; un premier essai a trouvé un bug (après un coup sur une planche, plus de coup au joueur) corrigé avant le commit ; (d) fin de vague : ligne `[Bilan]` puis 40 → 90 PV ; (e) `SkipToLevel(4)` + générateur prêt : `HuntPlayer` vrai, zombie à 21,7 m qui poursuit le joueur dans la cuisine ; (f) mort au niveau 3 → rechargement, départ au niveau 3 sans tutoriel, zones du niveau 2 ouvertes. Scène reconstruite et éclairage recuit, scène PC reconstruite.
+- **Pas testé au casque.** Commits locaux, pas poussé.

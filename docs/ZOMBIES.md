@@ -39,15 +39,17 @@ Les PV d'un zombie valent `100 × facteur du niveau`. Chaque tir au torse ou aux
 | **1** | 100 | 1 | 3 | 5 | **20 %** de sa vie max | 5 |
 | **2** | 130 | 1 | 4 | 7 | **20 %** | 5 |
 | **3** | 160 | 1 | 5 | 8 | **33 %** | 3 |
-| **4** | 200 | 1 | 6 | 10 | **50 %** | 2 |
+| **4** | 200 | 1 | 6 | 10 | **40 %** (avant : 50 %) | 3 |
 
 Les niveaux au-delà de 4 gardent les valeurs du niveau 4. Ces nombres de tirs sont ceux **mesurés** avec le vrai code dans l'éditeur.
+
+**Difficulté du menu** (`GameSettings.DamageMultiplier`) : les dégâts au joueur du tableau sont multipliés par **×0,75** en Facile, ×1 en Normal, **×1,25** en Difficile (`Zombie.ApplyLevel`).
 
 Le passage d'un niveau à l'autre est géré par le `WaveManager` (voir wiki « Niveaux et vagues ») : il règle `ZombieSpawner.level`, ce qui fixe PV et dégâts des zombies créés, et remet à zéro le quota de régénération du joueur.
 
 ## 3. Santé du joueur
 
-La santé du joueur passe de « 4 PV » à **100 PV (= 100 %)**, pour pouvoir retirer un pourcentage. Anciens réglages équivalents conservés : régénération de **25 PV** après 10 s sans dégât, **2 fois par vague** au maximum. Le vignettage rouge réagit à la part de vie perdue (et le « cœur qui bat » démarre à 25 % de vie ou moins).
+La santé du joueur passe de « 4 PV » à **100 PV (= 100 %)**, pour pouvoir retirer un pourcentage. Anciens réglages équivalents conservés : régénération de **25 PV** après 10 s sans dégât, **2 fois par vague** au maximum. **Soin entre deux vagues** : **+50 PV** au début de chaque pause (`WaveManager.breakHeal`, `PlayerHealth.Heal`), sans dépasser 100. Le vignettage rouge réagit à la part de vie perdue (et le « cœur qui bat » démarre à 25 % de vie ou moins).
 
 > Conséquence : au niveau 1, le joueur survit à **5** coups (et non plus 4), puisque chaque coup retire 20 %.
 
@@ -64,12 +66,24 @@ Le prefab **`Assets/Prefabs/ZombieSpawnPoints.prefab`** regroupe les points de d
 
 - Les fenêtres sont franchies par des **liens NavMesh** (extérieur → intérieur).
 - Chaque zombie choisit l'ouverture la plus proche **par le chemin réel**.
+- **Tirage pondéré des points** (issue #123, `WaveManager.SpawnWeights`) : chaque zombie de la vague part d'un point tiré au sort avec un poids (avant : un tour fixe). Ordre : extérieur, couloir gauche, couloir droit, toit.
+
+| Niveau | Extérieur | Couloir gauche | Couloir droit | Toit |
+|---|---|---|---|---|
+| 1 | 100 % | — | — | — |
+| 2 | 40 % | 30 % | 30 % | — |
+| 3 | 35 % | 25 % | 25 % | 15 % |
+| 4 | 30 % | 22,5 % | 22,5 % | 25 % |
+
+  Si les points d'un niveau sont changés dans la scène (nombre différent), on revient au tour fixe.
 - `Spawn_Couloir_Gauche` était au bout nord du couloir (−12 ; 3,7), à moins de 5 m de l'interrupteur du générateur : déplacé au fond de la cuisine, à **11,1 m** de l'interrupteur et hors de sa vue (issue #93).
 - Le départ est posé sur le NavMesh le plus proche **dans un rayon de 1 m d'abord** : avec 4 m d'emblée, Unity choisissait le toit du couloir droit (2,8 m au-dessus) et ces zombies arrivaient par le toit.
 
 ## 5. Poursuite hors du bunker et zombie coincé
 
 - **Poursuite** (issue #92) : un zombie qui marche vers son ouverture (ou casse ses planches) poursuit le joueur s'il le **voit à moins de 3,5 m** et que le joueur est **hors du bunker**. Il le frappe comme dans le bunker. Il le lâche si le joueur rentre dans le bunker, s'éloigne à plus de 7 m ou reste caché 2 s, et repart vers une ouverture. Pendant la poursuite il ne prend ni les fenêtres ni les trous du toit.
+- **Traque au niveau 4** : dès que le générateur est prêt (`WaveManager` met `Zombie.HuntPlayer` à vrai), tous les zombies poursuivent le joueur dès qu'il est hors du bunker, **sans condition de distance ni de vue**, et ne le lâchent que s'il rentre dans le bunker. Remis à faux au début de chaque niveau et à la victoire.
+- **Coup à travers la barricade** : un zombie qui casse des planches frappe le joueur placé à moins de **1,6 m** de lui (à plat, `Zombie.barricadeReach` ; le zombie se tient ~1 m devant l'ouverture, donc le joueur doit rester à ~60 cm en retrait). Ce coup fait **50 %** des dégâts du niveau (`barricadeDamageFactor`). Les coups **alternent** : après un coup au joueur, le suivant va à une planche (`lastHitWasPlayer`), le joueur ne peut donc pas protéger ses planches avec son corps. Rien au-delà de 1,6 m. Pas de coup au joueur tant que la porte (ouest / est) est fermée.
 - **Toit, plus de chute surprise** (issue #104, niveaux 3 et 4) : sur le toit, les pas du zombie résonnent (coup sourd toutes les ~0,55 s, entendu jusqu'à 16 m). Arrivé au bord de son trou, il attend **3 à 4 s** (état `Lurking`) : de la poussière tombe du trou dans le bunker avec un bruit de gravats (`Opening.WarnFromAbove`), puis il saute. Les trous ne se barricadent toujours pas.
 - **Zombie coincé** (issue #95) : un zombie qui devrait se déplacer (marche, entrée, poursuite) mais n'a pas parcouru 0,5 m en **20 s** meurt seul, pour que la vague se termine toujours. Casser des planches ou frapper ne compte pas comme « coincé ».
 
@@ -82,4 +96,20 @@ Test dans l'éditeur (nouvelle carte) : zombie de l'extérieur → fenêtre sud-
 - **Niveau 4** (issue #120) : le levier du générateur reste bloqué jusqu'à **6 zombies abattus** pendant le niveau **ou 60 s** passées dans le niveau (`WaveManager.generatorKills`, `generatorDelay`). Le panneau du générateur et l'écran d'annonces disent ce qu'il reste à faire ; une alarme courte et l'annonce « LE GÉNÉRATEUR EST PRÊT » signalent le déblocage. Les zombies tués par la sécurité « coincé » ne comptent pas.
 - **Bilan** (issue #122, `GameStats.cs`, `GameOverUI.cs`) : à la mort et à la victoire, sous le titre : zombies éliminés, % de tirs à la tête (balles dans une tête / balles tirées), planches posées, niveau atteint, temps total (vagues seulement, sans tutoriel ni pause). Gâchette pour rejouer après 3 s, sinon relance au bout de 15 s.
 
-Valeurs actuelles d'équilibrage (non modifiées, à revoir au playtest du 23/10, issue #124) : voir sections 2 et 3.
+## 7. Rééquilibrage du 20/10/2026 (journal 088)
+
+| Réglage | Avant | Après |
+|---|---|---|
+| Dégâts au joueur, niveau 4 | 50 % (2 coups) | **40 %** (3 coups) |
+| Coup à travers la barricade | aucun | **50 %** des dégâts du niveau, à moins de **1,6 m**, en alternance avec les planches |
+| Soin par pause | 0 | **+50 PV** |
+| Niveau 4, générateur prêt | poursuite à 3,5 m si vu | **traque** hors du bunker, sans distance ni vue |
+| Difficulté : dégâts reçus | ×1 | **×0,75 / ×1 / ×1,25** (Facile / Normal / Difficile) |
+| Difficulté : chargeurs dans la carte | 50 % | **75 % / 50 % / 35 %** (`GameSettings.MagazineChanceFactor`) |
+| Chargeurs du bunker (2) | 50 % chacun | **toujours présents** |
+| Recharger | les balles restantes étaient perdues | l'arme prend 12 au plus, **le chargeur ressort avec le reste** |
+| Points d'apparition | tour fixe | **tirage pondéré** (section 4) |
+
+Mesures pour le playtest du 23/10 (issue #124) : une ligne `[Bilan]` dans le log à chaque vague terminée, à la mort et à la victoire (tués, dont mêlée, tirs, têtes, dégâts reçus par niveau, PV, balles chargées, difficulté) ; lecture au casque avec `adb logcat -s Unity`.
+
+Testé dans l'éditeur (mode Play, simulation) : rechargement 5 + 12 → 12 dans l'arme et 5 dans le chargeur éjecté, chargeurs du bunker présents, coup à la barricade (joueur à 1,3 m frappé un coup sur deux, 10 PV, les planches tombent quand même ; rien à 2,2 m), +50 PV et ligne `[Bilan]` en fin de vague, traque au niveau 4 (zombie à 21,7 m qui poursuit), reprise au niveau 3 après une mort. **Pas testé au casque.**

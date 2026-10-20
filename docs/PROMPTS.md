@@ -98,6 +98,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [087](#087--version-pc-sans-casque-clavier-et-souris) | 2026-10-20 | Préparer une version non VR pour tester sur PC (ZQSD), sans toucher à la version VR | Joueur, Outils | Scène de lancement `MainScene_PC` + contrôleur clavier/souris qui pilote les mains XRI du rig ; testé en mode Play (tir, recharge, planche clouée, levier, radio) ; MainScene inchangée ; pas encore commité ni poussé |
 | [088](#088--rééquilibrage-du-jeu) | 2026-10-20 | Implémenter tout le rééquilibrage proposé en 085 | Gameplay / Équilibrage | Chargeurs du bunker garantis, recharge sans perte, coup à la barricade (1,6 m, 50 %, alternance), +50 PV par pause, niveau 4 à 40 %, traque au niveau 4, points pondérés (#123), difficulté, mesures [Bilan], reprise au niveau atteint (#121) ; tests a-f en mode Play ; pas poussé |
 | [089](#089--champ-de-vision-et-brouillard) | 2026-10-20 | Option FOV dans les paramètres, brouillard pour cacher la distance d'affichage | Rendu, Menus | Champ de vision 50 à 90° (version PC ; au casque, imposé par le Quest), brouillard bleu nuit et brume au bas du ciel ; testé en mode Play ; pas poussé |
+| [090](#090--téléportation-et-saut) | 2026-10-20 | Option de téléportation, remettre une touche de saut | Joueur, Menus | Option Déplacement : continu / téléportation (casque, point d'arrivée contrôlé par le NavMesh), saut remis (A, Espace sur PC) mais petit (≈ 0,33 m) ; testé en mode Play ; pas poussé |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1659,4 +1660,23 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Brouillard** : la carte avait déjà un brouillard, mais presque noir ; au loin le sol devenait noir puis le ciel (panorama d'Alban, sans brouillard) reprenait d'un coup, ce qui marquait la limite d'affichage. Le brouillard passe en bleu nuit (0,06 ; 0,075 ; 0,10), même densité qu'avant (0,06, exponentiel carré), et le bas du ciel se fond dans la couleur du brouillard (`SkySphere.shader` : tout brouillard sous l'horizon, ciel intact au-dessus de ≈ 17°). Le décor au loin et le ciel se rejoignent dans la même brume. Réglé dans `RoomBuilder` (survit à **Build VR Scene**) ; la scène a été mise à jour directement (une ligne, sans reconstruire ni recuire l'éclairage, qui ne dépend pas du brouillard).
 - Coût au casque : aucun calcul en plus pour le décor (le brouillard existait déjà) ; trois instructions de plus dans le shader du ciel.
 - Vérifié en mode Play : version PC, clic sur 70° → caméra à 70°, 50° et 90° vus en capture ; version VR, page PARAMÈTRES inchangée ; aucune erreur dans la console. Captures dehors (4 directions) avant / après comparées. Densité inchangée, donc la lisibilité des zombies au loin reste celle réglée avant (non revérifiée avec un zombie en jeu).
+- **Pas testé au casque.** Commit local, pas poussé.
+
+---
+
+## 090 — Téléportation et saut
+
+**Date** : 2026-10-20 · **Domaine** : Joueur, Menus
+
+> Rajoute en option de tp
+> (Et remet une touche de saut)
+
+**Résultat** (code écrit par l'IA, Claude Code ; testé en mode Play dans l'éditeur, pas au casque)
+
+- **Téléportation** : nouvelle ligne **Déplacement : CONTINU / TÉLÉPORTATION** dans CONFORT VR (désactivée par défaut, `GameSettings.Teleport`). Le bouton RECENTRER descend à côté de RETOUR pour laisser la place. Avec l'option, le joystick gauche vise comme le droit (vers l'avant = arc, relâcher = s'y rendre) et le fournisseur de téléportation XRI du rig est allumé. En version PC l'option n'apparaît pas.
+- **Point d'arrivée contrôlé** (`NavTeleportArea`, nouvelle zone de téléportation sur tout le sol) : sur le NavMesh, et joignable à pied par un chemin d'au plus 1,5 × la distance + 1 m. Donc pas à travers un mur, par une fenêtre, derrière une porte de zone fermée, ni sur un meuble.
+- **Saut** remis : le saut des Starter Assets (bouton A ; Espace en version PC et dans l'éditeur) avait été coupé le 7 octobre car il faisait passer par-dessus les obstacles. Il revient en petit : `jumpHeight` 0,45 (≈ 0,33 m mesurés), pas de double saut (`SetupVRScene`). Aide de la version PC mise à jour.
+- Correction en passant : les réglages des manettes (`ControllerInputActionManager`) étaient appliqués seulement aux manettes actives au chargement ; ils le sont maintenant aussi aux manettes éteintes (avant qu'elles soient suivies).
+- Scène VR reconstruite (**Build VR Scene**) et éclairage recuit.
+- Vérifié en mode Play : saut au casque simulé (0,33 m) et à la touche Espace en version PC (0,33 m) ; en sautant contre les fenêtres ouest, est et sud-ouest le joueur ne sort pas, il ne monte pas sur la caisse militaire de 0,46 m ; téléportation : points de la même pièce acceptés (dont un derrière des meubles), dehors (2 fenêtres, jardin), dessus d'établi et couloirs fermés refusés, déplacement du joueur par le fournisseur ; clic sur CONTINU → retour au déplacement continu ; page PARAMÈTRES capturée (pas de chevauchement). Non vérifié : le rayon et l'arc avec de vraies manettes.
 - **Pas testé au casque.** Commit local, pas poussé.

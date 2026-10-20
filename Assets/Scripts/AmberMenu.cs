@@ -38,9 +38,12 @@ public abstract class AmberMenu : MonoBehaviour
         else
         {
             Section(p, ref y, "CONFORT VR");
+            Choice(p, ref y, "Déplacement", new[] { "CONTINU", "TÉLÉPORTATION" }, () => GameSettings.Teleport ? 1 : 0, i => GameSettings.Teleport = i == 1);
             Choice(p, ref y, "Rotation", new[] { "PAR À-COUPS", "FLUIDE" }, () => GameSettings.SmoothTurn ? 1 : 0, i => GameSettings.SmoothTurn = i == 1);
             Choice(p, ref y, "Bords sombres", new[] { "OUI", "NON" }, () => GameSettings.ComfortVignette ? 0 : 1, i => GameSettings.ComfortVignette = i == 0);
-            Choice(p, ref y, "Vue", new[] { "RECENTRER" }, () => -1, i => GameSettings.Recenter());
+            // RECENTRER est descendu à côté de RETOUR : la ligne « Déplacement » a pris sa place
+            var re = MakeButton(p, new Vector2(HW - 0.17f, -0.53f), new Vector2(0.34f, 0.09f), "RECENTRER", 0.0095f, GameSettings.Recenter);
+            re.textColor = A;
         }
         Section(p, ref y, "JEU");
         Choice(p, ref y, "Difficulté", new[] { "FACILE", "NORMAL", "DIFFICILE" }, () => (int)GameSettings.Difficulty, i => GameSettings.Difficulty = (GameSettings.Level)i);

@@ -8,6 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
 public static class SetupVRScene
 {
+    public const float JumpHeight = 0.45f;
     const string XriDir = "Assets/Samples/XR Interaction Toolkit/3.6.0/Starter Assets/";
 
     [MenuItem("SAE501/Build VR Scene")]
@@ -26,12 +27,22 @@ public static class SetupVRScene
         AddHand(rig, "Left Controller", "l", "XRI Left Interaction", actions);
         AddHand(rig, "Right Controller", "r", "XRI Right Interaction", actions);
 
-        // déplacement : seulement marcher (joystick gauche) et tourner (joystick droit). Les autres modes des Starter Assets
-        // (saut sur A, escalade, « grab move » qui déplace le joueur quand on serre le grip dans le vide, téléportation sans zone)
-        // ne servent pas et faisaient passer le joueur à travers le sol ou par-dessus les obstacles.
+        // déplacement : marcher (joystick gauche), tourner (joystick droit) et sauter (A, ou Espace en version PC).
+        // L'escalade et le « grab move » (le joueur bouge quand on serre le grip dans le vide) ne servent pas.
+        // La téléportation reste éteinte ici : GameSettings l'allume si elle est choisie dans les paramètres (NavTeleportArea).
         foreach (var t in rig.GetComponentsInChildren<Transform>(true))
-            if (t.name == "Grab Move" || t.name == "Jump" || t.name == "Climb" || t.name == "Climb Teleport" || t.name == "Teleportation")
+            if (t.name == "Grab Move" || t.name == "Climb" || t.name == "Climb Teleport" || t.name == "Teleportation")
                 t.gameObject.SetActive(false);
+        // saut petit (0,45 m, au lieu de 1,25 m) : assez pour sentir le saut, trop peu pour monter sur une caisse,
+        // un rebord de fenêtre ou une barricade (le saut d'origine faisait passer par-dessus les obstacles)
+        foreach (var jump in rig.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.Jump.JumpProvider>(true))
+        {
+            jump.gameObject.SetActive(true);
+            jump.jumpHeight = JumpHeight;
+            jump.variableHeightJump = false;
+            jump.unlimitedInAirJumps = false;
+            jump.inAirJumpCount = 0;
+        }
         var cc = rig.GetComponent<CharacterController>();
         if (cc)
         {

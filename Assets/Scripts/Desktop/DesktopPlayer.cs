@@ -456,7 +456,7 @@ public class DesktopPlayer : MonoBehaviour
             "R : recharger (chargeur / pile)\n" +
             "Levier, porte : E puis regarder / reculer\n" +
             "B ou Entrée (maintenir) : passer l'attente\n" +
-            "Échap : pause · Espace : valider (menus)\n" +
+            "Espace : sauter (valider dans les menus) · Échap : pause\n" +
             "N : passer une étape du tutoriel");
     }
 }

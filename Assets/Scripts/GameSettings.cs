@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Réglages du joueur (menu PARAMÈTRES), enregistrés d'une partie à l'autre (PlayerPrefs) et appliqués à chaque scène chargée :
-//   musique / effets / cris des zombies, rotation fluide ou par à-coups, bords sombres en mouvement, difficulté,
+//   musique / effets / cris des zombies, rotation fluide ou par à-coups, déplacement continu ou téléportation,
+//   bords sombres en mouvement, difficulté,
 //   champ de vision (version PC seulement : au casque, c'est le Quest qui impose le champ de vision des lentilles).
 public static class GameSettings
 {
@@ -16,6 +17,8 @@ public static class GameSettings
     static float zombies = -1f;
     public static float Effects { get => PlayerPrefs.GetFloat("sae501.sfx", 0.8f); set { PlayerPrefs.SetFloat("sae501.sfx", Mathf.Clamp01(value)); Apply(); } }
     public static bool SmoothTurn { get => PlayerPrefs.GetInt("sae501.smooth", 1) == 1; set { PlayerPrefs.SetInt("sae501.smooth", value ? 1 : 0); Apply(); } }
+    // téléportation (au casque) : joystick vers l'avant = viser le sol, relâcher = s'y rendre ; sinon déplacement continu
+    public static bool Teleport { get => PlayerPrefs.GetInt("sae501.teleport", 0) == 1; set { PlayerPrefs.SetInt("sae501.teleport", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
     // champ de vision vertical de la caméra, en degrés (Camera.fieldOfView) ; 60 = valeur d'origine
     public static readonly int[] FieldOfViews = { 50, 60, 70, 80, 90 };
@@ -51,12 +54,24 @@ public static class GameSettings
         foreach (var mp in Object.FindObjectsByType<MusicPlayer>(FindObjectsSortMode.None))
             mp.volume = Mathf.Clamp01(Music * 1.6f);
 
-        // ControllerInputActionManager (Starter Assets XRI) : propriété smoothTurnEnabled, lue par réflexion
-        foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        // ControllerInputActionManager (Starter Assets XRI) : propriétés smoothTurnEnabled et smoothMotionEnabled, lues par réflexion.
+        // Les manettes sont éteintes tant qu'elles ne sont pas suivies (XRInputModalityManager) : on les règle aussi éteintes.
+        // smoothMotionEnabled de la manette gauche : vrai = le joystick fait marcher ; faux = vers l'avant il vise un point de
+        // téléportation (et sur les côtés il tourne). La manette droite est déjà ainsi (tourner + viser) : on n'y touche pas.
+        bool teleport = Teleport && !DesktopMode.On;
+        foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (mb.GetType().Name != "ControllerInputActionManager") continue;
             var p = mb.GetType().GetProperty("smoothTurnEnabled", BindingFlags.Public | BindingFlags.Instance);
             if (p != null && p.CanWrite) p.SetValue(mb, SmoothTurn);
+            var m = mb.GetType().GetProperty("smoothMotionEnabled", BindingFlags.Public | BindingFlags.Instance);
+            if (m != null && m.CanWrite && mb.name.Contains("Left")) m.SetValue(mb, !teleport);
+        }
+        // fournisseur de téléportation du rig (éteint par SetupVRScene) et zone de téléportation sur le sol
+        foreach (var tp in Object.FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            tp.gameObject.SetActive(teleport);
+            if (teleport) NavTeleportArea.Ensure(tp);
         }
 
         // vignette de confort des Starter Assets (si présente dans le rig)

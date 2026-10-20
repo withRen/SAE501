@@ -90,6 +90,9 @@ public static class RoomBuilder
 
         BuildMapLights();
         MakeMapColliders(roomRoot.transform);
+        SinkTerrainUnderFloors(roomRoot.transform);
+        FixFloorDecals(roomRoot.transform);
+        FixGardenCabin(roomRoot.transform);
         BuildExterior();
         BuildPlanks(planks);
         BuildHammer(hammerNode);
@@ -225,9 +228,13 @@ public static class RoomBuilder
             Vector3 Ax(int i) { var v = Vector3.zero; v[i] = 1f; return t.TransformDirection(v).normalized; }
             var width = Ax(axes[1]); var thick = Ax(axes[2]);
             if (Vector3.Dot(thick, Vector3.up) < 0f) thick = -thick;
-            res.Add(new Pose { name = t.name, pos = t.TransformPoint(b.center), rot = Quaternion.LookRotation(thick, width) });
+            var pos = t.TransformPoint(b.center);
+            var name = t.name;
             if (plankMesh == null && t.name == "Plank_01") { plankMesh = mf.sharedMesh; plankMats = t.GetComponent<Renderer>().sharedMaterials; }
             Object.DestroyImmediate(t.gameObject);
+            // pile posée sur un meuble (table de la cuisine : 5 planches empilées) : on n'en garde qu'une, celle du dessous
+            if (pos.y > 0.5f && res.Any(p => p.pos.y > 0.5f && Vector2.Distance(new Vector2(p.pos.x, p.pos.z), new Vector2(pos.x, pos.z)) < 0.3f)) continue;
+            res.Add(new Pose { name = name, pos = pos, rot = Quaternion.LookRotation(thick, width) });
         }
         return res;
     }
@@ -254,6 +261,137 @@ public static class RoomBuilder
             if (Structural.Any(k => n.Contains(k))) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
             else r.gameObject.AddComponent<BoxCollider>();
         }
+    }
+
+    // ---------- décor au sol (flaques, tapis, papiers, gravats) ----------
+    // Au casque : grandes plaques claires « en crépi » superposées sur les planchers. Les matériaux « Apocalypse » du fichier
+    // (flaques, mousse, tuyaux rouillés) ont leur couleur faite par des nœuds Blender que l'export ne lit pas : ils sortaient gris clair
+    // (0,8) et opaques, avec une normale de plâtre ou de moquette. Les flaques (Apoc_Water_Puddles, GenRoom_OilSpills)
+    // et plusieurs flaques se recouvrent à 1-4 mm du sol : z-fighting entre elles et avec les tapis.
+    // Correction : eau sombre et brillante, transparente (sans écriture de profondeur : les flaques superposées ne se battent plus),
+    // puis chaque couche posée à une hauteur fixe au-dessus du sol : gravats, tapis, papiers (plus de surfaces au même niveau).
+    static readonly (string key, float height)[] DecalLayers = { ("Debris", 0.002f), ("Rug", 0.007f), ("Runner", 0.007f), ("Papers", 0.012f) };
+    static void FixFloorDecals(Transform root)
+    {
+        Physics.SyncTransforms();      // colliders de la carte tout juste ajoutés
+        var water = Mat("Flaque_Eau", new Color(0.02f, 0.025f, 0.03f, 0.55f), 0.93f);
+        water.SetFloat("_Surface", 1f);
+        water.SetFloat("_Blend", 0f);
+        water.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        water.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        water.SetFloat("_ZWrite", 0f);
+        water.SetOverrideTag("RenderType", "Transparent");
+        water.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        water.renderQueue = (int)RenderQueue.Transparent;
+        // mousse et lianes (Apoc_Vines_And_Moss) : même perte de couleur, plaques blanches « de neige » au sol et lianes blanches au plafond
+        var moss = Mat("Mousse", new Color(0.05f, 0.075f, 0.03f), 0.05f);
+        var rust = Mat("Tuyau_Rouille", new Color(0.3f, 0.14f, 0.07f), 0.3f);
+        rust.SetFloat("_Metallic", 0.6f);
+        var fixedMats = new Dictionary<string, Material> { { "ApocalypsePuddle", water }, { "ApocalypseMoss", moss }, { "ApocalypseRustPipe", rust } };
+        Material Fixed(Material m) => m == null ? null : fixedMats.FirstOrDefault(kv => m.name.StartsWith(kv.Key)).Value;
+        int n = 0;
+        foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true))
+        {
+            if (r.sharedMaterials.Any(m => Fixed(m) != null))
+            {
+                r.sharedMaterials = r.sharedMaterials.Select(m => Fixed(m) ?? m).ToArray();
+                if (r.sharedMaterials.Contains(water)) r.shadowCastingMode = ShadowCastingMode.Off;
+                n++;
+                continue;
+            }
+            var layer = DecalLayers.FirstOrDefault(d => r.name.Contains(d.key));
+            if (layer.key == null) continue;
+            var b = r.bounds;
+            // sol sous le décor (les décors n'ont pas de collider : MakeMapColliders)
+            // (le plus haut sous le décor : pas le plateau d'une table posée sur le tapis)
+            var floor = Physics.RaycastAll(new Vector3(b.center.x, b.max.y + 0.5f, b.center.z), Vector3.down, 2f, ~0, QueryTriggerInteraction.Ignore)
+                .Where(h => h.point.y <= b.min.y + 0.02f).Select(h => h.point.y).DefaultIfEmpty(float.NaN).Max();
+            if (float.IsNaN(floor)) continue;
+            float lift = floor + layer.height - b.min.y;
+            if (lift > 0f) { r.transform.position += Vector3.up * lift; n++; }
+        }
+        Debug.Log($"[RoomBuilder] décor au sol corrigé : {n} objets (flaques transparentes, couches décalées)");
+    }
+
+    // Le terrain extérieur (Exterior_World_Terrain, vallonné) passe sous toute la maison et ressort par endroits à travers les
+    // planchers (couloirs, coin de l'échelle du bunker) : plaques claires au même niveau que le bois, avec z-fighting.
+    // Les sommets du terrain sous un plancher (ou à moins de 30 cm de son bord) sont descendus 10 cm sous ce plancher.
+    // Le maillage modifié est une copie enregistrée dans Assets/Generated (le FBX de la carte n'est pas touché).
+    static void SinkTerrainUnderFloors(Transform root)
+    {
+        var terr = Find(root, "Exterior_World_Terrain");
+        if (terr == null) return;
+        var floors = root.GetComponentsInChildren<MeshCollider>()
+            .Where(c => c.name.Contains("Floor") && c.transform != terr && c.bounds.size.y < 0.2f).ToList();
+        Physics.SyncTransforms();
+        var mf = terr.GetComponent<MeshFilter>();
+        var mesh = Object.Instantiate(mf.sharedMesh);
+        mesh.name = "Terrain_SousMaison";
+        var v = mesh.vertices;
+        int n = 0;
+        var offsets = new[] { Vector3.zero, new Vector3(0.3f, 0f, 0f), new Vector3(-0.3f, 0f, 0f), new Vector3(0f, 0f, 0.3f), new Vector3(0f, 0f, -0.3f) };
+        for (int i = 0; i < v.Length; i++)
+        {
+            var w = terr.TransformPoint(v[i]);
+            float top = float.NegativeInfinity;
+            foreach (var f in floors)
+                foreach (var o in offsets)
+                    if (f.Raycast(new Ray(new Vector3(w.x, f.bounds.max.y + 1f, w.z) + o, Vector3.down), out var h, 2f)) top = Mathf.Max(top, h.point.y);
+            if (float.IsNegativeInfinity(top) || w.y <= top - 0.1f) continue;
+            w.y = top - 0.1f;
+            v[i] = terr.InverseTransformPoint(w);
+            n++;
+        }
+        mesh.vertices = v;
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+        const string path = Dir + "/Terrain_SousMaison.asset";
+        AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CreateAsset(mesh, path);
+        mf.sharedMesh = mesh;
+        var mc = terr.GetComponent<MeshCollider>();
+        if (mc) mc.sharedMesh = mesh;
+        Debug.Log($"[RoomBuilder] terrain : {n} sommets descendus sous les planchers");
+    }
+
+    // ---------- cabane du jardin ----------
+    // Le groupe de bouteilles dépassait du buffet de 17 cm (deux bouteilles dans le vide) : décalé avec la lanterne posée au milieu.
+    // La clé dorée était un simple décor (statique, sans prise) : elle devient un objet qu'on prend en main, posée à l'avant du buffet.
+    static void FixGardenCabin(Transform root)
+    {
+        var board = Find(root, "Garden_Cabin_Sideboard");
+        var bottles = Find(root, "Garden_Cabin_Bottles");
+        if (board && bottles)
+        {
+            var top = board.GetComponent<Renderer>().bounds; var bb = bottles.GetComponent<Renderer>().bounds;
+            const float margin = 0.03f;
+            var shift = new Vector3(Mathf.Max(0f, top.min.x + margin - bb.min.x) - Mathf.Max(0f, bb.max.x - (top.max.x - margin)), 0f,
+                                    Mathf.Max(0f, top.min.z + margin - bb.min.z) - Mathf.Max(0f, bb.max.z - (top.max.z - margin)));
+            bottles.position += shift;
+            var lantern = Find(root, "Garden_Cabin_Lantern");
+            if (lantern) lantern.position += shift;
+        }
+
+        var key = Find(root, "Garden_Hidden_Key");
+        if (key == null) return;
+        key.SetParent(items, true);
+        key.name = "Cle_Jardin";
+        GameObjectUtility.SetStaticEditorFlags(key.gameObject, 0);      // objet mobile : éclairé par les sondes, pas par la lightmap
+        if (board)
+        {
+            var top = board.GetComponent<Renderer>().bounds; var kr = key.GetComponent<Renderer>().bounds;
+            key.position += new Vector3(0f, top.max.y + 0.005f - kr.min.y, top.max.z - 0.09f - kr.center.z);
+        }
+        var kb = key.GetComponent<MeshFilter>().sharedMesh.bounds;
+        var bc = key.GetComponent<BoxCollider>();
+        if (!bc) bc = key.gameObject.AddComponent<BoxCollider>();
+        bc.center = kb.center;
+        // clé de 1,5 cm d'épaisseur : collider grossi pour qu'on l'attrape sans viser au millimètre
+        bc.size = Vector3.Max(kb.size + Vector3.one * 0.02f, Vector3.one * 0.03f);
+        var rb = key.gameObject.AddComponent<Rigidbody>();
+        rb.mass = 0.05f;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        MakeGrab(key.gameObject);
     }
 
     // ---------- lumières du fichier ----------

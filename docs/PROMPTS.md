@@ -106,6 +106,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [095](#095--page-wiki-optimisations) | 2026-10-20 | Page wiki sur tout ce qui a été fait en optimisation | Wiki, Optimisation | Nouvelle page `Optimisations` (rendu au casque, lumière précalculée, LOD, textures, culling, caméras de surveillance, code, pistes), Home et barre latérale ; wiki poussé ; rien modifié dans le jeu |
 | [096](#096--image-de-couverture-github) | 2026-10-20 | Image de cover du jeu pour le dépôt GitHub | Communication, Rendu | Image 1280 × 640 rendue depuis `MainScene` (zombies, planches et lumières temporaires, rien sauvegardé) puis titre et accroche ajoutés ; à poser à la main dans Settings > Social preview |
 | [097](#097--cover-dans-le-readme) | 2026-10-20 | Mettre la cover en tête du README | Documentation | Image copiée dans `docs/images/cover.png` (Git LFS) et affichée sous le titre du README |
+| [098](#098--sols-en-double-bouteilles-clé-et-planches) | 2026-10-20 | Plaques au sol (capture au casque), bouteilles qui volent sous la cabane du jardin, clé impossible à prendre, trop de planches sur la table de la cuisine | Carte, Gameplay | Matériaux « Apocalypse » recolorés (mousse, flaques transparentes, tuyaux), tapis et papiers décalés, terrain abaissé sous les planchers ; bouteilles recalées ; clé prenable ; une seule planche sur la table ; éclairage recuit |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1793,4 +1794,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 - L'image de l'entrée 096 est copiée dans `docs/images/cover.png` (suivie par Git LFS, comme tous les PNG) et affichée juste sous le titre du `README.md`, avec un texte alternatif.
 - Commit local ; visible sur GitHub une fois poussé.
+
+---
+
+## 098 — Sols en double, bouteilles, clé et planches
+
+**Date** : 2026-10-20 · **Domaine** : Carte, Gameplay
+
+> Y a quelques petits soucis du style (L'image) mais aussi des bouteilles qui volent dans le jardin sous la tente
+> La clé n'est pas récupérable, ou devient simplement transparent
+> (Dans la cuisine y a trop de planches sur la table, met en qu'une)
+
+(L'image : capture Meta Casting au casque, bunker près de l'échelle et du chariot vert, grandes plaques blanches texturées superposées sur le plancher.)
+
+**Résultat** (fait par l'IA, Claude Code ; corrections dans `RoomBuilder.cs`, scène reconstruite et éclairage recuit)
+
+- **Plaques blanches au sol** : c'était la mousse de `Apoc_Vines_And_Moss` (et les lianes blanches du plafond). Les trois matériaux « Apocalypse » du fichier (mousse, flaques, tuyaux rouillés) ont leur couleur faite par des nœuds Blender que l'export ne lit pas : ils sortaient gris clair opaques. `FixFloorDecals` les remplace : mousse vert très sombre, flaques en eau sombre brillante et transparente (plus de z-fighting entre flaques superposées), tuyaux couleur rouille. Les tapis et papiers sont posés à des hauteurs fixes au-dessus du sol (gravats 2 mm, tapis 7 mm, papiers 12 mm) : plus deux surfaces au même niveau.
+- Le terrain extérieur passait sous la maison et touchait les planchers des couloirs : `SinkTerrainUnderFloors` descend ses sommets 10 cm sous tout plancher (copie du maillage dans `Assets/Generated/Terrain_SousMaison.asset`, le FBX n'est pas modifié).
+- **Bouteilles qui volent** (cabane du jardin) : le groupe de bouteilles dépassait du buffet de 17 cm, deux bouteilles dans le vide. Recalé sur le buffet avec la lanterne.
+- **Clé** : c'était un décor statique sans prise. Elle devient un objet qu'on prend en main (`Cle_Jardin` : corps physique, collider grossi, mêmes règles que les autres objets), posée à l'avant du buffet. Elle n'ouvre rien pour l'instant (aucune serrure dans le jeu).
+- **Planches de la cuisine** : 5 planches empilées sur la table, il n'en reste qu'une (`CollectPlanks` ne garde qu'une planche par pile posée sur un meuble). Les 3 planches au sol de la cuisine restent.
+- Vérifié : captures avant/après dans l'éditeur ; en mode Play, la clé reste posée, se prend avec une main simulée, suit la main et retombe au sol quand on la lâche ; une seule planche sur la table. **Pas vérifié au casque**, ni la cause exacte de « la clé devient transparente ».
 

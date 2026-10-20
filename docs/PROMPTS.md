@@ -95,6 +95,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [084](#084--hôpital-blender-phase-1-blockout) | 2026-10-19 | Rendre la scène d'hôpital Blender au mieux : phase 1 (collections, matériaux, World, blockout des 6 zones) | Environnement | Blockout construit dans une copie `_v02_phase1.blend`, ancienne passe archivée (masquée, rien supprimé), rendus de contrôle ; phase 2 en attente de validation |
 | [085](#085--ce-qui-manque-pour-léquilibrage) | 2026-10-20 | Ce qui manque au jeu Unity pour être équilibré | Game design | Valeurs réelles du code relevées : ≈ 96 balles pour ≈ 225 au torse, mêlée sans risque à la barricade, saut de difficulté au niveau 4, pas de mesures ; 8 manques classés ; rien modifié |
 | [086](#086--intégration-des-pr-131-radio-et-132-passer-lattente) | 2026-10-20 | Intégrer en local les PR d'Al Amine : radio de ravitaillement (#131) et passer l'attente avec B (#132) | Gameplay, GitHub | Fusion sans conflit sur une branche locale, compilation sans erreur, scène reconstruite et éclairage recuit ; pas encore poussé, en attente du test au casque |
+| [087](#087--version-pc-sans-casque-clavier-et-souris) | 2026-10-20 | Préparer une version non VR pour tester sur PC (ZQSD), sans toucher à la version VR | Joueur, Outils | Scène de lancement `MainScene_PC` + contrôleur clavier/souris qui pilote les mains XRI du rig ; testé en mode Play (tir, recharge, planche clouée, levier, radio) ; MainScene inchangée ; pas encore commité ni poussé |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1596,4 +1597,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Recouvrement avec #124 : oui, la radio ajoute jusqu'à 4 chargeurs (48 balles) par partie, ce qui ressemble à la piste « chargeur à chaque pause » de l'issue.
 - Wiki préparé (page `Radio-de-ravitaillement`, Commandes, Niveaux et vagues, Tutoriel), poussé avec la fusion dans `main`.
 - Pas testé au casque. Merge des PR et push en attente du retour de Rahim.
+
+---
+
+## 087 — Version PC sans casque (clavier et souris)
+
+**Date** : 2026-10-20 · **Domaine** : Joueur, Outils
+
+> Pour que je puisse tester sur PC sans casque, prépare moi une version non VR
+> Mouvements ZQSD
+> (Ne overwrite pas la version VR)
+
+**Résultat** (code écrit par l'IA, Claude Code ; testé en mode Play dans l'éditeur, pas joué à la main par un humain)
+
+- Nouvelle scène `Assets/Scenes/MainScene_PC.unity` (menu **SAE501 → Build PC Scene**, ou **SAE501 → Play PC Version** pour l'ouvrir et lancer) : elle active la version PC puis charge `MainScene`, qui n'est pas modifiée. La scène PC n'est pas ajoutée au build Quest.
+- `DesktopMode` (activé seulement par cette scène) ajoute `DesktopPlayer` au XR Origin : souris = regard, ZQSD = déplacement, les mains XRI du rig sont placées devant la caméra et visent le réticule. Les objets reçoivent les mêmes événements XRI qu'avec les manettes (prise, gâchette), donc le code du jeu est le même.
+- Touches : E / clic droit prendre-lâcher (main droite / gauche), clic gauche tirer, frapper ou appuyer, R recharger (chargeur ou pile), 1 / 2 / 3 pistolet, marteau, lampe de la ceinture, F lampe, C s'accroupir, B ou Entrée maintenus pour passer l'attente, Échap pause, Espace valider dans les menus, F1 aide.
+- Seule modification d'un script existant : `VRInput.RightB` accepte aussi la touche B quand la version PC est active.
+- Vérifié en mode Play (entrées simulées) : déplacement, pistolet sorti et rangé à la ceinture, tir au clic, recharge, planche prise puis posée sur la fenêtre sud-ouest, 2 clous enfoncés en 3 coups de marteau chacun (fenêtre barricadée), levier du disjoncteur abaissé (caméras allumées), bouton de la radio. Non vérifié : partie complète, menu principal à la souris, souris réelle (tests par entrées simulées).
 

@@ -55,13 +55,13 @@ public static class VRInput
         return XRNode.RightHand;
     }
 
-    /// <summary>Bouton B de la manette droite ; dans l'éditeur sans casque : touche Entrée.</summary>
+    /// <summary>Bouton B de la manette droite ; dans l'éditeur sans casque : touche Entrée (et B en version PC).</summary>
     public static bool RightB()
     {
         var d = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
         if (d.isValid && d.TryGetFeatureValue(CommonUsages.secondaryButton, out bool b) && b) return true;
         var k = UnityEngine.InputSystem.Keyboard.current;
-        return k != null && k.enterKey.isPressed;
+        return k != null && (k.enterKey.isPressed || DesktopMode.On && k.bKey.isPressed);
     }
 
     /// <summary>Joystick gauche enfoncé (clic).</summary>

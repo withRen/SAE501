@@ -104,6 +104,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [092](#092--textures-et-distance-mipmaps) | 2026-10-20 | Les textures baissent-elles en qualité avec la distance ? | Rendu, Optimisation | Explication seulement : oui, par les mipmaps (243 textures sur 246), trilinéaire + anisotrope ×4 sur la carte, 1024 px max, streaming des mipmaps coupé ; rien modifié |
 | [094](#094--fermer-les-pull-requests-et-pousser-dans-main) | 2026-10-20 | Fermer toutes les pull requests et pousser dans main la version actuelle du jeu | GitHub | Scène reconstruite et éclairage recuit, `main` poussée en avance rapide, wiki poussé, 7 PR fermées |
 | [095](#095--page-wiki-optimisations) | 2026-10-20 | Page wiki sur tout ce qui a été fait en optimisation | Wiki, Optimisation | Nouvelle page `Optimisations` (rendu au casque, lumière précalculée, LOD, textures, culling, caméras de surveillance, code, pistes), Home et barre latérale ; wiki poussé ; rien modifié dans le jeu |
+| [096](#096--image-de-couverture-github) | 2026-10-20 | Image de cover du jeu pour le dépôt GitHub | Communication, Rendu | Image 1280 × 640 rendue depuis `MainScene` (zombies, planches et lumières temporaires, rien sauvegardé) puis titre et accroche ajoutés ; à poser à la main dans Settings > Social preview |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1763,3 +1764,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Nouvelle page de wiki **`Optimisations`** (titre en français comme les autres pages) : rendu au casque (Single Pass Instanced, rendu fovéal au maximum, niveau de qualité Quest et son pipeline, pas de post-traitement), lumière précalculée et sondes, simplification à l'export et LOD du décor (avec le `lodBias 2` qui repousse la bascule vers 16 m), distance d'affichage et brouillard, textures (1024 px, mipmaps, trilinéaire, anisotrope), culling (champ de vision, distance, LOD, faces arrière, caméras de surveillance ; occlusion culling absent), SRP Batcher et regroupement statique, zombies et code. Courte section « Pistes non faites ».
 - `Home.md` (nouvelle section « Technique ») et `_Sidebar.md` mis à jour. Wiki poussé (commit `7a3d4ab`).
 - Rien modifié dans le jeu ; rien mesuré au casque (dit en tête de page).
+
+---
+
+## 096 — Image de couverture GitHub
+
+**Date** : 2026-10-20 · **Domaine** : Communication, Rendu
+
+> Tu pourrais me produire une image de cover du jeu qu'on va utiliser pour la cover du github
+
+**Résultat** (image produite par l'IA, Claude Code : rendu Unity par script, puis mise en page en Python/Pillow)
+
+- Image **1280 × 640 px** (format de l'aperçu social GitHub, 560 Ko) : le bunker vu de l'extérieur sud, de nuit, fenêtres sud barricadées et éclairées de l'intérieur, zombies qui approchent avec les yeux rouges, deux zombies qui frappent les fenêtres. Titre « THE LAST ESCAPOR », accroche « Survival shooter en réalité virtuelle », phrase « Barricade-toi. Tiens la nuit. Échappe-toi. » et badge « Meta Quest 3 · Unity 6 ».
+- Rendu fait dans l'éditeur à partir de la vraie `MainScene`, avec une caméra, des zombies (prefab `Zombie`, poses de marche et d'attaque figées), des planches et quelques lumières **temporaires**, puis la scène rechargée depuis le disque sans enregistrer. Les yeux sont dessinés comme ceux de `ZombieEyes` (le script ne tourne qu'en jeu). Retouches en 2D : étalonnage bleu nuit, halo des yeux et des fenêtres, vignette, grain.
+- Les zombies Cogneur et Coureur ressortaient en magenta dans ce rendu hors jeu (vêtements) : seuls des zombies « Rôdeur » sont dans l'image. Pas vérifié si le problème existe en jeu.
+- Rien modifié dans le projet. L'image ne peut pas être posée par l'IA : à faire dans GitHub, **Settings > General > Social preview > Edit > Upload an image**.
+

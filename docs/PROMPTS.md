@@ -90,6 +90,11 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [079](#079--lisibilité-p1--écran-dannonces-caméra-sud-toit-tutoriel-zones-leviers) | 2026-10-19 | Lisibilité P1 : écran d'annonces fixe + alarme, caméra extérieure sud, poussière avant la chute du toit, « Visez la tête », contenu des zones, annonce du niveau 4, leviers physiques | Gameplay | Issues #102 à #107 et #111 ; testé en mode Play dans l'éditeur, pas au casque |
 | [080](#080--game-feel-p2-et-fin-de-partie--vibrations-impacts-yeux-lod-sondes-générateur-bilan) | 2026-10-19 | Game feel P2 et fin de partie : vibrations, impacts, éclats, yeux lumineux, LOD, sondes de lumière, générateur au niveau 4, bilan | Gameplay, rendu | Issues #112 à #120 et #122 ; testé en mode Play dans l'éditeur, pas au casque |
 | [081](#081--validation-et-push-dans-main) | 2026-10-19 | Valider les issues #112 à #120 et #122, les assigner, pousser la version dans main | GitHub | Issues assignées et fermées ; `feature/map-finale` poussée dans `main` |
+| [082](#082--la-boucle-de-gameplay-est-elle-correcte-) | 2026-10-19 | La boucle de gameplay est-elle correcte, simple, lisible ? | Game design | Boucle correcte et simple ; 3 défauts de rythme et 4 infos non dites, 4 correctifs proposés |
+| [083](#083--contexte-de-la-scène-blender-ouverte) | 2026-10-19 | Prendre le contexte de la scène ouverte dans Blender | Environnement | Inventaire de `Hospital_VR_Survival_QualityPass.blend` (carte d'hôpital en 5 zones, 56 k triangles) et adaptation au Quest 3 ; rien modifié |
+| [084](#084--hôpital-blender-phase-1-blockout) | 2026-10-19 | Rendre la scène d'hôpital Blender au mieux : phase 1 (collections, matériaux, World, blockout des 6 zones) | Environnement | Blockout construit dans une copie `_v02_phase1.blend`, ancienne passe archivée (masquée, rien supprimé), rendus de contrôle ; phase 2 en attente de validation |
+| [085](#085--ce-qui-manque-pour-léquilibrage) | 2026-10-20 | Ce qui manque au jeu Unity pour être équilibré | Game design | Valeurs réelles du code relevées : ≈ 96 balles pour ≈ 225 au torse, mêlée sans risque à la barricade, saut de difficulté au niveau 4, pas de mesures ; 8 manques classés ; rien modifié |
+| [086](#086--intégration-des-pr-131-radio-et-132-passer-lattente) | 2026-10-20 | Intégrer en local les PR d'Al Amine : radio de ravitaillement (#131) et passer l'attente avec B (#132) | Gameplay, GitHub | Fusion sans conflit sur une branche locale, compilation sans erreur, scène reconstruite et éclairage recuit ; pas encore poussé, en attente du test au casque |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1401,4 +1406,194 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Issues #112 à #120 et #122 assignées à withRen et fermées (« terminée »), avec un commentaire qui renvoie aux commits et aux pages du wiki.
 - `feature/map-finale` poussée sur GitHub, puis dans `main` en avance rapide (aucun commit de `main` n'était absent de la branche) ; wiki poussé.
 - Les issues retirées de la demande 080 (#121, #123, #124, #125) restent ouvertes.
+
+### 082 — La boucle de gameplay est-elle correcte ?
+
+**Prompt**
+
+> la boucle de gameplay est-elle correcte ? Elle est simple, lisible etc ?
+
+**Résultat** (analyse par l'IA, Claude Code, à partir du code de `main` ; rien de joué au casque, aucun code modifié)
+
+- Verdict : boucle **correcte et simple** (barricader, défendre, réparer, aller chercher des ressources, 4 vagues, générateur). L'arbitrage clouer / tirer est le cœur VR du jeu et chaque action a son retour.
+- 3 défauts de rythme : les zones s'ouvrent au début de la vague et pas pendant la pause (`WaveManager.StartLevel`), donc on ne peut pas explorer au calme ; les nouvelles menaces des niveaux 2 et 3 (portes, toit, Cogneur, Coureur) ne sont pas annoncées ; au niveau 4 les zombies visent toujours le bunker, la course au générateur est le moment le moins dangereux.
+- Infos non dites : le but de la partie (dit seulement au niveau 4), les munitions finies (environ 96 balles en moyenne, 1 chance sur 4 de n'avoir aucun chargeur au bunker, issue #124), les armes de mêlée absentes du tutoriel, la mort qui fait tout recommencer (#121).
+- 4 correctifs proposés, par ordre d'effort. Hors boucle : rotation fluide activée par défaut (`GameSettings.SmoothTurn`), contraire à la règle de la SAÉ.
+- `Boucle_de_gameplay.md` (fichier dans les fichiers du projet Claude (bibliothèque), dossier `analyses`, pas dans le dépôt).
+
+### 083 — Contexte de la scène Blender ouverte
+
+**Prompt**
+
+> Il y a une scène actuellement active dans Blender, prend en le contexte
+
+**Résultat** (analyse par l'IA, Claude Code, en lecture seule dans la session Blender ouverte via le module Blender MCP ; rien de modifié ni enregistré dans Blender ni dans Unity)
+
+- Scène ouverte : `~/Downloads/Hospital_VR_Survival_QualityPass.blend` (Blender 5.2.1), hors dépôt. Ce n'est pas la carte actuelle (`LastBoardStanding_Kitchen.blend`) mais une **carte d'hôpital** en 5 zones : parking extérieur, hall d'accueil (pupitre CCTV), sous-sol du générateur, étage chirurgical (faux ascenseur), toit avec héliport et console d'évacuation à clé.
+- 675 objets (611 maillages), **≈ 56 000 triangles**, 40 matériaux sans image (couleurs et bruit procédural), 321 maillages sans UV, 33 lumières, 18 caméras de présentation, aucune animation, échelle 1 unité = 1 m.
+- Quest 3 : géométrie très légère ; à reprendre avant import : matériaux procéduraux (ne passent pas en FBX), UV, 314 objets de la passe qualité hors de leur zone et 40 objets masqués, éclairage à recuire, textes 3D à convertir. Usage dans le jeu déduit des noms d'objets, pas d'un document.
+- `Scene_Blender_contexte.md` (fichiers du projet Claude, pas dans le dépôt).
+
+### 084 — Hôpital Blender, phase 1 (blockout)
+
+**Prompt**
+
+> Je veux que tu rende au mieu que possible visuellement cette scène :
+> Tu es Level Designer / Environment Artist senior pour un jeu de survival horror coopératif en VR, style hôpital abandonné de nuit, ambiance “Left 4 Dead / Resident Evil / backrooms industriel”.
+>
+> Tu travailles dans Blender via MCP. Échelle métrique stricte : 1 unité Blender = 1 mètre. Unit Scale = 1.0. Grille de travail : 45 m en X, 35 m en Y.
+>
+> OBJECTIF
+> Construis un environnement modulaire, lisible en VR, sombre, cinématographique et gameplay-ready : un hôpital abandonné avec parking extérieur, hall, sous-sol générateur, étage chirurgical et toit-héliport.
+>
+> RÈGLES DE PRODUCTION
+> - Ne supprime aucun objet existant sans me le demander.
+> - Inspecte d’abord la scène, les collections, les matériaux et les lumières.
+> - Construis par passes : 1) layout/architecture, 2) matériaux, 3) props, 4) éclairage, 5) caméras et validation.
+> - Après chaque passe, vérifie : échelle réelle, positions, collisions grossières, objets hors-sol, matériaux manquants, nomenclature.
+> - Utilise des collections : ZONE_01_PARKING_EXTERIEUR, ZONE_02_HALL_ACCUEIL, ZONE_03_SOUSSOL_GENERATEUR, PREFAB_FAKE_ELEVATOR, ZONE_04_ETAGE_CHIRURGICAL, ZONE_05_TOIT_HELIPORT, LIGHTING, CAMERAS, MAT_Library.
+> - Nomme tous les objets : ex. SM_Wall_Hospital_01, SM_Fence_Breach_East, PROP_Ambulance_01, LIGHT_OilLamp_Workbench.
+> - Privilégie bpy.data et bmesh plutôt que bpy.ops lorsque possible ; gère explicitement le mode Objet.
+> - Utilise des modificateurs non destructifs : Bevel 0.01 m / 2 segments, Weighted Normal, Array pour les clôtures et planches.
+> - Auto Smooth à 30° sur l’architecture.
+> - Garde une topologie blockout propre : pas de géométrie inutile, pas de N-gons visibles, densité adaptée au temps réel VR.
+> - À la fin de chaque étape, prends un screenshot/rendu de contrôle et liste les corrections proposées.
+>
+> MATÉRIAUX PBR OBLIGATOIRES
+> Crée exactement ces matériaux dans MAT_Library :
+> - MAT_Shadow_Void : #020101, Roughness 1.0, Metallic 0.0, sans réflexion.
+> - MAT_Wood_Dark : #1B0F07, Roughness 0.85, veines de bois humide.
+> - MAT_Wood_Lit : #3C2615, Roughness 0.70, planches de barricade 1.5 x 0.25 x 0.04 m.
+> - MAT_Rust_Blood : #892C1E, Roughness 0.65, Metallic 0.8, métal oxydé.
+> - MAT_Asphalt_Wet : #060D17, Roughness 0.15, flaques avec Roughness 0.05 dans les creux.
+> - MAT_Hospital_Tile : #E0EBE6, Roughness 0.30, carrelage 15 x 15 cm sali par dégradé #1B0F07 en bas des murs.
+> - MAT_Emissive_Oil : #CA875C, Emission Strength 8.0.
+> - MAT_Emissive_Red : #FF261A, Emission Strength 12.0.
+> - MAT_Emissive_Green : #33FF4C, Emission Strength 12.0.
+> - MAT_CCTV_Screen : #59FF8C, Emission Strength 5.0.
+> - MAT_Gen_Victory : #FFCC80, Emission Strength 25.0.
+> - Ajoute aussi MAT_Amber_Ghost : #FFBF45, opacité 0.3, pour les planches fantômes et lueurs de portes.
+>
+> WORLD
+> - Fond : #060D17.
+> - Volume Scatter : Density 0.02, Anisotropy 0.4.
+> - Ambiance nocturne extérieure, brume légère, contraste fort entre zones sûres éclairées à l’ambre et zones hostiles plongées dans le noir.
+>
+> ZONE 01 — PARKING EXTERIEUR
+> Origine Z=0. Dalle bitume 22 x 18 x 0.2 m en MAT_Asphalt_Wet.
+> - Clôture périmétrique grillagée, hauteur 3.2 m, MAT_Rust_Blood.
+> - Deux brèches de 1.4 m : Est à X=11, Y=0 ; Ouest à X=-11, Y=0.
+> - Chaque brèche reçoit 3 planches MAT_Wood_Lit, plus 3 planches fantômes MAT_Amber_Ghost.
+> - Arbres morts décharnés MAT_Wood_Dark autour du parking, hors grille, hauteur 6 m.
+> - Ambulance renversée à X=-3.5, Y=2.0 : 5.2 x 2.1 x 2.4 m, carrosserie #E0EBE6 sali, portes arrière ouvertes, gyrophare MAT_Emissive_Red.
+> - Tente militaire à X=3.0, Y=-2.0 : 4 x 4 x 2.8 m, structure tubulaire, bâche déchirée #789682.
+> - Sous la tente : table de commandement à Z=0.8, MAT_Wood_Lit, avec radio militaire 0.4 x 0.25 x 0.3 m, cadran #FFBF45, lampe à huile MAT_Emissive_Oil, 4 chargeurs 9 mm noirs, marteau de 0.35 m, 6 planches au sol.
+> - Guérite à X=-8.0, Y=-7.0 : béton 2.5 x 2.5 x 2.8 m, fenêtre barricadable 1.4 x 1.3 m, allège à 0.95 m.
+> - Micro-props : 4 brancards pliés, 5 sacs mortuaires MAT_Shadow_Void, 3 barils rouillés, cônes de signalisation.
+>
+> ZONE 02 — HALL D’ACCUEIL
+> Origine X=0, Y=15, Z=0. Salle 14 x 12 x 3.4 m, murs MAT_Hospital_Tile.
+> - Entrée Sud à Y=9 : double porte vitrée coulissante, enseigne cassée “URGENCES” en MAT_Emissive_Red, boîtier de verrouillage #FF453D.
+> - Plafond béton avec 2 trous de 1.5 x 1.5 m, fers à béton tordus, gravats au sol.
+> - Comptoir central en U : 4.5 x 2.5 x 1.1 m, MAT_Wood_Dark.
+> - Poste CCTV au mur Nord, X=-4.0, Y=20.5, Z=1.0 : bureau métallique, 4 CRT 0.45 x 0.45 m en MAT_CCTV_Screen, coffret disjoncteur avec levier abaissable et voyants rouge/vert.
+> - Micro-props : chaises renversées, distributeur vitre brisée, fauteuil roulant couché, dossiers médicaux #E0EBE6.
+>
+> ZONE 03 — SOUS-SOL GÉNÉRATEUR
+> Origine X=0, Y=25, Z=-4. Salle 10 x 10 x 2.6 m, briques sombres et béton brut.
+> - Rampe béton descendante depuis X=5, Y=21, Z=0 : largeur 3.2 m, pente 20°.
+> - Plafond bas avec tuyaux industriels de 0.3 m de diamètre, MAT_Rust_Blood.
+> - Générateur diesel central : 3.2 x 1.8 x 2.0 m, MAT_Rust_Blood, grillage jaune/noir, 2 projecteurs MAT_Gen_Victory, gros levier d’amorçage.
+> - Établi Ouest à X=-4.2, Y=25 : MAT_Wood_Lit, lampe à huile MAT_Emissive_Oil, hache de pompier 0.75 m, pied-de-biche 0.65 m.
+> - Zone Est : 4 étagères 2.0 x 0.6 x 2.2 m, 6 bidons d’essence rouges, caisse à outils #892C1E, flaques d’huile noire MAT_Shadow_Void avec Roughness 0.02.
+>
+> PREFAB — FAUX ASCENSEUR
+> Cabine 3 x 3 x 2.8 m.
+> - Doubles portes acier brossé, largeur totale 1.8 m, fente centrale de 0.02 m avec plan émissif #FFBF45.
+> - Panneau interne droit à Z=1.3 : levier, voyant #33FF4C, afficheur digital #FFBF45.
+> - Trappe de plafond 1 x 1 m ouverte vers conduit MAT_Shadow_Void, lueur rouge sang #800000.
+> - Instancie Cabine A à X=0, Y=21, Z=0 et Cabine B à X=0, Y=21, Z=12.
+>
+> ZONE 04 — ÉTAGE CHIRURGICAL
+> Origine X=0, Y=15, Z=12. Plateau annulaire 16 x 16 x 3.2 m.
+> - Trémie centrale effondrée de 6 x 6 m, rambardes brisées, vue sur le Hall.
+> - Façade Sud éventrée sur 4 m à Y=7, donnant sur le parking : drop-down d’urgence.
+> - 4 fenêtres barricadables donnant sur échafaudages métalliques.
+> - 2 tables d’opération inox renversées, scialytique pendu par câble, lumière blafarde #789682, rideaux déchirés, chariots chirurgicaux, paravents.
+> - Réserve de planches et munitions dans l’angle Nord-Ouest.
+> - Escalier métallique Nord-Est à X=7, Y=21, Z=12 menant au toit.
+>
+> ZONE 05 — TOIT HÉLIPORT
+> Origine X=0, Y=15, Z=16. Terrasse 24 x 20 m, acrotère béton de 1.1 m.
+> - Héliport octogonal central surélevé : 10 x 10 x 0.8 m, rampe d’accès, “H” peint #FFBF45, 8 balises MAT_Emissive_Oil.
+> - Cabane radio Nord-Ouest à X=-8.0, Y=21 : tôle et bois, 3.5 x 3.0 x 2.6 m, clé finale au contour #FFD166 sur bureau métallique.
+> - Pupitre d’évacuation à X=0, Y=19.5, Z=17.8 : serrure à clé, gros bouton rouge MAT_Emissive_Red sous cache relevable.
+> - 4 blocs HVAC 2.2 x 1.5 x 1.8 m en symétrie autour de l’héliport pour le kiting.
+> - Antenne parabolique rouillée, 2 mâts halogènes MAT_Gen_Victory pointés vers le “H”.
+>
+> ÉCLAIRAGE
+> - Point Lights #CA875C, Radius 4.5 m, Power 150 W sur chaque lampe à huile / établi.
+> - Lumières pratiques : gyrophare rouge, néon URGENCES, CCTV vert, projecteurs générateur et héliport.
+> - Évite les zones totalement noires : conserve toujours une lecture minimale des circulations.
+> - Crée une caméra de validation par zone, cadrée pour montrer silhouette, chemin principal et point focal.
+>
+> VALIDATION FINALE
+> Après construction, vérifie et corrige :
+> 1. Toutes les dimensions respectent les mètres indiqués.
+> 2. Aucun objet ne flotte, ne traverse un mur ou ne bloque une circulation essentielle.
+> 3. Les 6 collections existent et contiennent les bons objets.
+> 4. Tous les matériaux demandés sont appliqués.
+> 5. Les chemins gameplay sont lisibles : parking → hall → sous-sol → hall → ascenseur → étage → toit.
+> 6. Prends un screenshot global et un screenshot par zone.
+>
+> Commence par la Phase 1 uniquement : crée les collections, les matériaux, le World, puis le blockout architectural exact des 6 zones. Ne détaille pas encore les micro-props. À la fin, montre-moi un rendu de contrôle et attends ma validation.
+
+**Résultat** (fait par l'IA, Claude Code, dans la session Blender ouverte via le module Blender MCP ; script bpy/bmesh écrit par l'IA ; rien dans le dépôt Unity)
+
+- Travail enregistré dans une copie : `~/Downloads/Hospital_VR_Survival_QualityPass_v02_phase1.blend`. L'original `Hospital_VR_Survival_QualityPass.blend` n'a pas été touché ; l'état non enregistré de la session au moment de commencer est gardé dans `…_v01_etat_avant_phase1.blend`.
+- Rien supprimé : les anciennes collections, les 23 objets à la racine, l'ancien World et les anciens matériaux de même nom sont rangés dans `ARCHIVE_QualityPass_v01` (exclue de la vue et du rendu) ou renommés `ARC_…`.
+- 9 collections demandées créées ; 12 matériaux demandés + 6 en plus (béton brut, briques, acier brossé, vitre, carrosserie d'ambulance, bâche), gardés dans la bibliothèque (pastilles `MATSWATCH_` dans `MAT_Library`) ; World `#060D17` + Volume Scatter 0.02 / 0.4.
+- Blockout des 6 zones aux cotes demandées (≈ 30 000 triangles après modificateurs, 0 N-gon, UV en mètres sur tout), Bevel 0.01 / 2, Weighted Normal, lissage 30°, Array pour poteaux, planches et marches. Gros props seulement en volumes (ambulance, tente, comptoir, poste CCTV, générateur, établi, pupitre) ; micro-props, lumières et arbres non faits (phases suivantes).
+- 8 caméras de validation et 9 rendus de contrôle Workbench (global, 2 plans, 1 par zone, ascenseur). Rendus non éclairés : l'éclairage est la phase 4.
+- Incohérences du cahier des charges relevées et réglées par un choix de l'IA, signalées à Rahim : rampe à 20° trop longue pour le sous-sol (palier + sas ajoutés au nord), toit 24 × 20 plus grand que l'étage 16 × 16 (4 poteaux), étage à Z=12 au-dessus d'un hall de 3,4 m (étages 1-2 fermés + puits sous la trémie), HVAC symétriques seulement Est/Ouest (la cabane radio gêne), carte de 42 m en Y pour une grille de 35 m.
+- En attente de la validation de Rahim avant la phase 2. Aucun commit.
+
+---
+
+## 085 — Ce qui manque pour l'équilibrage
+
+**Date** : 2026-10-20 · **Domaine** : Game design
+
+> Ok et iveau du jeu sur Unity, qu'est-ce qu'il manquerai au jeu pour que actuellement il soit équilibré ?
+
+**Résultat** (analyse écrite par l'IA, Claude Code, à partir du code de `main` au commit `c0f7d08` ; lecture seule, rien joué au casque, rien modifié dans le dépôt)
+
+- Document : `analyses/Equilibrage.md` dans les fichiers du projet Claude (tableaux des zombies, des munitions et de la mêlée par niveau).
+- Munitions : 24 balles sûres, ≈ 96 en moyenne (12 chargeurs à 50 %), pour ≈ 225 balles s'il faut tout tuer au torse ; recharger jette les balles restantes (`Pistol.Load`).
+- Mêlée : la hache du bunker tue en 1 à 2 coups à la tête, sans risque, car un zombie qui casse une planche ne frappe jamais le joueur (`Zombie.UpdateBreaking`).
+- Niveau 4 : 2 coups pour mourir, sans soin entre les vagues ; la difficulté du menu ne touche ni aux dégâts ni aux balles.
+- Pas de mesures pour régler après le playtest (niveau de la mort, dégâts par niveau, éliminations mêlée/pistolet).
+- 8 manques classés avec correctifs proposés (liés à #121, #123, #124 et 4 nouveaux) ; rien implémenté, en attente de Rahim.
+
+---
+
+## 086 — Intégration des PR #131 (radio) et #132 (passer l'attente)
+
+**Date** : 2026-10-20 · **Domaine** : Gameplay, GitHub
+
+> Réponds en français. Lis d'abord rules.md du dépôt SAE501 et respecte-le (consigner ce prompt mot pour mot dans docs/PROMPTS.md, pas de Co-Authored-By, issues sur le GitHub project #2, wiki si une fonctionnalité change).
+>
+> Trouve sur withRen/SAE501 les deux PR ouvertes d'Al Amine : la radio de ravitaillement (1 chargeur par le toit, attente selon la difficulté) et celle qui permet de passer l'attente entre les vagues. Lis-les et intègre-les dans la version de Rahim (son projet Unity local sur main, qui contient tout le travail validé hier), en résolvant les conflits avec nos patchs (WaveManager, annonces, générateur L4, etc.) et en vérifiant que Unity compile sans erreur. Laisse intactes ses modifications locales non commitées (URP settings, RuntimeActionBindings.json, Protection_suite).
+>
+> Choix par défaut : l'intégration se fait d'abord en local pour que Rahim teste au casque ; le merge des PR sur GitHub et le push sur main attendent son retour de test, sauf s'il te dit dans le fil de les merger tout de suite. Signale-lui ce qui a dû être adapté et ce qu'il doit tester. Note que la radio touche l'économie de munitions (issue #124 ouverte) : dis s'il y a recouvrement.
+
+*(consigne transmise par le Claude coordinateur du projet à partir de la demande de Rahim)*
+
+**Résultat** (fusion faite par l'IA, Claude Code ; le code des deux PR est d'Al Amine, non modifié)
+
+- Les deux PR partent de `c0f7d08` (la version validée le 19 octobre) : fusion sans conflit, aucun code adapté. Branche locale `claude/project-thread-6whioa`, deux commits de fusion.
+- Unity : compilation sans erreur ; **SAE501 → Build VR Scene** puis **Cuire l'éclairage** relancés (la reconstruction efface les lightmaps). Radio posée sur un mur latéral du bunker près de l'établi ; un lancer de boîte depuis le point de largage descend jusqu'au sol sans obstacle.
+- Recouvrement avec #124 : oui, la radio ajoute jusqu'à 4 chargeurs (48 balles) par partie, ce qui ressemble à la piste « chargeur à chaque pause » de l'issue.
+- Wiki préparé (page `Radio-de-ravitaillement`, Commandes, Niveaux et vagues, Tutoriel), poussé avec la fusion dans `main`.
+- Pas testé au casque. Merge des PR et push en attente du retour de Rahim.
 

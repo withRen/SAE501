@@ -56,7 +56,7 @@ Material:
     - _Color: {r: 0.9, g: 0.8, b: 0.29999998, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &2142838017413928112
+--- !u!114 &3039240314537398592
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

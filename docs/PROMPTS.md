@@ -99,6 +99,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [088](#088--rééquilibrage-du-jeu) | 2026-10-20 | Implémenter tout le rééquilibrage proposé en 085 | Gameplay / Équilibrage | Chargeurs du bunker garantis, recharge sans perte, coup à la barricade (1,6 m, 50 %, alternance), +50 PV par pause, niveau 4 à 40 %, traque au niveau 4, points pondérés (#123), difficulté, mesures [Bilan], reprise au niveau atteint (#121) ; tests a-f en mode Play ; pas poussé |
 | [089](#089--champ-de-vision-et-brouillard) | 2026-10-20 | Option FOV dans les paramètres, brouillard pour cacher la distance d'affichage | Rendu, Menus | Champ de vision 50 à 90° (version PC ; au casque, imposé par le Quest), brouillard bleu nuit et brume au bas du ciel ; testé en mode Play ; pas poussé |
 | [090](#090--téléportation-et-saut) | 2026-10-20 | Option de téléportation, remettre une touche de saut | Joueur, Menus | Option Déplacement : continu / téléportation (casque, point d'arrivée contrôlé par le NavMesh), saut remis (A, Espace sur PC) mais petit (≈ 0,33 m) ; testé en mode Play ; pas poussé |
+| [091](#091--rendu-à-8-m-et-réduction-des-polygones) | 2026-10-20 | Comment marche le rendu à 8 m, comment réduire les polygones | Rendu, Optimisation | Explication seulement : yeux lumineux 7-9 m, LOD du décor (bascule réelle ≈ 16 m à cause de `lodBias 2`), caméra 60 m, brouillard ; pistes (occlusion culling, LOD des zombies, coupe par calque) ; rien modifié |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1680,3 +1681,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Scène VR reconstruite (**Build VR Scene**) et éclairage recuit.
 - Vérifié en mode Play : saut au casque simulé (0,33 m) et à la touche Espace en version PC (0,33 m) ; en sautant contre les fenêtres ouest, est et sud-ouest le joueur ne sort pas, il ne monte pas sur la caisse militaire de 0,46 m ; téléportation : points de la même pièce acceptés (dont un derrière des meubles), dehors (2 fenêtres, jardin), dessus d'établi et couloirs fermés refusés, déplacement du joueur par le fournisseur ; clic sur CONTINU → retour au déplacement continu ; page PARAMÈTRES capturée (pas de chevauchement). Non vérifié : le rayon et l'arc avec de vraies manettes.
 - **Pas testé au casque.** Commit local, pas poussé.
+
+---
+
+## 091 — Rendu à 8 m et réduction des polygones
+
+**Date** : 2026-10-20 · **Domaine** : Rendu, Optimisation
+
+> Actuellement la façon de render à 8 mètre marche comment ? Comment on fait pour réduire les polygones etc ?
+
+**Résultat** (explication écrite par l'IA, Claude Code, après lecture du code, de `MainScene.unity` et de `QualitySettings.asset` ; rien modifié dans le projet)
+
+- Le « 8 m » vient de deux systèmes séparés : les **yeux lumineux** (`ZombieEyes`, fondu de 7 à 9 m, visuel seulement) et le **LOD du décor** (`LodBuilder`, #118 : 134 objets de plus de 2 000 triangles, LOD0 au-dessus de 10 % de la hauteur de l'écran, LOD1 ensuite).
+- Constat : `lodBias` vaut 2 dans les niveaux de qualité Quest et PC, donc la bascule LOD0 → LOD1 d'un meuble de 1,8 m se fait vers 16 m et non 8 m (≈ 30 m en version PC à 60°). Inféré par le calcul, pas mesuré en jeu.
+- Caméra du joueur limitée à 60 m ; le brouillard (0,06, exponentiel carré) laisse 79 % d'un objet visible à 8 m, 10 % à 25 m, 1 % à 35 m, mais n'enlève aucun objet du rendu.
+- Pistes proposées : `lodBias` à 1 (ou seuil LOD0 à 0,2), caméra à 35-40 m, occlusion culling à réessayer (retiré en 027 pour les lumières de lune, l'éclairage est maintenant précalculé), coupe par calque des petits objets, LOD des zombies, meilleure décimation (Blender), et surtout mesure au casque d'abord.
+- Rien testé, rien modifié ; aucun chiffre au casque.

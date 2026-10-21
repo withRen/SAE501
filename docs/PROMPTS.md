@@ -119,6 +119,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [109](#109--haie-et-forêt-en-feuillage-répété) | 2026-10-21 | Oui, en gardant l'optimisation | Carte | Texture de feuillage répétable faite à partir des feuilles PolyHaven, UV en mètres sur la haie et les sapins ; même coût |
 | [110](#110--textures-qui-clignotent-et-ombres-tachées) | 2026-10-21 | Textures abîmées : objets les uns dans les autres, lumière | Carte | 41 surfaces superposées corrigées à l'export ; petits objets éclairés par sondes au lieu de lightmaps ; éclairage recuit |
 | [111](#111--appui-de-fenêtre-encastré-dans-le-mur) | 2026-10-21 | Le bas de la fenêtre est encastré dans le mur | Carte | Encadrements gonflés de 4 mm selon leurs normales (l'appui passe devant le bas de l'ouverture du mur) ; éclairage recuit |
+| [112](#112--vraies-portes) | 2026-10-21 | Vraie texture de porte au lieu des portes low poly | Carte | Texture de porte à panneaux produite (bois peint écaillé des portes du fichier) ; appliquée aux 4 portes de niveau, double porte pour les passages larges |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2026,4 +2027,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 - Cause : le dessus de l'appui (`Bunker_WindowFrame_SE/SW`, z = 0,95 m) est exactement au niveau du bas de l'ouverture du mur sud ; la correction 110 épaississait l'encadrement dans l'épaisseur du mur seulement, pas en hauteur.
 - `export_map.py` : les encadrements sont maintenant gonflés de 4 mm selon leurs normales (appui, linteau et montants passent tous devant les faces du mur). Vérifié par capture dans l'éditeur ; éclairage recuit. Non testé au casque.
+
+---
+
+## 112 — Vraies portes
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Trouve une vraie texture de porte (ou produit en une) qui correspond au style de la map et utilise ça au lieu des portes low poly actuelles
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Les portes du fichier Blender utilisent le bois peint écaillé PolyHaven `distressed_painted_planks`. `Tools/blender/make_door_texture.py` en tire une porte à 4 panneaux (cadre lisse, panneaux rainurés en creux avec chanfrein en relief, crasse en bas, plaque de propreté en tôle) : `Assets/Textures/Porte/porte_couleur.png` et `porte_normale.png` (512 x 1024). Rien téléchargé.
+- `RoomBuilder.cs` : les battants des 4 portes de niveau (avant : boîtes grises) prennent ce matériau ; les passages de plus de 1,6 m (couloir droit, stockage) affichent deux portes ; poignée en métal. Charnière, verrou, barricade et coups des zombies inchangés.
+- Vérifié par captures dans l'éditeur ; éclairage recuit. Non testé au casque.
 

@@ -851,8 +851,29 @@ public static class RoomBuilder
     // ---------- portes de niveau et générateur ----------
     static GameObject gatesRoot;
 
+    // battant des portes : porte à panneaux en bois peint écaillé, dans le style des portes du fichier Blender
+    // (texture faite par Tools/blender/make_door_texture.py à partir de distressed_painted_planks). Le cube de Unity
+    // applique l'image entière sur chaque face : une porte par face de 1 m ; les passages larges (> 1,6 m) ont deux portes.
+    const string DoorTexDir = "Assets/Textures/Porte";
+    static Material DoorMat(float width)
+    {
+        bool wide = width > 1.6f;
+        if (doorMats.TryGetValue(wide, out var m)) return m;
+        if (AssetImporter.GetAtPath(DoorTexDir + "/porte_normale.png") is TextureImporter ti && ti.textureType != TextureImporterType.NormalMap)
+        { ti.textureType = TextureImporterType.NormalMap; ti.SaveAndReimport(); }
+        m = Mat(wide ? "Porte_Double" : "Porte", Color.white, 0.15f);
+        m.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(DoorTexDir + "/porte_couleur.png"));
+        m.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(DoorTexDir + "/porte_normale.png"));
+        m.EnableKeyword("_NORMALMAP");
+        var tiling = new Vector2(wide ? 2f : 1f, 1f);
+        m.SetTextureScale("_BaseMap", tiling); m.SetTextureScale("_BumpMap", tiling);
+        return doorMats[wide] = m;
+    }
+    static readonly Dictionary<bool, Material> doorMats = new Dictionary<bool, Material>();
+
     static void BuildGatesAndGenerator()
     {
+        doorMats.Clear();   // matériaux des battants recréés à chaque construction
         gatesRoot = new GameObject("Portes_Niveaux");
         gatesRoot.transform.SetParent(mapRoot, false);
         // pos = centre du passage (au sol) ; viewer = côté d'où le joueur arrive (le panneau y est lisible)
@@ -864,12 +885,12 @@ public static class RoomBuilder
             var hinge = new GameObject("Charniere").transform;
             hinge.SetParent(root, false);
             hinge.position = pos - Vector3.forward * (width / 2f);
-            var leaf = Box("Battant", hinge, Vector3.zero, new Vector3(0.12f, 2.1f, width), metalM);
+            var leaf = Box("Battant", hinge, Vector3.zero, new Vector3(0.12f, 2.1f, width), DoorMat(width));
             leaf.transform.position = pos + Vector3.up * 1.05f;
             var obstacle = leaf.AddComponent<UnityEngine.AI.NavMeshObstacle>();      // fermée : les zombies ne passent pas
             obstacle.shape = UnityEngine.AI.NavMeshObstacleShape.Box; obstacle.size = Vector3.one; obstacle.carving = true;
             // poignée côté joueur, près du bord libre (enfant de la charnière : elle tourne avec la porte)
-            var handle = Box("Poignee", hinge, Vector3.zero, new Vector3(0.04f, 0.2f, 0.04f), darkM, false);
+            var handle = Box("Poignee", hinge, Vector3.zero, new Vector3(0.04f, 0.2f, 0.04f), metalM, false);
             handle.transform.position = pos + Vector3.up * 1.0f + Vector3.forward * (width / 2f - 0.15f) + viewer * 0.1f;
             var hbc = handle.AddComponent<BoxCollider>(); hbc.size = new Vector3(4f, 1.5f, 4f);   // zone de prise plus large que la poignée (16 x 30 cm)
             var hi = handle.AddComponent<XRSimpleInteractable>();

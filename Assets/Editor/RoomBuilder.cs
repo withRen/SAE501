@@ -251,6 +251,8 @@ public static class RoomBuilder
     // (une boîte englobante bloquerait tout : la haie fait le tour du jardin, les tuyaux longent toute la salle)
     static readonly string[] Structural = { "Wall", "Floor", "Ceiling", "Trim", "Stub", "Terrain", "StonePath", "Hedges", "Rocks", "Pillars", "Trunk", "IndustrialPipes", "EscapeRoad" };
 
+    const float SmallProp = 1.3f;   // m : en dessous (sur les trois axes), éclairage par sondes au lieu de lightmap
+
     static void MakeMapColliders(Transform root)
     {
         foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true))
@@ -258,6 +260,11 @@ public static class RoomBuilder
             // statique : regroupement des maillages + éclairage précalculé (lightmaps, SAE501 > Cuire l'éclairage)
             GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI);
             var n = r.name;
+            // petits objets (caisses, coffres à outils, lampes…) : à 6 texels par mètre, leur lightmap ne fait que quelques
+            // pixels et leurs UV simplifiés débordent -> taches et bandes sombres. Ils prennent la lumière des sondes,
+            // comme les zombies ; ils comptent toujours dans la lumière renvoyée sur les murs.
+            if (r.bounds.size.x < SmallProp && r.bounds.size.y < SmallProp && r.bounds.size.z < SmallProp && !Structural.Any(k => n.Contains(k)))
+                r.receiveGI = ReceiveGI.LightProbes;
             if (NoCollider.Any(k => n.Contains(k))) continue;
             // arbres PolyHaven (Finalefinale : un seul maillage tronc + feuillage) : une boîte englobante ferait un cube de 4 m ;
             // seul le tronc bloque (capsule de 30 cm de rayon, 3 m de haut, sur le pivot du modèle : le pied du tronc)

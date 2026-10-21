@@ -115,6 +115,10 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [105](#105--carte-de-base-finalefinaleblend) | 2026-10-21 | Mettre à jour la carte de base avec Finalefinale.blend | Carte | Même plan que la carte actuelle, seul le jardin change (8 arbres PolyHaven, rochers, pierres) ; feuillage allégé à l'export ; textures manquantes signalées |
 | [106](#106--liste-des-textures-manquantes) | 2026-10-21 | Liste des textures manquantes | Carte | 25 images non empaquetées listées (herbe, pavés, arbres, rochers, pierres, tronc) |
 | [107](#107--textures-du-jardin-reçues) | 2026-10-21 | Textures du jardin reçues (textures.zip) | Carte | 20 textures rebranchées, herbe et pavés repris de map_final_final ; import, reconstruction, collisions des arbres, éclairage recuit |
+| [108](#108--haie-du-jardin-floue) | 2026-10-21 | La haie du jardin est encore en basse qualité | Carte | Cause : matériau procédural cuit en une image pour toute la haie ; correction proposée |
+| [109](#109--haie-et-forêt-en-feuillage-répété) | 2026-10-21 | Oui, en gardant l'optimisation | Carte | Texture de feuillage répétable faite à partir des feuilles PolyHaven, UV en mètres sur la haie et les sapins ; même coût |
+| [110](#110--textures-qui-clignotent-et-ombres-tachées) | 2026-10-21 | Textures abîmées : objets les uns dans les autres, lumière | Carte | 41 surfaces superposées corrigées à l'export ; petits objets éclairés par sondes au lieu de lightmaps ; éclairage recuit |
+| [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1948,4 +1952,64 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `RoomImport.cs` : feuillage en découpe alpha (opaque, double face) au lieu de transparent.
 - `RoomBuilder.cs` : arbres PolyHaven avec une capsule sur le tronc (au lieu d'une boîte de 4 m) ; pierres d'allée sans collision.
 - MainScene reconstruite (Build VR Scene), éclairage recuit. Points d'apparition, emplacements de planches, générateur, portes et radio identiques à l'ancienne scène. Non testé au casque.
+
+---
+
+## 108 — Haie du jardin floue
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> C'est encore bas qualité ça, c'est normal ? (capture de la haie du jardin)
+
+**Résultat** (analyse de l'IA, Claude Code)
+
+- La haie (`Garden_HighHedges_Boundary`) et les sapins du fond (`Exterior_Forest_Canopies`) ont dans Blender un matériau procédural (bruit) ; l'export le cuisait en une seule image de 1024 px pour des dizaines de mètres, d'où le flou. Défaut déjà présent avant Finalefinale.
+- Proposé : une texture de feuillage répétée tous les 1,5 à 2,5 m (ou, à défaut, une image cuite plus grande).
+
+---
+
+## 109 — Haie et forêt en feuillage répété
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Oui, n'oublie pas de bien optimiser le tout comme avant
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- PolyHaven n'a pas de texture de haie : `Tools/blender/make_hedge_texture.py` en fabrique une (1024 px, raccord sur les bords, couleur + normale) en éparpillant sur 6 couches les feuilles de l'atlas `island_tree_02` déjà fourni ; rien téléchargé. Fichiers : `Tools/blender/textures/haie_feuillage_*.png`.
+- `export_map.py` : la haie (1,5 m par répétition) et les sapins (2,5 m) utilisent cette texture avec des UV en mètres (projection sur le cube) au lieu d'une image cuite.
+- Optimisation inchangée : une seule image de 1024 px partagée (au lieu de deux images cuites par objet), mêmes triangles (~990 000 avant LOD), éclairage recuit. Non testé au casque.
+
+---
+
+## 110 — Revue LD/GD de l'hôpital v03
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Analyse l'entièreté de la scène actuellement ouverte dans Blender (Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend)
+> fait moi un retour constructif sur comment l'améliorer, soit le plus critique possible (prend le point de vu d'un level designer, d'un game designer)
+
+**Résultat** (analyse faite par l'IA, Claude Code ; le .blend n'a pas été modifié)
+
+- Analyse sur une copie, dans Blender en arrière-plan : inventaire par script, plans en coupe, vues à hauteur d'yeux, test de chemins par rayons. Revue écrite par l'IA : `Revue_LD_GD_Hopital_v03.md` et 5 images annotées dans les fichiers du projet.
+- Constat principal : très gros progrès visuel, mais aucun chemin jouable depuis le parking. Entrée du hall de 0,6 m, hall fermé (ascenseur, rampe et escalier derrière un mur plein), escalier en blocs pleins, rampe du sous-sol sous une dalle, bloc opératoire sans porte, porte d'ascenseur du toit derrière un pilastre ; ni points d'apparition ni barricades près du joueur (seulement sur les portails à 55 m) ; portes et fenêtres du hall tournées de 90°.
+- Couche « CoD Zombies » (boîte mystère, atouts, Pack-a-Punch, achats muraux) : 4 systèmes absents du jeu, noms déposés par Activision ; à retirer ou à remplacer par les mécaniques existantes.
+- Import Quest : 606 000 triangles (BMW 177 000, ambulance 158 000), 1 388 maillages, 220 matériaux, 79 lumières, 202 maillages à normales inversées (dont les sols), 292 sans UV, 143 images orphelines.
+- Recommandation : garder la carte actuelle pour le 13 novembre, ou réduire l'hôpital à hall + sous-sol + toit et corriger les bloquants. Rien testé dans Unity ni au casque.
+
+---
+
+## 110 — Textures qui clignotent et ombres tachées
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Il semblerai y avoir des soucis avec quelques textures comme ici :
+> Y a des moments où c'est des props qui sont les uns dans les autres, pour d'autre c'est juste la lumière
+> (3 captures : mur et encadrement de porte, coffre à outils, rebord de la fenêtre sud-est)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Cause 1 (défaut du fichier Blender, déjà présent avant Finalefinale) : des faces de deux objets dans le même plan et tournées du même côté (encadrements au ras des murs, rebords des fenêtres du bunker, sols qui se chevauchent sous les portes, placards et crédence de la cuisine, bureaux du pupitre, planche posée dans un coffre). `export_map.py` les détecte (plan à 4 mm près, recouvrement > 2 cm) : 41 objets corrigés, encadrements épaissis de 4 mm de chaque côté, crédence et placards avancés de 3 mm, sinon le plus petit objet recule de 3 mm.
+- Cause 2 (lumière) : à 6 texels par mètre, un petit objet n'a que quelques pixels de lightmap et ses UV simplifiés débordent (bandes sombres sur les tiroirs). `RoomBuilder.cs` : les objets de moins de 1,3 m sur les trois axes (357) prennent la lumière des sondes ; la résolution des lightmaps ne change pas (même coût au casque).
+- Éclairage recuit. Non testé au casque.
 

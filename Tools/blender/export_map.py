@@ -116,7 +116,47 @@ def relink_images():
             dst.materials[0].name = old_name
             print("MATÉRIAU REPRIS de", os.path.basename(fb), ":", old_name)
 
+# ---------- feuillage répété (haie du jardin, sapins de la forêt) ----------
+# Cuits en une seule image pour des dizaines de mètres, ils étaient flous (quelques pixels par mètre). On leur donne
+# une texture de feuillage répétable (Tools/blender/make_hedge_texture.py) et des UV en mètres (projection sur le cube) :
+# même coût au casque (une image de 1024 px), net de près.
+TILED = {"Mat_Garden_DenseHedge": 1.5, "Mat_Garden_DarkFoliage": 2.5}   # matériau -> mètres par répétition
+TILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "textures")
+def tile_foliage():
+    import bmesh
+    if not os.path.exists(os.path.join(TILE_DIR, "haie_feuillage_couleur.png")): return
+    col = bpy.data.images.load(os.path.join(TILE_DIR, "haie_feuillage_couleur.png"))
+    nrm = bpy.data.images.load(os.path.join(TILE_DIR, "haie_feuillage_normale.png")); nrm.colorspace_settings.name = "Non-Color"
+    for mname, size in TILED.items():
+        m = bpy.data.materials.get(mname)
+        if not m: continue
+        nt = m.node_tree
+        for n in list(nt.nodes):
+            if n.type not in ("BSDF_PRINCIPLED", "OUTPUT_MATERIAL"): nt.nodes.remove(n)
+        b = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+        tc = nt.nodes.new("ShaderNodeTexImage"); tc.image = col
+        tn = nt.nodes.new("ShaderNodeTexImage"); tn.image = nrm
+        nm = nt.nodes.new("ShaderNodeNormalMap")
+        nt.links.new(tc.outputs["Color"], b.inputs["Base Color"])
+        nt.links.new(tn.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
+        b.inputs["Roughness"].default_value = 0.8
+        for o in bpy.context.scene.objects:
+            if o.type != "MESH" or not any(s.material == m for s in o.material_slots): continue
+            if o.data.users > 1: o.data = o.data.copy()
+            bm = bmesh.new(); bm.from_mesh(o.data)
+            uv = bm.loops.layers.uv[0] if len(bm.loops.layers.uv) else bm.loops.layers.uv.new()
+            mw = o.matrix_world; rot = mw.to_3x3()
+            for f in bm.faces:
+                nw = rot @ f.normal; ax = max(range(3), key=lambda i: abs(nw[i]))
+                u, v = [(1, 2), (0, 2), (0, 1)][ax]
+                for l in f.loops:
+                    w = mw @ l.vert.co
+                    l[uv].uv = (w[u] / size, w[v] / size)
+            bm.to_mesh(o.data); bm.free()
+        print("FEUILLAGE RÉPÉTÉ", mname, "tous les", size, "m")
+
 relink_images()
+tile_foliage()
 bake_procedural()
 saved = {}
 def save_img(img, keep_alpha=False):
@@ -255,6 +295,69 @@ def thin_tree_leaves():
         print("FEUILLAGE ALLÉGÉ", o.data.name, len(islands), "feuilles ->", len(islands) // LEAF_STEP + 1)
     return done
 thinned = thin_tree_leaves()
+
+# ---------- surfaces superposées (scintillement / « z-fighting ») ----------
+# Dans le fichier, des faces de deux objets sont dans le même plan et tournées du même côté : encadrements de portes et
+# de fenêtres au ras des murs, sols qui se chevauchent sous les portes, meubles collés, planches posées dans une caisse.
+# Au casque, le GPU ne sait pas laquelle dessiner devant : la texture « clignote » ou mélange les deux.
+# Correction : les encadrements sont épaissis de 4 mm de chaque côté ; crédences et placards avancent de 3 mm ;
+# pour tout autre couple, le plus petit des deux objets recule de 3 mm derrière l'autre.
+FRAME_KEYS = ("Frame",)
+FRONT_KEYS = ("Backsplash", "KitchenCabinets", "Countertop")
+def fix_coplanar():
+    import collections
+    dg = bpy.context.evaluated_depsgraph_get()
+    buckets = collections.defaultdict(list)
+    objs = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get() and not o.parent
+            and not o.name.startswith(("Garden_", "Exterior_", "Ext_")) and o.data.name not in thinned
+            and not any(k in o.name for k in ("Apoc_", "Rug", "Runner", "Papers", "Debris", "Puddle", "OilSpill"))]   # décor au sol : RoomBuilder.FixFloorDecals
+    for o in objs:
+        me = o.evaluated_get(dg).to_mesh(); mw = o.matrix_world; nmat = mw.to_3x3().inverted().transposed()
+        if len(me.polygons) < 60000:
+            for p in me.polygons:
+                n = (nmat @ p.normal).normalized(); vs = [mw @ me.vertices[i].co for i in p.vertices]
+                if p.area * abs(mw.determinant()) ** (2 / 3) < 0.002: continue
+                buckets[(round(n.x, 1), round(n.y, 1), round(n.z, 1), round(n.dot(vs[0]) / 0.004))].append((o, vs, n))
+        o.evaluated_get(dg).to_mesh_clear()
+    def box(vs, n):
+        a = Vector((1, 0, 0)) if abs(n.x) < 0.9 else Vector((0, 1, 0)); u = n.cross(a).normalized(); v = n.cross(u)
+        us = [x.dot(u) for x in vs]; ws = [x.dot(v) for x in vs]
+        return min(us), max(us), min(ws), max(ws)
+    area = collections.Counter(); normal = {}
+    for fs in buckets.values():
+        if len({f[0].name for f in fs}) < 2: continue
+        bx = [(f[0], box(f[1], f[2]), f[2]) for f in fs]
+        for i in range(len(bx)):
+            for j in range(i + 1, len(bx)):
+                (a, ba, n), (b, bb, _) = bx[i], bx[j]
+                if a == b or ("Wall" in a.name and "Wall" in b.name): continue
+                w = min(ba[1], bb[1]) - max(ba[0], bb[0]); h = min(ba[3], bb[3]) - max(ba[2], bb[2])
+                if w > 0.02 and h > 0.02:
+                    k = tuple(sorted((a.name, b.name))); area[k] += w * h; normal[k] = n
+    def vol(o): d = o.dimensions; return d.x * d.y * d.z + 1e-6
+    done = set()
+    for (an, bn), ar in area.most_common():
+        if ar < 0.01: break
+        a, b = bpy.data.objects[an], bpy.data.objects[bn]; n = normal[(an, bn)]
+        mover = next((o for o in (a, b) if any(k in o.name for k in FRAME_KEYS + FRONT_KEYS)), None) or min((a, b), key=vol)
+        if mover.name in done: continue
+        done.add(mover.name)
+        if any(k in mover.name for k in FRAME_KEYS):
+            # épaissir selon l'axe le plus fin de l'objet (l'épaisseur du mur qu'il habille)
+            if mover.data.users > 1: mover.data = mover.data.copy()
+            co = [v.co.copy() for v in mover.data.vertices]
+            ax = min(range(3), key=lambda i: max(c[i] for c in co) - min(c[i] for c in co) or 1e9)
+            lo, hi = min(c[ax] for c in co), max(c[ax] for c in co); mid = (lo + hi) / 2
+            sc = mover.matrix_world.to_scale()[ax] or 1.0
+            f = ((hi - lo) + 0.008 / sc) / max(hi - lo, 1e-4)
+            for v in mover.data.vertices: v.co[ax] = mid + (v.co[ax] - mid) * f
+            how = "épaissi"
+        else:
+            sign = 1 if any(k in mover.name for k in FRONT_KEYS) else -1
+            mover.location += n * (0.003 * sign)
+            how = "avancé" if sign > 0 else "reculé"
+        print("SUPERPOSITION", mover.name, how, "(contre", (b if mover == a else a).name, "%.2f m²)" % ar)
+fix_coplanar()
 
 # simplification des objets de décor trop lourds (uniquement à l'export)
 dg = bpy.context.evaluated_depsgraph_get()

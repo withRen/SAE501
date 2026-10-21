@@ -1793,14 +1793,14 @@
    1.0
   ]
  },
- "Mat_Garden_DarkFoliage__Exterior_Forest_Canopies": {
+ "Mat_Garden_DarkFoliage": {
   "base_color": [
    0.05999999865889549,
    0.12999999523162842,
    0.05000000074505806,
    1.0
   ],
-  "rough": 0.8799999952316284,
+  "rough": 0.800000011920929,
   "metal": 0.0,
   "alpha": 1.0,
   "blend": "HASHED",
@@ -1808,8 +1808,8 @@
    1,
    1
   ],
-  "base_tex": "Mat_Garden_DarkFoliage__Exterior_Forest_Canopies_Couleur.jpg",
-  "normal_tex": "Mat_Garden_DarkFoliage__Exterior_Forest_Canopies_Normale.jpg",
+  "base_tex": "haie_feuillage_couleur.jpg",
+  "normal_tex": "haie_feuillage_normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,
@@ -1819,14 +1819,14 @@
    1.0
   ]
  },
- "Mat_Garden_DenseHedge__Garden_HighHedges_Boundary": {
+ "Mat_Garden_DenseHedge": {
   "base_color": [
    0.05000000074505806,
    0.10999999940395355,
    0.03999999910593033,
    1.0
   ],
-  "rough": 0.8999999761581421,
+  "rough": 0.800000011920929,
   "metal": 0.0,
   "alpha": 1.0,
   "blend": "HASHED",
@@ -1834,8 +1834,8 @@
    1,
    1
   ],
-  "base_tex": "Mat_Garden_DenseHedge__Garden_HighHedges_Boundary_Couleur.jpg",
-  "normal_tex": "Mat_Garden_DenseHedge__Garden_HighHedges_Boundary_Normale.jpg",
+  "base_tex": "haie_feuillage_couleur.jpg",
+  "normal_tex": "haie_feuillage_normale.jpg",
   "emission_tex": null,
   "alpha_linked": false,
   "emission_strength": 0.0,

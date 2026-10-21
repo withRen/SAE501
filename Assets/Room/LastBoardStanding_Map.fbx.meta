@@ -203,67 +203,12 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Mat_Garden_DarkFoliage
-    second: {fileID: 2100000, guid: 95f5dfa7bc1ff4215ab6eee528c66031, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Exterior_Forest_Canopies
-    second: {fileID: 2100000, guid: 772afe9c19b344ebebeac4a59adfa861, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_01_NE_Hill_Canopy
-    second: {fileID: 2100000, guid: e899604337a654986bc04b5f4a3af615, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_02_SE_Corner_Canopy
-    second: {fileID: 2100000, guid: e6936eea12baa4e6c91affa5588a2aae, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_03_CenterS_Canopy
-    second: {fileID: 2100000, guid: daf1e91777f7947ef837ae0d468577cd, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_04_SW_Hill_Canopy
-    second: {fileID: 2100000, guid: 5452c3dd3786149d1ac4de51e78c7ec9, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_05_GateSouth_Canopy
-    second: {fileID: 2100000, guid: 43607645b910241aebf14260d6c6ecd2, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_06_GateNorth_Canopy
-    second: {fileID: 2100000, guid: d9e3f0e5f82a24effa49a1fcf0e97824, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_07_BehindShed_Canopy
-    second: {fileID: 2100000, guid: f02e7609d0a76405889261339c20acad, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DarkFoliage__Garden_Tree_08_MidNorth_Canopy
-    second: {fileID: 2100000, guid: cffcb4826384644f5ae6218ce8c3a8e3, type: 2}
+    second: {fileID: 2100000, guid: 161dcb46509e042518f102d7ac2778b2, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Mat_Garden_DenseHedge
-    second: {fileID: 2100000, guid: 7f8c5e3de0bf144c48cd9d58496f4ba2, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_DenseHedge__Garden_HighHedges_Boundary
-    second: {fileID: 2100000, guid: 16bcae843c2814e8f9cbd0b902e39f18, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_GrassDirt
-    second: {fileID: 2100000, guid: 395a349d6e9d64db08010d9480b957bc, type: 2}
+    second: {fileID: 2100000, guid: 91652888f8b7948509f8f0515624d61e, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -282,21 +227,6 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Mat_Garden_Rock
-    second: {fileID: 2100000, guid: 2b8e02e0ed34542ffb596dbea7cabc21, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_Rock__Garden_Rocks_And_Boulders
-    second: {fileID: 2100000, guid: 8912553efa0eb4dcfa3c8353ba4293db, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_StonePath
-    second: {fileID: 2100000, guid: 479063ee16200485eb2055c7781ba6b0, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
       name: Mat_Garden_StonePath__Exterior_EscapeRoad_Stones
     second: {fileID: 2100000, guid: 94a06cba040784fe099c8ff6d2d859e5, type: 2}
   - first:
@@ -312,53 +242,8 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark
-    second: {fileID: 2100000, guid: 33d3d2d6488c34aeab1deed9d92518c1, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
       name: Mat_Garden_TreeBark__Exterior_Forest_Trunks
     second: {fileID: 2100000, guid: 0ef20b664735a44298251b391e1ad720, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_01_NE_Hill_Trunk
-    second: {fileID: 2100000, guid: 66f1d82b422824e6794236ce5d29e3ab, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_02_SE_Corner_Trunk
-    second: {fileID: 2100000, guid: eb77e3882461f4f19bbdd68d69ccdd83, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_03_CenterS_Trunk
-    second: {fileID: 2100000, guid: a0805c78cbd524d4a9e1a8f22c2c3427, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_04_SW_Hill_Trunk
-    second: {fileID: 2100000, guid: 6f7d535d38d70474a8506a5bb17fd5fd, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_05_GateSouth_Trunk
-    second: {fileID: 2100000, guid: cedb4c7559b8b4d0e8b637190dc52c47, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_06_GateNorth_Trunk
-    second: {fileID: 2100000, guid: ccae8ab2a84d24eabb90ea9b09196b04, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_07_BehindShed_Trunk
-    second: {fileID: 2100000, guid: fe33acabb47d7403b8ca9572b7c55e03, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Mat_Garden_TreeBark__Garden_Tree_08_MidNorth_Trunk
-    second: {fileID: 2100000, guid: 67c43d3ec4e114b70835705f0d9256bf, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

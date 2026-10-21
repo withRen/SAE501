@@ -110,6 +110,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [099](#099--pousser-main-puis-tester-les-vagues-infinies-de-lecapet) | 2026-10-21 | Pousser proprement dans main, puis fusionner la PR de LeCapet « vagues infinies » pour la tester | GitHub, Gameplay | `main` poussée (51fafa8) avec le wiki ; PR #133 fusionnée sur la branche locale `test/vagues-infinies`, conflits résolus, compilation sans erreur ; en attente du test de Rahim |
 | [100](#100--équilibrage-des-vagues-évasion-et-vagues-infinies) | 2026-10-21 | Vérifier l'équilibrage des vagues, surtout en vagues infinies | Game design | Courbe calculée vague par vague ; 4 défauts en survie (munitions finies, vie rendue à chaque vague, Coureurs trop rapides, 20 zombies vivants) ; 7 réglages chiffrés proposés ; rien modifié |
 | [101](#101--rééquilibrage-du-mode-vagues-infinies) | 2026-10-21 | Faire le rééquilibrage proposé pour les vagues infinies | Gameplay | 6 réglages appliqués (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse ×1,7, 14 vivants, renforts à la vague 4, PV +8 %/vague ×2,5) ; compilation sans erreur ; pas joué |
+| [102](#102--fusion-des-vagues-infinies-dans-main) | 2026-10-21 | Merger proprement le tout dans main | GitHub | `test/vagues-infinies` poussée dans `main` en avance rapide (e8aad93) ; PR #133 marquée fusionnée ; wiki poussé avec la page Mode survie |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1866,4 +1867,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `SupplyRadio` : livre ce nombre de chargeurs et l'affiche sur son écran.
 - Dégâts reçus inchangés (+4 %/vague, ×1,5).
 - Compilation sans erreur ; `MainScene` rechargée depuis le disque pour que l'objet `WaveManager` prenne les nouvelles valeurs (rien d'enregistré dans la scène). Pas joué en mode Play ni au casque.
+
+---
+
+## 102 — Fusion des vagues infinies dans main
+
+**Date** : 2026-10-21 · **Domaine** : GitHub
+
+> Merger sur GitHub le tout proprement dans le main
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Branche `test/vagues-infinies` (PR #133 de LeCapet adaptée, rééquilibrage 101, journaux 099 à 101) poussée dans `main` en avance rapide sur `e8aad93`, sans forcer ; GitHub a marqué la PR #133 fusionnée.
+- Wiki poussé : nouvelle page `Mode-survie`, Accueil et menu latéral.
+- Non commités, laissés en local : réglages URP, `RuntimeActionBindings.json`, `DevAgentSettings.asset`, `Protection_suite`, `scripts/`.
 

@@ -107,6 +107,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [096](#096--image-de-couverture-github) | 2026-10-20 | Image de cover du jeu pour le dépôt GitHub | Communication, Rendu | Image 1280 × 640 rendue depuis `MainScene` (zombies, planches et lumières temporaires, rien sauvegardé) puis titre et accroche ajoutés ; à poser à la main dans Settings > Social preview |
 | [097](#097--cover-dans-le-readme) | 2026-10-20 | Mettre la cover en tête du README | Documentation | Image copiée dans `docs/images/cover.png` (Git LFS) et affichée sous le titre du README |
 | [098](#098--sols-en-double-bouteilles-clé-et-planches) | 2026-10-20 | Plaques au sol (capture au casque), bouteilles qui volent sous la cabane du jardin, clé impossible à prendre, trop de planches sur la table de la cuisine | Carte, Gameplay | Matériaux « Apocalypse » recolorés (mousse, flaques transparentes, tuyaux), tapis et papiers décalés, terrain abaissé sous les planchers ; bouteilles recalées ; clé prenable ; une seule planche sur la table ; éclairage recuit |
+| [099](#099--pousser-main-puis-tester-les-vagues-infinies-de-lecapet) | 2026-10-21 | Pousser proprement dans main, puis fusionner la PR de LeCapet « vagues infinies » pour la tester | GitHub, Gameplay | `main` poussée (51fafa8) avec le wiki ; PR #133 fusionnée sur la branche locale `test/vagues-infinies`, conflits résolus, compilation sans erreur ; en attente du test de Rahim |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1815,4 +1816,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Clé** : c'était un décor statique sans prise. Elle devient un objet qu'on prend en main (`Cle_Jardin` : corps physique, collider grossi, mêmes règles que les autres objets), posée à l'avant du buffet. Elle n'ouvre rien pour l'instant (aucune serrure dans le jeu).
 - **Planches de la cuisine** : 5 planches empilées sur la table, il n'en reste qu'une (`CollectPlanks` ne garde qu'une planche par pile posée sur un meuble). Les 3 planches au sol de la cuisine restent.
 - Vérifié : captures avant/après dans l'éditeur ; en mode Play, la clé reste posée, se prend avec une main simulée, suit la main et retombe au sol quand on la lâche ; une seule planche sur la table. **Pas vérifié au casque**, ni la cause exacte de « la clé devient transparente ».
+
+---
+
+## 099 — Pousser main puis tester les vagues infinies de LeCapet
+
+**Date** : 2026-10-21 · **Domaine** : GitHub, Gameplay
+
+> Il y a eu une pull request github de LeCapet (Rajout du mode de jeu Vagues inifinis)
+> Regarde sa pull request, merge la avec la mienne que l'on puisse tester (Juste au par avant push proprement dans le main tout ce qu'on a fait jusqu'ici)
+
+**Résultat** (fusion et adaptations faites par l'IA, Claude Code ; le mode de jeu est le code de LeCapet)
+
+- `main` poussée en avance rapide sur `51fafa8` (correctifs du décor, de la clé et des planches, journal 095 à 098) ; wiki poussé. Unity n'était pas en mode Play et la scène avait son éclairage.
+- PR #133 fusionnée en local sur la branche `test/vagues-infinies`, créée à partir de `main`. La PR partait de `c0f7d08` : conflits dans `WaveManager.cs` et `GameStats.cs`, résolus en gardant les deux versions.
+- Adaptations : pause B et ligne « Maintenir B » gardées en mode survie ; +50 PV par pause et ligne [Bilan] gardées, durée de pause du mode survie ; poids d'apparition (#123) au-delà du niveau 4 = ceux du niveau 4 ; pas de reprise au niveau atteint (#121) en mode survie (`WaveManager`, `GameOverUI`) ; un seul `OnDestroy` (le record est enregistré en quittant) ; nombre de mêlées gardé dans le bilan.
+- Compilation sans erreur. Pas joué en mode Play ni au casque. Pas de fusion sur GitHub : en attente du « merge » de Rahim.
 

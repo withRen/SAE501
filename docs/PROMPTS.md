@@ -1844,7 +1844,7 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 **Résultat** (analyse écrite par l'IA, Claude Code, à partir du code de la branche `test/vagues-infinies` ; valeurs calculées, rien joué, rien modifié)
 
-- Document : `analyses/Equilibrage_vagues_infinies.md` dans les fichiers du projet Claude (pas dans le dépôt).
+- Document : `Equilibrage_vagues_infinies.md` dans les fichiers du projet Claude (pas dans le dépôt).
 - Évasion : courbe correcte, ≈ 144 balles pour ≈ 45 zombies.
 - Vagues infinies : la difficulté monte, mais parce que les munitions s'arrêtent après la vague 4 (12 balles par vague par la radio pour 18, puis 21, puis 27 zombies) ; la vie revient presque entièrement à chaque pause ; les Coureurs approchent 3,5 à 3,9 m/s ; jusqu'à 20 zombies vivants, pas mesuré au Quest. La vague 4 de survie est plus facile que le niveau 4 d'Évasion.
 - 7 réglages proposés (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse plafonnée à 1,7, 14 zombies vivants au plus, renforts à la vague 4, PV des zombies +8 %/vague plafonnés à ×2,5), en attente de l'accord de Rahim.

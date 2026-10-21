@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 // niveau atteint, temps total. Affiché à la mort ET à la victoire (générateur activé, appelé par WaveManager).
 // On peut relancer plus tôt avec une gâchette (après minReadTime), sinon la scène se recharge au bout de restartDelay.
 // [#121] Mort au niveau 2 ou plus : la gâchette (ou l'attente) reprend au début du niveau atteint ; maintenir B recommence au niveau 1.
+// Cinématiques : à la mort, le joueur s'effondre avant le fondu (PlayerDeathFall) ; à la victoire, après le fondu,
+// la vidéo de fin est jouée sur un écran dans le noir (EscapeVideo : le survivant s'enfuit, les zombies frappent la grille), puis le bilan.
 public class GameOverUI : MonoBehaviour
 {
     public static GameOverUI Instance { get; private set; }
@@ -77,15 +79,16 @@ public class GameOverUI : MonoBehaviour
     }
 
     // mode survie : pas de reprise au niveau atteint (on repart de la vague 1, le record compte)
-    void OnDied() { if (!running) StartCoroutine(Run(message, deathColor, 0f, !WaveManager.Endless && WaveManager.Level >= 2 ? WaveManager.Level : 0)); }
+    void OnDied() { if (!running) StartCoroutine(Run(message, deathColor, 0f, !WaveManager.Endless && WaveManager.Level >= 2 ? WaveManager.Level : 0, death: true)); }
 
-    public void ShowVictory() { if (!running) StartCoroutine(Run(victoryMessage, victoryColor, victoryDelay, 0)); }
+    public void ShowVictory() { if (!running) StartCoroutine(Run(victoryMessage, victoryColor, victoryDelay, 0, video: true)); }
 
     // resumeLevel : niveau proposé à la reprise (0 : pas de reprise, on recommence au niveau 1)
-    IEnumerator Run(string title, Color titleColor, float delay, int resumeLevel)
+    IEnumerator Run(string title, Color titleColor, float delay, int resumeLevel, bool death = false, bool video = false)
     {
         running = true;
         if (delay > 0f) yield return new WaitForSeconds(delay);
+        if (death) yield return PlayerDeathFall.Play(head);
         black.enabled = true;
         for (float t = 0; t < fadeDuration; t += Time.deltaTime)
         {
@@ -93,6 +96,8 @@ public class GameOverUI : MonoBehaviour
             yield return null;
         }
         black.material.color = Color.black;
+        if (death) PlayerDeathFall.Clear(head);
+        if (video) yield return EscapeVideo.Play(head);
 
         if (gameOverText)
         {

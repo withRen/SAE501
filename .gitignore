@@ -26,3 +26,6 @@ sysinfo.txt
 rules.md
 /Assets/_Recovery/
 /Assets/_Recovery.meta
+
+# cinématique de fin : poses exportées de Unity (régénérables : SAE501 > Cinématique > Exporter les poses pour Blender)
+/Tools/blender/cinematique/

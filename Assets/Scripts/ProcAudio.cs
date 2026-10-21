@@ -94,5 +94,8 @@ public static class ProcAudio
     // caisse qui tombe sur le sol : coup grave et sourd
     public static AudioClip Thud() => Make("caisse", 0.5f, t =>
         Mathf.Sin(t * 70f * 6.28f) * Mathf.Exp(-t * 9f) * 0.9f + (Random.value * 2 - 1) * Mathf.Exp(-t * 35f) * 0.5f);
+    // battement de cœur (deux coups sourds, « boum-boum ») : mort du joueur (PlayerDeathFall)
+    public static AudioClip Heartbeat() => Make("coeur", 0.6f, t =>
+        Mathf.Sin(t * 55f * 6.28f) * (Mathf.Exp(-t * 18f) + (t > 0.22f ? 0.7f * Mathf.Exp(-(t - 0.22f) * 20f) : 0f)) * 0.9f);
     public static AudioClip Hit() => Make("hit", 0.12f, t => Mathf.Sin(t * 900f * 6.28f) * Mathf.Exp(-t * 45f) * 0.6f + (Random.value * 2 - 1) * Mathf.Exp(-t * 80f) * 0.4f);
 }

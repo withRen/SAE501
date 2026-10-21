@@ -112,6 +112,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [101](#101--rééquilibrage-du-mode-vagues-infinies) | 2026-10-21 | Faire le rééquilibrage proposé pour les vagues infinies | Gameplay | 6 réglages appliqués (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse ×1,7, 14 vivants, renforts à la vague 4, PV +8 %/vague ×2,5) ; compilation sans erreur ; pas joué |
 | [102](#102--fusion-des-vagues-infinies-dans-main) | 2026-10-21 | Merger proprement le tout dans main | GitHub | `test/vagues-infinies` poussée dans `main` en avance rapide (e8aad93) ; PR #133 marquée fusionnée ; wiki poussé avec la page Mode survie |
 | [103](#103--plan-daction-du-multijoueur) | 2026-10-21 | Plan d'action du multijoueur : lobby, prêt, serveur local, scores | Game design | Plan écrit (NGO + Unity Transport en LAN, hôte sur un casque ou le PC, inventaire de ce qui passe en réseau, scores d'équipe et par joueur, 16 à 22 j estimés, option réduite 10 à 13 j) ; rien modifié dans le jeu |
+| [104](#104--animation-de-mort-et-cinématique-de-fin) | 2026-10-21 | Animation à la mort et cinématique de fin (fuite, zombies contre la grille), avec enregistrement | Gameplay | Mort : chute de la vue, voile rouge, tunnel, cœur ; fin : vidéo de 20 s rendue dans Blender, jouée sur un écran dans le noir ; vidéos envoyées ; pas testé au casque |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1902,3 +1903,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Serveur local : un joueur hôte (casque ou PC) ; découverte par diffusion UDP + IP manuelle en secours ; partage de connexion d'un téléphone plutôt que le Wi-Fi de l'IUT ; permission Internet Android à activer.
 - Lobby dans la scène Menu (HÉBERGER / REJOINDRE, PRÊT, compte à rebours quand tous sont prêts) ; inventaire de ce qui passe en réseau (joueurs, zombies, vagues, munitions, planches, portes, radio) ; score par joueur et d'équipe avec un barème.
 - Points soulevés : le GDD classe le multijoueur en « NE FERA PAS » ; estimation 16 à 22 jours-personne, option réduite « coop 2 joueurs, vagues infinies » 10 à 13 jours, à valider par Rahim avant tout code.
+
+---
+
+## 104 — Animation de mort et cinématique de fin
+
+**Date** : 2026-10-21 · **Domaine** : Gameplay
+
+> Le jeu manque actuellement d'une animation à la mort, mais aussi à la fin de la partie, créer moi genre un truc où le joueur s'enfuis en courant et on voit des zombis tapper contre la grille (c'est juste une cinématique de fin)
+> Fait moi le record de ça que je puisse en juger de la qualité
+>
+> Ok réfléchissons y, ce serai pas plus optimisé et plus logique de le faire dans blender ? On le render et c'est juste genre comme un MP4 ou un truc du genre qui est joué ?
+
+**Résultat** (code, scène Blender, rendu et bande-son faits par l'IA, Claude Code, sur la branche locale `feature/cinematiques` ; rien poussé)
+
+- Choix (sur la proposition de Rahim) : la fin est une **vidéo rendue dans Blender** et jouée sur un grand écran dans le noir, face au joueur (aucun mouvement de caméra imposé, plus beau qu'en temps réel, ~10 Mo) ; la mort reste **dans Unity**, en direct.
+- Mort (`PlayerDeathFall`, appelé par `GameOverUI`) : éclair rouge, la vue tombe à 35 cm du sol en 0,8 s avec un petit rebond et un son sourd, trois battements de cœur (`ProcAudio.Heartbeat`), bords qui noircissent, puis l'écran de fin habituel. Chute seulement verticale au casque ; en version PC la vue bascule aussi sur le côté. Déplacements et accroupissement coupés.
+- Fin (`EscapeVideo`, appelé par `GameOverUI` après le fondu) : la caméra n'affiche plus que l'écran (calque 30), la vidéo `Assets/Resources/Cinematique/CinematiqueFin.mp4` est jouée avec son, une gâchette la passe après 2 s, puis le bilan.
+- Vidéo (20 s, 1080p, H.264 + AAC) : `Tools/blender/cinematique_fin.py` monte la scène sur `map_final_final.blend` (sans le modifier) : le survivant (modèle « Protective suit ») sort du jardin en courant, la grille claque, 5 zombies (modèles du jeu) foncent dessus et la frappent pendant qu'il s'enfuit sur la route ; 3 plans, lampadaires ajoutés sur la route, rendu EEVEE (~45 min). Les animations sont celles du jeu, recalées par Unity (`CinematicPoseExport`, menu SAE501 > Cinématique) puis rejouées os par os dans Blender. Bande-son générée par code (`cinematique_son.py`) : pas, grille, coups, râles.
+- Vérifié en mode Play dans l'éditeur (enregistrements image par image) : la mort et le lancement de la vidéo à la victoire marchent. **Pas testé au casque** (confort de la chute, taille de l'écran, lecture de la vidéo sur le Quest). Son non écouté.
+- Limites : la course du survivant est le sprint Mixamo du Coureur (aucune course humaine dans le projet) ; le modèle « Protective suit » (`Assets/Protection_suite`) n'est pas commité, seule la vidéo en dépend ; le panneau du tutoriel reste visible par-dessus l'écran de fin (bug existant, non corrigé ici).
+

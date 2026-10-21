@@ -1,6 +1,6 @@
 # Carte — THE LAST ESCAPOR
 
-La carte vient du fichier Blender de l'équipe **`LastBoardStanding_Kitchen.blend`** (version du 7 octobre 2026). Elle remplace l'ancienne carte en boîtes grises.
+La carte vient du fichier Blender de l'équipe **`Finalefinale.blend`** (21 octobre 2026), dernière version de `LastBoardStanding_Kitchen.blend` (7 octobre) puis `map_final_final.blend`. Même plan ; le jardin a des arbres PolyHaven, des rochers moussus et une allée de pierres.
 
 ```
                        (haut = nord = +y Blender = -z Unity)
@@ -74,6 +74,9 @@ Les emplacements des fenêtres viennent des repères du fichier (`Bunker_PlankSl
 ## Mettre à jour la carte
 
 1. Exporter le `.blend` : `/Applications/Blender.app/Contents/MacOS/Blender -b carte.blend --python Tools/blender/export_map.py`
+   Si des images ne sont pas empaquetées dans le `.blend` (cas de `Finalefinale.blend`), ajouter devant la commande
+   `SAE_TEXTURES=~/dossier/des/textures` (images retrouvées par leur nom) et `SAE_FALLBACK_BLEND=~/Downloads/map_final_final.blend`
+   (matériaux encore incomplets repris de l'ancien fichier : herbe et pavés). Les arbres au feuillage lourd gardent une feuille sur 20.
    (FBX, matériaux, textures en JPG, lumières et caméras ; les objets de décor de plus de 6 000 triangles sont simplifiés à l'export).
 2. Dans Unity : **SAE501 → Salle → 1 - Importer la carte**, puis **SAE501 → Build VR Scene**.
 

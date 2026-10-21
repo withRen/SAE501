@@ -112,6 +112,9 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [101](#101--rééquilibrage-du-mode-vagues-infinies) | 2026-10-21 | Faire le rééquilibrage proposé pour les vagues infinies | Gameplay | 6 réglages appliqués (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse ×1,7, 14 vivants, renforts à la vague 4, PV +8 %/vague ×2,5) ; compilation sans erreur ; pas joué |
 | [102](#102--fusion-des-vagues-infinies-dans-main) | 2026-10-21 | Merger proprement le tout dans main | GitHub | `test/vagues-infinies` poussée dans `main` en avance rapide (e8aad93) ; PR #133 marquée fusionnée ; wiki poussé avec la page Mode survie |
 | [103](#103--plan-daction-du-multijoueur) | 2026-10-21 | Plan d'action du multijoueur : lobby, prêt, serveur local, scores | Game design | Plan écrit (NGO + Unity Transport en LAN, hôte sur un casque ou le PC, inventaire de ce qui passe en réseau, scores d'équipe et par joueur, 16 à 22 j estimés, option réduite 10 à 13 j) ; rien modifié dans le jeu |
+| [105](#105--carte-de-base-finalefinaleblend) | 2026-10-21 | Mettre à jour la carte de base avec Finalefinale.blend | Carte | Même plan que la carte actuelle, seul le jardin change (8 arbres PolyHaven, rochers, pierres) ; feuillage allégé à l'export ; textures manquantes signalées |
+| [106](#106--liste-des-textures-manquantes) | 2026-10-21 | Liste des textures manquantes | Carte | 25 images non empaquetées listées (herbe, pavés, arbres, rochers, pierres, tronc) |
+| [107](#107--textures-du-jardin-reçues) | 2026-10-21 | Textures du jardin reçues (textures.zip) | Carte | 20 textures rebranchées, herbe et pavés repris de map_final_final ; import, reconstruction, collisions des arbres, éclairage recuit |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1902,3 +1905,47 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Serveur local : un joueur hôte (casque ou PC) ; découverte par diffusion UDP + IP manuelle en secours ; partage de connexion d'un téléphone plutôt que le Wi-Fi de l'IUT ; permission Internet Android à activer.
 - Lobby dans la scène Menu (HÉBERGER / REJOINDRE, PRÊT, compte à rebours quand tous sont prêts) ; inventaire de ce qui passe en réseau (joueurs, zombies, vagues, munitions, planches, portes, radio) ; score par joueur et d'équipe avec un barème.
 - Points soulevés : le GDD classe le multijoueur en « NE FERA PAS » ; estimation 16 à 22 jours-personne, option réduite « coop 2 joueurs, vagues infinies » 10 à 13 jours, à valider par Rahim avant tout code.
+
+---
+
+## 105 — Carte de base : Finalefinale.blend
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Pour la map de base met la à jour avec celle là : 
+> Finalefinale.blend (qui se trouve dans mes téléchargements)
+
+**Résultat** (analyse et export faits par l'IA, Claude Code)
+
+- Comparaison avec la carte actuelle (`map_final_final.blend`) : même plan, mêmes pièces, portes, emplacements de planches, caméras et 31 lumières ; 6 objets déplacés de quelques dizaines de cm. Seul le jardin change : 16 arbres simples remplacés par 8 arbres PolyHaven (`Garden_RealTree_*`), plus 18 rochers moussus, 26 pierres d'allée, un tronc couché et deux vitres.
+- Chaque nouvel arbre pèse 248 000 triangles : `Tools/blender/export_map.py` garde une feuille sur 20 (agrandie) au lieu de la simplification classique qui écrase le feuillage.
+- Blocage : 25 images du jardin ne sont pas empaquetées dans le `.blend` (restées sur le PC de l'auteur). Carte actuelle remise en place en attendant.
+
+---
+
+## 106 — Liste des textures manquantes
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Fait moi la liste des textures manquantes
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Liste des 25 images (dossier d'origine `c:/Users/lenovo/Documents/Jardin jeu vr/assets/`) : `grass_*` et `cobble_*` (terrain, allée), `island_tree_02_*` (arbres, branches, feuilles et leur masque alpha), `rock_moss_set_01_*`, `stone_01_*`, `dead_tree_trunk_*`.
+
+---
+
+## 107 — Textures du jardin reçues
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> Voici les textures qu'il manque (textures.zip)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Le zip contient 20 des 25 images ; `grass_*` et `cobble_*` manquent encore. L'export les remplace par les matériaux procéduraux du même nom de `map_final_final.blend` : terrain et allée gardent l'aspect de la carte actuelle.
+- `export_map.py` : variables `SAE_TEXTURES` (dossier où retrouver les images par leur nom) et `SAE_FALLBACK_BLEND` (ancien fichier pour les matériaux encore incomplets) ; budgets serrés pour les pierres d'allée (800 triangles) et les rochers (1 200). Carte : 990 000 triangles avant LOD, contre 828 000 pour l'ancienne (jardin 226 000 → 387 000).
+- `RoomImport.cs` : feuillage en découpe alpha (opaque, double face) au lieu de transparent.
+- `RoomBuilder.cs` : arbres PolyHaven avec une capsule sur le tronc (au lieu d'une boîte de 4 m) ; pierres d'allée sans collision.
+- MainScene reconstruite (Build VR Scene), éclairage recuit. Points d'apparition, emplacements de planches, générateur, portes et radio identiques à l'ancienne scène. Non testé au casque.
+

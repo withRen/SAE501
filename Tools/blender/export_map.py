@@ -12,6 +12,7 @@ import numpy as np
 OUT = os.path.expanduser("~/SAE501/Assets/Room")
 TEX = OUT + "/Textures"
 MAX_TRIS = 6000          # au-delà, un objet de décor est simplifié (Quest)
+SMALL_TRIS = {"Garden_PathStone_": 800, "Garden_MossBoulder_": 1200}   # petits décors du jardin : budget plus serré
 KEEP_FULL = ("Wall", "Floor", "Ceiling", "Trim", "Cornice", "Wainscot", "Frame", "Door", "Window", "Apoc_")   # structure (nom contenant) : jamais simplifiée
 
 # on repart d'un dossier propre (les anciens fichiers de la salle sont remplacés)
@@ -84,10 +85,45 @@ def bake_procedural():
         done += 1
     print("PROCEDURAUX CUITS", done)
 
+# ---------- images non empaquetées (Finalefinale : textures restées sur le PC de l'auteur) ----------
+# SAE_TEXTURES=dossier[:dossier] : on y cherche chaque image manquante par son nom de fichier.
+# SAE_FALLBACK_BLEND=ancien.blend : un matériau dont une image manque encore est remplacé par le matériau du même nom
+# de cet ancien fichier (ex. herbe et pavés procéduraux de map_final_final.blend, cuits ensuite par bake_procedural).
+def missing(img):
+    return img.source == "FILE" and img.packed_file is None and not os.path.exists(bpy.path.abspath(img.filepath))
+
+def relink_images():
+    found = {}
+    for d in filter(None, os.environ.get("SAE_TEXTURES", "").split(":")):
+        for r, _, fs in os.walk(os.path.expanduser(d)):
+            for f in fs: found.setdefault(f.lower(), os.path.join(r, f))
+    for img in bpy.data.images:
+        if not missing(img): continue
+        p = found.get(os.path.basename(img.filepath.replace("\\", "/")).lower())
+        if p:
+            img.filepath = p; img.reload()
+            print("IMAGE RETROUVÉE", img.name, "->", p)
+    fb = os.environ.get("SAE_FALLBACK_BLEND")
+    if not fb: return
+    for m in list(bpy.data.materials):
+        if not m.node_tree or not any(n.type == "TEX_IMAGE" and n.image and missing(n.image) for n in m.node_tree.nodes): continue
+        with bpy.data.libraries.load(os.path.expanduser(fb), link=False) as (src, dst):
+            if m.name not in src.materials: continue
+            dst.materials = [m.name]
+        if dst.materials and dst.materials[0]:
+            old_name = m.name
+            m.user_remap(dst.materials[0]); bpy.data.materials.remove(m)
+            dst.materials[0].name = old_name
+            print("MATÉRIAU REPRIS de", os.path.basename(fb), ":", old_name)
+
+relink_images()
 bake_procedural()
 saved = {}
 def save_img(img, keep_alpha=False):
     if img is None: return None
+    if not img.has_data and img.packed_file is None and not os.path.exists(bpy.path.abspath(img.filepath)):
+        print("IMAGE MANQUANTE (non empaquetée dans le .blend) :", img.name, img.filepath)
+        return None
     key = (img.name, keep_alpha)
     if key in saved: return saved[key]
     ext = "png" if keep_alpha else "jpg"
@@ -104,6 +140,7 @@ def save_img(img, keep_alpha=False):
     return fn
 
 def mean_channel(img, ch):
+    if img.size[0] == 0: return 0.0 if ch == 2 or ch == 0 and "metal" in img.name.lower() else 0.8   # image manquante
     px = np.array(img.pixels[:], dtype=np.float32).reshape(-1, img.channels)
     return float(px[:, min(ch, img.channels - 1)].mean())
 
@@ -176,6 +213,49 @@ for o in bpy.context.scene.objects:
             "up": list(o.matrix_world.to_3x3() @ Vector((0, 1, 0))), "fov": o.data.angle})
 json.dump(meta, open(OUT + "/map_meta.json", "w"), indent=1)
 
+# arbres du jardin (Finalefinale : Garden_RealTree_*, ~248 000 triangles dont 244 000 de feuilles) : la simplification
+# classique écrase les cartes de feuilles. On garde une feuille sur LEAF_STEP (tirage régulier) et on l'agrandit pour
+# conserver un feuillage aussi couvrant ; le tronc et les branches restent intacts. Le maillage est partagé par les arbres.
+LEAF_STEP = 20
+def thin_tree_leaves():
+    import bmesh, random
+    rnd = random.Random(7)
+    done = set()
+    for o in bpy.context.scene.objects:
+        if o.type != "MESH" or not o.visible_get() or o.data.name in done: continue
+        li = [i for i, s in enumerate(o.material_slots) if s.material and "leaves" in s.material.name.lower()]
+        if not li or len(o.data.polygons) <= MAX_TRIS: continue
+        done.add(o.data.name)
+        bm = bmesh.new(); bm.from_mesh(o.data)
+        leaf = [f for f in bm.faces if f.material_index in li]
+        seen = set(); islands = []
+        for f in leaf:
+            if f in seen: continue
+            isl = []; st = [f]
+            while st:
+                g = st.pop()
+                if g in seen: continue
+                seen.add(g); isl.append(g)
+                for e in g.edges:
+                    for h in e.link_faces:
+                        if h not in seen and h.material_index in li: st.append(h)
+            islands.append(isl)
+        rnd.shuffle(islands)
+        scale = LEAF_STEP ** 0.5
+        kill = []
+        for k, isl in enumerate(islands):
+            if k % LEAF_STEP:
+                kill += isl
+                continue
+            vs = {v for f in isl for v in f.verts}
+            c = sum((v.co for v in vs), Vector()) / len(vs)
+            for v in vs: v.co = c + (v.co - c) * scale
+        bmesh.ops.delete(bm, geom=kill, context="FACES")
+        bm.to_mesh(o.data); bm.free()
+        print("FEUILLAGE ALLÉGÉ", o.data.name, len(islands), "feuilles ->", len(islands) // LEAF_STEP + 1)
+    return done
+thinned = thin_tree_leaves()
+
 # simplification des objets de décor trop lourds (uniquement à l'export)
 dg = bpy.context.evaluated_depsgraph_get()
 before = after = 0
@@ -185,11 +265,12 @@ for o in bpy.context.scene.objects:
     ev = o.evaluated_get(dg); me = ev.to_mesh()
     t = sum(len(p.vertices) - 2 for p in me.polygons); ev.to_mesh_clear()
     before += t
-    if t > MAX_TRIS and not any(k in o.name for k in KEEP_FULL):
+    cap = next((v for k, v in SMALL_TRIS.items() if o.name.startswith(k)), MAX_TRIS)
+    if t > cap and not any(k in o.name for k in KEEP_FULL) and o.data.name not in thinned:
         mod = o.modifiers.new("ExportDecimate", "DECIMATE")
-        mod.ratio = MAX_TRIS / t
+        mod.ratio = cap / t
         simplified.append((o.name, t))
-        after += MAX_TRIS
+        after += cap
     else:
         after += t
 

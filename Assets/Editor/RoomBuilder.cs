@@ -244,7 +244,8 @@ public static class RoomBuilder
     static readonly string[] NoCollider = { "Debris", "Papers", "Rug", "Runner", "Cornice", "Wainscot", "Backsplash", "PictureFrame", "Handle", "Frame",
         "WindowSash", "WindowGlass", "Chair_Overturned", "Brick", "Apoc_", "Puddle", "OilStain", "Cables", "CableConduits", "Pendant", "Sconce",
         "CCTV_Monitor", "CCTV_Bezel", "LEDs", "TallyLED", "CameraMesh", "Mount", "Bulb", "Door_Boarded_Planks",
-        "Canopy", "Canopies", "OilSpills", "CeilingVines", "Cabin_Roof" };   // jardin : feuillage des arbres, toit de la cabane ; salle du générateur : flaques, lianes
+        "Canopy", "Canopies", "OilSpills", "CeilingVines", "Cabin_Roof",   // jardin : feuillage des arbres, toit de la cabane ; salle du générateur : flaques, lianes
+        "PathStone" };   // Finalefinale : pierres plates de l'allée (quelques cm, on marche dessus)
     // structure : collider exact (murs percés de portes et de fenêtres, sols en L)
     // jardin (carte finale) : terrain vallonné, allée, haies, rochers, piliers du portail, troncs ; tuyaux de la salle du générateur
     // (une boîte englobante bloquerait tout : la haie fait le tour du jardin, les tuyaux longent toute la salle)
@@ -258,6 +259,19 @@ public static class RoomBuilder
             GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic | StaticEditorFlags.ContributeGI);
             var n = r.name;
             if (NoCollider.Any(k => n.Contains(k))) continue;
+            // arbres PolyHaven (Finalefinale : un seul maillage tronc + feuillage) : une boîte englobante ferait un cube de 4 m ;
+            // seul le tronc bloque (capsule de 30 cm de rayon, 3 m de haut, sur le pivot du modèle : le pied du tronc)
+            if (n.StartsWith("Garden_RealTree_") && !n.Contains("Gnarled"))
+            {
+                var cap = r.gameObject.AddComponent<CapsuleCollider>();
+                var up = r.transform.InverseTransformDirection(Vector3.up);
+                cap.direction = Mathf.Abs(up.y) > 0.7f ? 1 : Mathf.Abs(up.z) > 0.7f ? 2 : 0;
+                float s = r.transform.lossyScale.x;
+                cap.radius = 0.3f / s; cap.height = 3f / s;
+                var c = Vector3.zero; c[cap.direction] = Mathf.Sign(up[cap.direction]) * cap.height * 0.5f;
+                cap.center = c;
+                continue;
+            }
             if (Structural.Any(k => n.Contains(k))) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
             else r.gameObject.AddComponent<BoxCollider>();
         }

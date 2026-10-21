@@ -307,6 +307,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Mat_Garden_StonePath__Garden_StonePath_And_Porch.001
+    second: {fileID: 2100000, guid: 8cd2f29885f5345f7bead41c3863c31e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Mat_Garden_TreeBark
     second: {fileID: 2100000, guid: 33d3d2d6488c34aeab1deed9d92518c1, type: 2}
   - first:
@@ -374,6 +379,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Mat_Screen_CAM04_Stockage
     second: {fileID: 2100000, guid: 3051ab7f7c96e43378c02b9f7ad30b2b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Window_Glass_VR
+    second: {fileID: 2100000, guid: d9af88d0ef6924fc691351a489af04b9, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -547,6 +557,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: dead_tree_trunk
+    second: {fileID: 2100000, guid: 8f16f765862524a3499d98b94b6e2907, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: dead_tree_trunk_02
     second: {fileID: 2100000, guid: 09739d009505743d79fa5cea9a81b519, type: 2}
   - first:
@@ -622,6 +637,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: island_tree_02
+    second: {fileID: 2100000, guid: f739ef3e2aa1c4b8d81e84fc741e9e8d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: island_tree_02_branches
+    second: {fileID: 2100000, guid: 56743ee1416a94461bf6412b5d2bd9f8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: island_tree_02_leaves
+    second: {fileID: 2100000, guid: af6b8cdb1ba414546ab6dccd086b9e43, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: korean_fire_extinguisher_01_body
     second: {fileID: 2100000, guid: 469d82adc8be14887bd66d09dfcc4f90, type: 2}
   - first:
@@ -687,8 +717,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: rock_moss_set_01
+    second: {fileID: 2100000, guid: ce1ecb6e338d54a0fa415847448d01e3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: rusted_spade_01
     second: {fileID: 2100000, guid: 715f6ecf836144fa7a614df6ab85f627, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: stone_01
+    second: {fileID: 2100000, guid: ef33cc2e341ef4a8cbc566be3de4cd3f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

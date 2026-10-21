@@ -70,7 +70,19 @@ public static class RoomImport
             m.SetFloat("_Metallic", Mathf.Clamp01(i.metal));
             m.SetFloat("_Smoothness", Mathf.Clamp01(1f - i.rough));
 
-            bool transparent = i.alpha_linked || i.blend == "BLEND" || i.alpha < 0.99f;
+            // feuillage (arbres PolyHaven du jardin) : découpe alpha, opaque et double face ; en transparent, les feuilles
+            // se trient mal entre elles et coûtent cher en surdessin sur le Quest
+            bool foliage = i.alpha_linked && bt && kv.Key.ToLowerInvariant().Contains("leaves");
+            bool transparent = !foliage && (i.alpha_linked || i.blend == "BLEND" || i.alpha < 0.99f);
+            if (foliage)
+            {
+                m.SetFloat("_AlphaClip", 1f);
+                m.SetFloat("_Cutoff", 0.5f);
+                m.SetFloat("_Cull", 0f);
+                m.EnableKeyword("_ALPHATEST_ON");
+                m.SetOverrideTag("RenderType", "TransparentCutout");
+                m.renderQueue = (int)RenderQueue.AlphaTest;
+            }
             if (transparent)
             {
                 m.SetFloat("_Surface", 1f);

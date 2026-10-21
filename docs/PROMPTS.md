@@ -111,6 +111,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [100](#100--équilibrage-des-vagues-évasion-et-vagues-infinies) | 2026-10-21 | Vérifier l'équilibrage des vagues, surtout en vagues infinies | Game design | Courbe calculée vague par vague ; 4 défauts en survie (munitions finies, vie rendue à chaque vague, Coureurs trop rapides, 20 zombies vivants) ; 7 réglages chiffrés proposés ; rien modifié |
 | [101](#101--rééquilibrage-du-mode-vagues-infinies) | 2026-10-21 | Faire le rééquilibrage proposé pour les vagues infinies | Gameplay | 6 réglages appliqués (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse ×1,7, 14 vivants, renforts à la vague 4, PV +8 %/vague ×2,5) ; compilation sans erreur ; pas joué |
 | [102](#102--fusion-des-vagues-infinies-dans-main) | 2026-10-21 | Merger proprement le tout dans main | GitHub | `test/vagues-infinies` poussée dans `main` en avance rapide (e8aad93) ; PR #133 marquée fusionnée ; wiki poussé avec la page Mode survie |
+| [103](#103--plan-daction-du-multijoueur) | 2026-10-21 | Plan d'action du multijoueur : lobby, prêt, serveur local, scores | Game design | Plan écrit (NGO + Unity Transport en LAN, hôte sur un casque ou le PC, inventaire de ce qui passe en réseau, scores d'équipe et par joueur, 16 à 22 j estimés, option réduite 10 à 13 j) ; rien modifié dans le jeu |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1882,3 +1883,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Wiki poussé : nouvelle page `Mode-survie`, Accueil et menu latéral.
 - Non commités, laissés en local : réglages URP, `RuntimeActionBindings.json`, `DevAgentSettings.asset`, `Protection_suite`, `scripts/`.
 
+---
+
+## 103 — Plan d'action du multijoueur
+
+**Date** : 2026-10-21 · **Domaine** : Game design
+
+> Ok maintenant établissons un plan d'action pour mettre en place le multijoueur
+> Il faut un système de lobby d'attente, un système de lancement de la partie quand tout le monde est "prêt" (bouton à cliquer) 
+> Un système de serveur (Local, vu que je vais charger le jeu sur des casques, explique moi comment je pourrais mettre ça en place)
+> Un système de score globale 
+> Et un système de score unique aux joueurs
+
+**Résultat** (plan écrit par l'IA, Claude Code, après lecture du code de `main` 5c1d40c ; aucun code du jeu modifié)
+
+- Document : `Plan_multijoueur.md` dans les fichiers du projet Claude (pas dans le dépôt).
+- Bibliothèque recommandée : Netcode for GameObjects + Unity Transport (officiel, LAN sans Internet, tests à plusieurs dans l'éditeur) ; Mirror en second choix ; Photon Fusion écarté (dépend du cloud).
+- Serveur local : un joueur hôte (casque ou PC) ; découverte par diffusion UDP + IP manuelle en secours ; partage de connexion d'un téléphone plutôt que le Wi-Fi de l'IUT ; permission Internet Android à activer.
+- Lobby dans la scène Menu (HÉBERGER / REJOINDRE, PRÊT, compte à rebours quand tous sont prêts) ; inventaire de ce qui passe en réseau (joueurs, zombies, vagues, munitions, planches, portes, radio) ; score par joueur et d'équipe avec un barème.
+- Points soulevés : le GDD classe le multijoueur en « NE FERA PAS » ; estimation 16 à 22 jours-personne, option réduite « coop 2 joueurs, vagues infinies » 10 à 13 jours, à valider par Rahim avant tout code.

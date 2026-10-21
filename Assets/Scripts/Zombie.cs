@@ -103,6 +103,15 @@ public class Zombie : MonoBehaviour
         attackDamage = st.playerDamage * GameSettings.DamageMultiplier;    // difficulté du menu : Facile x0,75, Difficile x1,25
     }
 
+    // [Survie] au-delà du dernier niveau défini, ZombieLevels n'augmente plus rien : WaveManager ajoute ici des PV et des dégâts en plus
+    // (à appeler juste après la création, après ApplyLevel)
+    public void ApplyEndlessScaling(float hpFactor, float damageFactor)
+    {
+        MaxHealth *= Mathf.Max(0.1f, hpFactor);
+        Health = MaxHealth;
+        attackDamage = Mathf.Min(1f, attackDamage * Mathf.Max(0.1f, damageFactor));
+    }
+
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();

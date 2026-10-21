@@ -76,7 +76,8 @@ public class GameOverUI : MonoBehaviour
         if (PlayerHealth.Instance) PlayerHealth.Instance.Died -= OnDied;
     }
 
-    void OnDied() { if (!running) StartCoroutine(Run(message, deathColor, 0f, WaveManager.Level >= 2 ? WaveManager.Level : 0)); }
+    // mode survie : pas de reprise au niveau atteint (on repart de la vague 1, le record compte)
+    void OnDied() { if (!running) StartCoroutine(Run(message, deathColor, 0f, !WaveManager.Endless && WaveManager.Level >= 2 ? WaveManager.Level : 0)); }
 
     public void ShowVictory() { if (!running) StartCoroutine(Run(victoryMessage, victoryColor, victoryDelay, 0)); }
 

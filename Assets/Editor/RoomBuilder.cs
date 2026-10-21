@@ -1400,7 +1400,8 @@ public static class RoomBuilder
     }
 
     // ---------- radio de ravitaillement (SupplyRadio) ----------
-    // Une radio fixée au mur du bunker : bouton rouge = commander des chargeurs. Après une attente (selon la difficulté),
+    // Une radio fixée au mur du bunker, avec un combiné posé dessus (RadioHandset) : on le décroche et on le porte à l'oreille
+    // pour commander des chargeurs ; lâché, il revient sur son socle (relié à la radio par un cordon). Après une attente (selon la difficulté),
     // une caisse tombe par le trou du toit au-dessus de l'établi (Toit_Etabli, voir BuildBunkerOpenings) avec les chargeurs dedans.
     // La caisse et le chargeur sont des modèles cachés, copiés à chaque livraison.
     static readonly Vector3 SupplyDrop = new Vector3(-1.05f, 4.0f, 12.15f);     // au-dessus du trou du toit côté établi
@@ -1408,7 +1409,8 @@ public static class RoomBuilder
     static void BuildSupplyRadio()
     {
         var radioM = Mat("Radio", new Color(0.22f, 0.26f, 0.16f), 0.25f);        // vert olive militaire
-        var buttonM = Mat("Radio_Bouton", new Color(0.8f, 0.1f, 0.08f), 0.5f);
+        var lampM = Mat("Radio_Voyant", new Color(0.8f, 0.1f, 0.08f), 0.5f);
+        var handsetM = Mat("Radio_Combine", new Color(0.07f, 0.07f, 0.075f), 0.45f);     // bakélite noire
         var screenM = Mat("Radio_Ecran", new Color(0.01f, 0.02f, 0.015f), 0.8f);
 
         // place : premier mur touché par un rayon à hauteur de poitrine (murs est et ouest du bunker, loin des fenêtres)
@@ -1438,11 +1440,59 @@ public static class RoomBuilder
         Box("Ecran", root, new Vector3(-0.06f, 0.03f, 0.172f), new Vector3(0.19f, 0.11f, 0.005f), screenM, false);
         var display = MakeLabel("Affichage", root, root.TransformPoint(new Vector3(-0.06f, 0.03f, 0.176f)), Quaternion.LookRotation(-normal), 0.0032f, new Color(1f, 0.75f, 0.27f));
         display.text = "RAVITAILLEMENT";
-        var btn = Box("Bouton", root, new Vector3(0.11f, 0.02f, 0.185f), new Vector3(0.06f, 0.06f, 0.03f), buttonM);
-        ((BoxCollider)btn.GetComponent<Collider>()).size = new Vector3(1.8f, 1.8f, 2.5f);   // zone à toucher plus grande que le bouton
-        var inter = btn.AddComponent<XRSimpleInteractable>();
+        var lamp = Prim(PrimitiveType.Sphere, "Voyant", root, new Vector3(0.11f, 0.02f, 0.172f), new Vector3(0.03f, 0.03f, 0.016f), lampM);
         var tag = MakeLabel("Etiquette", root, root.TransformPoint(new Vector3(0.11f, -0.045f, 0.176f)), Quaternion.LookRotation(-normal), 0.0022f, new Color(0.85f, 0.85f, 0.8f));
         tag.text = "APPEL";
+
+        // socle du combiné, sur le dessus de la radio : deux paires de fourches qui encadrent la poignée
+        const float hx = -0.03f, hy = 0.135f, hz = 0.1f;                        // pose de repos du combiné
+        Box("Socle", root, new Vector3(hx, 0.105f, hz), new Vector3(0.14f, 0.01f, 0.07f), darkM, false);
+        foreach (var fx in new[] { -0.05f, 0.05f })
+            foreach (var fz in new[] { -0.028f, 0.028f })
+                Box("Fourche", root, new Vector3(hx + fx, 0.122f, hz + fz), new Vector3(0.01f, 0.035f, 0.01f), darkM, false);
+
+        // combiné : poignée le long de X, écouteur (-X) et micro (+X) tournés vers le bas au repos
+        var hs = new GameObject("Combine").transform;
+        hs.SetParent(root, false);
+        hs.localPosition = new Vector3(hx, hy, hz);
+        Box("Poignee", hs, Vector3.zero, new Vector3(0.17f, 0.028f, 0.035f), handsetM, false);
+        Box("Ecouteur", hs, new Vector3(-0.085f, -0.018f, 0f), new Vector3(0.05f, 0.035f, 0.055f), handsetM, false);
+        Box("Micro", hs, new Vector3(0.085f, -0.018f, 0f), new Vector3(0.05f, 0.035f, 0.055f), handsetM, false);
+        var earpiece = new GameObject("Point_Ecouteur").transform;
+        earpiece.SetParent(hs, false);
+        earpiece.localPosition = new Vector3(-0.085f, -0.036f, 0f);
+        var cordEnd = new GameObject("Cordon_Fin").transform;
+        cordEnd.SetParent(hs, false);
+        cordEnd.localPosition = new Vector3(0.11f, -0.02f, 0f);
+        var hbc = hs.gameObject.AddComponent<BoxCollider>();
+        hbc.center = new Vector3(0f, -0.012f, 0f); hbc.size = new Vector3(0.23f, 0.055f, 0.06f);
+        var hrb = hs.gameObject.AddComponent<Rigidbody>();
+        hrb.isKinematic = true; hrb.useGravity = false;                         // jamais de chute : il revient sur le socle
+        // prise : la poignée dans le poing, l'écouteur vers le haut (au-dessus du pouce), les écouteurs tournés vers la tête
+        var hAttach = new GameObject("Attach").transform;
+        hAttach.SetParent(hs, false);
+        hAttach.localRotation = Quaternion.LookRotation(Vector3.forward, Vector3.left);
+        var hGrab = hs.gameObject.AddComponent<XRGrabInteractable>();
+        hGrab.movementType = XRBaseInteractable.MovementType.Instantaneous;
+        hGrab.attachTransform = hAttach;
+        hGrab.throwOnDetach = false;
+        hs.gameObject.AddComponent<IgnorePlayer>();
+        hs.gameObject.AddComponent<GrabGuard>();
+
+        // cordon : de la radio (côté droit) au bout du combiné, tracé par RadioHandset
+        var cordAnchor = new GameObject("Cordon_Depart").transform;
+        cordAnchor.SetParent(root, false);
+        cordAnchor.localPosition = new Vector3(0.185f, -0.04f, 0.12f);
+        var cordGo = new GameObject("Cordon");
+        cordGo.transform.SetParent(root, false);
+        var cord = cordGo.AddComponent<LineRenderer>();
+        cord.sharedMaterial = darkM;
+        cord.widthMultiplier = 0.007f;
+        cord.shadowCastingMode = ShadowCastingMode.Off;
+        cord.numCapVertices = 2;
+
+        var handset = hs.gameObject.AddComponent<RadioHandset>();
+        handset.earpiece = earpiece; handset.cordAnchor = cordAnchor; handset.cordEnd = cordEnd; handset.cord = cord;
 
         // modèle de caisse (bac ouvert, les chargeurs tombent dedans)
         var crate = new GameObject("Modele_Caisse");
@@ -1470,7 +1520,7 @@ public static class RoomBuilder
         drop.position = SupplyDrop;
 
         var radio = root.gameObject.AddComponent<SupplyRadio>();
-        radio.button = inter; radio.buttonRenderer = btn.GetComponent<Renderer>(); radio.display = display;
+        radio.handset = handset; radio.lamp = lamp.GetComponent<Renderer>(); radio.display = display;
         radio.dropFrom = drop; radio.crateTemplate = crate; radio.magazineTemplate = mag;
     }
 

@@ -1,18 +1,18 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Radio de ravitaillement (construite par RoomBuilder.BuildSupplyRadio) :
-//   1. le joueur appuie sur le bouton rouge de la radio (grip sur le bouton) ;
-//   2. la radio répond (grésillement) et affiche un compte à rebours ;
+//   1. le joueur décroche le combiné (grip) et le porte à son oreille (RadioHandset) ;
+//   2. la radio répond dans l'écouteur (grésillement + vibration de la manette) et affiche un compte à rebours ;
 //   3. à la fin, une caisse tombe par le trou du toit avec un chargeur plein (12 balles) dedans.
+// On raccroche en lâchant le combiné : il revient sur son socle. Hors service : tonalité « occupé » dans l'écouteur.
 // Un seul appel par vague. Attente selon la difficulté (PARAMÈTRES) : Facile 15 s · Normal 30 s · Difficile 50 s.
 // Un seul chargeur par caisse, quelle que soit la difficulté (décision de l'équipe : les munitions restent rares).
 // Le compte à rebours suit le temps du jeu : il s'arrête pendant la pause.
 public class SupplyRadio : MonoBehaviour
 {
-    public XRSimpleInteractable button;
-    public Renderer buttonRenderer;
+    public RadioHandset handset;
+    public Renderer lamp;                   // voyant qui clignote quand on peut appeler
     public TextMesh display;
     public Transform dropFrom;              // point d'où tombe la caisse (au-dessus du plafond s'il y a un trou)
     public GameObject crateTemplate;        // caisse cachée, copiée à chaque livraison
@@ -26,8 +26,8 @@ public class SupplyRadio : MonoBehaviour
     int usedForLevel = -1;
     float arriveAt;
     GameObject lastCrate;
-    AudioSource audioSrc;
-    AudioClip chirp, whoosh;
+    AudioSource audioSrc, earSrc;           // haut-parleur de la radio, écouteur du combiné
+    AudioClip chirp, whoosh, beep;
 
     static readonly Color Amber = new Color(1f, 0.75f, 0.27f), Green = new Color(0.35f, 1f, 0.55f), Red = new Color(1f, 0.3f, 0.25f);
 
@@ -40,10 +40,38 @@ public class SupplyRadio : MonoBehaviour
         audioSrc.spatialBlend = 1f; audioSrc.minDistance = 0.5f; audioSrc.maxDistance = 12f; audioSrc.playOnAwake = false;
         chirp = ProcAudio.RadioChirp();
         whoosh = ProcAudio.Whoosh();
-        if (button) button.selectEntered.AddListener(_ => Call());
+        beep = ProcAudio.Click();
+        if (handset)
+        {
+            earSrc = handset.gameObject.AddComponent<AudioSource>();
+            earSrc.spatialBlend = 1f; earSrc.minDistance = 0.05f; earSrc.maxDistance = 2f; earSrc.playOnAwake = false;
+            handset.PutToEar += OnEar;
+            handset.Lifted += Refresh;
+            handset.HungUp += Refresh;
+        }
         if (crateTemplate) crateTemplate.SetActive(false);
         if (magazineTemplate) magazineTemplate.SetActive(false);
         Refresh();
+    }
+
+    void OnDestroy()
+    {
+        if (!handset) return;
+        handset.PutToEar -= OnEar;
+        handset.Lifted -= Refresh;
+        handset.HungUp -= Refresh;
+    }
+
+    // combiné porté à l'oreille
+    void OnEar()
+    {
+        if (PauseMenu.Paused) return;
+        switch (state)
+        {
+            case State.Ready: Call(); break;
+            case State.Waiting: EarSound().PlayOneShot(chirp, 0.35f); break;     // déjà commandé : simple accusé
+            default: StartCoroutine(Busy()); break;                               // plus de caisse cette vague
+        }
     }
 
     public void Call()
@@ -52,8 +80,21 @@ public class SupplyRadio : MonoBehaviour
         state = State.Waiting;
         usedForLevel = WaveKey;
         arriveAt = Time.time + delayByDifficulty[Diff];
-        audioSrc.PlayOneShot(chirp, 0.8f);
+        EarSound().PlayOneShot(chirp, 0.8f);
+        if (handset && handset.Holder) VRInput.Haptic(VRInput.HandOf(handset.Holder), 0.35f, 0.25f);
+        Refresh();
         StartCoroutine(Deliver());
+    }
+
+    AudioSource EarSound() => handset && handset.IsHeld && earSrc ? earSrc : audioSrc;
+
+    IEnumerator Busy()
+    {
+        for (int i = 0; i < 3 && handset && handset.AtEar; i++)
+        {
+            EarSound().PlayOneShot(beep, 0.7f);
+            yield return new WaitForSeconds(0.25f);
+        }
     }
 
     IEnumerator Deliver()
@@ -90,10 +131,10 @@ public class SupplyRadio : MonoBehaviour
     {
         // nouvelle vague : la radio redevient disponible
         if (state == State.Used && WaveKey > usedForLevel) { state = State.Ready; Refresh(); }
-        if (state == State.Ready && buttonRenderer)
+        if (state == State.Ready && lamp)
         {
-            float a = 0.5f + 0.5f * Mathf.Sin(Time.time * 4f);       // le bouton clignote quand on peut appeler
-            buttonRenderer.material.color = Color.Lerp(new Color(0.35f, 0.05f, 0.05f), Red, a);
+            float a = 0.5f + 0.5f * Mathf.Sin(Time.time * 4f);       // le voyant clignote quand on peut appeler
+            lamp.material.color = Color.Lerp(new Color(0.35f, 0.05f, 0.05f), Red, a);
         }
     }
 
@@ -108,10 +149,10 @@ public class SupplyRadio : MonoBehaviour
             case State.Used:
                 t = "INDISPONIBLE\nPROCHAINE\nVAGUE"; c = Red; break;
             default:
-                t = "RAVITAILLEMENT\n1 CHARGEUR\n▶ BOUTON ROUGE"; c = Amber; break;
+                t = handset && handset.IsHeld ? "À L'OREILLE\nPOUR\nCOMMANDER" : "RAVITAILLEMENT\n1 CHARGEUR\n▶ DÉCROCHEZ"; c = Amber; break;
         }
         if (display.text != t) display.text = t;
         display.color = c;
-        if (state != State.Ready && buttonRenderer) buttonRenderer.material.color = new Color(0.25f, 0.05f, 0.05f);
+        if (state != State.Ready && lamp) lamp.material.color = new Color(0.25f, 0.05f, 0.05f);
     }
 }

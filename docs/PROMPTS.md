@@ -108,6 +108,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [097](#097--cover-dans-le-readme) | 2026-10-20 | Mettre la cover en tête du README | Documentation | Image copiée dans `docs/images/cover.png` (Git LFS) et affichée sous le titre du README |
 | [098](#098--sols-en-double-bouteilles-clé-et-planches) | 2026-10-20 | Plaques au sol (capture au casque), bouteilles qui volent sous la cabane du jardin, clé impossible à prendre, trop de planches sur la table de la cuisine | Carte, Gameplay | Matériaux « Apocalypse » recolorés (mousse, flaques transparentes, tuyaux), tapis et papiers décalés, terrain abaissé sous les planchers ; bouteilles recalées ; clé prenable ; une seule planche sur la table ; éclairage recuit |
 | [099](#099--pousser-main-puis-tester-les-vagues-infinies-de-lecapet) | 2026-10-21 | Pousser proprement dans main, puis fusionner la PR de LeCapet « vagues infinies » pour la tester | GitHub, Gameplay | `main` poussée (51fafa8) avec le wiki ; PR #133 fusionnée sur la branche locale `test/vagues-infinies`, conflits résolus, compilation sans erreur ; en attente du test de Rahim |
+| [100](#100--équilibrage-des-vagues-évasion-et-vagues-infinies) | 2026-10-21 | Vérifier l'équilibrage des vagues, surtout en vagues infinies | Game design | Courbe calculée vague par vague ; 4 défauts en survie (munitions finies, vie rendue à chaque vague, Coureurs trop rapides, 20 zombies vivants) ; 7 réglages chiffrés proposés ; rien modifié |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1832,4 +1833,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - PR #133 fusionnée en local sur la branche `test/vagues-infinies`, créée à partir de `main`. La PR partait de `c0f7d08` : conflits dans `WaveManager.cs` et `GameStats.cs`, résolus en gardant les deux versions.
 - Adaptations : pause B et ligne « Maintenir B » gardées en mode survie ; +50 PV par pause et ligne [Bilan] gardées, durée de pause du mode survie ; poids d'apparition (#123) au-delà du niveau 4 = ceux du niveau 4 ; pas de reprise au niveau atteint (#121) en mode survie (`WaveManager`, `GameOverUI`) ; un seul `OnDestroy` (le record est enregistré en quittant) ; nombre de mêlées gardé dans le bilan.
 - Compilation sans erreur. Pas joué en mode Play ni au casque. Pas de fusion sur GitHub : en attente du « merge » de Rahim.
+
+---
+
+## 100 — Équilibrage des vagues (Évasion et vagues infinies)
+
+**Date** : 2026-10-21 · **Domaine** : Game design
+
+> Vérifie l'équilibrage des vagues (en mode infinis si c'est sensé être bien compliqué)
+
+**Résultat** (analyse écrite par l'IA, Claude Code, à partir du code de la branche `test/vagues-infinies` ; valeurs calculées, rien joué, rien modifié)
+
+- Document : `analyses/Equilibrage_vagues_infinies.md` dans les fichiers du projet Claude (pas dans le dépôt).
+- Évasion : courbe correcte, ≈ 144 balles pour ≈ 45 zombies.
+- Vagues infinies : la difficulté monte, mais parce que les munitions s'arrêtent après la vague 4 (12 balles par vague par la radio pour 18, puis 21, puis 27 zombies) ; la vie revient presque entièrement à chaque pause ; les Coureurs approchent 3,5 à 3,9 m/s ; jusqu'à 20 zombies vivants, pas mesuré au Quest. La vague 4 de survie est plus facile que le niveau 4 d'Évasion.
+- 7 réglages proposés (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse plafonnée à 1,7, 14 zombies vivants au plus, renforts à la vague 4, PV des zombies +8 %/vague plafonnés à ×2,5), en attente de l'accord de Rahim.
 

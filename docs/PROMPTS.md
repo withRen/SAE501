@@ -118,6 +118,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [108](#108--haie-du-jardin-floue) | 2026-10-21 | La haie du jardin est encore en basse qualité | Carte | Cause : matériau procédural cuit en une image pour toute la haie ; correction proposée |
 | [109](#109--haie-et-forêt-en-feuillage-répété) | 2026-10-21 | Oui, en gardant l'optimisation | Carte | Texture de feuillage répétable faite à partir des feuilles PolyHaven, UV en mètres sur la haie et les sapins ; même coût |
 | [110](#110--textures-qui-clignotent-et-ombres-tachées) | 2026-10-21 | Textures abîmées : objets les uns dans les autres, lumière | Carte | 41 surfaces superposées corrigées à l'export ; petits objets éclairés par sondes au lieu de lightmaps ; éclairage recuit |
+| [111](#111--appui-de-fenêtre-encastré-dans-le-mur) | 2026-10-21 | Le bas de la fenêtre est encastré dans le mur | Carte | Encadrements gonflés de 4 mm selon leurs normales (l'appui passe devant le bas de l'ouverture du mur) ; éclairage recuit |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2012,4 +2013,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Cause 1 (défaut du fichier Blender, déjà présent avant Finalefinale) : des faces de deux objets dans le même plan et tournées du même côté (encadrements au ras des murs, rebords des fenêtres du bunker, sols qui se chevauchent sous les portes, placards et crédence de la cuisine, bureaux du pupitre, planche posée dans un coffre). `export_map.py` les détecte (plan à 4 mm près, recouvrement > 2 cm) : 41 objets corrigés, encadrements épaissis de 4 mm de chaque côté, crédence et placards avancés de 3 mm, sinon le plus petit objet recule de 3 mm.
 - Cause 2 (lumière) : à 6 texels par mètre, un petit objet n'a que quelques pixels de lightmap et ses UV simplifiés débordent (bandes sombres sur les tiroirs). `RoomBuilder.cs` : les objets de moins de 1,3 m sur les trois axes (357) prennent la lumière des sondes ; la résolution des lightmaps ne change pas (même coût au casque).
 - Éclairage recuit. Non testé au casque.
+
+---
+
+## 111 — Appui de fenêtre encastré dans le mur
+
+**Date** : 2026-10-21 · **Domaine** : Carte
+
+> les bugs sont encore présent, en gros au niveau de la fenêtre, le bas de la fenêtre est encastré avec le mur du bas, ducoup on voit un morceau du mur dans la fenêtre
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Cause : le dessus de l'appui (`Bunker_WindowFrame_SE/SW`, z = 0,95 m) est exactement au niveau du bas de l'ouverture du mur sud ; la correction 110 épaississait l'encadrement dans l'épaisseur du mur seulement, pas en hauteur.
+- `export_map.py` : les encadrements sont maintenant gonflés de 4 mm selon leurs normales (appui, linteau et montants passent tous devant les faces du mur). Vérifié par capture dans l'éditeur ; éclairage recuit. Non testé au casque.
 

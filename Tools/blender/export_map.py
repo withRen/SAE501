@@ -300,7 +300,7 @@ thinned = thin_tree_leaves()
 # Dans le fichier, des faces de deux objets sont dans le même plan et tournées du même côté : encadrements de portes et
 # de fenêtres au ras des murs, sols qui se chevauchent sous les portes, meubles collés, planches posées dans une caisse.
 # Au casque, le GPU ne sait pas laquelle dessiner devant : la texture « clignote » ou mélange les deux.
-# Correction : les encadrements sont épaissis de 4 mm de chaque côté ; crédences et placards avancent de 3 mm ;
+# Correction : les encadrements sont gonflés de 4 mm selon leurs normales ; crédences et placards avancent de 3 mm ;
 # pour tout autre couple, le plus petit des deux objets recule de 3 mm derrière l'autre.
 FRAME_KEYS = ("Frame",)
 FRONT_KEYS = ("Backsplash", "KitchenCabinets", "Countertop")
@@ -343,15 +343,16 @@ def fix_coplanar():
         if mover.name in done: continue
         done.add(mover.name)
         if any(k in mover.name for k in FRAME_KEYS):
-            # épaissir selon l'axe le plus fin de l'objet (l'épaisseur du mur qu'il habille)
+            # gonfler de 4 mm selon les normales (« Shrink/Fatten ») : chaque face de l'encadrement passe devant la face du mur
+            # dans le même plan, y compris l'appui de fenêtre au ras du bas de l'ouverture et les montants
+            import bmesh
             if mover.data.users > 1: mover.data = mover.data.copy()
-            co = [v.co.copy() for v in mover.data.vertices]
-            ax = min(range(3), key=lambda i: max(c[i] for c in co) - min(c[i] for c in co) or 1e9)
-            lo, hi = min(c[ax] for c in co), max(c[ax] for c in co); mid = (lo + hi) / 2
-            sc = mover.matrix_world.to_scale()[ax] or 1.0
-            f = ((hi - lo) + 0.008 / sc) / max(hi - lo, 1e-4)
-            for v in mover.data.vertices: v.co[ax] = mid + (v.co[ax] - mid) * f
-            how = "épaissi"
+            bm = bmesh.new(); bm.from_mesh(mover.data)
+            d = 0.004 / (max(mover.matrix_world.to_scale()) or 1.0)
+            moves = [(v, v.normal * d * v.calc_shell_factor()) for v in bm.verts]
+            for v, off in moves: v.co += off
+            bm.to_mesh(mover.data); bm.free()
+            how = "gonflé"
         else:
             sign = 1 if any(k in mover.name for k in FRONT_KEYS) else -1
             mover.location += n * (0.003 * sign)

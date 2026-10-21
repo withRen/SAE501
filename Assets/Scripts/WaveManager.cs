@@ -68,17 +68,23 @@ public class WaveManager : MonoBehaviour
     [Tooltip("Test : lance la scène de jeu directement en mode survie (sans passer par le menu).")]
     public bool forceEndless = false;
     [Tooltip("Plafond de la vitesse des zombies (multiplicateur, comme LevelDef.speed). La vitesse s'en approche sans jamais le dépasser.")]
-    public float endlessSpeedCap = 2f;
+    public float endlessSpeedCap = 1.7f;           // rééquilibrage 101 : 2 -> 1,7 (Coureur au plus vite ≈ 3,3 m/s au lieu de 3,9)
     [Tooltip("Plafond de zombies vivants en même temps (performances du casque).")]
-    public int endlessMaxAliveCap = 20;
+    public int endlessMaxAliveCap = 14;            // rééquilibrage 101 : 20 -> 14, à remonter après une mesure des i/s au casque
     [Tooltip("Délai minimal entre deux apparitions (secondes) : l'intervalle s'en approche sans jamais l'atteindre.")]
     public float endlessMinInterval = 1.5f;
     [Tooltip("Au-delà de la dernière vague définie : PV en plus par vague (0,1 = +10 %), et plafond du multiplicateur.")]
-    public float endlessHpPerWave = 0.10f, endlessHpCap = 3f;
+    public float endlessHpPerWave = 0.08f, endlessHpCap = 2.5f;   // rééquilibrage 101 : 10 %/vague et x3 -> 8 % et x2,5
     [Tooltip("Idem pour les dégâts infligés au joueur.")]
     public float endlessDamagePerWave = 0.04f, endlessDamageCap = 1.5f;
     [Tooltip("La pause entre deux vagues raccourcit de ce nombre de secondes par vague (au-delà de la dernière définie), jusqu'au minimum.")]
     public float endlessBreakShrink = 1.5f, endlessBreakMin = 20f;
+    [Tooltip("Mode survie : PV rendus en pause en moins par vague au-delà de la dernière définie, et minimum (rééquilibrage 101).")]
+    public float endlessHealShrink = 5f, endlessHealMin = 15f;
+    [Tooltip("Mode survie, dernière vague définie (4) : renforts comme au niveau 4 d'Évasion pendant ce temps (s), puis la vague se termine normalement.")]
+    public float endlessLastLevelReinforce = 60f;
+    [Tooltip("Mode survie : chargeurs livrés par la radio à partir des vagues 5 et 10 (1 avant).")]
+    public int endlessRadioMagsFrom5 = 2, endlessRadioMagsFrom10 = 3;
     [Tooltip("Ajuste le nombre de zombies et de zombies simultanés selon la difficulté du menu : FACILE, NORMAL, DIFFICILE. NORMAL = vagues définies telles quelles.")]
     public float[] endlessDifficultyScale = { 0.85f, 1f, 1.2f };
 
@@ -263,6 +269,8 @@ public class WaveManager : MonoBehaviour
     {
         var def = cur;
         bool last = !Endless && Level == levels.Length;      // mode survie : jamais de dernier niveau
+        // mode survie, vague 4 : renforts pendant endlessLastLevelReinforce secondes (sinon cette vague était plus facile que le niveau 4 d'Évasion)
+        bool reinforce = last || (Endless && Level == levels.Length && LevelTime < endlessLastLevelReinforce);
         LevelTime += Time.deltaTime;
         LevelKills = GameStats.Kills - killsAtLevelStart;
         if (last && !generatorAnnounced && GeneratorReady)
@@ -280,7 +288,7 @@ public class WaveManager : MonoBehaviour
             bool room = def.maxAlive <= 0 || Alive < def.maxAlive;
             if (spawnTimer <= 0f && room) { SpawnOne(def); spawnTimer = def.spawnInterval; }
         }
-        else if (last)
+        else if (reinforce)
         {
             reinforceTimer -= Time.deltaTime;
             if (reinforceTimer <= 0f && Alive < Mathf.Max(lastLevelMaxAlive, def.maxAlive)) { SpawnOne(def); reinforceTimer = lastLevelReinforcementEvery; }
@@ -290,8 +298,9 @@ public class WaveManager : MonoBehaviour
             phase = Phase.Break;
             timer = Endless ? EndlessBreak(Level) : breakBetweenLevels;
             Debug.Log(GameStats.LogLine("vague terminée", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
-            if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(breakHeal);
-            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(breakHeal) + " PV", 5f);
+            float heal = Endless ? EndlessHeal(Level) : breakHeal;
+            if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(heal);
+            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(heal) + " PV", 5f);
             return;
         }
 
@@ -389,6 +398,18 @@ public class WaveManager : MonoBehaviour
         if (endlessDifficultyScale == null || endlessDifficultyScale.Length == 0) return 1f;
         int i = Mathf.Clamp((int)GameSettings.Difficulty, 0, endlessDifficultyScale.Length - 1);     // 0 facile, 1 normal, 2 difficile
         return Mathf.Max(0.1f, endlessDifficultyScale[i]);
+    }
+
+    // mode survie : le soin de pause baisse après la dernière vague définie (50, 45, 40… 15 PV) : les dégâts s'accumulent
+    float EndlessHeal(int n) => Mathf.Max(endlessHealMin, breakHeal - endlessHealShrink * Mathf.Max(0, n - levels.Length));
+
+    /// <summary>Chargeurs par appel de la radio de ravitaillement (SupplyRadio) : 1, puis plus en mode survie pour suivre le nombre de zombies.</summary>
+    public int RadioMagazines(int normal)
+    {
+        if (!Endless) return normal;
+        if (Level >= 10) return Mathf.Max(normal, endlessRadioMagsFrom10);
+        if (Level >= 5) return Mathf.Max(normal, endlessRadioMagsFrom5);
+        return normal;
     }
 
     float EndlessBreak(int n) => Mathf.Max(endlessBreakMin, breakBetweenLevels - endlessBreakShrink * Mathf.Max(0, n - levels.Length));

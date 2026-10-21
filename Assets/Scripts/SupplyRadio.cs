@@ -8,6 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 //   3. à la fin, une caisse tombe par le trou du toit avec un chargeur plein (12 balles) dedans.
 // Un seul appel par vague. Attente selon la difficulté (PARAMÈTRES) : Facile 15 s · Normal 30 s · Difficile 50 s.
 // Un seul chargeur par caisse, quelle que soit la difficulté (décision de l'équipe : les munitions restent rares).
+// Mode vagues infinies : 2 chargeurs à partir de la vague 5, 3 à partir de la vague 10 (WaveManager.RadioMagazines).
 // Le compte à rebours suit le temps du jeu : il s'arrête pendant la pause.
 public class SupplyRadio : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public class SupplyRadio : MonoBehaviour
     int usedForLevel = -1;
     float arriveAt;
     GameObject lastCrate;
+    int shownLevel = -1;
     AudioSource audioSrc;
     AudioClip chirp, whoosh;
 
@@ -74,6 +76,7 @@ public class SupplyRadio : MonoBehaviour
         for (float t = 0f; t < 4f && (sc == null || !sc.Landed); t += Time.deltaTime) yield return null;
         yield return new WaitForSeconds(0.3f);
         int n = magazinesByDifficulty[Diff];
+        if (WaveManager.Instance) n = WaveManager.Instance.RadioMagazines(n);     // mode survie : 2 chargeurs dès la vague 5, 3 dès la vague 10
         for (int i = 0; i < n; i++)
         {
             var off = crate.transform.TransformDirection(new Vector3((i - (n - 1) / 2f) * 0.08f, 0.12f, 0f));
@@ -90,6 +93,7 @@ public class SupplyRadio : MonoBehaviour
     {
         // nouvelle vague : la radio redevient disponible
         if (state == State.Used && WaveKey > usedForLevel) { state = State.Ready; Refresh(); }
+        if (shownLevel != WaveKey) { shownLevel = WaveKey; Refresh(); }     // le nombre de chargeurs affiché suit la vague (mode survie)
         if (state == State.Ready && buttonRenderer)
         {
             float a = 0.5f + 0.5f * Mathf.Sin(Time.time * 4f);       // le bouton clignote quand on peut appeler
@@ -108,7 +112,8 @@ public class SupplyRadio : MonoBehaviour
             case State.Used:
                 t = "INDISPONIBLE\nPROCHAINE\nVAGUE"; c = Red; break;
             default:
-                t = "RAVITAILLEMENT\n1 CHARGEUR\n▶ BOUTON ROUGE"; c = Amber; break;
+                int n = WaveManager.Instance ? WaveManager.Instance.RadioMagazines(magazinesByDifficulty[Diff]) : magazinesByDifficulty[Diff];
+                t = "RAVITAILLEMENT\n" + n + (n > 1 ? " CHARGEURS" : " CHARGEUR") + "\n▶ BOUTON ROUGE"; c = Amber; break;
         }
         if (display.text != t) display.text = t;
         display.color = c;

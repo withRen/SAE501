@@ -13,7 +13,7 @@
 
 Réimport : exporter depuis Blender en FBX (axes Y haut / -Z avant), puis menu **SAE501 → Salle → 1 - Importer la salle**, puis **SAE501 → Build VR Scene**.
 Textures issues de Poly Haven (CC0) et modèles Poly Haven (CC0).
-Clé de la cabane : modèle « Key » de Quaternius ([Poly Pizza](https://poly.pizza/m/bg6e1lfNsO), CC0) et texture Metal048C d'ambientCG ([lien](https://ambientcg.com/view?id=Metal048C), CC0), dans `Assets/Cle/`. Liste complète des sources : page wiki [Textures et modèles](https://github.com/withRen/SAE501/wiki/Textures-et-modeles).
+Clé de la cabane : modèle « Key » de Quaternius ([Poly Pizza](https://poly.pizza/m/y3bSVdIjTh), CC0) et texture rusty_metal_04 de Poly Haven ([lien](https://polyhaven.com/a/rusty_metal_04), CC0), dans `Assets/Cle/`. Liste complète des sources : page wiki [Textures et modèles](https://github.com/withRen/SAE501/wiki/Textures-et-modeles).
 
 ## 1. Armes et outils (le kit du joueur)
 

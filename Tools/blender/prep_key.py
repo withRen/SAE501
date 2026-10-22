@@ -1,4 +1,4 @@
-import bpy, sys, mathutils
+import bpy, sys, os, mathutils
 argv = sys.argv[sys.argv.index("--")+1:]
 src, dst, length = argv[0], argv[1], float(argv[2])
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -32,7 +32,7 @@ c = (mn + mx) / 2
 s = length / (mx.x - mn.x)
 o.data.transform(mathutils.Matrix.Scale(s, 4) @ mathutils.Matrix.Translation(-c))
 o.data.update()
-o.name = o.data.name = "Cle_Ornee"
+o.name = o.data.name = os.path.splitext(os.path.basename(dst))[0]
 # UV : projection cubique en mètres (texture de métal répétée)
 bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
 bpy.ops.uv.cube_project(cube_size=0.05)

@@ -121,7 +121,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [111](#111--appui-de-fenêtre-encastré-dans-le-mur) | 2026-10-21 | Le bas de la fenêtre est encastré dans le mur | Carte | Encadrements gonflés de 4 mm selon leurs normales (l'appui passe devant le bas de l'ouverture du mur) ; éclairage recuit |
 | [112](#112--vraies-portes) | 2026-10-21 | Vraie texture de porte au lieu des portes low poly | Carte | Texture de porte à panneaux produite (bois peint écaillé des portes du fichier) ; appliquée aux 4 portes de niveau, double porte pour les passages larges |
 | [113](#113--fondu-de-début-et-menu-des-commandes) | 2026-10-22 | Fondu au début de la partie, menu qui explique les touches | Interface | Fondu depuis le noir (VR et PC) ; page COMMANDES dans le menu d'accueil et le menu pause : manettes Quest 3 avec traits de rappel, clavier et souris |
-| [114](#114--modèle-de-la-clé) | 2026-10-22 | Clé : modèle ou texture gratuits, sources dans le wiki | Graphisme | Clé ornée Quaternius (CC0) et or vieilli ambientCG Metal048C (CC0) à la place de la clé du fichier ; page wiki Textures et modèles |
+| [114](#114--modèle-de-la-clé) | 2026-10-22 | Clé : modèle ou texture gratuits, sources dans le wiki | Graphisme | Clé en fer rouillé : modèle Quaternius (CC0) et texture Poly Haven rusty_metal_04 (CC0), sans lueur ; page wiki Textures et modèles |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2076,4 +2076,12 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `RoomBuilder.cs` (`UseOrnateKey`) : `Cle_Jardin` (sur le buffet de la cabane) prend ce modèle et le matériau `Cle_Ornee` ; la lueur dorée de l'ancienne clé est gardée, adoucie de moitié pour que l'usure du métal se voie. Prise en main, collider, poids et position inchangés (calculés comme avant à partir du modèle).
 - MainScene reconstruite, éclairage recuit. Vérifié par capture dans l'éditeur. **Pas testé au casque.**
 - Page wiki **Textures et modèles** créée (sources, auteurs, licences, liens).
+
+> Elle est trop dorée, elle devrai être dans le thème du reste de la map, et elle fait un peu trop fantasy
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Clé ornée dorée écartée. Remplacée par la clé simple « Key » de **Quaternius** (https://poly.pizza/m/y3bSVdIjTh, **CC0**, 284 triangles), mise à 12 cm, habillée du fer rouillé **rusty_metal_04** de **Poly Haven** (https://polyhaven.com/a/rusty_metal_04, **CC0**), comme le reste de la carte. Plus de lueur dorée : le liseré des objets interactifs la signale.
+- `RoomBuilder.UseIronKey` remplace `UseOrnateKey` ; `prep_key.py` nomme le maillage d'après le fichier exporté. Anciens fichiers `Cle_Ornee` supprimés.
+- MainScene reconstruite, éclairage recuit, vérifié par capture dans l'éditeur. **Pas testé au casque.** Page wiki mise à jour (avec l'historique de la première version).
 

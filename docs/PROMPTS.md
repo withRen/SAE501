@@ -137,6 +137,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [127](#127--son-et-titre-de-début-de-vague) | 2026-10-22 | Son à chaque début de vague + « Vague N » au milieu de l'écran | Gameplay / Ressenti | Chuchotement (SOUND BAG, YouTube) découpé à 4 s ; « VAGUE N » collé à la vue, fondu 1 s / 1,5 s visible / fondu 1,5 s, calé sur le son ; crédits README et wiki |
 | [128](#128--titre-de-vague-en-lettres-de-sang) | 2026-10-22 | « VAGUE N » en lettres de sang, police libre de droits | Interface | Police Nosifer (OFL, usage commercial permis), rouge sang + ombre noire ; crédits README et wiki |
 | [129](#129--retrait-de-la-version-pc) | 2026-10-22 | Retirer toute trace de la version PC pour l'instant | Outils | Scène MainScene_PC, scripts Desktop, menu Play PC Version, champ de vision, onglet clavier et cas « mode PC » retirés ; état sauvé sur la branche archive/version-pc ; wiki nettoyé |
+| [130](#130--release-apk-quest-v090) | 2026-10-22 | Publier l'APK de la dernière version dans les releases GitHub, nom du jeu et icône | Outils | Build Quest 0.9.0 depuis main (menu + scène de jeu), icônes Android depuis le branding, release GitHub « The Last Escapor v0.9.0 » avec l'APK |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2359,4 +2360,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Gardés : les raccourcis clavier pour tester dans l'éditeur sans casque (Espace, Entrée, C, Échap, N / K), antérieurs à la version PC.
 - Wiki : mentions de la version PC retirées de 15 pages (Commandes, Menus, Déplacement, Ceinture, Pistolet, Inspection, Tutoriel, Brouillard, etc.), capture de l'onglet clavier supprimée, note sur l'Accueil. Les anciennes entrées de ce journal (087, 089…) restent telles quelles : c'est l'historique.
 - Vérifié : compilation sans erreur ; mode Play dans MainScene : menu pause et page COMMANDES construits (onglet manettes seul), réglages appliqués, coup reçu et titre de vague sans erreur. **Pas testé au casque.** Scène VR ni reconstruite ni recuite (rien n'y change).
+
+---
+
+## 130 — Release APK Quest v0.9.0
+
+**Date** : 2026-10-22 · **Domaine** : Outils
+
+> Je veux que sur le github tu push une version APK dans les release de la toute dernière version du jeu avec le nom du jeu comme titre de l'APK, et le logo / icone bien config
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Build fait depuis `main` (commit c356f31) dans une copie séparée du projet, pour ne pas embarquer les réglages URP et matériaux non commités du dossier de travail. Scène ni reconstruite ni recuite.
+- `QuestBuild.ReleaseApk` (menu SAE501 → Build → Quest Release) : prend maintenant toutes les scènes des Build Settings (`Menu` puis `MainScene` ; l'ancien build release oubliait le menu), sort `Builds/TheLastEscapor-v<version>.apk`, quitte en erreur en mode batch si le build échoue.
+- Nouveau `QuestBuild.ApplyIdentity` (menu SAE501 → Build → Appliquer nom, version et icônes) : nom « The Last Escapor », version **0.9.0** (code Android 2), icône par défaut et icônes Android classique / ronde = `icon_1024_carre.png` du branding, icône adaptative = fond nuit `#06090F` + icône réduite à 66 % pour tenir dans le masque rond. Les Player Settings utilisés sont ceux du profil de build **Meta Quest** (actif) : c'est lui qui est enregistré.
+- Vérifié dans l'APK (`aapt`) : libellé « The Last Escapor », `com.sae501.vr`, version 0.9.0 (2), icônes du jeu dans les ressources. APK de 628 Mo, signé avec la clé de debug Unity (installation par adb / SideQuest).
+- Release GitHub `v0.9.0` « The Last Escapor v0.9.0 » avec `TheLastEscapor-v0.9.0.apk` et les étapes d'installation. Page wiki « Build et installation ».
+- **Pas testé au casque** (installation, lancement, icône dans la bibliothèque).
 

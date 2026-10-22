@@ -28,6 +28,8 @@ using UnityEngine.SceneManagement;
 //   Les 4 vagues définies dans `levels` servent de base (mêmes zombies, même rythme) ; au-delà, BuildEndlessWave() prolonge chaque
 //   réglage par une formule (suite arithmétique pour le nombre de zombies, approche d'un plafond pour la vitesse, le nombre de zombies
 //   vivants en même temps et le délai entre deux apparitions). Aucun tableau de vagues à remplir à la main.
+// [Portes] Les portes d'une zone (ZoneGate.unlockLevel = N) se déverrouillent dès la fin de la vague N-1, au début de la pause,
+//   et pas au début de la vague N : le joueur a toute la pause pour aller y chercher des planches. Un son (doorClip) l'annonce.
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
@@ -100,6 +102,7 @@ public class WaveManager : MonoBehaviour
     public AudioClip startClip;                // joué au lancement de la partie (début de la scène)
     [Range(0f, 1f)] public float startVolume = 0.9f;
     [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme de début de vague
+    [Range(0f, 1f)] public float doorVolume = 0.9f;       // portes déverrouillées en fin de vague (Resources/Audio/Porte_Deverrouillee)
 
     enum Phase { Waiting, Wave, Break, Victory }
     Phase phase = Phase.Waiting;
@@ -110,7 +113,7 @@ public class WaveManager : MonoBehaviour
     TextMesh banner, status;
     Coroutine bannerRoutine;
     AudioSource sfx;
-    AudioClip alarm;
+    AudioClip alarm, doorClip;
     WaveTitle title;            // « VAGUE N » au milieu de la vue + son de début de vague
 
     public TextMesh StatusText => status;
@@ -162,7 +165,7 @@ public class WaveManager : MonoBehaviour
     // quitter la partie (menu pause, rejouer…) : la progression du mode survie compte pour le record
     void Start()
     {
-        ZoneGate.UpdateAll(Resumed ? startLevel - 1 : 0);      // reprise : les zones des niveaux déjà passés sont ouvertes
+        ZoneGate.UpdateAll(Resumed ? startLevel : 0);          // reprise : les vagues d'avant sont finies, leurs portes sont ouvertes
         if (!screen)
         {
             screen = new GameObject("Ecran_Annonces").transform;
@@ -177,6 +180,7 @@ public class WaveManager : MonoBehaviour
         sfx = gameObject.AddComponent<AudioSource>();
         sfx.playOnAwake = false; sfx.spatialBlend = 0f;
         alarm = ProcAudio.Alarm();
+        doorClip = Resources.Load<AudioClip>("Audio/Porte_Deverrouillee");
         title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
         if (startClip) sfx.PlayOneShot(startClip, startVolume);
         if (Resumed) Announce("REPRISE AU NIVEAU " + startLevel + "\nBarricadez-vous :\nla vague arrive dans " + Mathf.CeilToInt(firstDelay) + " s.", 8f);
@@ -243,13 +247,13 @@ public class WaveManager : MonoBehaviour
         killsAtLevelStart = GameStats.Kills; LevelKills = 0; LevelTime = 0f; generatorAnnounced = false;
         Zombie.HuntPlayer = false;
         phase = Phase.Wave;
-        ZoneGate.UpdateAll(Level);
+        ZoneGate.UpdateAll(Level);              // d'habitude déjà fait en fin de vague ; utile si la partie commence à un autre niveau (startLevel)
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
         if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
         if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
         if (title) title.Show(Level);
         if (Endless) EndlessRecord.Submit(Level, GameStats.Time);
-        Announce((Endless ? EndlessBanner(Level) : cur.banner) + ZonesOpenedText(Level), 8f);
+        Announce(Endless ? EndlessBanner(Level) : cur.banner, 8f);
     }
 
     static string EndlessBanner(int n)
@@ -258,10 +262,9 @@ public class WaveManager : MonoBehaviour
         return "VAGUE " + n;
     }
 
-    // [#106] zones ouvertes à ce niveau et ce qu'on y trouve (ZoneGate.contents)
+    // [#106] zones ouvertes pour le niveau lvl et ce qu'on y trouve (ZoneGate.contents) ; annoncées en fin de vague, quand elles s'ouvrent
     static string ZonesOpenedText(int lvl)
     {
-        if (!Endless && lvl >= ZombieLevels.MaxLevel) return "";   // niveau 4 : l'annonce dit déjà où aller (en mode survie, la zone est annoncée comme les autres)
         var sb = new System.Text.StringBuilder();
         foreach (var g in ZoneGate.All)
             if (g.unlockLevel == lvl)
@@ -304,7 +307,11 @@ public class WaveManager : MonoBehaviour
             Debug.Log(GameStats.LogLine("vague terminée", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
             float heal = Endless ? EndlessHeal(Level) : breakHeal;
             if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(heal);
-            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(heal) + " PV", 5f);
+            // [Portes] les zones de la vague suivante s'ouvrent tout de suite, pour toute la pause
+            bool doorsOpened = ZoneGate.UpdateAll(Level + 1);
+            if (doorsOpened && sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
+            string opened = doorsOpened ? ZonesOpenedText(Level + 1) : "";
+            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(heal) + " PV" + opened, opened.Length > 0 ? 8f : 5f);
             return;
         }
 

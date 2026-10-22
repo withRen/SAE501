@@ -138,6 +138,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [128](#128--titre-de-vague-en-lettres-de-sang) | 2026-10-22 | « VAGUE N » en lettres de sang, police libre de droits | Interface | Police Nosifer (OFL, usage commercial permis), rouge sang + ombre noire ; crédits README et wiki |
 | [129](#129--retrait-de-la-version-pc) | 2026-10-22 | Retirer toute trace de la version PC pour l'instant | Outils | Scène MainScene_PC, scripts Desktop, menu Play PC Version, champ de vision, onglet clavier et cas « mode PC » retirés ; état sauvé sur la branche archive/version-pc ; wiki nettoyé |
 | [130](#130--release-apk-quest-v090) | 2026-10-22 | Publier l'APK de la dernière version dans les releases GitHub, nom du jeu et icône | Outils | Build Quest 0.9.0 depuis main (menu + scène de jeu), icônes Android depuis le branding, release GitHub « The Last Escapor v0.9.0 » avec l'APK |
+| [131](#131--portes-déverrouillées-en-fin-de-vague) | 2026-10-22 | Son au déblocage d'une porte + portes débloquées dès la fin de chaque vague | Gameplay / Ressenti | Les zones de la vague N+1 s'ouvrent à la fin de la vague N (début de la pause), son door-open.mp3, annonce « OUVERT : … » sur l'écran du bunker, panneaux « ouverte après la vague N » |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2378,3 +2379,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Release GitHub `v0.9.0` « The Last Escapor v0.9.0 » avec `TheLastEscapor-v0.9.0.apk` et les étapes d'installation. Page wiki « Build et installation ».
 - **Pas testé au casque** (installation, lancement, icône dans la bibliothèque).
 
+---
+
+## 131 — Portes déverrouillées en fin de vague
+
+**Date** : 2026-10-22 · **Domaine** : Gameplay / Ressenti
+
+> Rajoute au jeu ce son au déblocage d'une porte (passage de vague)
+> Et fait en sorte que les portes se débloquent entre les vagues, genre fini la vague 1, instant les portes se débloquent, et ce a chaque fois
+
+(fichier joint : `door-open.mp3`)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Avant : une zone de niveau N (couloirs et cuisine : 2, stockage : 3, générateur : 4) s'ouvrait au **début** de la vague N, donc pendant que les zombies arrivaient. Maintenant elle s'ouvre dès la **fin** de la vague N-1, au début de la pause : le joueur a toute la pause pour aller y chercher planches et chargeurs.
+- Interprétation : « à chaque fois » = à chaque fin de vague qui a des portes à ouvrir (vagues 1, 2 et 3). Il n'y a que 4 portes de niveau, donc après la vague 3 (et en mode survie au-delà), plus rien ne s'ouvre et aucun son ne joue.
+- Son `door-open.mp3` copié en `Assets/Resources/Audio/Porte_Deverrouillee.mp3` (Vorbis, décompressé au chargement, comme le son de début de vague), joué une fois, non spatialisé (on l'entend où qu'on soit), quand au moins une porte vient de se déverrouiller.
+- Annonce de fin de vague : « VAGUE N TERMINÉE … +X PV » suivie de « OUVERT : zone · contenu · » (affichée 8 s au lieu de 5) ; l'annonce de début de vague ne répète plus les zones. Après la vague 3 du mode Évasion, la porte du générateur est maintenant annoncée aussi.
+- Panneaux des portes : « (ouverte après la vague N) » au lieu de « (niveau N) ». Reprise au niveau N (après une mort) : les portes des niveaux jusqu'à N sont déjà ouvertes.
+- `ZoneGate.UpdateAll` dit maintenant si une porte vient de s'ouvrir ; `WaveManager` joue le son en fin de vague. Scène ni reconstruite ni recuite (le son est chargé depuis `Resources`, les textes sont posés au lancement).
+- Vérifié en mode Play (mode Évasion, vagues terminées par script) : pendant la vague 1, les 4 portes restent verrouillées ; dès la fin de la vague 1, les deux portes de couloir se déverrouillent (poignée active), l'annonce affiche les deux zones ; fin de la vague 2 : le stockage s'ouvre ; le générateur reste fermé. Le son est chargé et la ligne qui le joue s'exécute, mais je ne l'ai pas écouté. **Pas testé au casque.**
+- Source du son : non précisée (crédit à compléter dans le README).

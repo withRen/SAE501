@@ -3,7 +3,8 @@ using UnityEngine;
 
 // Porte verrouillée qui ferme une zone de la carte jusqu'à un certain niveau (WaveManager).
 // Verrouillée : battant fermé (le joueur ne passe pas : le rig a un CharacterController) + panneau rouge « VERROUILLÉ ».
-// Au niveau voulu : la porte se déverrouille, le joueur l'ouvre en tirant la poignée (HingedDoor).
+// [Portes] Dès la fin de la vague unlockLevel - 1 : la porte se déverrouille (son joué par WaveManager), le joueur l'ouvre
+//   en tirant la poignée (HingedDoor).
 // [#106] Le panneau dit aussi ce que contient la zone (contents), pour que le joueur sache pourquoi sortir du bunker.
 // Ces portes sont ignorées par le NavMesh (les zombies n'apparaissent dans une zone qu'une fois la porte ouverte).
 public class ZoneGate : MonoBehaviour
@@ -29,14 +30,22 @@ public class ZoneGate : MonoBehaviour
     {
         All.Add(this);
         closedPos = door.localPosition;
-        if (sign) sign.text = "VERROUILLÉ\n" + zoneName + (string.IsNullOrEmpty(contents) ? "" : "\n" + contents) + "\n(niveau " + unlockLevel + ")";
+        if (sign) sign.text = "VERROUILLÉ\n" + zoneName + (string.IsNullOrEmpty(contents) ? "" : "\n" + contents) + "\n(ouverte après la vague " + (unlockLevel - 1) + ")";
     }
 
     void OnDestroy() => All.Remove(this);
 
-    public static void UpdateAll(int level)
+    // ouvre les zones jusqu'au niveau level ; vrai si au moins une porte vient de se déverrouiller
+    public static bool UpdateAll(int level)
     {
-        foreach (var g in All) g.SetOpen(level >= g.unlockLevel);
+        bool opened = false;
+        foreach (var g in All)
+        {
+            bool open = level >= g.unlockLevel;
+            if (open && !g.IsOpen) opened = true;
+            g.SetOpen(open);
+        }
+        return opened;
     }
 
     public HingedDoor hinged;           // porte sur charnière : déverrouillée, le joueur l'ouvre en tirant (sinon : battant qui monte)

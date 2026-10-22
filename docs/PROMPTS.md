@@ -130,6 +130,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [120](#120--rechargement-facilité) | 2026-10-22 | Recharger trop compliqué, le chargeur traverse le pistolet | Gameplay | Zone du puits 5 → 8 cm ; rechargement par proximité (9 cm) avec le trajet du chargeur entre deux images |
 | [121](#121--croix-pour-passer-le-tutoriel) | 2026-10-22 | Croix pour passer le tutoriel | Interface | Croix en haut à droite des panneaux du tutoriel : visée main vide + gâchette (PC : réticule + clic) ; A + X 2 s toujours possible |
 | [122](#122--retour-de-dégâts-et-direction-du-coup) | 2026-10-22 | Accentuer les dégâts reçus + indicateur de direction | Gameplay / Ressenti | Arc rouge du côté du zombie (suit la tête), bord rouge de ce côté, flash selon les dégâts, son du coup + griffure spatialisée, battement de cœur sous 25 %, vibration plus forte côté zombie ; VR et PC |
+| [126](#126--mise-à-jour-du-gdd) | 2026-10-22 | Mettre à jour le GDD (.docx) avec l'état actuel du jeu | Documents | GDD réécrit par l'IA dans sa mise en forme : 4 niveaux au lieu de 5 vagues, mode Vagues infinies, radio, ceinture, inspection, contrôles, flow, feedbacks, UI ; nouveau fichier `GDD The last escapor - 2026-10-22.docx` |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2243,3 +2244,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Vérifié en mode Play : coups simulés venant de la gauche et de derrière → arcs à gauche et en bas, événement reçu, PV corrects ; captures. **Pas testé au casque** (vibrations, son spatialisé, lisibilité des arcs dans chaque œil).
 - Wiki : page Vignettage de dégâts (section « Retour de coup et direction »).
 
+---
+
+## 126 — Mise à jour du GDD
+
+**Date** : 2026-10-22 · **Domaine** : Documents
+
+> Il faudrait également mettre à jour le GDD :
+
+(avec le fichier `GDD The last escapor.docx`)
+
+**Résultat** (texte écrit par l'IA, Claude Code, à partir du journal 085 à 121, du wiki, de `docs/ZOMBIES.md` et des analyses d'équilibrage ; aucun code ni scène modifiés)
+
+- Même document, même mise en forme (styles, couleurs, tableaux), modifié en place : `GDD The last escapor - 2026-10-22.docx` dans les fichiers du projet Claude (pas dans le dépôt).
+- Corrigé : titre « The Last Escapor » (la couverture disait « The last survivor ») ; 4 niveaux au lieu de 5 vagues (6 à 15 zombies, renforts au niveau 4) ; types Rôdeur / Cogneur / Coureur au lieu de Standard / Rapide / Renforcé ; dégâts jusqu'à 40 % ; victoire par le levier du générateur (la clé n'ouvre encore rien) ; genre « solo », multijoueur hors périmètre ; ceinture (chargeur à gauche, marteau sur l'établi) ; rechargement par proximité ; mort = bilan et reprise au niveau atteint.
+- Ajouté : mode Vagues infinies (tableau et plafonds), radio de ravitaillement, munitions, difficulté, tableau des commandes casque / PC (le schéma des manettes de la v1 est gardé, avec une note), inspection des balles et de la pile, fondu de début, page COMMANDES, croix du tutoriel, options de confort (téléportation, saut, prise), brouillard ; sections vides remplies : Flow, Mécaniques diverses, Core gameplay, Micro boucles, Level design (zones), Signes et feedbacks, UI (avec une capture de l'inspection), Atmosphère ; nouveaux sons ; couleur du brouillard dans la palette.
+- Sommaire : Word recalcule les numéros de page à l'ouverture (accepter la mise à jour des champs).
+- Vérifié : rendu des 29 pages en PDF (LibreOffice). Les valeurs sont celles du code en Normal, **pas mesurées au casque**.

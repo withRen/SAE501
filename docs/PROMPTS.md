@@ -1923,4 +1923,5 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 **Résultat** (fait par l'IA, Claude Code)
 
 - Nouvelle `docs/images/cover.png`, dossier `docs/images/branding/` (covers, icônes, logos, `LISEZMOI.md`) et lien dans le `README.md`, poussés sur `main` (commit `f9966d6`) en avance rapide depuis un worktree séparé (la branche `feature/ceinture-marteau` n'est pas touchée).
+- `docs/images/branding/LISEZMOI.md` corrigé ensuite pour décrire le dossier à plat tel qu'il est poussé (il citait des sous-dossiers absents).
 - L'aperçu social GitHub (Settings > General > Social preview) reste à changer à la main.

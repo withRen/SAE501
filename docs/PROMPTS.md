@@ -121,6 +121,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [111](#111--appui-de-fenêtre-encastré-dans-le-mur) | 2026-10-21 | Le bas de la fenêtre est encastré dans le mur | Carte | Encadrements gonflés de 4 mm selon leurs normales (l'appui passe devant le bas de l'ouverture du mur) ; éclairage recuit |
 | [112](#112--vraies-portes) | 2026-10-21 | Vraie texture de porte au lieu des portes low poly | Carte | Texture de porte à panneaux produite (bois peint écaillé des portes du fichier) ; appliquée aux 4 portes de niveau, double porte pour les passages larges |
 | [113](#113--fondu-de-début-et-menu-des-commandes) | 2026-10-22 | Fondu au début de la partie, menu qui explique les touches | Interface | Fondu depuis le noir (VR et PC) ; page COMMANDES dans le menu d'accueil et le menu pause : manettes Quest 3 avec traits de rappel, clavier et souris |
+| [114](#114--modèle-de-la-clé) | 2026-10-22 | Clé : modèle ou texture gratuits, sources dans le wiki | Graphisme | Clé ornée Quaternius (CC0) et or vieilli ambientCG Metal048C (CC0) à la place de la clé du fichier ; page wiki Textures et modèles |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2059,4 +2060,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Dessin des manettes : `Tools/make_controller_images.py` (Pillow) produit `Assets/Resources/Commandes/manette_gauche.png` et `manette_droite.png`, schéma au trait teinté en ambre par le menu. Rien téléchargé.
 - Correction au passage : le fond des pages des menus ambre est dessiné avant le reste (il recouvrait les éléments loin du centre du panneau, qui paraissaient ternes).
 - Vérifié : captures des pages en mode batch, puis en mode Play dans MainScene (fondu présent au rechargement de la scène, voile à 0,99 puis 0,47 ; page COMMANDES du menu pause). **Pas testé au casque**, ni en version PC jouée au clavier. Remarque vue en capture : un panneau du tutoriel posé dans la carte peut passer devant le menu pause (déjà le cas avant).
+
+---
+
+## 114 — Modèle de la clé
+
+**Date** : 2026-10-22 · **Domaine** : Graphisme
+
+> Trouve une texture de clé ou un modèle de clé gratuit et utilise ça, rajoute le dans les textures utiisées dans le wiki (rajoute le lien etc)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Pas de clé chez Poly Haven. Modèle choisi : « Key » de **Quaternius** sur Poly Pizza (https://poly.pizza/m/bg6e1lfNsO), **CC0**, 688 triangles, clé ancienne à anneau ouvragé. Texture : **Metal048C** d'**ambientCG** (https://ambientcg.com/view?id=Metal048C), or impur et rugueux, **CC0**.
+- `Tools/blender/prep_key.py` met le modèle à plat, à 16 cm de long (l'ancienne clé faisait 17 cm), centré, avec des UV en projection cubique, et l'exporte dans `Assets/Cle/Cle_Ornee.fbx`. Textures réduites à 512 px (couleur, normale, métal + lissage) dans `Assets/Cle/`.
+- `RoomBuilder.cs` (`UseOrnateKey`) : `Cle_Jardin` (sur le buffet de la cabane) prend ce modèle et le matériau `Cle_Ornee` ; la lueur dorée de l'ancienne clé est gardée, adoucie de moitié pour que l'usure du métal se voie. Prise en main, collider, poids et position inchangés (calculés comme avant à partir du modèle).
+- MainScene reconstruite, éclairage recuit. Vérifié par capture dans l'éditeur. **Pas testé au casque.**
+- Page wiki **Textures et modèles** créée (sources, auteurs, licences, liens).
 

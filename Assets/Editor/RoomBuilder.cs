@@ -398,6 +398,7 @@ public static class RoomBuilder
         key.SetParent(items, true);
         key.name = "Cle_Jardin";
         GameObjectUtility.SetStaticEditorFlags(key.gameObject, 0);      // objet mobile : éclairé par les sondes, pas par la lightmap
+        UseOrnateKey(key);
         if (board)
         {
             var top = board.GetComponent<Renderer>().bounds; var kr = key.GetComponent<Renderer>().bounds;
@@ -413,6 +414,33 @@ public static class RoomBuilder
         rb.mass = 0.05f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         MakeGrab(key.gameObject);
+    }
+
+    // La clé du fichier (48 triangles, un bloc doré) est remplacée par la clé ornée « Key » de Quaternius (CC0, 688 triangles,
+    // poly.pizza/m/bg6e1lfNsO), mise à plat et à 16 cm par Tools/blender/prep_key.py, habillée de l'or vieilli Metal048C
+    // d'ambientCG (CC0, réduit en 512 px). Même taille et même place que l'ancienne : la prise en main ne change pas.
+    const string KeyDir = "Assets/Cle";
+    static void UseOrnateKey(Transform key)
+    {
+        var mesh = AssetDatabase.LoadAllAssetsAtPath(KeyDir + "/Cle_Ornee.fbx").OfType<Mesh>().FirstOrDefault();
+        if (mesh == null) { Debug.LogWarning("[RoomBuilder] Assets/Cle/Cle_Ornee.fbx introuvable : clé d'origine gardée"); return; }
+        if (AssetImporter.GetAtPath(KeyDir + "/cle_metal_normale.jpg") is TextureImporter ti && ti.textureType != TextureImporterType.NormalMap)
+        { ti.textureType = TextureImporterType.NormalMap; ti.SaveAndReimport(); }
+        if (AssetImporter.GetAtPath(KeyDir + "/cle_metal_metal_lissage.png") is TextureImporter mi && mi.sRGBTexture)
+        { mi.sRGBTexture = false; mi.SaveAndReimport(); }
+        var m = Mat("Cle_Ornee", Color.white, 1f);
+        m.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(KeyDir + "/cle_metal_couleur.jpg"));
+        m.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(KeyDir + "/cle_metal_normale.jpg"));
+        m.SetTexture("_MetallicGlossMap", AssetDatabase.LoadAssetAtPath<Texture2D>(KeyDir + "/cle_metal_metal_lissage.png"));
+        m.SetFloat("_Smoothness", 0.8f);                // lissage lu dans l'alpha de la carte métal, un peu adouci
+        m.EnableKeyword("_NORMALMAP"); m.EnableKeyword("_METALLICSPECGLOSSMAP");
+        // lueur dorée de l'ancienne clé (Mat_Garden_HiddenKey_Gold) gardée pour la repérer dans la cabane sombre, à travers la texture
+        m.SetTexture("_EmissionMap", AssetDatabase.LoadAssetAtPath<Texture2D>(KeyDir + "/cle_metal_couleur.jpg"));
+        m.SetColor("_EmissionColor", new Color(0.75f, 0.6f, 0.15f));     // moitié de l'ancienne lueur : le relief et l'usure restent lisibles
+        m.EnableKeyword("_EMISSION");
+        m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;      // comme l'ancienne : objet mobile, rien n'est cuit
+        key.GetComponent<MeshFilter>().sharedMesh = mesh;
+        key.GetComponent<MeshRenderer>().sharedMaterial = m;
     }
 
     // ---------- lumières du fichier ----------

@@ -111,6 +111,9 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [100](#100--équilibrage-des-vagues-évasion-et-vagues-infinies) | 2026-10-21 | Vérifier l'équilibrage des vagues, surtout en vagues infinies | Game design | Courbe calculée vague par vague ; 4 défauts en survie (munitions finies, vie rendue à chaque vague, Coureurs trop rapides, 20 zombies vivants) ; 7 réglages chiffrés proposés ; rien modifié |
 | [101](#101--rééquilibrage-du-mode-vagues-infinies) | 2026-10-21 | Faire le rééquilibrage proposé pour les vagues infinies | Gameplay | 6 réglages appliqués (radio 2 puis 3 chargeurs, soin de pause dégressif, vitesse ×1,7, 14 vivants, renforts à la vague 4, PV +8 %/vague ×2,5) ; compilation sans erreur ; pas joué |
 | [102](#102--fusion-des-vagues-infinies-dans-main) | 2026-10-21 | Merger proprement le tout dans main | GitHub | `test/vagues-infinies` poussée dans `main` en avance rapide (e8aad93) ; PR #133 marquée fusionnée ; wiki poussé avec la page Mode survie |
+| [123](#123--cover-et-logo-du-jeu) | 2026-10-22 | Refaire la cover du jeu et faire un logo simple (desktop, mobile, Quest) | Communication | Cover refaite depuis la cinématique de fin (zombies derrière la grille), 3 formats ; logo « fenêtre barricadée + yeux rouges », icônes 16 à 1024 px, .ico, .icns, logotypes ; fait par l'IA |
+| [124](#124--grille-de-la-cover-plus-détaillée) | 2026-10-22 | La grille de la cover fait low poly | Communication | Grille redessinée en 2D (fer forgé, rouille, rivets) ; modèle 3D du jeu inchangé |
+| [125](#125--cover-et-logo-poussés-sur-github) | 2026-10-22 | Mettre à jour le GitHub | GitHub | Cover et logo poussés sur `main` |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1882,3 +1885,42 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Wiki poussé : nouvelle page `Mode-survie`, Accueil et menu latéral.
 - Non commités, laissés en local : réglages URP, `RuntimeActionBindings.json`, `DevAgentSettings.asset`, `Protection_suite`, `scripts/`.
 
+---
+
+## 123 — Cover et logo du jeu
+
+**Date** : 2026-10-22 · **Domaine** : Communication
+
+> Refait moi l'image de cover du jeu (Et fait moi un logo aussi, je veux un truc simple pour le logo, ça doit être un truc logo pour une version desktop / mobile / quest)
+
+**Résultat** (image produite par l'IA, Claude, en Python/Pillow + rendu SVG/HTML dans Chromium)
+
+- **Cover** refaite à partir d'une image de la cinématique de fin (les zombies bloqués derrière la grille du jardin) : étalonnage nuit, yeux rouges ajoutés, titre THE LAST / ESCAPOR (polices Anton + Barlow Condensed). Formats 1280x640 (aperçu GitHub, `docs/images/cover.png`), 2560x1280 et 1920x1080.
+- **Logo** : deux planches clouées (fenêtre barricadée) avec deux yeux rouges dans la fente. Couleurs nuit `#06090F` / `#18233A`, os `#ECE4D3`, rouge `#FF3B2F`.
+- Icônes de 16 à 1024 px (version simplifiée sous 64 px), `.ico` Windows, `.icns` macOS, icône adaptative Android, logotypes horizontal et vertical. Fichiers dans `docs/images/branding/` (voir `LISEZMOI.md`).
+
+---
+
+## 124 — Grille de la cover plus détaillée
+
+**Date** : 2026-10-22 · **Domaine** : Communication
+
+> La grille fait low poly, corrige ça, je veux une grille plus détaillée
+
+**Résultat** (fait par l'IA, Claude)
+
+- Grille de la cover redessinée en 2D : 17 barreaux ronds en fer forgé, reflet, grain, rouille, bagues, traverse biseautée rivetée, plaque à 4 boulons.
+- Le modèle 3D de la grille dans le jeu n'a pas changé.
+
+---
+
+## 125 — Cover et logo poussés sur GitHub
+
+**Date** : 2026-10-22 · **Domaine** : GitHub
+
+> Niquel, met à jour le github
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Nouvelle `docs/images/cover.png`, dossier `docs/images/branding/` (covers, icônes, logos, `LISEZMOI.md`) et lien dans le `README.md`, poussés sur `main` en avance rapide depuis un worktree séparé (la branche `feature/ceinture-marteau` n'est pas touchée).
+- L'aperçu social GitHub (Settings > General > Social preview) reste à changer à la main.

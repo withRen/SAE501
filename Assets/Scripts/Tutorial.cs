@@ -15,7 +15,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 //     À la fin, il est réactivé et la partie commence normalement (compte à rebours de 15 s).
 //   - Un panneau suit doucement le regard ; une flèche montre l'objet à utiliser.
 //   - Étapes : planche → poser → marteau → clouer → 2 fenêtres → pistolet → cible → recharger → disjoncteur → caméras.
-//   - Passer tout le tutoriel : maintenir A + X pendant 2 s. (Éditeur : N = étape suivante, K = tout passer.)
+//   - Passer tout le tutoriel : la croix en haut à droite du panneau (visée avec une main vide + gâchette, TutorialSkipCross)
+//     ou maintenir A + X pendant 2 s. (Éditeur : N = étape suivante, K = tout passer.)
 //   - Déjà fait ? Pendant les 10 premières secondes de la partie, maintenir A + X 2 s pour le revoir.
 //   - Un futur bouton du menu « Revoir le tutoriel » peut appeler Tutorial.ForceNext() (ou ResetSaved()).
 public class Tutorial : MonoBehaviour
@@ -69,6 +70,7 @@ public class Tutorial : MonoBehaviour
     public int targetHits = 3;
 
     bool replayOnly, skipStep, skipAll;
+    GameObject panelCross;
     float holdTimer;
     Transform head, panel, marker, markerArrow;
     TextMesh header, body, footer, markerLabel;
@@ -261,7 +263,7 @@ public class Tutorial : MonoBehaviour
     {
         if (skipAll) yield break;
         if (panel) panel.gameObject.SetActive(false);              // le panneau devant les yeux laisse la place au panneau de la carte
-        var board = TutorialBoard.Create(head, "ÉTAPE " + n + " / " + total, label, text, where != null ? where() : null);
+        var board = TutorialBoard.Create(head, "ÉTAPE " + n + " / " + total, label, text, where != null ? where() : null, () => skipAll = true);
         while (!done() && !skipStep && !skipAll)
         {
             string extra = progress != null ? progress() : "";
@@ -491,6 +493,26 @@ public class Tutorial : MonoBehaviour
         footer = Text(panel, "Aide", new Vector2(0f, -0.215f), 0.0042f, new Color(0.47f, 0.59f, 0.51f), TextAnchor.MiddleCenter, false);
         holdBar = Quad(panel, "Maintien", Vector2.zero, Vector2.one, amber, 4270, 0f).transform;
         holdBar.gameObject.SetActive(false);
+
+        // croix « passer le tutoriel » à droite de la bande du titre (TutorialSkipCross : visée + gâchette)
+        var cross = new GameObject("Croix").AddComponent<TutorialSkipCross>();
+        cross.transform.SetParent(panel, false);
+        cross.transform.localPosition = new Vector3(0.468f, 0.262f, 0f);
+        var crossBg = Quad(cross.transform, "Croix_Fond", Vector2.zero, new Vector2(0.046f, 0.046f), new Color(0.05f, 0.04f, 0.02f, 0.85f), 4265, 0.001f);
+        var crossBars = new Renderer[2];
+        for (int i = 0; i < 2; i++)
+        {
+            crossBars[i] = Quad(cross.transform, "Croix_Trait", Vector2.zero, new Vector2(0.034f, 0.006f), amber, 4270, 0f);
+            crossBars[i].transform.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 45f : -45f);
+        }
+        cross.half = 0.035f;                  // zone visée un peu plus grande que la croix (7 cm)
+        cross.onClick = () => skipAll = true;
+        cross.onHover = h =>
+        {
+            crossBg.material.color = h ? new Color(0.85f, 0.2f, 0.15f, 0.95f) : new Color(0.05f, 0.04f, 0.02f, 0.85f);
+            foreach (var r in crossBars) r.material.color = h ? Color.white : amber;
+        };
+        panelCross = cross.gameObject;
     }
 
     void SetPanel(string title, string text, bool showSkipHint, string footerOverride = null, bool success = false)
@@ -499,8 +521,9 @@ public class Tutorial : MonoBehaviour
         if (header.text != title) header.text = title;
         if (body.text != text) body.text = text;
         body.color = success ? new Color(0.35f, 1f, 0.55f) : new Color(0.9f, 0.94f, 0.92f);
-        string f = footerOverride ?? (showSkipHint ? "Maintenez A + X pendant 2 s pour passer le tutoriel" : "");
+        string f = footerOverride ?? (showSkipHint ? "Passer le tutoriel : la croix (visée + gâchette, main vide) ou A + X pendant 2 s" : "");
         if (footer.text != f) footer.text = f;
+        if (panelCross) panelCross.SetActive(showSkipHint);              // pas de croix sur l'invitation à revoir le tutoriel
     }
 
     void BuildMarker()

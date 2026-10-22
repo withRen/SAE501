@@ -128,6 +128,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [118](#118--balles-et-batterie-à-linspection) | 2026-10-22 | Balles et batterie affichées seulement quand on tourne l'objet de côté (canon vers la gauche) près du visage | Interface | `InspectHud` : « 8 / 12 » + icône de balle sur le pistolet, pile à 4 barres sur la lampe (barre en cours qui clignote de plus en plus vite) |
 | [119](#119--inspection-plus-souple-et-prise-des-armes) | 2026-10-22 | Inspection capricieuse ; pistolet et hache décalés dans la main | Gameplay | Seuils assouplis + marge et maintien ; point d'accroche au centre du poing ; prise sur l'axe réel du manche |
 | [120](#120--rechargement-facilité) | 2026-10-22 | Recharger trop compliqué, le chargeur traverse le pistolet | Gameplay | Zone du puits 5 → 8 cm ; rechargement par proximité (9 cm) avec le trajet du chargeur entre deux images |
+| [121](#121--croix-pour-passer-le-tutoriel) | 2026-10-22 | Croix pour passer le tutoriel | Interface | Croix en haut à droite des panneaux du tutoriel : visée main vide + gâchette (PC : réticule + clic) ; A + X 2 s toujours possible |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2207,4 +2208,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Sphère du socket portée à 8 cm. Nouveau rechargement par proximité dans `MagWell` : un chargeur tenu en main qui passe à moins de 9 cm du puits pendant que le pistolet est en main est inséré tout de suite, quelle que soit son orientation. Le trajet du chargeur entre deux images est testé (segment), pas seulement sa position. Rien si l'arme est pleine ; rien si le pistolet est au holster. `Magazine.All` liste les chargeurs pour ne pas parcourir la scène à chaque image.
 - Vérifié en mode Play (mains simulées) : pistolet à 3 balles, chargeur plein passé à travers l'arme en une seule image (de 25 cm d'un côté à 25 cm de l'autre) → 12 balles, le chargeur ressort avec 3. MainScene reconstruite, éclairage recuit. **Pas testé au casque.**
 - Wiki : page Pistolet (section « Rechargement facilité »).
+
+---
+
+## 121 — Croix pour passer le tutoriel
+
+**Date** : 2026-10-22 · **Domaine** : Interface
+
+> Rajoute une croix au tutoriel pour qu'il soit skippable
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Nouveau script `TutorialSkipCross` : croix en haut à droite de chaque panneau du tutoriel (panneaux posés dans la carte, `TutorialBoard`, et panneau devant les yeux, `Tutorial`). On la vise avec une manette dont la main est vide : un rayon ambre apparaît seulement quand on vise la croix, elle passe au rouge, petite vibration ; la gâchette valide. Une main qui tient un objet est ignorée (sa gâchette tire ou allume la lampe). Version PC / éditeur : réticule + clic gauche (ou Espace). Portée 8 m ; zone visée 10 cm (panneaux de la carte) et 7 cm (panneau devant les yeux).
+- La croix fait comme A + X : le tutoriel saute aux astuces puis à « PRÊT ? », que la même croix ferme aussi. A + X pendant 2 s reste possible. Pas de croix sur l'invitation « revoir le tutoriel ». Textes d'aide des panneaux mis à jour.
+- Vérifié en mode Play : la croix du panneau de l'étape 1 (à 4,4 m) est touchée par un rayon visé dessus et pas par un rayon décalé ; le clic termine les étapes (plus de panneau d'étape, passage aux astuces). Capture de la croix. Scripts seulement : scène ni reconstruite ni recuite. **Pas testé au casque.**
+- Wiki : page Tutoriel.
 

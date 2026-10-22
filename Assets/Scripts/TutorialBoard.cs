@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,13 +23,14 @@ public class TutorialBoard : MonoBehaviour
     bool followHead;
     float spawn;
 
-    public static TutorialBoard Create(Transform head, string step, string label, string text, Vector3? anchor)
+    public static TutorialBoard Create(Transform head, string step, string label, string text, Vector3? anchor, Action onSkip = null)
     {
         if (!font) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         var go = new GameObject("Tutoriel_Panneau_" + label);
         var b = go.AddComponent<TutorialBoard>();
         b.head = head;
         b.Build(step, label, text);
+        b.BuildCross(onSkip);
         b.Place(anchor);
         return b;
     }
@@ -50,7 +52,7 @@ public class TutorialBoard : MonoBehaviour
         body = Txt("Texte", new Vector2(0, 10), new Vector2(840, 300), 40, FontStyle.Normal, TextCol, TextAnchor.MiddleCenter);
         body.text = text;
         footer = Txt("Aide", new Vector2(0, -200), new Vector2(860, 40), 24, FontStyle.Normal, Dim, TextAnchor.MiddleCenter);
-        footer.text = "Maintenez A + X pendant 2 s pour passer le tutoriel";
+        footer.text = "Passer le tutoriel : visez la croix et appuyez sur la gâchette (main vide), ou A + X pendant 2 s";
 
         if (!lineMat) { lineMat = new Material(Shader.Find("Universal Render Pipeline/Unlit")); lineMat.SetColor("_BaseColor", Amber); }
         var lg = new GameObject("Trait");
@@ -62,6 +64,29 @@ public class TutorialBoard : MonoBehaviour
         line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         line.receiveShadows = false;
         spawn = Time.time;
+    }
+
+    // croix « passer le tutoriel » à droite de la bande du titre (TutorialSkipCross : visée + gâchette)
+    void BuildCross(Action onSkip)
+    {
+        var g = new GameObject("Croix", typeof(RectTransform));
+        g.transform.SetParent(transform, false);
+        var r = (RectTransform)g.transform; r.anchoredPosition = new Vector2(415, 205); r.sizeDelta = new Vector2(60, 60);
+        var bg = Img("Croix_Fond", new Vector2(415, 205), new Vector2(54, 54), new Color(0.05f, 0.04f, 0.02f, 0.85f));
+        var bars = new Image[2];
+        for (int i = 0; i < 2; i++)
+        {
+            bars[i] = Img("Croix_Trait", new Vector2(415, 205), new Vector2(40, 7), Amber);
+            bars[i].rectTransform.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 45f : -45f);
+        }
+        var cross = g.AddComponent<TutorialSkipCross>();
+        cross.half = 40f;                     // zone visée un peu plus grande que la croix (10 cm)
+        cross.onClick = onSkip;
+        cross.onHover = h =>
+        {
+            bg.color = h ? new Color(0.85f, 0.2f, 0.15f, 0.95f) : new Color(0.05f, 0.04f, 0.02f, 0.85f);
+            foreach (var b in bars) b.color = h ? Color.white : Amber;
+        };
     }
 
     Image Img(string n, Vector2 pos, Vector2 size, Color c)

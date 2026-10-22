@@ -7,6 +7,8 @@ using UnityEngine;
 // Sur le XR Origin. Les zombies appellent PlayerHealth.Instance.TakeDamage().
 // (UI : HealthVignette, GameOverUI.)
 // [#115] Chaque coup reçu fait vibrer les deux manettes : on le sent même sans voir le zombie (plus fort si le coup tue).
+// Coup venant d'un zombie (TakeDamage avec sa position) : la manette du côté du zombie vibre plus fort que l'autre,
+// et DamagedFrom donne la position de l'attaquant (indicateur de direction de HealthVignette).
 public class PlayerHealth : MonoBehaviour
 {
     public static PlayerHealth Instance { get; private set; }
@@ -27,6 +29,7 @@ public class PlayerHealth : MonoBehaviour
 
     public event Action<float, float> Changed;  // (pv actuels, pv max)
     public event Action<float> Damaged;         // dégâts subis (en PV)
+    public event Action<float, Vector3> DamagedFrom;    // dégâts subis + position de l'attaquant (seulement si elle est connue)
     public event Action Died;
 
     float sinceLastHit;
@@ -72,8 +75,11 @@ public class PlayerHealth : MonoBehaviour
 
     // Appelé par le zombie à chaque coup de griffe.
     public void TakeDamageFraction(float fractionOfMax) => TakeDamage(fractionOfMax * maxHealth);
+    public void TakeDamageFraction(float fractionOfMax, Vector3 from) => TakeDamage(fractionOfMax * maxHealth, from);
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount) => TakeDamage(amount, null);
+
+    public void TakeDamage(float amount, Vector3? from)
     {
         if (IsDead) return;
 
@@ -81,11 +87,28 @@ public class PlayerHealth : MonoBehaviour
         Health = Mathf.Max(0f, Health - amount);
         if (Health < 0.01f) Health = 0f;      // évite qu'il reste 0,00001 PV après 3 coups d'un tiers
         sinceLastHit = 0f;
-        VRInput.HapticBoth(Health <= 0f ? 1f : hitHaptic, Health <= 0f ? hitHapticDuration * 2f : hitHapticDuration);
+        HitHaptics(from);
         Damaged?.Invoke(amount);
+        if (from.HasValue) DamagedFrom?.Invoke(amount, from.Value);
         Changed?.Invoke(Health, maxHealth);
 
         if (Health <= 0f) Died?.Invoke();
+    }
+
+    // Vibration au coup : les deux manettes, la manette du côté de l'attaquant au maximum, l'autre à moitié environ.
+    void HitHaptics(Vector3? from)
+    {
+        float amp = Health <= 0f ? 1f : hitHaptic, dur = Health <= 0f ? hitHapticDuration * 2f : hitHapticDuration;
+        float side = 0f;                                                   // -1 = à gauche, +1 = à droite
+        if (from.HasValue && Camera.main)
+        {
+            var cam = Camera.main.transform;
+            var d = Vector3.ProjectOnPlane(from.Value - cam.position, Vector3.up);
+            if (d.sqrMagnitude > 1e-4f) side = Vector3.Dot(d.normalized, Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized);
+        }
+        float near = Mathf.Min(1f, amp + 0.2f * Mathf.Abs(side)), far = amp * Mathf.Lerp(1f, 0.45f, Mathf.Abs(side));
+        VRInput.Haptic(UnityEngine.XR.XRNode.LeftHand, side < 0f ? near : far, dur);
+        VRInput.Haptic(UnityEngine.XR.XRNode.RightHand, side < 0f ? far : near, dur);
     }
 
     // tir dans la tête (Pistol) : mort immédiate

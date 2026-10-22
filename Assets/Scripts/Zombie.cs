@@ -258,7 +258,7 @@ public class Zombie : MonoBehaviour
             if (Time.time < hitAt) return;
             hitAt = -1f; pendingPlayerHit = false; lastHitWasPlayer = true;
             if (player != null && !player.Dead && FlatDistanceToPlayer() <= barricadeReach * 1.15f)
-                player.TakeDamageFraction(attackDamage * barricadeDamageFactor);
+                player.TakeDamageFraction(attackDamage * barricadeDamageFactor, transform.position);
             return;
         }
         if (!target.DoorClosed && pendingPlank == null && hitAt < 0f && !lastHitWasPlayer && Time.time >= nextBreak
@@ -403,7 +403,7 @@ public class Zombie : MonoBehaviour
         if (hitAt > 0f && Time.time >= hitAt)
         {
             hitAt = -1f;
-            if (FlatDistanceToPlayer() <= attackRange * 1.3f) player.TakeDamageFraction(attackDamage);
+            if (FlatDistanceToPlayer() <= attackRange * 1.3f) player.TakeDamageFraction(attackDamage, transform.position);
         }
     }
 

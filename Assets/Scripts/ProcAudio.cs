@@ -94,5 +94,34 @@ public static class ProcAudio
     // caisse qui tombe sur le sol : coup grave et sourd
     public static AudioClip Thud() => Make("caisse", 0.5f, t =>
         Mathf.Sin(t * 70f * 6.28f) * Mathf.Exp(-t * 9f) * 0.9f + (Random.value * 2 - 1) * Mathf.Exp(-t * 35f) * 0.5f);
+    // coup reçu par le joueur : choc sourd dans le corps (grave) + souffle bref ; non spatialisé (HealthVignette)
+    public static AudioClip PlayerHurt()
+    {
+        float lp = 0f;
+        return Make("coup_recu", 0.35f, t =>
+        {
+            lp += ((Random.value * 2 - 1) - lp) * 0.12f;
+            return Mathf.Sin(t * 55f * 6.2832f) * Mathf.Exp(-t * 12f) * 0.9f + lp * Mathf.Exp(-t * 18f) * 1.6f;
+        });
+    }
+    // griffure du zombie : bruit aigu (bruit moins sa partie grave) qui monte puis retombe ; joué du côté du zombie (HealthVignette)
+    public static AudioClip ClawSwipe()
+    {
+        float lp = 0f;
+        return Make("griffure", 0.2f, t =>
+        {
+            float n = Random.value * 2 - 1;
+            lp += (n - lp) * 0.3f;
+            return (n - lp) * Mathf.Sin(Mathf.PI * t / 0.2f) * 0.8f;
+        });
+    }
+    // battement de cœur « poum-poum » quand il reste peu de PV (HealthVignette, au rythme de la pulsation rouge)
+    public static AudioClip Heartbeat(float gap = 0.23f) => Make("coeur", 0.5f, t =>
+    {
+        float b1 = Mathf.Sin(t * 48f * 6.2832f) * Mathf.Exp(-t * 22f);
+        float t2 = t - gap;
+        float b2 = t2 > 0f ? Mathf.Sin(t2 * 42f * 6.2832f) * Mathf.Exp(-t2 * 22f) * 0.7f : 0f;
+        return (b1 + b2) * 0.9f;
+    });
     public static AudioClip Hit() => Make("hit", 0.12f, t => Mathf.Sin(t * 900f * 6.28f) * Mathf.Exp(-t * 45f) * 0.6f + (Random.value * 2 - 1) * Mathf.Exp(-t * 80f) * 0.4f);
 }

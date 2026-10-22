@@ -129,6 +129,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [119](#119--inspection-plus-souple-et-prise-des-armes) | 2026-10-22 | Inspection capricieuse ; pistolet et hache décalés dans la main | Gameplay | Seuils assouplis + marge et maintien ; point d'accroche au centre du poing ; prise sur l'axe réel du manche |
 | [120](#120--rechargement-facilité) | 2026-10-22 | Recharger trop compliqué, le chargeur traverse le pistolet | Gameplay | Zone du puits 5 → 8 cm ; rechargement par proximité (9 cm) avec le trajet du chargeur entre deux images |
 | [121](#121--croix-pour-passer-le-tutoriel) | 2026-10-22 | Croix pour passer le tutoriel | Interface | Croix en haut à droite des panneaux du tutoriel : visée main vide + gâchette (PC : réticule + clic) ; A + X 2 s toujours possible |
+| [122](#122--retour-de-dégâts-et-direction-du-coup) | 2026-10-22 | Accentuer les dégâts reçus + indicateur de direction | Gameplay / Ressenti | Arc rouge du côté du zombie (suit la tête), bord rouge de ce côté, flash selon les dégâts, son du coup + griffure spatialisée, battement de cœur sous 25 %, vibration plus forte côté zombie ; VR et PC |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2223,4 +2224,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - La croix fait comme A + X : le tutoriel saute aux astuces puis à « PRÊT ? », que la même croix ferme aussi. A + X pendant 2 s reste possible. Pas de croix sur l'invitation « revoir le tutoriel ». Textes d'aide des panneaux mis à jour.
 - Vérifié en mode Play : la croix du panneau de l'étape 1 (à 4,4 m) est touchée par un rayon visé dessus et pas par un rayon décalé ; le clic termine les étapes (plus de panneau d'étape, passage aux astuces). Capture de la croix. Scripts seulement : scène ni reconstruite ni recuite. **Pas testé au casque.**
 - Wiki : page Tutoriel.
+
+---
+
+## 122 — Retour de dégâts et direction du coup
+
+**Date** : 2026-10-22 · **Domaine** : Gameplay / Ressenti
+
+> Il faudrait également accentué les effets de quand on prend des dégats car généralement le joueur ne sais pas exactement qu'il prend des dégats
+> Et rajouter un petit indicateur d'où vient le dégat
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Existant : vignette rouge selon les PV + flash au coup (`HealthVignette`), vibration égale des deux manettes (`PlayerHealth`). Rien n'indiquait la direction, aucun son.
+- Indicateur de direction : le zombie transmet sa position avec le coup (`PlayerHealth.TakeDamageFraction(fraction, position)`, événement `DamagedFrom`). Le shader `DamageVignette` dessine un arc rouge autour du centre de la vue du côté du zombie (haut = devant, bas = derrière, côtés = gauche / droite) et rougit le bord de l'écran de ce côté (vision périphérique au casque). L'arc suit la rotation de la tête, reste 0,6 s puis s'efface en 1,6 s ; 4 coups en même temps au plus, un même zombie ravive son arc.
+- Coup plus net : flash rouge proportionnel aux dégâts (×0,8 à ×1,5) ; son « choc sourd » dans le corps à chaque coup + griffure jouée depuis la direction du zombie ; battement de cœur sonore (au rythme de la pulsation rouge) sous 25 % des PV ; la manette du côté du zombie vibre plus fort, l'autre moitié moins (`ProcAudio.PlayerHurt`, `ClawSwipe`, `Heartbeat`).
+- Confort VR : rien ne bouge la caméra (pas de secousse). Même rendu en version PC (même caméra). Scripts et shader seulement : scène ni reconstruite ni recuite.
+- Vérifié en mode Play : coups simulés venant de la gauche et de derrière → arcs à gauche et en bas, événement reçu, PV corrects ; captures. **Pas testé au casque** (vibrations, son spatialisé, lisibilité des arcs dans chaque œil).
+- Wiki : page Vignettage de dégâts (section « Retour de coup et direction »).
 

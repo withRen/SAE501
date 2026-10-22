@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-// Affichage à l'inspection : on tient l'objet en main, on le penche sur le côté et on l'approche du visage
+// Affichage à l'inspection : on tient l'objet en main, on le tourne de côté (canon ou faisceau vers la gauche) près du visage
 // pour lire ce qu'il reste. Le reste du temps, rien ne s'affiche.
 //   - Pistolet : « 8 / 12 » suivi d'une icône de balle (blanc, orange quand il en reste peu, rouge et clignotant à vide).
 //   - Lampe : icône de pile à 4 barres ; la barre en cours clignote doucement, de plus en plus vite quand elle va s'éteindre.
@@ -21,8 +21,8 @@ public class InspectHud : MonoBehaviour
     public float maxDistance = 0.5f;
     [Tooltip("L'objet doit être dans ce cône devant le regard (degrés).")]
     public float maxViewAngle = 40f;
-    [Tooltip("Inclinaison sur le côté (rotation autour de l'axe de l'objet) à partir de laquelle on affiche.")]
-    public float minTilt = 35f;
+    [Tooltip("Écart maximal entre l'axe de l'objet (canon, faisceau) et la gauche du regard.")]
+    public float maxLeftAngle = 45f;
     public float fadeSpeed = 8f;
     [Tooltip("Test dans l'éditeur : affiche le panneau sans tenir l'objet.")]
     public bool forceShow;
@@ -50,22 +50,20 @@ public class InspectHud : MonoBehaviour
     }
 
     // ───────────────────────── geste ─────────────────────────
-    public static bool Inspecting(Transform obj, Transform head, float maxDistance, float maxViewAngle, float minTilt)
+    // canon (ou verre de la lampe) tourné vers la gauche du regard : on voit le flanc de l'objet devant soi
+    public static bool Inspecting(Transform obj, Transform head, float maxDistance, float maxViewAngle, float maxLeftAngle)
     {
         var to = obj.position - head.position;
         if (to.magnitude > maxDistance) return false;
         if (Vector3.Angle(head.forward, to) > maxViewAngle) return false;
-        // inclinaison : angle entre le « haut » de l'objet et la verticale, autour de l'axe avant de l'objet
-        var up = Vector3.ProjectOnPlane(Vector3.up, obj.forward);
-        if (up.sqrMagnitude < 1e-4f) return true;                       // objet pointé vers le haut ou le bas : on le regarde par le bout
-        return Vector3.Angle(up, obj.up) >= minTilt;
+        return Vector3.Angle(obj.forward, -head.right) <= maxLeftAngle;
     }
 
     void LateUpdate()
     {
         if (!head) { var cam = Camera.main; if (cam) head = cam.transform; else return; }
         bool held = BeltItem.InHand(grab) && !PauseMenu.Paused;
-        bool show = forceShow || held && (DesktopMode.On || Inspecting(transform, head, maxDistance, maxViewAngle, minTilt));
+        bool show = forceShow || held && (DesktopMode.On || Inspecting(transform, head, maxDistance, maxViewAngle, maxLeftAngle));
         alpha = Mathf.MoveTowards(alpha, show ? 1f : 0f, fadeSpeed * Time.deltaTime);
         panel.gameObject.SetActive(alpha > 0.001f);
         if (alpha <= 0.001f) return;

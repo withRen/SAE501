@@ -84,7 +84,7 @@ public abstract partial class AmberMenu
         UiKit.Text(p, "Ceinture", new Vector2(0f, -0.33f), Tc, UiKit.Dim,
                    "Ceinture : pistolet à droite, chargeur à gauche. Marteau sur l'établi.\n"
                    + "Recharger : glisser le chargeur sous la poignée du pistolet.\n"
-                   + "Balles, pile : pencher l'objet en main près du visage.");
+                   + "Balles, pile : objet en main près du visage, canon / faisceau vers la gauche.");
     }
 
     static float StickY => PadY + (PtStick.y - 0.022f - 0.5f) * PadH;

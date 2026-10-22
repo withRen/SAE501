@@ -125,7 +125,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [115](#115--ceinture-chargeur-et-marteau) | 2026-10-22 | Ceinture : 1 chargeur, rayon pour reposer le pistolet, marteau sur la table | Gameplay | Holster du chargeur à la hanche gauche (rayon 14 cm), pistolet 16 cm, lampe 12 cm ; plus de marteau à la ceinture, posé sur l'établi du bunker |
 | [116](#116--objets-low-poly-remplacés) | 2026-10-22 | Retirer les objets low poly, modèles ou textures libres, sources dans le wiki | Graphisme | 6 bouteilles vertes remplacées par 2 modèles Poly Haven (CC0) ; piles en cubes remplacées par une pile D modélisée et texturée ; page wiki Textures et modèles |
 | [117](#117--lampe-torche-réaliste) | 2026-10-22 | Lampe torche : paquet Asset Store, puis modèle réaliste libre | Graphisme | Lampe en cylindres remplacée par Small Plastic Torch de Poly Haven (CC0) ; faisceau, jauge, port de pile et prise gardés |
-| [118](#118--balles-et-batterie-à-linspection) | 2026-10-22 | Balles et batterie affichées seulement quand on penche l'objet près du visage | Interface | `InspectHud` : « 8 / 12 » + icône de balle sur le pistolet, pile à 4 barres sur la lampe (barre en cours qui clignote de plus en plus vite) |
+| [118](#118--balles-et-batterie-à-linspection) | 2026-10-22 | Balles et batterie affichées seulement quand on tourne l'objet de côté (canon vers la gauche) près du visage | Interface | `InspectHud` : « 8 / 12 » + icône de balle sur le pistolet, pile à 4 barres sur la lampe (barre en cours qui clignote de plus en plus vite) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2163,3 +2163,11 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Lampe : icône de pile couchée avec 4 barres. Les barres pleines sont ambre (rouge orangé sur la dernière), la barre en cours **clignote doucement (0,5 Hz) quand elle vient de commencer, jusqu'à 4 Hz juste avant de s'éteindre** ; les barres vides restent à peine visibles. L'ancienne barre jaune posée sur la lampe est retirée.
 - Page COMMANDES : ligne « Balles, pile : pencher l'objet en main près du visage ».
 - Vérifié dans l'éditeur : test du geste (droit = rien, penché près = affiché, penché loin = rien, hors du regard = rien) et capture en mode Play (8 / 12, pile à 3 barres). **Pas testé au casque** : les seuils (50 cm, 40°, 35°) sont à régler au ressenti.
+
+> Il devrait plus être penché de côté, genre le canon vers la gauche, même système pour la lampe
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Geste changé : au lieu de faire rouler l'objet sur son axe, on le **tourne de côté** pour que le **canon (ou le faisceau de la lampe) pointe vers la gauche** du regard, à 45° près (`InspectHud.maxLeftAngle`), toujours à moins de 50 cm des yeux et devant le regard. On voit alors le flanc de l'arme devant soi. Même règle pour la lampe. Page COMMANDES mise à jour.
+- Test du geste dans l'éditeur : visée vers l'avant = rien ; canon à gauche = affiché (aussi un peu relevé) ; canon à droite = rien ; simplement roulé sur l'axe = rien ; à 80 cm = rien. Scène inchangée (pas de reconstruction ni de recuisson). **Pas testé au casque.**
+

@@ -8,6 +8,11 @@ public class Magazine : MonoBehaviour
 {
     public int rounds = 12;
 
+    // chargeurs présents (pour MagWell : rechargement par proximité, sans parcourir la scène à chaque image)
+    public static readonly System.Collections.Generic.List<Magazine> All = new System.Collections.Generic.List<Magazine>();
+    void OnEnable() => All.Add(this);
+    void OnDisable() => All.Remove(this);
+
     // Rééquilibrage : le chargeur sort de l'arme avec les balles qui restaient (Pistol.Load) au lieu de disparaître
     public void Eject(Vector3 position, Vector3 velocity)
     {

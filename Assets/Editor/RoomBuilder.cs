@@ -1723,7 +1723,7 @@ public static class RoomBuilder
         well.transform.localPosition = magWellPos;
         var sc = well.AddComponent<SphereCollider>();
         sc.isTrigger = true;
-        sc.radius = 0.05f;
+        sc.radius = 0.08f;                     // avant 5 cm ; MagWell recharge aussi par proximité (9 cm, trajet compris)
         var mw = well.AddComponent<MagWell>();
         mw.pistol = pi;
         mw.showInteractableHoverMeshes = false;

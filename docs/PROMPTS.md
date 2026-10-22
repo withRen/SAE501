@@ -127,6 +127,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [117](#117--lampe-torche-réaliste) | 2026-10-22 | Lampe torche : paquet Asset Store, puis modèle réaliste libre | Graphisme | Lampe en cylindres remplacée par Small Plastic Torch de Poly Haven (CC0) ; faisceau, jauge, port de pile et prise gardés |
 | [118](#118--balles-et-batterie-à-linspection) | 2026-10-22 | Balles et batterie affichées seulement quand on tourne l'objet de côté (canon vers la gauche) près du visage | Interface | `InspectHud` : « 8 / 12 » + icône de balle sur le pistolet, pile à 4 barres sur la lampe (barre en cours qui clignote de plus en plus vite) |
 | [119](#119--inspection-plus-souple-et-prise-des-armes) | 2026-10-22 | Inspection capricieuse ; pistolet et hache décalés dans la main | Gameplay | Seuils assouplis + marge et maintien ; point d'accroche au centre du poing ; prise sur l'axe réel du manche |
+| [120](#120--rechargement-facilité) | 2026-10-22 | Recharger trop compliqué, le chargeur traverse le pistolet | Gameplay | Zone du puits 5 → 8 cm ; rechargement par proximité (9 cm) avec le trajet du chargeur entre deux images |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2191,4 +2192,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Hache, pied-de-biche, marteau : la prise était calée sur le centre du maillage, décalé par le fer (7,3 cm du manche pour la hache, 3,1 cm pour le pied-de-biche). Elle suit maintenant l'axe réel du manche, mesuré sur une tranche (`RoomBuilder.HandleAxis`), comme le collider du manche.
 - Vérifié en mode Play avec une main simulée en poing fermé : la crosse du pistolet et le manche de la hache passent dans le poing (captures de côté, de dos, de dessus). MainScene reconstruite, éclairage recuit. **Pas testé au casque.**
 - Wiki : Mains et prise des objets (section « Correction de la prise »), Inspection des objets.
+
+---
+
+## 120 — Rechargement facilité
+
+**Date** : 2026-10-22 · **Domaine** : Gameplay
+
+> Ok, et aussi facilite le truc qui permet de recharger car là c'est trop compliqué, par moment mettre le chargeur proche du pistolet le fait passer à travers
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Cause : le puits sous la crosse (`MagWell`, socket XRI) n'acceptait le chargeur que s'il restait au moins une image dans une sphère de 5 cm. Un geste rapide le faisait passer à travers l'arme entre deux images, sans rien faire.
+- Sphère du socket portée à 8 cm. Nouveau rechargement par proximité dans `MagWell` : un chargeur tenu en main qui passe à moins de 9 cm du puits pendant que le pistolet est en main est inséré tout de suite, quelle que soit son orientation. Le trajet du chargeur entre deux images est testé (segment), pas seulement sa position. Rien si l'arme est pleine ; rien si le pistolet est au holster. `Magazine.All` liste les chargeurs pour ne pas parcourir la scène à chaque image.
+- Vérifié en mode Play (mains simulées) : pistolet à 3 balles, chargeur plein passé à travers l'arme en une seule image (de 25 cm d'un côté à 25 cm de l'autre) → 12 balles, le chargeur ressort avec 3. MainScene reconstruite, éclairage recuit. **Pas testé au casque.**
+- Wiki : page Pistolet (section « Rechargement facilité »).
 

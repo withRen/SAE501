@@ -74,7 +74,7 @@ public class Pistol : MonoBehaviour
         UpdateHud();
     }
 
-    // Le compteur n'est visible que quand le pistolet est en main (pas dans le holster).
+    // Ancien compteur sur la culasse (hud) : n'est plus créé, remplacé par InspectHud (affiché quand on penche l'arme près du visage).
     void Update()
     {
         if (!hud) return;

@@ -1691,18 +1691,11 @@ public static class RoomBuilder
         l.enabled = false;   // allumé 0,04 s par tir
         pi.flash = l;
 
-        var tg = new GameObject("AmmoHUD");
-        tg.transform.SetParent(p.transform, false);
-        tg.transform.localPosition = hudPos;
-        tg.transform.localEulerAngles = new Vector3(90, 0, 0);
-        var tm = tg.AddComponent<TextMesh>();
-        tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        tm.fontSize = 64;
-        tm.characterSize = 0.0035f;
-        tm.anchor = TextAnchor.MiddleCenter;
-        tm.color = new Color(1f, 0.85f, 0.3f);
-        tg.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
-        pi.hud = tm;
+        // compteur de balles : seulement quand on penche le pistolet près du visage (InspectHud)
+        var ih = p.AddComponent<InspectHud>();
+        ih.kind = InspectHud.Kind.Ammo;
+        ih.anchor = hudPos;
+        ih.above = 0.035f;
 
         // emplacement du chargeur sous la crosse
         var well = new GameObject("MagWell");
@@ -1870,8 +1863,6 @@ public static class RoomBuilder
             bc.center = new Vector3(0, 0, 0.02f);
         }
 
-        // jauge de charge (Flashlight.bar) : une fine barre lumineuse sur le manche, côté arrière
-        var bar = Box("BatteryBar", f.transform, new Vector3(0, gaugeY, back * 0.55f), new Vector3(0.008f, 0.003f, 0.07f), lightM, false);
 
         var port = new GameObject("BatteryPort");
         port.transform.SetParent(f.transform, false);
@@ -1904,7 +1895,11 @@ public static class RoomBuilder
         f.AddComponent<BeltItem>().type = BeltItemType.Flashlight;
         var fl = f.AddComponent<Flashlight>();
         fl.spot = l;
-        fl.bar = bar.transform;
+        // charge : icône de pile à 4 barres, seulement quand on penche la lampe près du visage (InspectHud)
+        var ih = f.AddComponent<InspectHud>();
+        ih.kind = InspectHud.Kind.Battery;
+        ih.anchor = new Vector3(0f, gaugeY, back * 0.3f);
+        ih.above = 0.035f;
         return grab;
     }
 }

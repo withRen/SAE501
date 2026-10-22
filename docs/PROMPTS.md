@@ -125,6 +125,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [115](#115--ceinture-chargeur-et-marteau) | 2026-10-22 | Ceinture : 1 chargeur, rayon pour reposer le pistolet, marteau sur la table | Gameplay | Holster du chargeur à la hanche gauche (rayon 14 cm), pistolet 16 cm, lampe 12 cm ; plus de marteau à la ceinture, posé sur l'établi du bunker |
 | [116](#116--objets-low-poly-remplacés) | 2026-10-22 | Retirer les objets low poly, modèles ou textures libres, sources dans le wiki | Graphisme | 6 bouteilles vertes remplacées par 2 modèles Poly Haven (CC0) ; piles en cubes remplacées par une pile D modélisée et texturée ; page wiki Textures et modèles |
 | [117](#117--lampe-torche-réaliste) | 2026-10-22 | Lampe torche : paquet Asset Store, puis modèle réaliste libre | Graphisme | Lampe en cylindres remplacée par Small Plastic Torch de Poly Haven (CC0) ; faisceau, jauge, port de pile et prise gardés |
+| [118](#118--balles-et-batterie-à-linspection) | 2026-10-22 | Balles et batterie affichées seulement quand on penche l'objet près du visage | Interface | `InspectHud` : « 8 / 12 » + icône de balle sur le pistolet, pile à 4 barres sur la lampe (barre en cours qui clignote de plus en plus vite) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2141,3 +2142,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `RoomBuilder.MakeFlashlight` : le modèle remplace les deux cylindres. Il est tourné pour que le verre éclaire vers l'avant et que la dragonne pende dessous ; l'axe du faisceau passe par le centre du verre. Collider calé sur le corps (sans la dragonne), port de la pile à l'arrière, jauge de charge sur le dessus du manche, prise de la main sur le manche. `Flashlight.cs` : la jauge se vide depuis sa place (elle n'est plus forcément au centre de l'objet).
 - MainScene reconstruite, éclairage recuit, captures dans l'éditeur (lampe allumée, dragonne en bas). **Pas testé au casque** (prise en main, sens du faisceau).
 - Page wiki **Textures et modèles** complétée.
+
+---
+
+## 118 — Balles et batterie à l'inspection
+
+**Date** : 2026-10-22 · **Domaine** : Interface
+
+> Ok pour ce qui est du chargeur / du système de balles / de la batterie de la flashlight
+> Fait en sorte que le nombre / la barre de batterie de la lampe ne s'affichent que si le joueur tiens l'objet dans la main et décide de le tilte de côté en layant un peu proche du visage
+> Pour le chargeur ça afficherait au niveau du pistolet nombre de balle / 12 avec une icone de balle après
+> Pour la flashlight ça afficherai une icone de batterie avec 4 barres dedans, et la barre actuelle qui est utilisée clignotterai doucement et de plus en plus vite quand elle est sur le point de se consummer
+
+(avec deux captures du casque : l'ancienne lampe et sa barre jaune, le pistolet en main)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Nouveau script `InspectHud` (pistolet et lampe). Geste d'inspection : objet **tenu en main**, à **moins de 50 cm des yeux**, dans un cône de **40°** devant le regard, et **penché sur le côté d'au moins 35°** (rotation autour de l'axe de l'objet). Le panneau apparaît et disparaît en fondu (≈ 0,12 s), flotte 3,5 cm au-dessus de l'objet et se tourne vers les yeux. Version PC : visible dès que l'objet est en main (on ne peut pas pencher l'objet à la souris).
+- Pistolet : « 8 / 12 » puis une icône de balle (dessinée par code) ; blanc, orange à 3 balles ou moins, rouge clignotant à vide. L'ancien compteur toujours visible sur la culasse est retiré.
+- Lampe : icône de pile couchée avec 4 barres. Les barres pleines sont ambre (rouge orangé sur la dernière), la barre en cours **clignote doucement (0,5 Hz) quand elle vient de commencer, jusqu'à 4 Hz juste avant de s'éteindre** ; les barres vides restent à peine visibles. L'ancienne barre jaune posée sur la lampe est retirée.
+- Page COMMANDES : ligne « Balles, pile : pencher l'objet en main près du visage ».
+- Vérifié dans l'éditeur : test du geste (droit = rien, penché près = affiché, penché loin = rien, hors du regard = rien) et capture en mode Play (8 / 12, pile à 3 barres). **Pas testé au casque** : les seuils (50 cm, 40°, 35°) sont à régler au ressenti.

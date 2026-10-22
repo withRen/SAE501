@@ -1,13 +1,12 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 // Croix « passer le tutoriel », en haut à droite des panneaux du tutoriel.
 // On la vise avec une manette dont la main est VIDE (un rayon apparaît seulement quand on vise la croix) et on appuie sur
 // la gâchette. Une main qui tient un objet est ignorée : la gâchette sert alors à tirer ou à allumer la lampe.
-// Sans manettes (éditeur, version PC) : on vise avec le regard (réticule) et on clique (clic gauche, Espace ou gâchette).
+// Sans manettes (éditeur sans casque) : on vise avec le regard et on appuie sur Espace (ou la gâchette).
 // La zone visée est un carré de `half` (en unités locales de cet objet) autour de lui, dans son plan.
 public class TutorialSkipCross : MonoBehaviour
 {
@@ -47,7 +46,7 @@ public class TutorialSkipCross : MonoBehaviour
         bool aimed = false;
         Vector3 from = Vector3.zero, to = Vector3.zero;
 
-        if (hands && !DesktopMode.On)
+        if (hands)
         {
             aimed |= Hand(left, leftHand, XRNode.LeftHand, ref downL, ref from, ref to);
             aimed |= Hand(right, rightHand, XRNode.RightHand, ref downR, ref from, ref to);
@@ -55,15 +54,14 @@ public class TutorialSkipCross : MonoBehaviour
         else if (head)
         {
             bool hit = Hit(new Ray(head.position, head.forward), out _);
-            var mouse = Mouse.current;
-            bool d = VRInput.AnyTrigger() || VRInput.KeyboardSpace() || (mouse != null && mouse.leftButton.isPressed);
+            bool d = VRInput.AnyTrigger() || VRInput.KeyboardSpace();
             if (hit && d && !downHead) { onClick?.Invoke(); return; }
             downHead = d;
             aimed = hit;
         }
 
         if (aimed != hovered) { hovered = aimed; onHover?.Invoke(aimed); }
-        bool show = aimed && hands && !DesktopMode.On;
+        bool show = aimed && hands;
         if (show) rayOwner = this;
         if (rayOwner == this) Line(show, from, to);
     }

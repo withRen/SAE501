@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Base commune des menus « terminal de bunker » ambre (menu d'accueil MainMenu, menu pause PauseMenu) :
-// panneau, gros boutons, page PARAMÈTRES (son, confort VR ou affichage PC, difficulté), page COMMANDES (AmberMenuControls.cs)
+// panneau, gros boutons, page PARAMÈTRES (son, confort VR, difficulté), page COMMANDES (AmberMenuControls.cs)
 // et briques (curseurs, choix).
 // Tout est construit en code (UiKit) ; le pointeur est MenuPointer.
 public abstract partial class AmberMenu : MonoBehaviour
@@ -27,16 +27,6 @@ public abstract partial class AmberMenu : MonoBehaviour
         Slider(p, ref y, "Musique", () => GameSettings.Music, v => GameSettings.Music = v);
         Slider(p, ref y, "Effets", () => GameSettings.Effects, v => GameSettings.Effects = v);
         Slider(p, ref y, "Zombies", () => GameSettings.Zombies, v => GameSettings.Zombies = v);
-        if (DesktopMode.On)
-        {
-            // version PC : les réglages du casque n'ont pas de sens, on règle le champ de vision à la place
-            // (au casque, il est imposé par le Quest : l'option n'y apparaît pas)
-            Section(p, ref y, "AFFICHAGE");
-            var fovs = GameSettings.FieldOfViews;
-            Choice(p, ref y, "Champ de vision", System.Array.ConvertAll(fovs, f => f + "°"),
-                   () => System.Array.IndexOf(fovs, GameSettings.FieldOfView), i => GameSettings.FieldOfView = fovs[i]);
-        }
-        else
         {
             Section(p, ref y, "CONFORT VR");
             Choice(p, ref y, "Déplacement", new[] { "CONTINU", "TÉLÉPORTATION" }, () => GameSettings.Teleport ? 1 : 0, i => GameSettings.Teleport = i == 1);

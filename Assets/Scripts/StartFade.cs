@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Fondu depuis le noir au début de chaque partie (casque et version PC, aussi après « rejouer ») :
+// Fondu depuis le noir au début de chaque partie (aussi après « rejouer ») :
 // l'écran reste noir un court instant (le temps que la scène se pose), puis s'éclaircit.
 // Rien à placer dans la scène : il s'installe tout seul dans toute scène qui contient un WaveManager.
 public class StartFade : MonoBehaviour

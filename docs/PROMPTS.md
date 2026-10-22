@@ -133,6 +133,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [126](#126--mise-à-jour-du-gdd) | 2026-10-22 | Mettre à jour le GDD (.docx) avec l'état actuel du jeu | Documents | GDD réécrit par l'IA dans sa mise en forme : 4 niveaux au lieu de 5 vagues, mode Vagues infinies, radio, ceinture, inspection, contrôles, flow, feedbacks, UI ; nouveau fichier `GDD The last escapor - 2026-10-22.docx` |
 | [127](#127--son-et-titre-de-début-de-vague) | 2026-10-22 | Son à chaque début de vague + « Vague N » au milieu de l'écran | Gameplay / Ressenti | Chuchotement (SOUND BAG, YouTube) découpé à 4 s ; « VAGUE N » collé à la vue, fondu 1 s / 1,5 s visible / fondu 1,5 s, calé sur le son ; crédits README et wiki |
 | [128](#128--titre-de-vague-en-lettres-de-sang) | 2026-10-22 | « VAGUE N » en lettres de sang, police libre de droits | Interface | Police Nosifer (OFL, usage commercial permis), rouge sang + ombre noire ; crédits README et wiki |
+| [129](#129--retrait-de-la-version-pc) | 2026-10-22 | Retirer toute trace de la version PC pour l'instant | Outils | Scène MainScene_PC, scripts Desktop, menu Play PC Version, champ de vision, onglet clavier et cas « mode PC » retirés ; état sauvé sur la branche archive/version-pc ; wiki nettoyé |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2295,4 +2296,23 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `WaveTitle` : « VAGUE N » en Nosifer, rouge sang sombre (0,62 ; 0,02 ; 0,02), avec une ombre noire légèrement décalée derrière pour rester lisible ; un peu plus petit qu'avant car la police est très large. Si la police manque, retour à la police par défaut.
 - Vérifié en mode Play : titre « VAGUE 3 » en lettres de sang au centre de la vue (capture). **Pas testé au casque.**
 - Crédits : README et page wiki Crédits (renommée « Crédits des sons et polices »).
+
+---
+
+## 129 — Retrait de la version PC
+
+**Date** : 2026-10-22 · **Domaine** : Outils
+
+> Ok, retire toute trace de la version PC pour l'instant, on retravaillera dessus possiblement dans longtemps
+
+(confirmé dans le fil : « oui, retire la version PC »)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Sauvegarde d'abord : l'état complet avec la version PC est sur la branche `archive/version-pc` (commit 57c162e). Pour la reprendre : repartir de cette branche, ou récupérer les fichiers listés ci-dessous.
+- Supprimés : scène `MainScene_PC`, dossier `Assets/Scripts/Desktop` (`DesktopBoot`, `DesktopMode`, `DesktopPlayer`), `Assets/Editor/DesktopSceneBuilder.cs` (menus SAE501 → Build PC Scene et Play PC Version).
+- Retirés du code partagé : réglage « Champ de vision » (section AFFICHAGE, `GameSettings.FieldOfView`), onglet CLAVIER + SOURIS de la page COMMANDES (la page montre seulement les manettes), cas « mode PC » dans `ClickGrab`, `InspectHud`, `TutorialSkipCross` (réticule et clic souris), `VRInput.RightB` (touche B), `GameSettings` (téléportation), mentions dans les commentaires.
+- Gardés : les raccourcis clavier pour tester dans l'éditeur sans casque (Espace, Entrée, C, Échap, N / K), antérieurs à la version PC.
+- Wiki : mentions de la version PC retirées de 15 pages (Commandes, Menus, Déplacement, Ceinture, Pistolet, Inspection, Tutoriel, Brouillard, etc.), capture de l'onglet clavier supprimée, note sur l'Accueil. Les anciennes entrées de ce journal (087, 089…) restent telles quelles : c'est l'historique.
+- Vérifié : compilation sans erreur ; mode Play dans MainScene : menu pause et page COMMANDES construits (onglet manettes seul), réglages appliqués, coup reçu et titre de vague sans erreur. **Pas testé au casque.** Scène VR ni reconstruite ni recuite (rien n'y change).
 

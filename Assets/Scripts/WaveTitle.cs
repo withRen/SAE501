@@ -4,7 +4,7 @@ using UnityEngine;
 // fondu d'apparition 1 s, 1,5 s bien visible, fondu de disparition 1,5 s (le chuchotement monte, tient, puis s'éteint).
 // Lettres de sang : police Nosifer (Typomondo, SIL Open Font License : usage libre, y compris commercial ; Resources/Fonts),
 // rouge sang avec une ombre noire derrière pour rester lisible sur un décor sombre ou clair.
-// Texte collé à la tête (VR et PC, même caméra), dessiné par-dessus le décor ; rien ne bouge la caméra.
+// Texte collé à la tête, dessiné par-dessus le décor ; rien ne bouge la caméra.
 // Créé par WaveManager.Start, appelé par WaveManager.StartLevel.
 public class WaveTitle : MonoBehaviour
 {

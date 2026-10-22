@@ -8,7 +8,7 @@ using UnityEngine;
 //   - arc rouge autour du centre de la vue du côté du zombie (haut = devant, bas = derrière), qui suit les rotations de la tête
 //     et s'efface en ~2 s ; le bord de l'écran de ce côté-là rougit aussi (vision périphérique) ;
 //   - son : choc sourd dans le corps + griffure jouée depuis la direction du zombie ; battement de cœur sous 25 % des PV.
-// (La vibration des manettes, plus forte du côté du zombie, est dans PlayerHealth.) Même rendu en version PC (même caméra).
+// (La vibration des manettes, plus forte du côté du zombie, est dans PlayerHealth.)
 // À mettre sur n'importe quel objet de la scène. Assigner "head" = Main Camera du XR Origin et "material".
 public class HealthVignette : MonoBehaviour
 {

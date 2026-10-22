@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 // Menu d'accueil (scène « Menu »), style « terminal de bunker » ambre :
 //   SOLO (choix du mode : ÉVASION = 4 niveaux et le générateur, SURVIE = vagues infinies), MULTIJOUEUR (grisé « BIENTÔT »), PARAMÈTRES (son, confort VR, difficulté),
-//   COMMANDES (schéma des manettes ou du clavier, AmberMenuControls), QUITTER.
+//   COMMANDES (schéma des manettes, AmberMenuControls), QUITTER.
 // Le panneau flotte devant le joueur, un peu à droite ; il est construit au lancement (UiKit). Pointeur : MenuPointer.
 public class MainMenu : AmberMenu
 {

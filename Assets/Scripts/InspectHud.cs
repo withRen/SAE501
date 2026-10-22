@@ -5,8 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // pour lire ce qu'il reste. Le reste du temps, rien ne s'affiche.
 //   - Pistolet : « 8 / 12 » suivi d'une icône de balle (blanc, orange quand il en reste peu, rouge et clignotant à vide).
 //   - Lampe : icône de pile à 4 barres ; la barre en cours clignote doucement, de plus en plus vite quand elle va s'éteindre.
-// Le petit panneau flotte au-dessus de l'objet et se tourne vers les yeux. Version PC : visible dès que l'objet est en main
-// (on ne peut pas pencher l'objet à la souris).
+// Le petit panneau flotte au-dessus de l'objet et se tourne vers les yeux.
 [RequireComponent(typeof(XRGrabInteractable))]
 public class InspectHud : MonoBehaviour
 {
@@ -73,7 +72,7 @@ public class InspectHud : MonoBehaviour
     {
         if (!head) { var cam = Camera.main; if (cam) head = cam.transform; else return; }
         bool held = BeltItem.InHand(grab) && !PauseMenu.Paused;
-        bool gesture = held && (DesktopMode.On || Inspecting(transform, head, maxDistance, maxViewAngle, maxLeftAngle, showing ? hysteresis : 0f));
+        bool gesture = held && Inspecting(transform, head, maxDistance, maxViewAngle, maxLeftAngle, showing ? hysteresis : 0f);
         if (gesture) lastSeen = Time.time;
         showing = held && Time.time - lastSeen <= linger;
         bool show = forceShow || showing;

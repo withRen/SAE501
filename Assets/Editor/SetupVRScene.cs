@@ -27,7 +27,7 @@ public static class SetupVRScene
         AddHand(rig, "Left Controller", "l", "XRI Left Interaction", actions);
         AddHand(rig, "Right Controller", "r", "XRI Right Interaction", actions);
 
-        // déplacement : marcher (joystick gauche), tourner (joystick droit) et sauter (A, ou Espace en version PC).
+        // déplacement : marcher (joystick gauche), tourner (joystick droit) et sauter (A).
         // L'escalade et le « grab move » (le joueur bouge quand on serre le grip dans le vide) ne servent pas.
         // La téléportation reste éteinte ici : GameSettings l'allume si elle est choisie dans les paramètres (NavTeleportArea).
         foreach (var t in rig.GetComponentsInChildren<Transform>(true))

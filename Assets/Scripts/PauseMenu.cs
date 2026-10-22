@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Menu pause de la partie : bouton menu (☰) de la manette gauche (Échap dans l'éditeur) pour l'ouvrir ou le fermer.
-// Même style que le menu d'accueil (AmberMenu) : REPRENDRE, PARAMÈTRES (son, confort VR, difficulté), COMMANDES (schéma des manettes
-// ou du clavier), MENU (retour à l'accueil).
+// Même style que le menu d'accueil (AmberMenu) : REPRENDRE, PARAMÈTRES (son, confort VR, difficulté), COMMANDES (schéma des manettes),
+// MENU (retour à l'accueil).
 // Pendant la pause : temps figé (zombies, vagues, physique), son en pause, tir / coups / clous bloqués (voir Paused).
 // Le panneau apparaît devant le joueur, dans la direction où il regarde ; on vise avec le rayon de la manette, gâchette pour valider.
 public class PauseMenu : AmberMenu

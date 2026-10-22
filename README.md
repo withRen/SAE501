@@ -151,6 +151,7 @@ L'IA (Claude Code) est utilisée pour produire du code, des documents et des ré
 - Mains animées et rig XR : exemples du cours et XR Interaction Toolkit (Unity).
 - Meta XR SDK : licence Meta (voir le SDK).
 - Son de début de vague : « Creepy Whisper Sound Effect 13 » de **SOUND BAG** ([YouTube](https://youtube.com/shorts/YyluAyugj4s)), usage personnel et non commercial autorisé par l'auteur ; découpé à 4 s (`Assets/Resources/Audio/Vague_Debut.ogg`).
+- Police « lettres de sang » du titre de vague : **Nosifer** de Typomondo ([Google Fonts](https://fonts.google.com/specimen/Nosifer)), licence SIL Open Font License 1.1 : usage libre, personnel et commercial (`Assets/Resources/Fonts`, licence jointe).
 - Assets de l'Asset Store prévus : voir [docs/ASSETS.md](docs/ASSETS.md) (à importer, licences à vérifier).
 
 ## Problèmes connus

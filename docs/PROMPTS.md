@@ -132,6 +132,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [122](#122--retour-de-dégâts-et-direction-du-coup) | 2026-10-22 | Accentuer les dégâts reçus + indicateur de direction | Gameplay / Ressenti | Arc rouge du côté du zombie (suit la tête), bord rouge de ce côté, flash selon les dégâts, son du coup + griffure spatialisée, battement de cœur sous 25 %, vibration plus forte côté zombie ; VR et PC |
 | [126](#126--mise-à-jour-du-gdd) | 2026-10-22 | Mettre à jour le GDD (.docx) avec l'état actuel du jeu | Documents | GDD réécrit par l'IA dans sa mise en forme : 4 niveaux au lieu de 5 vagues, mode Vagues infinies, radio, ceinture, inspection, contrôles, flow, feedbacks, UI ; nouveau fichier `GDD The last escapor - 2026-10-22.docx` |
 | [127](#127--son-et-titre-de-début-de-vague) | 2026-10-22 | Son à chaque début de vague + « Vague N » au milieu de l'écran | Gameplay / Ressenti | Chuchotement (SOUND BAG, YouTube) découpé à 4 s ; « VAGUE N » collé à la vue, fondu 1 s / 1,5 s visible / fondu 1,5 s, calé sur le son ; crédits README et wiki |
+| [128](#128--titre-de-vague-en-lettres-de-sang) | 2026-10-22 | « VAGUE N » en lettres de sang, police libre de droits | Interface | Police Nosifer (OFL, usage commercial permis), rouge sang + ombre noire ; crédits README et wiki |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2279,4 +2280,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Nouveau script `WaveTitle` : « VAGUE N » en rouge au milieu de la vue (collé à la tête, à 1,2 m, dessiné par-dessus le décor ; même rendu en version PC). Calé sur le son mesuré (montée jusqu'à 1 s, pleine voix jusqu'à 2,5 s, extinction) : fondu d'apparition 1 s, 1,5 s bien visible, fondu de disparition 1,5 s, 4 s au total. Joué par `WaveManager.StartLevel` à chaque vague (aussi en mode survie). L'alarme de début de vague et l'annonce sur l'écran du bunker sont gardées.
 - Crédits : README (section Crédits) et wiki (page Crédits des sons, page Niveaux et vagues).
 - Vérifié en mode Play : son chargé (4,0 s), titre « VAGUE 3 » affiché au centre de la vue (capture). Scripts et son seulement : scène ni reconstruite ni recuite. **Pas testé au casque.**
+
+---
+
+## 128 — Titre de vague en lettres de sang
+
+**Date** : 2026-10-22 · **Domaine** : Interface
+
+> Fait le en lettres de sang, et utilise bien une font libre de droit que ce soit personnal use ou même commercial use
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Police **Nosifer** (Typomondo), lettres qui dégoulinent de sang, téléchargée depuis le dépôt officiel Google Fonts (`google/fonts`). Licence SIL Open Font License 1.1 : usage libre, personnel et commercial, intégrable dans un jeu ; le texte de la licence est joint (`Assets/Resources/Fonts/Nosifer-OFL.txt`).
+- `WaveTitle` : « VAGUE N » en Nosifer, rouge sang sombre (0,62 ; 0,02 ; 0,02), avec une ombre noire légèrement décalée derrière pour rester lisible ; un peu plus petit qu'avant car la police est très large. Si la police manque, retour à la police par défaut.
+- Vérifié en mode Play : titre « VAGUE 3 » en lettres de sang au centre de la vue (capture). **Pas testé au casque.**
+- Crédits : README et page wiki Crédits (renommée « Crédits des sons et polices »).
 

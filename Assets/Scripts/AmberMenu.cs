@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Base commune des menus « terminal de bunker » ambre (menu d'accueil MainMenu, menu pause PauseMenu) :
-// panneau, gros boutons, page PARAMÈTRES (son, confort VR ou affichage PC, difficulté) et briques (curseurs, choix).
+// panneau, gros boutons, page PARAMÈTRES (son, confort VR ou affichage PC, difficulté), page COMMANDES (AmberMenuControls.cs)
+// et briques (curseurs, choix).
 // Tout est construit en code (UiKit) ; le pointeur est MenuPointer.
-public abstract class AmberMenu : MonoBehaviour
+public abstract partial class AmberMenu : MonoBehaviour
 {
     protected static readonly Color A = UiKit.Amber;
     protected static readonly Color Ink = new Color(0.06f, 0.04f, 0.015f);
@@ -59,7 +60,8 @@ public abstract class AmberMenu : MonoBehaviour
     {
         var p = new GameObject(name).transform;
         p.SetParent(PanelParent, false);
-        UiKit.Quad(p, "Fond", Vector2.zero, PanelSize, PanelCol, -1, 0.012f);
+        // fond dessiné avant tout le reste de la page (même file, il recouvrait les éléments éloignés du centre, triés plus loin que lui)
+        UiKit.Quad(p, "Fond_Page", Vector2.zero, PanelSize, PanelCol, 2990, 0.012f);
         UiKit.Frame(p, Vector2.zero, PanelSize, 0.004f, new Color(A.r, A.g, A.b, 0.4f), -1, 0.006f);
         UiKit.Brackets(p, Vector2.zero, PanelSize + new Vector2(0.03f, 0.03f), 0.07f, 0.008f, A);
         UiKit.Quad(p, "Bande", new Vector2(0f, 0.596f), new Vector2(PanelSize.x, 0.088f), new Color(A.r, A.g, A.b, 0.92f), -1, 0.006f);

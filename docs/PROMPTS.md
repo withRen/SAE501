@@ -120,6 +120,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [110](#110--textures-qui-clignotent-et-ombres-tachées) | 2026-10-21 | Textures abîmées : objets les uns dans les autres, lumière | Carte | 41 surfaces superposées corrigées à l'export ; petits objets éclairés par sondes au lieu de lightmaps ; éclairage recuit |
 | [111](#111--appui-de-fenêtre-encastré-dans-le-mur) | 2026-10-21 | Le bas de la fenêtre est encastré dans le mur | Carte | Encadrements gonflés de 4 mm selon leurs normales (l'appui passe devant le bas de l'ouverture du mur) ; éclairage recuit |
 | [112](#112--vraies-portes) | 2026-10-21 | Vraie texture de porte au lieu des portes low poly | Carte | Texture de porte à panneaux produite (bois peint écaillé des portes du fichier) ; appliquée aux 4 portes de niveau, double porte pour les passages larges |
+| [113](#113--fondu-de-début-et-menu-des-commandes) | 2026-10-22 | Fondu au début de la partie, menu qui explique les touches | Interface | Fondu depuis le noir (VR et PC) ; page COMMANDES dans le menu d'accueil et le menu pause : manettes Quest 3 avec traits de rappel, clavier et souris |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2041,4 +2042,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Les portes du fichier Blender utilisent le bois peint écaillé PolyHaven `distressed_painted_planks`. `Tools/blender/make_door_texture.py` en tire une porte à 4 panneaux (cadre lisse, panneaux rainurés en creux avec chanfrein en relief, crasse en bas, plaque de propreté en tôle) : `Assets/Textures/Porte/porte_couleur.png` et `porte_normale.png` (512 x 1024). Rien téléchargé.
 - `RoomBuilder.cs` : les battants des 4 portes de niveau (avant : boîtes grises) prennent ce matériau ; les passages de plus de 1,6 m (couloir droit, stockage) affichent deux portes ; poignée en métal. Charnière, verrou, barricade et coups des zombies inchangés.
 - Vérifié par captures dans l'éditeur ; éclairage recuit. Non testé au casque.
+
+---
+
+## 113 — Fondu de début et menu des commandes
+
+**Date** : 2026-10-22 · **Domaine** : Interface
+
+> Rajoute dans le jeu un petit fade in au moment du début de la game
+> Rajoute aussi un menu qui explique les touches brièvement (genre schématique des manettes avec des traits qui disent ce que chaque touche fait)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- `StartFade.cs` : au chargement de toute scène de jeu (scène qui contient un `WaveManager`, donc aussi « rejouer » et la version PC), l'écran reste noir 0,3 s puis s'éclaircit en 1,4 s (voile collé à la caméra, comme le fondu du menu). S'installe tout seul : MainScene n'a pas été reconstruite, l'éclairage n'a pas bougé.
+- Page **COMMANDES** (`AmberMenuControls.cs`), ouverte par un nouveau bouton du menu d'accueil (5 boutons resserrés) et du menu pause : onglet MANETTES (dessin des deux manettes Quest 3, traits de rappel vers gâchette, grip, joystick, A, B, X, menu) et onglet CLAVIER + SOURIS (touches de `DesktopPlayer`). L'onglet affiché d'abord suit la version (casque ou PC). Les textes suivent les réglages en cours : déplacement continu ou téléportation, prise en un clic ou en maintenant, rotation par à-coups ou fluide.
+- Dessin des manettes : `Tools/make_controller_images.py` (Pillow) produit `Assets/Resources/Commandes/manette_gauche.png` et `manette_droite.png`, schéma au trait teinté en ambre par le menu. Rien téléchargé.
+- Correction au passage : le fond des pages des menus ambre est dessiné avant le reste (il recouvrait les éléments loin du centre du panneau, qui paraissaient ternes).
+- Vérifié : captures des pages en mode batch, puis en mode Play dans MainScene (fondu présent au rechargement de la scène, voile à 0,99 puis 0,47 ; page COMMANDES du menu pause). **Pas testé au casque**, ni en version PC jouée au clavier. Remarque vue en capture : un panneau du tutoriel posé dans la carte peut passer devant le menu pause (déjà le cas avant).
 

@@ -5,7 +5,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Menu d'accueil (scène « Menu »), style « terminal de bunker » ambre :
-//   SOLO (choix du mode : ÉVASION = 4 niveaux et le générateur, SURVIE = vagues infinies), MULTIJOUEUR (grisé « BIENTÔT »), PARAMÈTRES (son, confort VR, difficulté), QUITTER.
+//   SOLO (choix du mode : ÉVASION = 4 niveaux et le générateur, SURVIE = vagues infinies), MULTIJOUEUR (grisé « BIENTÔT »), PARAMÈTRES (son, confort VR, difficulté),
+//   COMMANDES (schéma des manettes ou du clavier, AmberMenuControls), QUITTER.
 // Le panneau flotte devant le joueur, un peu à droite ; il est construit au lancement (UiKit). Pointeur : MenuPointer.
 public class MainMenu : AmberMenu
 {
@@ -15,7 +16,7 @@ public class MainMenu : AmberMenu
     public float scale = 1.1f;                                   // taille du panneau (1 = 1,52 m de large)
     public string version = "v0.9";
 
-    Transform mainPage, modesPage, settingsPage;
+    Transform mainPage, modesPage, settingsPage, controlsPage;
     Renderer fade;
     bool leaving;
 
@@ -33,6 +34,8 @@ public class MainMenu : AmberMenu
         modesPage.gameObject.SetActive(false);
         settingsPage = BuildSettings(() => ShowSettings(false));
         settingsPage.gameObject.SetActive(false);
+        controlsPage = BuildControls(() => ShowControls(false));
+        controlsPage.gameObject.SetActive(false);
         // textes toujours devant les fonds (sinon le titre de la bande du haut était caché par la bande)
         foreach (var r in GetComponentsInChildren<Renderer>(true))
             if (r.GetComponent<TextMesh>()) r.material.renderQueue = 3100;
@@ -54,13 +57,15 @@ public class MainMenu : AmberMenu
         UiKit.Text(p, "Titre", new Vector2(0f, 0.348f), 0.0285f, A, "ESCAPOR", TextAnchor.MiddleCenter, true);
         UiKit.Text(p, "Accroche", new Vector2(0f, 0.22f), 0.0075f, UiKit.Dim, "SURVIVRE  ·  CLOUER  ·  S'ÉCHAPPER");
 
-        BigButton(p, 0.078f, "SOLO", () => ShowModes(true));
-        var multi = BigButton(p, -0.082f, "MULTIJOUEUR", null);
+        // 5 boutons, 0,135 m d'écart (0,16 m quand il n'y en avait que 4)
+        BigButton(p, 0.09f, "SOLO", () => ShowModes(true));
+        var multi = BigButton(p, -0.045f, "MULTIJOUEUR", null);
         multi.interactable = false;
         UiKit.Text(multi.transform, "Bientot", new Vector2(0.565f, 0f), 0.0075f, A, "BIENTÔT", TextAnchor.MiddleRight, true);
         UiKit.Frame(multi.transform, new Vector2(0.56f - 0.09f, 0f), new Vector2(0.22f, 0.055f), 0.003f, A, -1, 0.004f);
-        BigButton(p, -0.242f, "PARAMÈTRES", () => ShowSettings(true));
-        BigButton(p, -0.402f, "QUITTER", Quit);
+        BigButton(p, -0.18f, "PARAMÈTRES", () => ShowSettings(true));
+        BigButton(p, -0.315f, "COMMANDES", () => ShowControls(true));
+        BigButton(p, -0.45f, "QUITTER", Quit);
 
         UiKit.Text(p, "Aide", new Vector2(0f, -0.578f), 0.0068f, UiKit.Dim, "Visez un bouton  ·  gâchette pour valider");
         return p;
@@ -70,6 +75,13 @@ public class MainMenu : AmberMenu
     {
         mainPage.gameObject.SetActive(!on);
         settingsPage.gameObject.SetActive(on);
+    }
+
+    void ShowControls(bool on)
+    {
+        if (on) RefreshControls();
+        mainPage.gameObject.SetActive(!on);
+        controlsPage.gameObject.SetActive(on);
     }
 
     // ---------- page SOLO : choix du mode ----------

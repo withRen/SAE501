@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Menu pause de la partie : bouton menu (☰) de la manette gauche (Échap dans l'éditeur) pour l'ouvrir ou le fermer.
-// Même style que le menu d'accueil (AmberMenu) : REPRENDRE, PARAMÈTRES (son, confort VR, difficulté), MENU (retour à l'accueil).
+// Même style que le menu d'accueil (AmberMenu) : REPRENDRE, PARAMÈTRES (son, confort VR, difficulté), COMMANDES (schéma des manettes
+// ou du clavier), MENU (retour à l'accueil).
 // Pendant la pause : temps figé (zombies, vagues, physique), son en pause, tir / coups / clous bloqués (voir Paused).
 // Le panneau apparaît devant le joueur, dans la direction où il regarde ; on vise avec le rayon de la manette, gâchette pour valider.
 public class PauseMenu : AmberMenu
@@ -15,7 +16,7 @@ public class PauseMenu : AmberMenu
     public float distance = 1.3f;          // m devant les yeux
     public float scale = 0.8f;             // 1 = panneau de 1,52 m de large
 
-    Transform panel, mainPage, settingsPage;
+    Transform panel, mainPage, settingsPage, controlsPage;
     bool wasDown, leaving;
 
     protected override Transform PanelParent => panel;
@@ -30,12 +31,13 @@ public class PauseMenu : AmberMenu
         panel.SetParent(transform, false);
         mainPage = BuildMain();
         settingsPage = BuildSettings(() => ShowSettings(false));
+        controlsPage = BuildControls(() => ShowControls(false));
         panel.gameObject.AddComponent<MenuPointer>().head = head;   // rayons des manettes, seulement quand le panneau est affiché
         // fond plus opaque derrière les pages : le décor et les textes du jeu ne se lisent plus à travers
         UiKit.Quad(panel, "Fond_Opaque", Vector2.zero, PanelSize, new Color(0f, 0f, 0f, 0.97f), -1, 0.02f);
         // ordre d'affichage : au-dessus de tout ce qui est en jeu (textes d'état, écrans collés à la tête : 4300 au plus)
         foreach (var r in panel.GetComponentsInChildren<Renderer>(true))
-            r.material.renderQueue = r.GetComponent<TextMesh>() ? 4600 : r.name == "Fond_Opaque" ? 4490 : 4500;   // fond opaque dessiné en premier
+            r.material.renderQueue = r.GetComponent<TextMesh>() ? 4600 : r.name == "Fond_Opaque" ? 4490 : r.name == "Fond_Page" ? 4495 : 4500;   // fonds dessinés en premier
         panel.gameObject.SetActive(false);
     }
 
@@ -46,8 +48,9 @@ public class PauseMenu : AmberMenu
         UiKit.Text(p, "Titre", new Vector2(0f, 0.3f), 0.0285f, A, "PAUSE", TextAnchor.MiddleCenter, true);
         BigButton(p, 0.09f, "REPRENDRE", Resume);
         BigButton(p, -0.07f, "PARAMÈTRES", () => ShowSettings(true));
-        BigButton(p, -0.23f, "MENU", ToMenu);
-        UiKit.Text(p, "Aide", new Vector2(0f, -0.5f), 0.0068f, UiKit.Dim, "Visez un bouton  ·  gâchette pour valider  ·  bouton menu : reprendre");
+        BigButton(p, -0.23f, "COMMANDES", () => ShowControls(true));
+        BigButton(p, -0.39f, "MENU", ToMenu);
+        UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, "Visez un bouton  ·  gâchette pour valider  ·  bouton menu : reprendre");
         return p;
     }
 
@@ -55,6 +58,15 @@ public class PauseMenu : AmberMenu
     {
         mainPage.gameObject.SetActive(!on);
         settingsPage.gameObject.SetActive(on);
+        controlsPage.gameObject.SetActive(false);
+    }
+
+    void ShowControls(bool on)
+    {
+        if (on) RefreshControls();
+        mainPage.gameObject.SetActive(!on);
+        settingsPage.gameObject.SetActive(false);
+        controlsPage.gameObject.SetActive(on);
     }
 
     void Update()

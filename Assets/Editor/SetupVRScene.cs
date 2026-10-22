@@ -127,10 +127,11 @@ public static class SetupVRScene
         var direct = go.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRDirectInteractor>();
         var attach = new GameObject("Attach").transform;
         attach.SetParent(go.transform, false);
-        // point d'accroche AU CENTRE DU POING FERMÉ du modèle de main (mesuré : jointures de l'index à -0,106 m, du majeur à -0,13 m,
-        // côté pouce/jointures à ±0,05 m). Avec la valeur de My project (-0,07 m), la crosse flottait au-dessus du poing :
-        // notre modèle de main est placé plus bas sous la manette.
-        attach.localPosition = new Vector3(0.015f * sideSign, -0.135f, 0.025f);
+        // point d'accroche AU CENTRE DU POING FERMÉ du modèle de main. Mesuré sur le maillage du poing fermé (grip + gâchette),
+        // repère de la manette, main droite : x de -0,015 à 0,073, y de -0,178 à -0,078 ; les doigts se referment devant le
+        // centre de la paume. Avant (0,015 ; -0,135 ; 0,025) : au casque, la crosse sortait sur le côté du poing (côté pouce) et en
+        // avant des doigts. Maintenant 1,5 cm plus vers l'extérieur, 2,5 cm plus en arrière : la crosse passe dans le poing.
+        attach.localPosition = new Vector3(0.03f * sideSign, -0.13f, 0.0f);
         direct.attachTransform = attach;
         direct.improveAccuracyWithSphereCollider = true;
         direct.physicsTriggerInteraction = QueryTriggerInteraction.Ignore;

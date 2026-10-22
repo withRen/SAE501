@@ -18,11 +18,15 @@ public class InspectHud : MonoBehaviour
 
     [Header("Geste d'inspection")]
     [Tooltip("Distance maximale entre l'objet et les yeux.")]
-    public float maxDistance = 0.5f;
+    public float maxDistance = 0.6f;
     [Tooltip("L'objet doit être dans ce cône devant le regard (degrés).")]
-    public float maxViewAngle = 40f;
-    [Tooltip("Écart maximal entre l'axe de l'objet (canon, faisceau) et la gauche du regard.")]
-    public float maxLeftAngle = 45f;
+    public float maxViewAngle = 50f;
+    [Tooltip("Écart maximal (vu de dessus, dans le repère de la tête) entre l'axe de l'objet et la gauche du regard.")]
+    public float maxLeftAngle = 60f;
+    [Tooltip("Une fois affiché, les seuils sont élargis de cette part (pas de clignotement à la limite).")]
+    public float hysteresis = 0.25f;
+    [Tooltip("Le panneau reste encore ce temps quand le geste se perd (secondes).")]
+    public float linger = 0.35f;
     public float fadeSpeed = 8f;
     [Tooltip("Test dans l'éditeur : affiche le panneau sans tenir l'objet.")]
     public bool forceShow;
@@ -31,7 +35,8 @@ public class InspectHud : MonoBehaviour
     Pistol pistol;
     Flashlight lamp;
     Transform panel, head;
-    float alpha;
+    float alpha, lastSeen = -10f;
+    bool showing;
 
     TextMesh text;
     SpriteRenderer bullet;
@@ -50,20 +55,28 @@ public class InspectHud : MonoBehaviour
     }
 
     // ───────────────────────── geste ─────────────────────────
-    // canon (ou verre de la lampe) tourné vers la gauche du regard : on voit le flanc de l'objet devant soi
-    public static bool Inspecting(Transform obj, Transform head, float maxDistance, float maxViewAngle, float maxLeftAngle)
+    // canon (ou verre de la lampe) tourné vers la gauche du regard : on voit le flanc de l'objet devant soi.
+    // La direction est lue dans le repère de la tête et vue de dessus : l'objet peut être relevé ou baissé (jusqu'à ~60°),
+    // seule compte sa direction gauche / avant. widen (0 = seuils normaux) élargit tous les seuils.
+    public static bool Inspecting(Transform obj, Transform head, float maxDistance, float maxViewAngle, float maxLeftAngle, float widen = 0f)
     {
+        float k = 1f + widen;
         var to = obj.position - head.position;
-        if (to.magnitude > maxDistance) return false;
-        if (Vector3.Angle(head.forward, to) > maxViewAngle) return false;
-        return Vector3.Angle(obj.forward, -head.right) <= maxLeftAngle;
+        if (to.magnitude > maxDistance * k) return false;
+        if (Vector3.Angle(head.forward, to) > maxViewAngle * k) return false;
+        var d = head.InverseTransformDirection(obj.forward);
+        if (Mathf.Abs(d.y) > 0.87f) return false;                         // pointé vers le haut ou le bas
+        return Vector2.Angle(new Vector2(d.x, d.z), Vector2.left) <= maxLeftAngle * k;
     }
 
     void LateUpdate()
     {
         if (!head) { var cam = Camera.main; if (cam) head = cam.transform; else return; }
         bool held = BeltItem.InHand(grab) && !PauseMenu.Paused;
-        bool show = forceShow || held && (DesktopMode.On || Inspecting(transform, head, maxDistance, maxViewAngle, maxLeftAngle));
+        bool gesture = held && (DesktopMode.On || Inspecting(transform, head, maxDistance, maxViewAngle, maxLeftAngle, showing ? hysteresis : 0f));
+        if (gesture) lastSeen = Time.time;
+        showing = held && Time.time - lastSeen <= linger;
+        bool show = forceShow || showing;
         alpha = Mathf.MoveTowards(alpha, show ? 1f : 0f, fadeSpeed * Time.deltaTime);
         panel.gameObject.SetActive(alpha > 0.001f);
         if (alpha <= 0.001f) return;

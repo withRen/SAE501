@@ -1271,19 +1271,35 @@ public static class RoomBuilder
         hbc.size = hs + Vector3.one * 0.02f;
         head.AddComponent<HammerHead>();
 
+        var hAxis = HandleAxis(v, q, vis.transform.localPosition, -len * 0.3f, -len * 0.05f);   // axe réel du manche (la tête déborde)
         var handle = new GameObject("HandleCollider");
         handle.transform.SetParent(h.transform, false);
+        handle.transform.localPosition = hAxis;
         var hb = handle.AddComponent<BoxCollider>();
         hb.size = new Vector3(0.03f, len, 0.03f);
 
         var attach = new GameObject("Attach").transform;
         attach.SetParent(h.transform, false);
-        attach.localPosition = new Vector3(0, -len * 0.18f, 0);
+        attach.localPosition = hAxis + new Vector3(0, -len * 0.18f, 0);
 
         h.AddComponent<Rigidbody>();
         MakeGrab(h, attach);
         h.AddComponent<BeltItem>().type = BeltItemType.Hammer;
         h.AddComponent<Hammer>();
+    }
+
+    // centre (x, z) du manche d'un outil dont l'axe long est Y (repère de l'objet) : milieu des sommets dont la hauteur est
+    // entre yLo et yHi (une tranche du manche, loin de la tête). y = 0 dans le résultat.
+    static Vector3 HandleAxis(Vector3[] verts, Quaternion q, Vector3 offset, float yLo, float yHi)
+    {
+        Vector3 mn = Vector3.one * 1e9f, mx = -mn; int n = 0;
+        foreach (var p in verts)
+        {
+            var w = q * p + offset;
+            if (w.y < yLo || w.y > yHi) continue;
+            mn = Vector3.Min(mn, w); mx = Vector3.Max(mx, w); n++;
+        }
+        return n == 0 ? Vector3.zero : new Vector3((mn.x + mx.x) / 2f, 0f, (mn.z + mx.z) / 2f);
     }
 
     // Arme de corps à corps à partir d'un objet de la carte (pied de biche, hache) : même analyse que le marteau,
@@ -1337,13 +1353,17 @@ public static class RoomBuilder
         striker.transform.localPosition = hc;
         striker.AddComponent<BoxCollider>().size = hs + Vector3.one * 0.01f;
 
+        // le fer (ou le crochet) déborde d'un côté : le centre du maillage n'est pas sur le manche. On prend le vrai axe du manche
+        // là où se pose la main, sinon l'arme tenue est décalée à côté du poing.
+        var hAxis = HandleAxis(v, q, vis.transform.localPosition, -len * 0.4f, -len * 0.2f);
         var handle = new GameObject("Manche");
         handle.transform.SetParent(w.transform, false);
+        handle.transform.localPosition = hAxis;
         handle.AddComponent<BoxCollider>().size = new Vector3(0.035f, len, 0.035f);
 
         var attach = new GameObject("Attach").transform;
         attach.SetParent(w.transform, false);
-        attach.localPosition = new Vector3(0f, -len * 0.3f, 0f);       // prise vers le bout du manche
+        attach.localPosition = hAxis + new Vector3(0f, -len * 0.3f, 0f);       // prise vers le bout du manche
 
         var rb = w.AddComponent<Rigidbody>();
         rb.mass = 1.2f;

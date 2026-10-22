@@ -126,6 +126,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [116](#116--objets-low-poly-remplacés) | 2026-10-22 | Retirer les objets low poly, modèles ou textures libres, sources dans le wiki | Graphisme | 6 bouteilles vertes remplacées par 2 modèles Poly Haven (CC0) ; piles en cubes remplacées par une pile D modélisée et texturée ; page wiki Textures et modèles |
 | [117](#117--lampe-torche-réaliste) | 2026-10-22 | Lampe torche : paquet Asset Store, puis modèle réaliste libre | Graphisme | Lampe en cylindres remplacée par Small Plastic Torch de Poly Haven (CC0) ; faisceau, jauge, port de pile et prise gardés |
 | [118](#118--balles-et-batterie-à-linspection) | 2026-10-22 | Balles et batterie affichées seulement quand on tourne l'objet de côté (canon vers la gauche) près du visage | Interface | `InspectHud` : « 8 / 12 » + icône de balle sur le pistolet, pile à 4 barres sur la lampe (barre en cours qui clignote de plus en plus vite) |
+| [119](#119--inspection-plus-souple-et-prise-des-armes) | 2026-10-22 | Inspection capricieuse ; pistolet et hache décalés dans la main | Gameplay | Seuils assouplis + marge et maintien ; point d'accroche au centre du poing ; prise sur l'axe réel du manche |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2170,4 +2171,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 - Geste changé : au lieu de faire rouler l'objet sur son axe, on le **tourne de côté** pour que le **canon (ou le faisceau de la lampe) pointe vers la gauche** du regard, à 45° près (`InspectHud.maxLeftAngle`), toujours à moins de 50 cm des yeux et devant le regard. On voit alors le flanc de l'arme devant soi. Même règle pour la lampe. Page COMMANDES mise à jour.
 - Test du geste dans l'éditeur : visée vers l'avant = rien ; canon à gauche = affiché (aussi un peu relevé) ; canon à droite = rien ; simplement roulé sur l'axe = rien ; à 80 cm = rien. Scène inchangée (pas de reconstruction ni de recuisson). **Pas testé au casque.**
+
+---
+
+## 119 — Inspection plus souple et prise des armes
+
+**Date** : 2026-10-22 · **Domaine** : Gameplay
+
+> Par moments c'est un poil capricieux
+>
+> Et aussi il faudrait patch le placement de l'arme quand on la prend dans la main, même la ache se retrouve un peu décalé quand je prend dans la ain
+
+(avec une capture du casque : pistolet tenu, sa crosse à côté du poing)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Inspection (`InspectHud`) : seuils assouplis (60 cm au lieu de 50, cône de 50° au lieu de 40, canon à 60° de la gauche au lieu de 45°). La direction du canon est lue vue de dessus dans le repère de la tête : on peut relever ou baisser l'arme. Une fois le panneau affiché, les seuils sont élargis de 25 % et le panneau reste 0,35 s après la perte du geste : il ne clignote plus à la limite.
+- Prise : mesure du maillage du poing fermé (main droite, repère de la manette). Le point d'accroche des deux mains était 1,5 cm trop vers le pouce et 2,5 cm trop en avant : (±0,015 ; −0,135 ; 0,025) → (±0,03 ; −0,13 ; 0) (`SetupVRScene`). Vaut pour tous les objets.
+- Hache, pied-de-biche, marteau : la prise était calée sur le centre du maillage, décalé par le fer (7,3 cm du manche pour la hache, 3,1 cm pour le pied-de-biche). Elle suit maintenant l'axe réel du manche, mesuré sur une tranche (`RoomBuilder.HandleAxis`), comme le collider du manche.
+- Vérifié en mode Play avec une main simulée en poing fermé : la crosse du pistolet et le manche de la hache passent dans le poing (captures de côté, de dos, de dessus). MainScene reconstruite, éclairage recuit. **Pas testé au casque.**
+- Wiki : Mains et prise des objets (section « Correction de la prise »), Inspection des objets.
 

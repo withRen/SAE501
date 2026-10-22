@@ -82,7 +82,7 @@ public abstract partial class AmberMenu
         Callout(p, true, PtGrip, -0.09f, "GRIP", GripText);
 
         UiKit.Text(p, "Ceinture", new Vector2(0f, -0.33f), Tc, UiKit.Dim,
-                   "Ceinture : pistolet à droite, marteau à gauche, chargeur devant.\n"
+                   "Ceinture : pistolet à droite, chargeur à gauche. Marteau sur l'établi.\n"
                    + "Recharger : glisser le chargeur sous la poignée du pistolet.");
     }
 
@@ -145,7 +145,7 @@ public abstract partial class AmberMenu
         Row(p, -0.1f, ref y, new[] { "E" }, "E", "Prendre / lâcher (main droite)");
         Row(p, -0.1f, ref y, new[] { "F" }, "F", "Utiliser l'objet de la main\ngauche (lampe)");
         Row(p, -0.1f, ref y, new[] { "R" }, "R", "Recharger (chargeur, pile)");
-        Row(p, -0.1f, ref y, new[] { "1", "2", "3" }, "1  2  3", "Pistolet, marteau,\nlampe (ceinture)");
+        Row(p, -0.1f, ref y, new[] { "1", "2", "3" }, "1  2  3", "Pistolet, marteau\n(à portée), lampe");
         Row(p, -0.1f, ref y, new[] { "N" }, "N", "Tutoriel : passer une étape");
         Row(p, -0.1f, ref y, new[] { "F1" }, "F1", "Aide à l'écran");
 

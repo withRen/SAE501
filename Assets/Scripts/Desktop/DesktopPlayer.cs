@@ -304,12 +304,14 @@ public class DesktopPlayer : MonoBehaviour
     }
 
     // touches 1 / 2 / 3 : sortir l'objet de la ceinture (ou l'y ranger s'il est déjà en main)
+    // le marteau n'a pas de holster : la touche 2 le prend s'il est posé à portée
     void FromBelt(Hand h, BeltItemType type)
     {
         var heldItem = h.HeldItem<BeltItem>();
         if (heldItem && heldItem.type == type) { Release(h); return; }
         var socket = Socket(type);
         var item = socket && socket.hasSelection ? socket.firstInteractableSelected as XRGrabInteractable : null;
+        if (!item && type == BeltItemType.Hammer) { var hm = Nearest<Hammer>(); if (hm) item = hm.GetComponent<XRGrabInteractable>(); }
         if (!item) return;
         if (h.Held != null) Release(h);
         Grab(h, item, item.colliders.Count > 0 && item.colliders[0] ? item.colliders[0].bounds.center : item.transform.position);
@@ -452,7 +454,7 @@ public class DesktopPlayer : MonoBehaviour
             "Clic gauche : tirer, frapper (marteau), appuyer\n" +
             "Clic droit : prendre / lâcher (main gauche)\n" +
             "F : utiliser l'objet de la main gauche (lampe)\n" +
-            "1 : pistolet · 2 : marteau · 3 : lampe (ceinture)\n" +
+            "1 : pistolet · 2 : marteau (à portée) · 3 : lampe\n" +
             "R : recharger (chargeur / pile)\n" +
             "Levier, porte : E puis regarder / reculer\n" +
             "B ou Entrée (maintenir) : passer l'attente\n" +

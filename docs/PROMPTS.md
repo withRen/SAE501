@@ -122,6 +122,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [112](#112--vraies-portes) | 2026-10-21 | Vraie texture de porte au lieu des portes low poly | Carte | Texture de porte à panneaux produite (bois peint écaillé des portes du fichier) ; appliquée aux 4 portes de niveau, double porte pour les passages larges |
 | [113](#113--fondu-de-début-et-menu-des-commandes) | 2026-10-22 | Fondu au début de la partie, menu qui explique les touches | Interface | Fondu depuis le noir (VR et PC) ; page COMMANDES dans le menu d'accueil et le menu pause : manettes Quest 3 avec traits de rappel, clavier et souris |
 | [114](#114--modèle-de-la-clé) | 2026-10-22 | Clé : modèle ou texture gratuits, sources dans le wiki | Graphisme | Clé en fer rouillé : modèle Quaternius (CC0) et texture Poly Haven rusty_metal_04 (CC0), sans lueur ; page wiki Textures et modèles |
+| [115](#115--ceinture-chargeur-et-marteau) | 2026-10-22 | Ceinture : 1 chargeur, rayon pour reposer le pistolet, marteau sur la table | Gameplay | Holster du chargeur à la hanche gauche (rayon 14 cm), pistolet 16 cm, lampe 12 cm ; plus de marteau à la ceinture, posé sur l'établi du bunker |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2085,3 +2086,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `RoomBuilder.UseIronKey` remplace `UseOrnateKey` ; `prep_key.py` nomme le maillage d'après le fichier exporté. Anciens fichiers `Cle_Ornee` supprimés.
 - MainScene reconstruite, éclairage recuit, vérifié par capture dans l'éditeur. **Pas testé au casque.** Page wiki mise à jour (avec l'historique de la première version).
 
+---
+
+## 115 — Ceinture, chargeur et marteau
+
+**Date** : 2026-10-22 · **Domaine** : Gameplay
+
+> Le système de ceinture est un peu compliqué pour y reposer des items (Rajoute le fait qu'on puisse porter 1 chargeur en même temps, que ce soit celui de base ou un récup sur la map, patch le rayon, parce que actuellement c'est trop compliqué de reposer le pistolet)
+> Et pour le marteau, dégage le de la ceinture et fait en sorte qu'il soit posé au début de la game sur la table
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Le holster du chargeur existait déjà (devant, rayon 9 cm) et acceptait tout chargeur, mais il était difficile à trouver. Il passe à la **hanche gauche**, à la place du marteau, avec un rayon de **14 cm**. Il porte **un seul chargeur** : celui de départ ou n'importe quel chargeur ramassé (carte, radio).
+- Rayons des holsters élargis (`RoomBuilder.MakeSocket` prend maintenant le rayon) : pistolet **9 → 16 cm**, lampe 9 → 12 cm. Le rangement se fait toujours en lâchant l'objet près de la hanche (`GrabGuard` empêche toujours le holster d'aspirer un objet tenu).
+- Marteau : plus de holster. Il est **posé à plat sur l'établi du bunker** au début de la partie (`BuildHammer`). Textes mis à jour : tutoriel (étape 3 « posé sur l'établi », étape 8 « à gauche »), page COMMANDES, aide PC. Version PC : la touche 2 prend le marteau s'il est à portée.
+- MainScene reconstruite, éclairage recuit. Vérifié en mode Play dans l'éditeur : un chargeur de la carte lâché à 11 cm du holster s'y range, le pistolet lâché à 14 cm aussi, le marteau reste couché sur l'établi (capture). **Pas testé au casque** : le bon rayon dépend du ressenti à la manette.
+- Page wiki **Ceinture** créée, Tutoriel et Pistolet mis à jour.

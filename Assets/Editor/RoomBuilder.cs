@@ -42,7 +42,7 @@ public static class RoomBuilder
     {
         if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets", "Generated");
         // références gardées d'une reconstruction à l'autre : après un réimport de la carte elles pointeraient vers d'anciens matériaux (planches roses)
-        plankMesh = null; plankMats = null; hammerGrab = null;
+        plankMesh = null; plankMats = null;
         MakeMaterials();
         EnsureFxMaterials();
         blockM = Mat("Blockout", new Color(0.05f, 0.05f, 0.055f));
@@ -1164,8 +1164,6 @@ public static class RoomBuilder
         return null;
     }
 
-    static XRGrabInteractable hammerGrab;
-
     static void BuildHammer(Transform node)
     {
         var mesh = node.GetComponent<MeshFilter>().sharedMesh;
@@ -1196,9 +1194,10 @@ public static class RoomBuilder
         Vector3 axisDir = Vector3.zero; axisDir[ax] = headHigh ? 1f : -1f;
         var q = Quaternion.FromToRotation(axisDir, Vector3.up);
 
+        // [ceinture] le marteau n'est plus à la ceinture : il est posé à plat sur l'établi du bunker au début de la partie
         var h = new GameObject("Hammer");
         h.transform.SetParent(items, false);
-        h.transform.position = pos + new Vector3(0, 0.08f, 0);
+        h.transform.SetPositionAndRotation(new Vector3(pos.x, pos.y - 0.07f, pos.z), Quaternion.Euler(0f, 20f, 90f));
         var vis = new GameObject("Visual");
         vis.transform.SetParent(h.transform, false);
         vis.transform.localRotation = q;
@@ -1225,7 +1224,7 @@ public static class RoomBuilder
         attach.localPosition = new Vector3(0, -len * 0.18f, 0);
 
         h.AddComponent<Rigidbody>();
-        hammerGrab = MakeGrab(h, attach);
+        MakeGrab(h, attach);
         h.AddComponent<BeltItem>().type = BeltItemType.Hammer;
         h.AddComponent<Hammer>();
     }
@@ -1466,14 +1465,14 @@ public static class RoomBuilder
     }
 
     // ---------- ceinture + kit ----------
-    static BeltSocket MakeSocket(Transform belt, string name, Vector3 localPos, BeltItemType type, XRGrabInteractable start)
+    static BeltSocket MakeSocket(Transform belt, string name, Vector3 localPos, BeltItemType type, XRGrabInteractable start, float radius)
     {
         var g = new GameObject(name);
         g.transform.SetParent(belt, false);
         g.transform.localPosition = localPos;
         var sc = g.AddComponent<SphereCollider>();
         sc.isTrigger = true;
-        sc.radius = 0.09f;
+        sc.radius = radius;
         var s = g.AddComponent<BeltSocket>();
         s.accepts = type;
         s.showInteractableHoverMeshes = false;
@@ -1494,12 +1493,13 @@ public static class RoomBuilder
 
         var pistol = MakePistol(B + new Vector3(0.22f, 0f, 0.02f));
         var light = MakeFlashlight(B + new Vector3(0.2f, 0f, -0.12f));
-        var mag = MakeMagazine(B + new Vector3(-0.1f, 0f, 0.18f));
+        var mag = MakeMagazine(B + new Vector3(-0.22f, 0f, 0f));
 
-        MakeSocket(belt.transform, "Holster_Pistol", new Vector3(0.22f, 0f, 0.02f), BeltItemType.Pistol, pistol);
-        MakeSocket(belt.transform, "Holster_Hammer", new Vector3(-0.24f, 0f, -0.08f), BeltItemType.Hammer, hammerGrab);
-        MakeSocket(belt.transform, "Holster_Flashlight", new Vector3(0.2f, 0f, -0.12f), BeltItemType.Flashlight, light);
-        MakeSocket(belt.transform, "Holster_Magazine", new Vector3(-0.1f, 0f, 0.18f), BeltItemType.Magazine, mag);
+        // [ceinture] rayons élargis (avant : 9 cm partout) : on range le pistolet en le lâchant à environ 16 cm de la hanche droite.
+        // Le marteau n'a plus de holster ; le chargeur prend sa place à la hanche gauche (1 seul, celui du départ ou un ramassé).
+        MakeSocket(belt.transform, "Holster_Pistol", new Vector3(0.22f, 0f, 0.02f), BeltItemType.Pistol, pistol, 0.16f);
+        MakeSocket(belt.transform, "Holster_Flashlight", new Vector3(0.2f, 0f, -0.12f), BeltItemType.Flashlight, light, 0.12f);
+        MakeSocket(belt.transform, "Holster_Magazine", new Vector3(-0.22f, 0f, 0f), BeltItemType.Magazine, mag, 0.14f);
     }
 
     static Material SmokeMat()

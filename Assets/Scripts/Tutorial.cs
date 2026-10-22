@@ -129,7 +129,7 @@ public class Tutorial : MonoBehaviour
             () => NewPlank(p => p.InSlot), () => NearestFreeSlot(sw, se), "ICI");
 
         if (hammer)
-            yield return Step(3, total, "Gardez la planche en place.\nAvec l'autre main, prenez le marteau\naccroché à votre ceinture (à gauche).",
+            yield return Step(3, total, "Gardez la planche en place.\nAvec l'autre main, prenez le marteau\nposé sur l'établi.",
                 () => Hammer.Held || NewPlank(p => p.state == Plank.State.Nailed),
                 () => hammer ? hammer.transform.position : (Vector3?)null, "MARTEAU");
 
@@ -161,7 +161,7 @@ public class Tutorial : MonoBehaviour
 
             EnsureMagazineAvailable();
             int ammoBefore = pistol.ammo;
-            yield return Step(8, total, "Rechargez : prenez le chargeur\nà votre ceinture (devant)\net glissez-le sous la poignée du pistolet.",
+            yield return Step(8, total, "Rechargez : prenez le chargeur\nà votre ceinture (à gauche)\net glissez-le sous la poignée du pistolet.",
                 () => pistol == null || pistol.ammo > ammoBefore,
                 () => MagazinePosition(), "CHARGEUR");
             RestoreMagazine();

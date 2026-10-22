@@ -1,6 +1,8 @@
 # The Last Escapor
 
-![The Last Escapor : le bunker barricadé de nuit, des zombies aux yeux rouges approchent](docs/images/cover.png)
+![The Last Escapor : des zombies aux yeux rouges bloqués derrière la grille en fer forgé du jardin, de nuit](docs/images/cover.png)
+
+Logo et icônes du jeu (desktop, mobile, Quest) : [docs/images/branding/](docs/images/branding/)
 
 > Seul dans un bunker sombre, tu barricades les ouvertures à coups de marteau et tu tires sur les zombies qui arrivent par les couloirs, en surveillant les caméras.
 

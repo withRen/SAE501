@@ -130,6 +130,9 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [120](#120--rechargement-facilité) | 2026-10-22 | Recharger trop compliqué, le chargeur traverse le pistolet | Gameplay | Zone du puits 5 → 8 cm ; rechargement par proximité (9 cm) avec le trajet du chargeur entre deux images |
 | [121](#121--croix-pour-passer-le-tutoriel) | 2026-10-22 | Croix pour passer le tutoriel | Interface | Croix en haut à droite des panneaux du tutoriel : visée main vide + gâchette (PC : réticule + clic) ; A + X 2 s toujours possible |
 | [122](#122--retour-de-dégâts-et-direction-du-coup) | 2026-10-22 | Accentuer les dégâts reçus + indicateur de direction | Gameplay / Ressenti | Arc rouge du côté du zombie (suit la tête), bord rouge de ce côté, flash selon les dégâts, son du coup + griffure spatialisée, battement de cœur sous 25 %, vibration plus forte côté zombie ; VR et PC |
+| [123](#123--cover-et-logo-du-jeu) | 2026-10-22 | Refaire la cover du jeu et faire un logo simple (desktop, mobile, Quest) | Communication | Cover refaite depuis la cinématique de fin (zombies derrière la grille), 3 formats ; logo « fenêtre barricadée + yeux rouges », icônes 16 à 1024 px, .ico, .icns, logotypes ; fait par l'IA |
+| [124](#124--grille-de-la-cover-plus-détaillée) | 2026-10-22 | La grille de la cover fait low poly | Communication | Grille redessinée en 2D (fer forgé, rouille, rivets) ; modèle 3D du jeu inchangé |
+| [125](#125--cover-et-logo-poussés-sur-github) | 2026-10-22 | Mettre à jour le GitHub | GitHub | Cover et logo poussés sur `main` (f9966d6) |
 | [126](#126--mise-à-jour-du-gdd) | 2026-10-22 | Mettre à jour le GDD (.docx) avec l'état actuel du jeu | Documents | GDD réécrit par l'IA dans sa mise en forme : 4 niveaux au lieu de 5 vagues, mode Vagues infinies, radio, ceinture, inspection, contrôles, flow, feedbacks, UI ; nouveau fichier `GDD The last escapor - 2026-10-22.docx` |
 | [127](#127--son-et-titre-de-début-de-vague) | 2026-10-22 | Son à chaque début de vague + « Vague N » au milieu de l'écran | Gameplay / Ressenti | Chuchotement (SOUND BAG, YouTube) découpé à 4 s ; « VAGUE N » collé à la vue, fondu 1 s / 1,5 s visible / fondu 1,5 s, calé sur le son ; crédits README et wiki |
 | [128](#128--titre-de-vague-en-lettres-de-sang) | 2026-10-22 | « VAGUE N » en lettres de sang, police libre de droits | Interface | Police Nosifer (OFL, usage commercial permis), rouge sang + ombre noire ; crédits README et wiki |
@@ -2246,6 +2249,47 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Confort VR : rien ne bouge la caméra (pas de secousse). Même rendu en version PC (même caméra). Scripts et shader seulement : scène ni reconstruite ni recuite.
 - Vérifié en mode Play : coups simulés venant de la gauche et de derrière → arcs à gauche et en bas, événement reçu, PV corrects ; captures. **Pas testé au casque** (vibrations, son spatialisé, lisibilité des arcs dans chaque œil).
 - Wiki : page Vignettage de dégâts (section « Retour de coup et direction »).
+
+---
+
+## 123 — Cover et logo du jeu
+
+**Date** : 2026-10-22 · **Domaine** : Communication
+
+> Refait moi l'image de cover du jeu (Et fait moi un logo aussi, je veux un truc simple pour le logo, ça doit être un truc logo pour une version desktop / mobile / quest)
+
+**Résultat** (image produite par l'IA, Claude, en Python/Pillow + rendu SVG/HTML dans Chromium)
+
+- **Cover** refaite à partir d'une image de la cinématique de fin (les zombies bloqués derrière la grille du jardin) : étalonnage nuit, yeux rouges ajoutés, titre THE LAST / ESCAPOR (polices Anton + Barlow Condensed). Formats 1280x640 (aperçu GitHub, `docs/images/cover.png`), 2560x1280 et 1920x1080.
+- **Logo** : deux planches clouées (fenêtre barricadée) avec deux yeux rouges dans la fente. Couleurs nuit `#06090F` / `#18233A`, os `#ECE4D3`, rouge `#FF3B2F`.
+- Icônes de 16 à 1024 px (version simplifiée sous 64 px), `.ico` Windows, `.icns` macOS, icône adaptative Android, logotypes horizontal et vertical. Fichiers dans `docs/images/branding/` (voir `LISEZMOI.md`).
+
+---
+
+## 124 — Grille de la cover plus détaillée
+
+**Date** : 2026-10-22 · **Domaine** : Communication
+
+> La grille fait low poly, corrige ça, je veux une grille plus détaillée
+
+**Résultat** (fait par l'IA, Claude)
+
+- Grille de la cover redessinée en 2D : 17 barreaux ronds en fer forgé, reflet, grain, rouille, bagues, traverse biseautée rivetée, plaque à 4 boulons.
+- Le modèle 3D de la grille dans le jeu n'a pas changé.
+
+---
+
+## 125 — Cover et logo poussés sur GitHub
+
+**Date** : 2026-10-22 · **Domaine** : GitHub
+
+> Niquel, met à jour le github
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Nouvelle `docs/images/cover.png`, dossier `docs/images/branding/` (covers, icônes, logos, `LISEZMOI.md`) et lien dans le `README.md`, poussés sur `main` (commit `f9966d6`) en avance rapide depuis un worktree séparé (la branche `feature/ceinture-marteau` n'est pas touchée).
+- `docs/images/branding/LISEZMOI.md` corrigé ensuite pour décrire le dossier à plat tel qu'il est poussé (il citait des sous-dossiers absents).
+- L'aperçu social GitHub (Settings > General > Social preview) reste à changer à la main.
 
 ---
 

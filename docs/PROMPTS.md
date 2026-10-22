@@ -131,6 +131,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [121](#121--croix-pour-passer-le-tutoriel) | 2026-10-22 | Croix pour passer le tutoriel | Interface | Croix en haut à droite des panneaux du tutoriel : visée main vide + gâchette (PC : réticule + clic) ; A + X 2 s toujours possible |
 | [122](#122--retour-de-dégâts-et-direction-du-coup) | 2026-10-22 | Accentuer les dégâts reçus + indicateur de direction | Gameplay / Ressenti | Arc rouge du côté du zombie (suit la tête), bord rouge de ce côté, flash selon les dégâts, son du coup + griffure spatialisée, battement de cœur sous 25 %, vibration plus forte côté zombie ; VR et PC |
 | [126](#126--mise-à-jour-du-gdd) | 2026-10-22 | Mettre à jour le GDD (.docx) avec l'état actuel du jeu | Documents | GDD réécrit par l'IA dans sa mise en forme : 4 niveaux au lieu de 5 vagues, mode Vagues infinies, radio, ceinture, inspection, contrôles, flow, feedbacks, UI ; nouveau fichier `GDD The last escapor - 2026-10-22.docx` |
+| [127](#127--son-et-titre-de-début-de-vague) | 2026-10-22 | Son à chaque début de vague + « Vague N » au milieu de l'écran | Gameplay / Ressenti | Chuchotement (SOUND BAG, YouTube) découpé à 4 s ; « VAGUE N » collé à la vue, fondu 1 s / 1,5 s visible / fondu 1,5 s, calé sur le son ; crédits README et wiki |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2261,3 +2262,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Ajouté : mode Vagues infinies (tableau et plafonds), radio de ravitaillement, munitions, difficulté, tableau des commandes casque / PC (le schéma des manettes de la v1 est gardé, avec une note), inspection des balles et de la pile, fondu de début, page COMMANDES, croix du tutoriel, options de confort (téléportation, saut, prise), brouillard ; sections vides remplies : Flow, Mécaniques diverses, Core gameplay, Micro boucles, Level design (zones), Signes et feedbacks, UI (avec une capture de l'inspection), Atmosphère ; nouveaux sons ; couleur du brouillard dans la palette.
 - Sommaire : Word recalcule les numéros de page à l'ouverture (accepter la mise à jour des champs).
 - Vérifié : rendu des 29 pages en PDF (LibreOffice). Les valeurs sont celles du code en Normal, **pas mesurées au casque**.
+
+---
+
+## 127 — Son et titre de début de vague
+
+**Date** : 2026-10-22 · **Domaine** : Gameplay / Ressenti
+
+> Rajoute à chaque début de vagues ce sont :
+> https://youtube.com/shorts/YyluAyugj4s?si=MYkwLI0k4qUBj3bA (Rajoute le dans les crédits aussi et dans le wiki)
+> Et fait en sorte qu'il y ai le message "Vague" suivi du numéro de la vague au milieu de l'écran du joueur pendant genre 1.5 secondes avec un effet de fade-in fade-out le tout dure 4s (le temps du sons en rythme avec)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Son : « Creepy Whisper Sound Effect 13 » de SOUND BAG, récupéré avec yt-dlp (4,5 s). La description de la vidéo autorise l'usage personnel et non commercial (projet étudiant : OK ; usage commercial interdit sans licence). Découpé à 4 s, mono, fondu final 0,4 s : `Assets/Resources/Audio/Vague_Debut.ogg` (chargé par `Resources.Load`, pas besoin de reconstruire la scène).
+- Nouveau script `WaveTitle` : « VAGUE N » en rouge au milieu de la vue (collé à la tête, à 1,2 m, dessiné par-dessus le décor ; même rendu en version PC). Calé sur le son mesuré (montée jusqu'à 1 s, pleine voix jusqu'à 2,5 s, extinction) : fondu d'apparition 1 s, 1,5 s bien visible, fondu de disparition 1,5 s, 4 s au total. Joué par `WaveManager.StartLevel` à chaque vague (aussi en mode survie). L'alarme de début de vague et l'annonce sur l'écran du bunker sont gardées.
+- Crédits : README (section Crédits) et wiki (page Crédits des sons, page Niveaux et vagues).
+- Vérifié en mode Play : son chargé (4,0 s), titre « VAGUE 3 » affiché au centre de la vue (capture). Scripts et son seulement : scène ni reconstruite ni recuite. **Pas testé au casque.**
+

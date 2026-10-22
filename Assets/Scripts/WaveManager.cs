@@ -111,6 +111,7 @@ public class WaveManager : MonoBehaviour
     Coroutine bannerRoutine;
     AudioSource sfx;
     AudioClip alarm;
+    WaveTitle title;            // « VAGUE N » au milieu de la vue + son de début de vague
 
     public TextMesh StatusText => status;
 
@@ -176,6 +177,7 @@ public class WaveManager : MonoBehaviour
         sfx = gameObject.AddComponent<AudioSource>();
         sfx.playOnAwake = false; sfx.spatialBlend = 0f;
         alarm = ProcAudio.Alarm();
+        title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
         if (startClip) sfx.PlayOneShot(startClip, startVolume);
         if (Resumed) Announce("REPRISE AU NIVEAU " + startLevel + "\nBarricadez-vous :\nla vague arrive dans " + Mathf.CeilToInt(firstDelay) + " s.", 8f);
         if (PlayerHealth.Instance) PlayerHealth.Instance.Died += OnPlayerDied;
@@ -244,6 +246,8 @@ public class WaveManager : MonoBehaviour
         ZoneGate.UpdateAll(Level);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
         if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
+        if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
+        if (title) title.Show(Level);
         if (Endless) EndlessRecord.Submit(Level, GameStats.Time);
         Announce((Endless ? EndlessBanner(Level) : cur.banner) + ZonesOpenedText(Level), 8f);
     }

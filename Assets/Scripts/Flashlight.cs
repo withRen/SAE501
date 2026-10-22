@@ -11,14 +11,14 @@ public class Flashlight : MonoBehaviour
     public float baseIntensity = 12f;
 
     bool on;
-    float barLength;
+    float barLength, barZ;
     XRGrabInteractable grab;
 
     void Awake()
     {
         grab = GetComponent<XRGrabInteractable>();
         grab.activated.AddListener(_ => { if (BeltItem.InHand(grab) && level > 0f) on = !on; });
-        if (bar) barLength = bar.localScale.z;
+        if (bar) { barLength = bar.localScale.z; barZ = bar.localPosition.z; }
     }
 
     void Update()
@@ -49,7 +49,7 @@ public class Flashlight : MonoBehaviour
             s.z = Mathf.Max(0.001f, barLength * level);
             bar.localScale = s;
             var p = bar.localPosition;
-            p.z = -barLength * 0.5f * (1f - level);
+            p.z = barZ - barLength * 0.5f * (1f - level);          // la barre se vide vers l'avant, depuis sa place sur le manche
             bar.localPosition = p;
         }
     }

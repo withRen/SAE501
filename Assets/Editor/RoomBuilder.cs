@@ -1820,29 +1820,69 @@ public static class RoomBuilder
         return grab;
     }
 
+    // Lampe : avant, deux cylindres. Maintenant « Small Plastic Torch » de Poly Haven (Abiyyu Panggalih, CC0, lampe jaune usée de 23 cm),
+    // allégée à 6 000 triangles par Tools/blender/prep_torch.py (Assets/Lampe). Le verre est à -Z dans le FBX : le modèle est tourné
+    // pour éclairer vers +Z et descendu pour que l'axe du faisceau passe par l'origine (comme l'ancienne lampe).
+    const string TorchDir = "Assets/Lampe";
     static XRGrabInteractable MakeFlashlight(Vector3 pos)
     {
         var f = new GameObject("Flashlight");
         f.transform.SetParent(items, false);
         f.transform.position = pos;
-        var body = Prim(PrimitiveType.Cylinder, "Body", f.transform, Vector3.zero, new Vector3(0.04f, 0.08f, 0.04f), darkM, new Vector3(90, 0, 0));
-        Prim(PrimitiveType.Cylinder, "Head", f.transform, new Vector3(0, 0, 0.09f), new Vector3(0.06f, 0.02f, 0.06f), metalM, new Vector3(90, 0, 0));
+        var mesh = AssetDatabase.LoadAllAssetsAtPath(TorchDir + "/Lampe_Torche.fbx").OfType<Mesh>().FirstOrDefault();
+        float front = 0.1f, back = -0.1f, gaugeY = 0.026f;
         var bc = f.AddComponent<BoxCollider>();
-        bc.size = new Vector3(0.05f, 0.05f, 0.2f);
-        bc.center = new Vector3(0, 0, 0.02f);
+        if (mesh)
+        {
+            // centre du verre (2e sous-maillage) = axe du faisceau ; la dragonne (ce qui dépasse de plus de 3,4 cm de l'axe)
+            // doit pendre sous la lampe, l'interrupteur dessus : on tourne le modèle autour de son axe en conséquence
+            var v = mesh.vertices; var glass = mesh.GetIndices(1); var gc = Vector3.zero;
+            foreach (var i in glass) gc += v[i];
+            gc /= glass.Length;
+            var cord = Vector2.zero;
+            foreach (var p in v) { var d = new Vector2(p.x - gc.x, p.y - gc.y); if (d.magnitude > 0.034f) cord += d; }
+            float roll = cord.sqrMagnitude > 0f ? -90f - Mathf.Atan2(cord.y, cord.x) * Mathf.Rad2Deg : 0f;
+            var rot = Quaternion.Euler(0f, 180f, 0f) * Quaternion.Euler(0f, 0f, roll);
+            var mn = Vector3.one * 1e9f; var mx = -mn;
+            // boîte du corps seulement (sans la dragonne) : collider et longueur de la lampe
+            foreach (var p in v) { if (new Vector2(p.x - gc.x, p.y - gc.y).magnitude > 0.034f) continue; var q = rot * (p - gc); mn = Vector3.Min(mn, q); mx = Vector3.Max(mx, q); }
+            var vis = new GameObject("Visual");
+            vis.transform.SetParent(f.transform, false);
+            vis.transform.localRotation = rot;
+            vis.transform.localPosition = -(rot * gc) - new Vector3(0f, 0f, (mn.z + mx.z) / 2f);
+            vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var glassM = Mat("Lampe_Torche_Verre", new Color(0.8f, 0.8f, 0.76f), 0.95f);
+            vis.AddComponent<MeshRenderer>().sharedMaterials = new[] { TexturedMat("Lampe_Torche", TorchDir, "Lampe_Torche"), glassM };
+            float zc = (mn.z + mx.z) / 2f;
+            front = mx.z - zc; back = mn.z - zc;
+            bc.size = mx - mn; bc.center = new Vector3((mn.x + mx.x) / 2f, (mn.y + mx.y) / 2f, 0f);
+            // jauge posée sur le dessus du manche (point le plus haut de la moitié arrière)
+            float top = 0f;
+            foreach (var p in v) { var q = rot * (p - gc); q.z -= zc; if (q.z < -0.03f && q.z > back + 0.02f) top = Mathf.Max(top, q.y); }
+            gaugeY = top + 0.002f;
+        }
+        else
+        {
+            Debug.LogWarning("[RoomBuilder] Assets/Lampe/Lampe_Torche.fbx introuvable : lampe en cylindres");
+            Prim(PrimitiveType.Cylinder, "Body", f.transform, Vector3.zero, new Vector3(0.04f, 0.08f, 0.04f), darkM, new Vector3(90, 0, 0));
+            Prim(PrimitiveType.Cylinder, "Head", f.transform, new Vector3(0, 0, 0.09f), new Vector3(0.06f, 0.02f, 0.06f), metalM, new Vector3(90, 0, 0));
+            bc.size = new Vector3(0.05f, 0.05f, 0.2f);
+            bc.center = new Vector3(0, 0, 0.02f);
+        }
 
-        var bar = Box("BatteryBar", f.transform, new Vector3(0, 0.026f, 0), new Vector3(0.01f, 0.004f, 0.1f), lightM, false);
+        // jauge de charge (Flashlight.bar) : une fine barre lumineuse sur le manche, côté arrière
+        var bar = Box("BatteryBar", f.transform, new Vector3(0, gaugeY, back * 0.55f), new Vector3(0.008f, 0.003f, 0.07f), lightM, false);
 
         var port = new GameObject("BatteryPort");
         port.transform.SetParent(f.transform, false);
-        port.transform.localPosition = new Vector3(0, 0, -0.1f);
+        port.transform.localPosition = new Vector3(0, 0, back);
         var sc = port.AddComponent<SphereCollider>();
         sc.isTrigger = true;
         sc.radius = 0.07f;
 
         var lg = new GameObject("Spot");
         lg.transform.SetParent(f.transform, false);
-        lg.transform.localPosition = new Vector3(0, 0, 0.1f);
+        lg.transform.localPosition = new Vector3(0, 0, front + 0.005f);
         var l = lg.AddComponent<Light>();
         l.type = LightType.Spot;
         l.range = 15f;
@@ -1857,7 +1897,7 @@ public static class RoomBuilder
         // prise fixe : le corps de la lampe dans la paume, le faisceau dans l'axe de la main
         var fAttach = new GameObject("Attach").transform;
         fAttach.SetParent(f.transform, false);
-        fAttach.localPosition = new Vector3(0f, 0f, -0.02f);
+        fAttach.localPosition = new Vector3(0f, 0f, back * 0.45f);   // main sur le manche, derrière la tête
 
         f.AddComponent<Rigidbody>();
         var grab = MakeGrab(f, fAttach);

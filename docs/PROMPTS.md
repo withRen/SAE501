@@ -124,6 +124,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [114](#114--modèle-de-la-clé) | 2026-10-22 | Clé : modèle ou texture gratuits, sources dans le wiki | Graphisme | Clé en fer rouillé : modèle Quaternius (CC0) et texture Poly Haven rusty_metal_04 (CC0), sans lueur ; page wiki Textures et modèles |
 | [115](#115--ceinture-chargeur-et-marteau) | 2026-10-22 | Ceinture : 1 chargeur, rayon pour reposer le pistolet, marteau sur la table | Gameplay | Holster du chargeur à la hanche gauche (rayon 14 cm), pistolet 16 cm, lampe 12 cm ; plus de marteau à la ceinture, posé sur l'établi du bunker |
 | [116](#116--objets-low-poly-remplacés) | 2026-10-22 | Retirer les objets low poly, modèles ou textures libres, sources dans le wiki | Graphisme | 6 bouteilles vertes remplacées par 2 modèles Poly Haven (CC0) ; piles en cubes remplacées par une pile D modélisée et texturée ; page wiki Textures et modèles |
+| [117](#117--lampe-torche-réaliste) | 2026-10-22 | Lampe torche : paquet Asset Store, puis modèle réaliste libre | Graphisme | Lampe en cylindres remplacée par Small Plastic Torch de Poly Haven (CC0) ; faisceau, jauge, port de pile et prise gardés |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2119,3 +2120,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Piles : pas de pile libre de droits en haute définition trouvée (Poly Haven n'en a pas). Pile créée : maillage de pile ronde type D (34 x 61 mm, chanfreins, téton du pôle +, 560 triangles) fait par `RoomBuilder.BatteryMesh`, texture d'étiquette militaire vert olive « BA-30 · pile alcaline 1,5 V » dessinée par `Tools/make_battery_texture.py` (Pillow, avec usure), dans `Assets/Pile/`. Collider en capsule. Rien n'a changé pour le jeu (prise, recharge de la lampe).
 - MainScene reconstruite, éclairage recuit, vérifié par captures dans l'éditeur. **Pas testé au casque.**
 - Page wiki **Textures et modèles** complétée (sources, auteurs, licences, liens, fichiers).
+
+---
+
+## 117 — Lampe torche réaliste
+
+**Date** : 2026-10-22 · **Domaine** : Graphisme
+
+> Tiens, voilà la lampe torche : https://assetstore.unity.com/packages/3d/props/furniture/electric-torch-224071
+
+> C'est bon
+
+> Bon bah créer moi en une ou telecharge moi en une avec un aspect réaliste comme dans le style du jeu (référence la aussi)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Paquet « Electric Torch » (Asset Store, gratuit) : il faut l'ajouter à son compte et le télécharger depuis le Package Manager ; il n'est jamais arrivé sur le Mac, donc pas utilisé.
+- Modèle choisi à la place : « Small Plastic Torch » de **Poly Haven** (https://polyhaven.com/a/small_plastic_torch), par **Abiyyu Panggalih**, **CC0** : vieille lampe en plastique jaune usée, 23 cm, avec dragonne. Comparé à Vintage Flashlight, Signal Flashlight et Plastic Torch 6V (Poly Haven), trop gros ou peu maniables pour une lampe tenue à une main.
+- `Tools/blender/prep_torch.py` : glTF 1k → FBX (`Assets/Lampe/`), longueur sur un axe, allégée de 13 252 à 6 000 triangles (Decimate). Textures 1k (couleur, normale, métal + lissage tiré de la carte ARM).
+- `RoomBuilder.MakeFlashlight` : le modèle remplace les deux cylindres. Il est tourné pour que le verre éclaire vers l'avant et que la dragonne pende dessous ; l'axe du faisceau passe par le centre du verre. Collider calé sur le corps (sans la dragonne), port de la pile à l'arrière, jauge de charge sur le dessus du manche, prise de la main sur le manche. `Flashlight.cs` : la jauge se vide depuis sa place (elle n'est plus forcément au centre de l'objet).
+- MainScene reconstruite, éclairage recuit, captures dans l'éditeur (lampe allumée, dragonne en bas). **Pas testé au casque** (prise en main, sens du faisceau).
+- Page wiki **Textures et modèles** complétée.

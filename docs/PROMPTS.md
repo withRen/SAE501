@@ -113,7 +113,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [102](#102--fusion-des-vagues-infinies-dans-main) | 2026-10-21 | Merger proprement le tout dans main | GitHub | `test/vagues-infinies` poussée dans `main` en avance rapide (e8aad93) ; PR #133 marquée fusionnée ; wiki poussé avec la page Mode survie |
 | [123](#123--cover-et-logo-du-jeu) | 2026-10-22 | Refaire la cover du jeu et faire un logo simple (desktop, mobile, Quest) | Communication | Cover refaite depuis la cinématique de fin (zombies derrière la grille), 3 formats ; logo « fenêtre barricadée + yeux rouges », icônes 16 à 1024 px, .ico, .icns, logotypes ; fait par l'IA |
 | [124](#124--grille-de-la-cover-plus-détaillée) | 2026-10-22 | La grille de la cover fait low poly | Communication | Grille redessinée en 2D (fer forgé, rouille, rivets) ; modèle 3D du jeu inchangé |
-| [125](#125--cover-et-logo-poussés-sur-github) | 2026-10-22 | Mettre à jour le GitHub | GitHub | Cover et logo poussés sur `main` |
+| [125](#125--cover-et-logo-poussés-sur-github) | 2026-10-22 | Mettre à jour le GitHub | GitHub | Cover et logo poussés sur `main` (f9966d6) |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -1922,5 +1922,5 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 **Résultat** (fait par l'IA, Claude Code)
 
-- Nouvelle `docs/images/cover.png`, dossier `docs/images/branding/` (covers, icônes, logos, `LISEZMOI.md`) et lien dans le `README.md`, poussés sur `main` en avance rapide depuis un worktree séparé (la branche `feature/ceinture-marteau` n'est pas touchée).
+- Nouvelle `docs/images/cover.png`, dossier `docs/images/branding/` (covers, icônes, logos, `LISEZMOI.md`) et lien dans le `README.md`, poussés sur `main` (commit `f9966d6`) en avance rapide depuis un worktree séparé (la branche `feature/ceinture-marteau` n'est pas touchée).
 - L'aperçu social GitHub (Settings > General > Social preview) reste à changer à la main.

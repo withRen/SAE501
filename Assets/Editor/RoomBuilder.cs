@@ -42,7 +42,7 @@ public static class RoomBuilder
     {
         if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets", "Generated");
         // références gardées d'une reconstruction à l'autre : après un réimport de la carte elles pointeraient vers d'anciens matériaux (planches roses)
-        plankMesh = null; plankMats = null;
+        plankMesh = null; plankMats = null; batteryMesh = null;
         MakeMaterials();
         EnsureFxMaterials();
         blockM = Mat("Blockout", new Color(0.05f, 0.05f, 0.055f));
@@ -89,6 +89,7 @@ public static class RoomBuilder
         var genCrowbarNode = Find(roomRoot.transform, "GenRoom_Crowbar");       // carte finale : établi de la salle du générateur
 
         BuildMapLights();
+        ReplaceLowPolyBottles(roomRoot.transform);
         MakeMapColliders(roomRoot.transform);
         SinkTerrainUnderFloors(roomRoot.transform);
         FixFloorDecals(roomRoot.transform);
@@ -437,6 +438,62 @@ public static class RoomBuilder
         m.EnableKeyword("_NORMALMAP"); m.EnableKeyword("_METALLICSPECGLOSSMAP");
         key.GetComponent<MeshFilter>().sharedMesh = mesh;
         key.GetComponent<MeshRenderer>().sharedMaterial = m;
+    }
+
+    // ---------- objets de décor low poly remplacés ----------
+    // Les 6 bouteilles vertes du fichier (Bottle_01, 84 triangles, couchées) sont remplacées par deux objets Poly Haven (CC0) :
+    // « Bleach Bottle » (bidon de javel, 4 052 triangles) et « Multi Cleaner Bottle » (flacon de nettoyant, 6 792 triangles),
+    // de James Ray Cock, en 1k, mis debout à leur taille réelle par Tools/blender/prep_prop.py. Posés debout à la place de la
+    // bouteille (même centre, même support), en alternant les deux modèles. La place au-dessus a été vérifiée (≥ 59 cm partout).
+    const string DecorDir = "Assets/Decor";
+    static void ReplaceLowPolyBottles(Transform root)
+    {
+        var models = new[] { PropModel("Bidon_Javel"), PropModel("Flacon_Nettoyant") };
+        if (models[0].mesh == null || models[1].mesh == null) { Debug.LogWarning("[RoomBuilder] Assets/Decor : modèles introuvables, bouteilles d'origine gardées"); return; }
+        int i = 0;
+        foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true))
+        {
+            if (!r.sharedMaterial || r.sharedMaterial.name != "BottleGlass") continue;
+            var b = r.bounds;
+            var (mesh, mat) = models[i++ % models.Length];
+            var t = r.transform;
+            t.SetPositionAndRotation(new Vector3(b.center.x, b.min.y, b.center.z), Quaternion.Euler(0f, t.eulerAngles.y, 0f));
+            t.localScale = Vector3.one;
+            t.GetComponent<MeshFilter>().sharedMesh = mesh;
+            r.sharedMaterial = mat;
+        }
+        Debug.Log($"[RoomBuilder] {i} bouteilles low poly remplacées");
+    }
+
+    static (Mesh mesh, Material mat) PropModel(string name)
+    {
+        var mesh = AssetDatabase.LoadAllAssetsAtPath($"{DecorDir}/{name}.fbx").OfType<Mesh>().FirstOrDefault();
+        return (mesh, mesh ? TexturedMat(name, DecorDir, name) : null);
+    }
+
+    // matériau Lit à partir de trois textures : {prefix}_couleur.jpg|png, {prefix}_normale.jpg, {prefix}_metal_lissage.png (R métal, A lissage)
+    static Material TexturedMat(string matName, string dir, string prefix)
+    {
+        Texture2D Tex(string suffix)
+        {
+            foreach (var ext in new[] { ".jpg", ".png" })
+            {
+                var t = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/{prefix}_{suffix}{ext}");
+                if (t) return t;
+            }
+            return null;
+        }
+        if (AssetImporter.GetAtPath($"{dir}/{prefix}_normale.jpg") is TextureImporter ni && ni.textureType != TextureImporterType.NormalMap)
+        { ni.textureType = TextureImporterType.NormalMap; ni.SaveAndReimport(); }
+        if (AssetImporter.GetAtPath($"{dir}/{prefix}_metal_lissage.png") is TextureImporter mi && mi.sRGBTexture)
+        { mi.sRGBTexture = false; mi.SaveAndReimport(); }
+        var m = Mat(matName, Color.white, 1f);
+        m.SetTexture("_BaseMap", Tex("couleur"));
+        var n = Tex("normale");
+        if (n) { m.SetTexture("_BumpMap", n); m.EnableKeyword("_NORMALMAP"); }
+        m.SetTexture("_MetallicGlossMap", Tex("metal_lissage"));
+        m.EnableKeyword("_METALLICSPECGLOSSMAP");
+        return m;
     }
 
     // ---------- lumières du fichier ----------
@@ -1100,7 +1157,7 @@ public static class RoomBuilder
         headM = Mat("HammerHead", new Color(0.35f, 0.36f, 0.38f), 0.5f);
         nailM = Mat("Nail", new Color(0.75f, 0.75f, 0.78f), 0.6f);
         lockerM = Mat("Locker", new Color(0.16f, 0.20f, 0.18f), 0.35f);
-        batteryM = Mat("Battery", new Color(0.25f, 0.45f, 0.30f));
+        batteryM = TexturedMat("Battery", "Assets/Pile", "pile");
         magM = Mat("Magazine", new Color(0.22f, 0.22f, 0.24f), 0.4f);
         lightM = Mat("FlashlightBar", new Color(0.9f, 0.8f, 0.3f), 0.1f, "Universal Render Pipeline/Unlit");
 
@@ -1381,18 +1438,72 @@ public static class RoomBuilder
         return p;
     }
 
+    // Pile : avant, deux cubes verts. Maintenant une pile ronde type D (34 x 61 mm, pôle + vers +Z) faite par BatteryMesh,
+    // habillée d'une étiquette militaire vert olive dessinée par Tools/make_battery_texture.py (Assets/Pile).
     static void MakeBattery(Vector3 pos)
     {
         var b = new GameObject("Battery");
         b.transform.SetParent(items, false);
         b.transform.position = pos;
-        var bc = b.AddComponent<BoxCollider>();
-        bc.size = new Vector3(0.03f, 0.03f, 0.06f);
-        Box("Visual", b.transform, Vector3.zero, new Vector3(0.03f, 0.03f, 0.06f), batteryM, false);
-        Box("Tip", b.transform, new Vector3(0, 0, 0.035f), new Vector3(0.012f, 0.012f, 0.01f), metalM, false);
+        b.transform.rotation = Quaternion.Euler(0f, Mathf.Repeat(pos.x * 97f + pos.z * 61f, 360f), 0f);   // couchée, orientation fixe mais variée
+        var bc = b.AddComponent<CapsuleCollider>();
+        bc.direction = 2; bc.radius = BatteryR; bc.height = BatteryL + 0.003f;
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(b.transform, false);
+        vis.AddComponent<MeshFilter>().sharedMesh = BatteryMesh();
+        vis.AddComponent<MeshRenderer>().sharedMaterial = batteryM;
         b.AddComponent<Rigidbody>();
         MakeGrab(b).useDynamicAttach = true;
         b.AddComponent<Battery>();
+    }
+
+    const float BatteryR = 0.017f, BatteryL = 0.061f;
+    static Mesh batteryMesh;
+    // cylindre tourné autour de Z à partir d'un profil (rayon, z, v) : fond chanfreiné, corps, épaulement, téton du pôle +.
+    // Chaque tronçon du profil a ses propres sommets : arêtes vives aux chanfreins, lisse autour de la pile.
+    static Mesh BatteryMesh()
+    {
+        if (batteryMesh) return batteryMesh;
+        const string path = "Assets/Generated/Pile_D.asset";
+        AssetDatabase.DeleteAsset(path);
+        float h = BatteryL / 2f, c = 0.0015f;
+        var prof = new (float r, float z, float v)[]
+        {
+            (0f, -h, 0.02f), (BatteryR - c, -h, 0.03f), (BatteryR, -h + c, 0.045f), (BatteryR, h - c, 0.935f),
+            (BatteryR - c, h, 0.95f), (0.0055f, h, 0.97f), (0.0045f, h + 0.0015f, 0.98f), (0f, h + 0.0015f, 0.99f),
+        };
+        const int N = 40;
+        var verts = new List<Vector3>(); var uvs = new List<Vector2>(); var tris = new List<int>();
+        for (int k = 0; k + 1 < prof.Length; k++)
+        {
+            int start = verts.Count;
+            for (int e = 0; e < 2; e++)
+            {
+                var p = prof[k + e];
+                for (int j = 0; j <= N; j++)
+                {
+                    float a = j / (float)N * Mathf.PI * 2f;
+                    verts.Add(new Vector3(Mathf.Cos(a) * p.r, Mathf.Sin(a) * p.r, p.z));
+                    uvs.Add(new Vector2(j / (float)N, p.v));
+                }
+            }
+            for (int j = 0; j < N; j++)
+            {
+                int a0 = start + j, a1 = a0 + 1, b0 = start + N + 1 + j, b1 = b0 + 1;
+                tris.AddRange(new[] { a0, a1, b0, a1, b1, b0 });
+            }
+        }
+        var m = new Mesh { name = "Pile_D" };
+        m.SetVertices(verts); m.SetUVs(0, uvs); m.SetTriangles(tris, 0);
+        m.RecalculateNormals(); m.RecalculateTangents(); m.RecalculateBounds();
+        // le profil tourne dans le sens qui met les faces vers l'intérieur : on vérifie avec la normale du corps
+        if (Vector3.Dot(m.normals[(N + 1) * 2 * 2], new Vector3(verts[(N + 1) * 2 * 2].x, verts[(N + 1) * 2 * 2].y, 0f)) < 0f)
+        {
+            for (int t = 0; t < tris.Count; t += 3) (tris[t + 1], tris[t + 2]) = (tris[t + 2], tris[t + 1]);
+            m.SetTriangles(tris, 0); m.RecalculateNormals(); m.RecalculateTangents();
+        }
+        AssetDatabase.CreateAsset(m, path);
+        return batteryMesh = m;
     }
 
     // UI diégétique de l'équipe : vignettage rouge selon les PV, écran noir + texte à la mort, puis relance de la scène

@@ -123,6 +123,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [113](#113--fondu-de-début-et-menu-des-commandes) | 2026-10-22 | Fondu au début de la partie, menu qui explique les touches | Interface | Fondu depuis le noir (VR et PC) ; page COMMANDES dans le menu d'accueil et le menu pause : manettes Quest 3 avec traits de rappel, clavier et souris |
 | [114](#114--modèle-de-la-clé) | 2026-10-22 | Clé : modèle ou texture gratuits, sources dans le wiki | Graphisme | Clé en fer rouillé : modèle Quaternius (CC0) et texture Poly Haven rusty_metal_04 (CC0), sans lueur ; page wiki Textures et modèles |
 | [115](#115--ceinture-chargeur-et-marteau) | 2026-10-22 | Ceinture : 1 chargeur, rayon pour reposer le pistolet, marteau sur la table | Gameplay | Holster du chargeur à la hanche gauche (rayon 14 cm), pistolet 16 cm, lampe 12 cm ; plus de marteau à la ceinture, posé sur l'établi du bunker |
+| [116](#116--objets-low-poly-remplacés) | 2026-10-22 | Retirer les objets low poly, modèles ou textures libres, sources dans le wiki | Graphisme | 6 bouteilles vertes remplacées par 2 modèles Poly Haven (CC0) ; piles en cubes remplacées par une pile D modélisée et texturée ; page wiki Textures et modèles |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2102,3 +2103,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Marteau : plus de holster. Il est **posé à plat sur l'établi du bunker** au début de la partie (`BuildHammer`). Textes mis à jour : tutoriel (étape 3 « posé sur l'établi », étape 8 « à gauche »), page COMMANDES, aide PC. Version PC : la touche 2 prend le marteau s'il est à portée.
 - MainScene reconstruite, éclairage recuit. Vérifié en mode Play dans l'éditeur : un chargeur de la carte lâché à 11 cm du holster s'y range, le pistolet lâché à 14 cm aussi, le marteau reste couché sur l'établi (capture). **Pas testé au casque** : le bon rayon dépend du ressenti à la manette.
 - Page wiki **Ceinture** créée, Tutoriel et Pistolet mis à jour.
+
+---
+
+## 116 — Objets low poly remplacés
+
+**Date** : 2026-10-22 · **Domaine** : Graphisme
+
+> Retire les éléments low poly que tu as rajouté et cherche des textures / GLB qui correspondent ou créer les, n'oublie pas de les référencer dans le wiki
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Objets visés (ceux visibles sur la capture de l'établi) : ils ne venaient pas du travail sur la ceinture, ils étaient déjà dans la carte. Les **6 bouteilles vertes** du fichier Blender (`Bottle_01`, 84 triangles, couchées : établi et bureau du bunker, cuisine, stockage) et les **4 piles** de la lampe (deux cubes verts faits par `RoomBuilder`).
+- Bouteilles : remplacées par deux modèles **Poly Haven** de **James Ray Cock** (**CC0**) en 1k : « Bleach Bottle » (https://polyhaven.com/a/bleach_bottle, 4 052 triangles, 29 cm) et « Multi Cleaner Bottle » (https://polyhaven.com/a/multi_cleaner_bottle, 6 792 triangles, 23 cm). `Tools/blender/prep_prop.py` les met debout, origine au fond, taille réelle, export FBX dans `Assets/Decor/` ; la carte ARM est convertie en carte métal + lissage pour Unity. `RoomBuilder.ReplaceLowPolyBottles` les pose debout à la place de chaque bouteille (place au-dessus vérifiée, au moins 59 cm), en alternant les deux.
+- Piles : pas de pile libre de droits en haute définition trouvée (Poly Haven n'en a pas). Pile créée : maillage de pile ronde type D (34 x 61 mm, chanfreins, téton du pôle +, 560 triangles) fait par `RoomBuilder.BatteryMesh`, texture d'étiquette militaire vert olive « BA-30 · pile alcaline 1,5 V » dessinée par `Tools/make_battery_texture.py` (Pillow, avec usure), dans `Assets/Pile/`. Collider en capsule. Rien n'a changé pour le jeu (prise, recharge de la lampe).
+- MainScene reconstruite, éclairage recuit, vérifié par captures dans l'éditeur. **Pas testé au casque.**
+- Page wiki **Textures et modèles** complétée (sources, auteurs, licences, liens, fichiers).

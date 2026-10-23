@@ -16,7 +16,6 @@ public static class MenuBuilder
     public const string ScenePath = "Assets/Scenes/Menu.unity";
     const string ImagePath = "Assets/Menu/MenuBackground.png";
     const string Dir = "Assets/Generated/Menu";
-    const string MusicPath = "Assets/Audio/Music/Musique_Menu.mp3";
 
     [MenuItem("SAE501/Build Menu Scene")]
     public static void Build()
@@ -130,20 +129,8 @@ public static class MenuBuilder
             mists.Add(q.transform);
         }
 
-        // ---------- musique du menu (en boucle, volume réglé par GameSettings / curseur Musique) ----------
-        var music = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicPath);
-        if (AssetImporter.GetAtPath(MusicPath) is AudioImporter ai)
-        {
-            var ss = ai.defaultSampleSettings;                    // lue en streaming, compressée en Vorbis (comme les musiques du jeu)
-            if (ss.loadType != AudioClipLoadType.Streaming || ss.compressionFormat != AudioCompressionFormat.Vorbis)
-            {
-                ss.loadType = AudioClipLoadType.Streaming; ss.compressionFormat = AudioCompressionFormat.Vorbis; ss.quality = 0.6f;
-                ai.defaultSampleSettings = ss; ai.SaveAndReimport();
-                music = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicPath);
-            }
-        }
-        if (music) new GameObject("Musique_Menu").AddComponent<MusicPlayer>().tracks = new[] { music };
-        else Debug.LogWarning("Musique du menu introuvable : " + MusicPath);
+        // ---------- musique du menu : pistes Musique_Menu* du dossier, en boucle (volume réglé par GameSettings / curseur Musique) ----------
+        MusicLibrary.Create("Musique_Menu", MusicLibrary.Menu);
 
         // ---------- menu et ambiance animée ----------
         new GameObject("Menu").AddComponent<MainMenu>().head = cam.transform;

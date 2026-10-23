@@ -139,6 +139,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [129](#129--retrait-de-la-version-pc) | 2026-10-22 | Retirer toute trace de la version PC pour l'instant | Outils | Scène MainScene_PC, scripts Desktop, menu Play PC Version, champ de vision, onglet clavier et cas « mode PC » retirés ; état sauvé sur la branche archive/version-pc ; wiki nettoyé |
 | [130](#130--release-apk-quest-v090) | 2026-10-22 | Publier l'APK de la dernière version dans les releases GitHub, nom du jeu et icône | Outils | Build Quest 0.9.0 depuis main (menu + scène de jeu), icônes Android depuis le branding, release GitHub « The Last Escapor v0.9.0 » avec l'APK |
 | [131](#131--portes-déverrouillées-en-fin-de-vague) | 2026-10-22 | Son au déblocage d'une porte + portes débloquées dès la fin de chaque vague | Gameplay / Ressenti | Les zones de la vague N+1 s'ouvrent à la fin de la vague N (début de la pause), son door-open.mp3, annonce « OUVERT : … » sur l'écran du bunker, panneaux « ouverte après la vague N » |
+| [132](#132--musiques-en-boucle-et-playlist-extensible) | 2026-10-23 | Musiques qui tournent en boucle, d'autres à ajouter plus tard | Audio | Playlist automatique : toutes les Musique_Principale_N du dossier s'enchaînent et rebouclent, menu SAE501 > Mettre à jour les musiques |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2400,3 +2401,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `ZoneGate.UpdateAll` dit maintenant si une porte vient de s'ouvrir ; `WaveManager` joue le son en fin de vague. Scène ni reconstruite ni recuite (le son est chargé depuis `Resources`, les textes sont posés au lancement).
 - Vérifié en mode Play (mode Évasion, vagues terminées par script) : pendant la vague 1, les 4 portes restent verrouillées ; dès la fin de la vague 1, les deux portes de couloir se déverrouillent (poignée active), l'annonce affiche les deux zones ; fin de la vague 2 : le stockage s'ouvre ; le générateur reste fermé. Le son est chargé et la ligne qui le joue s'exécute, mais je ne l'ai pas écouté. **Pas testé au casque.**
 - Source du son : non précisée (crédit à compléter dans le README).
+
+## 132 — Musiques en boucle et playlist extensible
+
+**Date** : 2026-10-23 · **Domaine** : Audio
+
+> Fait en sorte que les musiques tournent e boucle (On en rajoutera par la suite donc y en aura d'autres)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Le lecteur (`MusicPlayer`) enchaînait déjà les pistes en boucle (1, 2, 1, 2...), mais la liste des musiques était écrite en dur dans `RoomBuilder` (deux chemins) et `MenuBuilder` (un chemin) : ajouter une musique demandait de modifier le code et de reconstruire la scène, ce qui efface l'éclairage cuit.
+- Nouveau `Assets/Editor/MusicLibrary.cs` : une playlist = tous les fichiers de `Assets/Audio/Music` dont le nom commence par `Musique_Principale` (jeu) ou `Musique_Menu` (menu), triés par numéro (`_10` après `_2`), réglés en streaming Vorbis. `RoomBuilder` et `MenuBuilder` l'utilisent.
+- Ajouter une musique : déposer `Musique_Principale_3.mp3` (puis `_4`...) dans `Assets/Audio/Music`, ouvrir la scène, menu **SAE501 > Mettre à jour les musiques**, sauvegarder. Pas de reconstruction ni de recuisson. La liste `Tracks` reste aussi modifiable à la main dans l'inspecteur.
+- `MusicPlayer` : champ `playlist` (préfixe des fichiers), une case vide dans la liste est sautée au lieu de bloquer, une seule piste = boucle simple, plusieurs = enchaînement puis retour à la première. Pause du jeu : la musique attend, comme avant.
+- Scènes non modifiées (les pistes actuelles sont déjà dedans). Wiki : page [Musique](https://github.com/withRen/SAE501/wiki/Musique). **Pas testé au casque.**
+

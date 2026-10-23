@@ -901,32 +901,10 @@ public static class RoomBuilder
         return c;
     }
 
-    // ---------- musique de fond : les deux pistes du jeu, en alternance ----------
+    // ---------- musique de fond : toutes les pistes Musique_Principale_N du dossier, en boucle (MusicLibrary) ----------
     static void BuildMusic()
     {
-        string[] paths = { "Assets/Audio/Music/Musique_Principale_1.mp3", "Assets/Audio/Music/Musique_Principale_2.mp3" };
-        var clips = new List<AudioClip>();
-        foreach (var p in paths)
-        {
-            // musique longue : lue en streaming (pas chargée entière en mémoire sur le Quest), compressée en Vorbis
-            if (AssetImporter.GetAtPath(p) is AudioImporter ai)
-            {
-                var st = ai.defaultSampleSettings;
-                if (st.loadType != AudioClipLoadType.Streaming || st.compressionFormat != AudioCompressionFormat.Vorbis)
-                {
-                    st.loadType = AudioClipLoadType.Streaming;
-                    st.compressionFormat = AudioCompressionFormat.Vorbis;
-                    st.quality = 0.6f;
-                    ai.defaultSampleSettings = st;
-                    ai.SaveAndReimport();
-                }
-            }
-            var c = AssetDatabase.LoadAssetAtPath<AudioClip>(p);
-            if (c) clips.Add(c); else Debug.LogWarning("Musique introuvable : " + p);
-        }
-        var go = new GameObject("Musique");
-        go.transform.SetParent(bunkerRoot, false);
-        go.AddComponent<MusicPlayer>().tracks = clips.ToArray();
+        MusicLibrary.Create("Musique", MusicLibrary.Game, bunkerRoot);
     }
 
     // ---------- portes de niveau et générateur ----------

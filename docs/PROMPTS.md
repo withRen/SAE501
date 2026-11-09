@@ -142,6 +142,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [133](#133--portage-pc-clavier--souris) | 2026-11-09 | Portage PC propre : interactions, placement des mains, réticule, ZQSD, E, clic, souris verrouillée | Interaction / Version PC | Version PC dans les mêmes scènes (casque par défaut, PC sans casque) : DesktopPlayer, mains et armes en vue FPS, tir depuis le centre de l'écran, HUD (réticule, aide, munitions), menus à la souris, textes du tutoriel, réglages souris ; testé en mode Play sans casque |
 | [134](#134--fusion-de-la-pr-146-escalade-dans-la-version-pc) | 2026-11-09 | Récupérer la PR #146 (escalade des fenêtres, Al Amine) et la fusionner avec la version PC locale pour tester | Dépôt / Zombies | PR fusionnée localement dans feature/portage-pc sans conflit, contrôleurs des zombies régénérés avec les 3 clips d'escalade ; rien poussé |
 | [135](#135--escalade-des-fenêtres-corrigée) | 2026-11-09 | Analyser la vidéo du problème d'animation du zombie et le faire passer proprement dans la fenêtre | Zombies | Clips Mixamo faits pour un mur de 2 m + montée du script = zombie au-dessus du cadre ; corrigé : mains sur le rebord, passage dans l'ouverture, chute courte, se relève sans saut ; testé 2 fenêtres × 3 types |
+| [136](#136--chaise-et-desserte-retirées-près-des-fenêtres) | 2026-11-09 | Retirer une chaise et une table proches des fenêtres | Carte | Tabouret du poêle et desserte verte (avec sa marmite) retirés de MainScene et de RoomBuilder, NavMesh et éclairage recuits |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2457,3 +2458,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Correction** (`ZombieWindowClimb`, `ZombieMixamo`) : avec les vrais clips, le zombie reste au sol au pied du mur, sur une ligne recentrée sur la fenêtre (milieu des emplacements de planches). Après l'Animator (`LateUpdate`), le modèle est décalé pour que les mains restent sur le rebord (2/3 du geste) et que le bassin passe dans l'ouverture ; la chute part du rebord et finit 0,6 m derrière le mur ; en se relevant, le bassin reste en place. À la fin, le décalage est reporté sur le zombie (pas de téléportation). Seule la 2e partie du clip *Climbing* est jouée (à partir de 45 %, ×1,1). L'ancien mouvement (sans les clips) est inchangé. Contrôleurs régénérés (même GUID : pas de reconstruction de scène ni de recuisson).
 - **Vérifié** : compilation sans erreur ; mode Play dans l'éditeur de Rahim (version PC), 2 fenêtres du bunker (SE, SW) × 3 types (normal, Cogneur, Coureur) : bassin au plus haut à 1,48–1,53 m (rebord 0,97 m, haut de fenêtre 1,99 m), écart au centre ≤ 0,36 m, 5 cm de déplacement du bassin quand l'agent reprend la main ; captures image par image : mains sur le rebord, corps dans l'ouverture, chute à plat derrière le mur, relevé. **Pas testé au casque.**
 - Wiki : section « Escalade des fenêtres » de la page Zombies (commit local, pas poussé). Rien poussé.
+
+---
+
+## 136 — Chaise et desserte retirées près des fenêtres
+
+**Date** : 2026-11-09 · **Domaine** : Carte
+
+> Retire cette chaise ainsi que cette table proche des fenêtres
+
+(2 captures jointes, version PC, MainScene)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Objets reconnus (captures comparées dans l'éditeur) : la chaise = `Bunker_Stove_Stool_01` (tabouret haut en métal sur le tapis, à côté du fût) ; la table = `Bunker_ToolCart` (desserte verte à roulettes sous la fenêtre sud-est), avec la marmite posée dessus (`Bunker_Stove_Pot`, simple décor : retirée avec elle). Tapis et papiers gardés. Aucun script ne les utilisait.
+- Retirés de `MainScene` (dans l'éditeur ouvert de Rahim) et ajoutés à la liste des objets retirés de `RoomBuilder` (une reconstruction de la scène ne les remet pas).
+- NavMesh recuit (la desserte était un obstacle sous la fenêtre où entrent les zombies) : 2133 → 2125 triangles, chemins dehors → dedans complets pour les fenêtres SE et SW. Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée. Capture après : plus de desserte ni de tabouret, pas d'ombre restante au sol.
+- Avertissement « Retain Transform Parent… Items is deactivated » de la console : il vient des holsters de la ceinture et du puits du pistolet (`XRSocketInteractor.OnDisable`) quand la scène se ferme (fin du mode Play, rechargement) : « Items » est déjà désactivé au moment où ils lâchent pistolet, lampe et chargeur. Sans effet en jeu ; non modifié (le changer toucherait la prise des objets au casque).
+- **Pas testé au casque.** Rien poussé.

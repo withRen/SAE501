@@ -143,6 +143,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [134](#134--fusion-de-la-pr-146-escalade-dans-la-version-pc) | 2026-11-09 | Récupérer la PR #146 (escalade des fenêtres, Al Amine) et la fusionner avec la version PC locale pour tester | Dépôt / Zombies | PR fusionnée localement dans feature/portage-pc sans conflit, contrôleurs des zombies régénérés avec les 3 clips d'escalade ; rien poussé |
 | [135](#135--escalade-des-fenêtres-corrigée) | 2026-11-09 | Analyser la vidéo du problème d'animation du zombie et le faire passer proprement dans la fenêtre | Zombies | Clips Mixamo faits pour un mur de 2 m + montée du script = zombie au-dessus du cadre ; corrigé : mains sur le rebord, passage dans l'ouverture, chute courte, se relève sans saut ; testé 2 fenêtres × 3 types |
 | [136](#136--chaise-et-desserte-retirées-près-des-fenêtres) | 2026-11-09 | Retirer une chaise et une table proches des fenêtres | Carte | Tabouret du poêle et desserte verte (avec sa marmite) retirés de MainScene et de RoomBuilder, NavMesh et éclairage recuits |
+| [137](#137--textures-pbr-sur-les-objets-en-aplat) | 2026-11-09 | Remplacer les aplats de couleur par des textures PBR | Graphismes | 24 matériaux en couleur unie texturés (albedo, normal, métal/lissé, usure), 22 textures 1024 ASTC 6x6, réappliquées à la reconstruction |
+| [145](#145--modèles-détaillés-du-poste-de-surveillance) | 2026-11-09 | Le poste de surveillance est encore low poly | Graphismes | Radio, enregistreur à LEDs, clavier, étagère à écrans et 5e écran remplacés par des modèles détaillés (Blender, ~15 000 triangles), éclairage recuit |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2476,3 +2478,42 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - NavMesh recuit (la desserte était un obstacle sous la fenêtre où entrent les zombies) : 2133 → 2125 triangles, chemins dehors → dedans complets pour les fenêtres SE et SW. Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée. Capture après : plus de desserte ni de tabouret, pas d'ombre restante au sol.
 - Avertissement « Retain Transform Parent… Items is deactivated » de la console : il vient des holsters de la ceinture et du puits du pistolet (`XRSocketInteractor.OnDisable`) quand la scène se ferme (fin du mode Play, rechargement) : « Items » est déjà désactivé au moment où ils lâchent pistolet, lampe et chargeur. Sans effet en jeu ; non modifié (le changer toucherait la prise des objets au casque).
 - **Pas testé au casque.** Rien poussé.
+
+---
+
+## 137 — Textures PBR sur les objets en aplat
+
+**Date** : 2026-11-09 · **Domaine** : Graphismes
+
+> Fais l'inventaire des matériaux/objets restés low poly (couleurs unies, sans texture PBR) dans MainScene, propose et applique des textures PBR plus réalistes et détaillées (albedo/normal/roughness, usure, saleté, cohérents avec l'ambiance hôpital/bunker sombre), en gardant le budget Quest 3 (textures 1024-2048 max, compression ASTC, pas de coût de perf excessif). Si les modèles n'ont pas d'UV, signale-le. Après changement des matériaux, rebake l'éclairage avant commit. Montre des captures avant/après.
+
+(demande transmise avec une capture du poste de surveillance : écrans CCTV, radio, boîtier à LEDs, clavier, lampe, bureau en aplats unis)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Inventaire** (script dans l'éditeur, MainScene) : 24 matériaux de décor sans texture. Poste de surveillance : `MetalDark` (cadres des écrans, meuble, magnétoscope à LEDs, clavier), `Dark`/`Metal` (5e écran généré), `RadioBody`/`RadioBlack`/`HammerSteel` (radio), `Radio` (radio générée). Ailleurs : `DoorMetal` (caisses, fûts, portes), `GeneratorPaint`, `FuelRed`, `Chrome`, `Rubber`, `LampShade`, `Paper`, `Countertop`, `FridgeEnamel`, `SinkEnamel`, `Mat_CCTV_CameraBody`, `stone_01` (pierres du jardin : normale sans couleur). Laissés tels quels : LED, ampoules, verres, écrans CCTV (shader animé), interface, manettes.
+- **Sans UV** (texture impossible, restent unis) : les 4 caméras CCTV et leurs supports muraux, l'armoire de premiers secours, le tableau de carte tactique. À déplier dans Blender.
+- `textures.zip` ne contenait que des textures de jardin (arbres, rochers, pierre) : seule la couleur de stone_01 a servi. Rien téléchargé.
+- **Textures** : `Tools/textures/generer_usure.py` (Python, numpy) fabrique des textures raccordables 1024 px à partir de rust_coarse_01 et dirty_concrete (Poly Haven, CC0, déjà sur le Mac) : un albedo par matériau (couleur d'origine + éclats de peinture, rouille, rayures, saleté), une normale et une carte métal/lissé par famille (peinture, acier, plastique, papier). 22 textures dans `Assets/Room/Textures/Usure/`, ASTC 6x6 sur Android, mipmaps, environ 14 Mo de mémoire en tout.
+- **Application** : `Assets/Editor/TexturesUsure.cs` (menu SAE501 > Salle > Appliquer les textures d'usure), appelé aussi à la fin de `RoomImport.Import` et de `RoomBuilder.Populate` (ces deux scripts recréent les matériaux en couleur unie).
+- **Vérifié** : captures avant/après du poste de surveillance dans le mode Play de l'éditeur (`docs/captures/textures_usure/`). Défaut visible : sur le clavier (face du dessus aux UV étirées), les rayures sont étirées.
+- Éclairage recuit avec les modèles de l'entrée 145 (même session).
+- **Pas testé au casque** (coût réel sur Quest 3 non mesuré). Rien poussé.
+
+---
+
+## 145 — Modèles détaillés du poste de surveillance
+
+**Date** : 2026-11-09 · **Domaine** : Graphismes
+
+> C'est encore low poly, corrige ça en utilisant de bonnes textures réalistes et optimisé
+
+(capture jointe : poste de surveillance en vue scène, après l'entrée 137)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Constat** : les textures de l'entrée 137 étaient bien appliquées et enregistrées ; le problème venait de la forme. La radio, l'enregistreur à LEDs, le clavier, l'étagère à écrans et le 5e écran (avec son pied) étaient de simples boîtes, et aucune texture ne pouvait le masquer.
+- **Modèles** : `Tools/blender/poste_surveillance.py` (Blender 5.2, en ligne de commande) construit 5 modèles détaillés, à la place exacte des boîtes, dans `Assets/Decor/Surveillance/` : étagère en tôle pliée sur montants tubulaires avec semelles vissées, écharpes et goulotte de câbles ; enregistreur avec façade, oreilles de baie vissées, fente cassette, boutons, molette, ouïes et pieds ; clavier à touches beiges et pupitre de commande des caméras (manette, boutons, molette, afficheur) sur socle incliné ; radio aux coins arrondis avec grille de haut-parleur, cadran, boutons, poignée et antenne télescopique ; moniteur avec cadre, coque arrière, boutons, rotule et socle. Arêtes biseautées, UV en projection cube (texture répétée tous les 0,6 m environ). Environ 15 000 triangles pour les 5 modèles, sans nouvelle texture : ils réutilisent les matériaux d'usure de l'entrée 137.
+- **Durable** : `Assets/Editor/PosteSurveillance.cs`, appelé par `RoomBuilder` (carte : avant la création des collisions ; 5e écran : dans `BuildExtraScreen`, avec les boîtes d'origine si le modèle manque). Appliqué aussi dans la `MainScene` ouverte (collisions en boîtes recalées), scène enregistrée.
+- Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée par le script de cuisson.
+- **Vérifié** : captures dans l'éditeur avant/après et vues rapprochées (`docs/captures/textures_usure/modeles_*.jpg`). **Pas testé au casque** (coût réel sur Quest 3 non mesuré, mais le surcoût est faible : ~15 000 triangles statiques regroupés). Rien poussé.

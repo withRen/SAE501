@@ -92,6 +92,7 @@ public static class RoomBuilder
 
         BuildMapLights();
         ReplaceLowPolyBottles(roomRoot.transform);
+        PosteSurveillance.RemplacerCarte(roomRoot.transform);   // étagère à écrans, enregistreur, clavier, radio : modèles détaillés
         MakeMapColliders(roomRoot.transform);
         SinkTerrainUnderFloors(roomRoot.transform);
         FixFloorDecals(roomRoot.transform);
@@ -122,6 +123,7 @@ public static class RoomBuilder
         LodBuilder.Build(roomRoot.transform);          // [#118] après le NavMesh : les LOD1 n'y entrent pas
         BuildLightProbes();
         UnbatchInteractables();
+        TexturesUsure.Appliquer();                     // textures PBR des matériaux recréés en couleur unie (Dark, Metal, Radio)
         LightBaker.ApplySettings();
     }
 
@@ -1083,8 +1085,11 @@ public static class RoomBuilder
         var mon = new GameObject("CCTV_Monitor_05").transform;
         mon.SetParent(parent, false);
         mon.SetPositionAndRotation(pos, face);
-        Box("Boitier", mon, new Vector3(0f, 0f, 0.035f), new Vector3(0.47f, 0.36f, 0.06f), darkM, false);
-        Box("Pied", mon, new Vector3(0f, -(pos.y - 0.79f) / 2f - 0.09f, 0.05f), new Vector3(0.05f, pos.y - 0.79f - 0.18f, 0.05f), metalM, false);
+        if (!PosteSurveillance.Moniteur(mon))       // moniteur détaillé (coque, cadre, pied et socle) ; sinon les boîtes d'origine
+        {
+            Box("Boitier", mon, new Vector3(0f, 0f, 0.035f), new Vector3(0.47f, 0.36f, 0.06f), darkM, false);
+            Box("Pied", mon, new Vector3(0f, -(pos.y - 0.79f) / 2f - 0.09f, 0.05f), new Vector3(0.05f, pos.y - 0.79f - 0.18f, 0.05f), metalM, false);
+        }
         var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
         q.name = name;
         q.transform.SetParent(mon, false);

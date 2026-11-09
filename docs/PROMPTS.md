@@ -140,6 +140,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [130](#130--release-apk-quest-v090) | 2026-10-22 | Publier l'APK de la dernière version dans les releases GitHub, nom du jeu et icône | Outils | Build Quest 0.9.0 depuis main (menu + scène de jeu), icônes Android depuis le branding, release GitHub « The Last Escapor v0.9.0 » avec l'APK |
 | [131](#131--portes-déverrouillées-en-fin-de-vague) | 2026-10-22 | Son au déblocage d'une porte + portes débloquées dès la fin de chaque vague | Gameplay / Ressenti | Les zones de la vague N+1 s'ouvrent à la fin de la vague N (début de la pause), son door-open.mp3, annonce « OUVERT : … » sur l'écran du bunker, panneaux « ouverte après la vague N » |
 | [133](#133--portage-pc-clavier--souris) | 2026-11-09 | Portage PC propre : interactions, placement des mains, réticule, ZQSD, E, clic, souris verrouillée | Interaction / Version PC | Version PC dans les mêmes scènes (casque par défaut, PC sans casque) : DesktopPlayer, mains et armes en vue FPS, tir depuis le centre de l'écran, HUD (réticule, aide, munitions), menus à la souris, textes du tutoriel, réglages souris ; testé en mode Play sans casque |
+| [134](#134--fusion-de-la-pr-146-escalade-dans-la-version-pc) | 2026-11-09 | Récupérer la PR #146 (escalade des fenêtres, Al Amine) et la fusionner avec la version PC locale pour tester | Dépôt / Zombies | PR fusionnée localement dans feature/portage-pc sans conflit, contrôleurs des zombies régénérés avec les 3 clips d'escalade ; rien poussé |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2423,3 +2424,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Vérifié** : compilation sans erreur ; scénario automatique en mode Play (version PC forcée, MainScene pendant le tutoriel puis menu d'accueil, captures d'écran) : marche, pistolet sorti de la ceinture, 2 tirs puis rechargement R (10 → 12 balles), visée, lampe dans la main gauche allumée, marteau pris sur l'établi puis rangé et ressorti, planche prise et posée sur une fenêtre, **2 clous enfoncés en 3 coups chacun (planche clouée)**, disjoncteur abaissé en maintenant E, écran de caméra ouvert et refermé, radio appelée (« CAISSE DANS 30 s »), porte de zone ouverte (92°), Ctrl accroupi, pause par Échap et reprise, menu d'accueil (pages COMMANDES et PARAMÈTRES) ; aucune erreur dans la console. Les touches simulées (marche, E maintenu, Ctrl, Échap) ne passent que quand la fenêtre de l'éditeur a le focus : elles ont réussi lors des passages où elle l'avait.
 - **Pas testé** : au casque (le code VR n'est pas modifié, mais la détection automatique avec un casque Link / Air Link n'a pas été essayée), une vraie partie jouée à la main au clavier, un build Windows / macOS. Script de test non commité.
 - Wiki : nouvelle page [Version PC](https://github.com/withRen/SAE501/wiki/Version-PC) ; Accueil, menu, Commandes, Menus et Tutoriel mis à jour (commit local du wiki, pas encore poussé).
+
+---
+
+## 134 — Fusion de la PR #146 (escalade) dans la version PC
+
+**Date** : 2026-11-09 · **Domaine** : Dépôt / Zombies
+
+> Il y a eu un push de patch d'animation, c'est sous la pull request : Escalade des fenêtres : vraies animations (se hisser, tomber à plat, #146) de AL amine, pull la et merge la avec la version pc locale qu'on fasse un test
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- PR #146 (`features/escalade-zombies`, Al Amine, 1 commit `cb1b973`) récupérée et fusionnée localement dans `feature/portage-pc` (merge, pas de rebase). **Aucun conflit** : la PR touche l'escalade des **zombies** (`ZombieWindowClimb`, `ZombieAnimationBridge`, `ZombieMixamo` et 3 clips Mixamo dans `Assets/Animations/Escalade`), le portage PC ne touche aucun de ces fichiers.
+- La PR ne contenait pas les contrôleurs d'animation régénérés : sans eux, les zombies gardaient l'ancienne escalade (code seul). Régénérés dans l'éditeur (`ZombieMixamo.EnsureController` pour le zombie normal, le Cogneur et le Coureur) : chacun a maintenant les états Climb, Fall et StandUp. Même fichier et même GUID : prefabs et scène inchangés, pas de reconstruction ni de recuisson. Les réglages d'import des 3 FBX (rig humanoïde, noms des clips) sont commités avec.
+- Vérifié : compilation sans erreur (console de l'éditeur vide). **Pas vérifié en mode Play** : l'éditeur était ouvert par Rahim, je n'ai pas lancé le mode Play à sa place ; test à faire par lui (voir le message de rapport). Rien poussé.

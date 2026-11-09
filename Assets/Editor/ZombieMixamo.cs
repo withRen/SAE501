@@ -108,7 +108,11 @@ public static class ZombieMixamo
     public const string ClimbPath = "Assets/Animations/Escalade/Climbing.fbx";
     public const string FallPath = "Assets/Animations/Escalade/Falling Flat Impact.fbx";
     public const string StandUpPath = "Assets/Animations/Escalade/Zombie Stand Up.fbx";
-    public const float ClimbClipSpeed = 1.6f;      // 3,83 s joué en 2,4 s (ZombieWindowClimb.climbTimeAnimated)
+    // Le clip Climbing est fait pour un mur de 2 m : au début le zombie est debout, mains à 2,15 m. Sur un rebord de 0,9 m
+    // (fenêtres du bunker) on ne garde que la 2e partie, quand il se hisse (à partir de 45 % du clip), jouée ×1,1 :
+    // (1 - 0,45) × 3,83 s / 1,1 = 1,9 s (ZombieWindowClimb.climbTimeAnimated). ZombieWindowClimb cale les mains sur le rebord.
+    public const float ClimbClipSpeed = 1.1f;
+    public const float ClimbStartOffset = 0.45f;
     public const float StandUpClipSpeed = 1.5f;    // 6 s joué en 4 s ; debout vers 3,6 s du clip, donc vers 2,4 s
     public const float FallStartOffset = 0.1f;     // le clip commence en l'air : on saute ses premières images
 
@@ -142,7 +146,7 @@ public static class ZombieMixamo
         sUp.motion = standUpClip; sUp.speed = StandUpClipSpeed;
 
         var tc = sm.AddAnyStateTransition(sClimb);
-        tc.hasExitTime = false; tc.duration = 0.15f; tc.canTransitionToSelf = false;
+        tc.hasExitTime = false; tc.duration = 0.15f; tc.canTransitionToSelf = false; tc.offset = ClimbStartOffset;
         tc.AddCondition(AnimatorConditionMode.If, 0, "Climb");
         var tf = sm.AddAnyStateTransition(sFall);
         tf.hasExitTime = false; tf.duration = 0.1f; tf.canTransitionToSelf = false; tf.offset = FallStartOffset;

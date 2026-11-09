@@ -156,6 +156,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [147](#147--textes-des-portes-cachés-par-les-murs) | 2026-11-09 | Ne plus voir les textes des portes à travers les murs, seulement de près | Interface / Rendu | Shader SAE501/WorldText : test de profondeur (les murs cachent le texte) et fondu entre 3,5 et 5 m calculé dans le shader ; 7 textes du décor (portes, générateur, radio) |
 | [148](#148--murs-qui-entrent-les-uns-dans-les-autres) | 2026-11-09 | Corriger les aberrations des murs qui se chevauchent | Carte / Rendu | 224 triangles superposés retirés sur 39 éléments de structure (z-fighting à côté du disjoncteur, sous les portes, aux angles), copies de maillages dans Assets/Generated/Recouvrements |
 | [149](#149--branche-develop-et-archivage-des-branches-fusionnées) | 2026-11-09 | Pousser dans une branche propre et archiver les branches déjà fusionnées | Git | Branche `develop` poussée (travail du jour + ajouts Antigravity), wiki poussé, 16 branches fusionnées gardées en tags `archive/<nom>` puis supprimées |
+| [150](#150--trous-du-toit-irréguliers) | 2026-11-09 | Trou du toit : forme moins carrée, tiges retirées, effet sur les bords | Carte / Rendu | Bord de béton cassé irrégulier, auréole noircie, gravats, lianes qui pendaient retirées (`TrousToit.cs`), éclairage recuit |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2718,4 +2719,26 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Restent hors commit : fichiers personnels (réglages URP, profil de build Quest avec l'identifiant du casque, `RuntimeActionBindings.json`, `DevAgentSettings.asset`, `Protection_suite`, `scripts/`), changements automatiques de l'éditeur dans `Assets/Generated` et `Tools/blender/cinematique`.
 - Wiki poussé (4 commits en attente : Version PC, escalade, tabouret et desserte, textes des portes, murs superposés).
 - 16 branches distantes entièrement contenues dans `develop` gardées en tags `archive/<nom>` puis supprimées : Gestion-vague-infini, Nouveau-son, UI-Hugo, claude/project-thread-6whioa, claude/project-thread-vr7je7, feature/7.2-effet-cctv, feature/74-zombie-test, feature/aex_usable, feature/ceinture-marteau, feature/map-finale, feature/menu-accueil, feature/zombie-animation, features/passer-attente, features/tutoriels, features/types-zombies, test/vagues-infinies. Gardées : `main`, `archive/version-pc`, `features/escalade-zombies` (PR #146 encore ouverte) et les 7 branches avec du travail absent de `develop`.
+
+---
+
+## 150 — Trous du toit irréguliers
+
+**Date** : 2026-11-09 · **Domaine** : Carte / Rendu
+
+> Change la forme du trou, un peu plus varié que juste un carré, et retire les tiges qui tombent du toit, fait un effet sur les bords du trou
+
+(capture jointe : trou carré au-dessus de l'établi, avec des tiges sombres qui pendent ; puis « Et la suite ? », pris comme accord pour quitter le mode Play et reconstruire)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : les deux trous du toit du bunker (au-dessus des lits et de l'établi) sont des carrés de 1,2 x 1,2 m découpés dans la dalle `Bunker_Ceiling` de la carte Blender ; les « tiges » sont 9 lianes en boîtes sombres de `Apoc_Vines_And_Moss` qui pendent de chaque trou jusqu'à 1,3 m du sol.
+- **Correction durable** : `Assets/Editor/TrousToit.cs`, appelé par `RoomBuilder` après les collisions (le FBX n'est pas modifié) :
+  - lianes qui pendaient des trous retirées (copie du maillage ; les taches de mousse au sol restent) ;
+  - **bord de béton cassé** qui remplit les coins du carré : ouverture irrégulière (~0,7 à 1,3 m), arête ébréchée, enduit tombé sous la dalle, tranche en béton nu plus sombre ; dessus et dessous dans le plan de la dalle avec les mêmes UV que le plafond (pas de raccord) ;
+  - **auréole noircie** (suie et saleté, texture de bruit, transparente vers l'extérieur) sous le plafond autour du trou ;
+  - **gravats** au sol sous chaque trou (9 éclats de 8 triangles, seulement sur le sol, pas sur les meubles).
+  - Coût : ~800 triangles de bord et ~330 d'auréole par trou, 1 matériau opaque et 1 transparent de plus, aucune collision (NavMesh, zombies et caisse inchangés). La poussière du toit tombe d'une zone de 0,75 m (au lieu de 1 m) pour rester dans l'ouverture.
+- Scène reconstruite (**SAE501 → Build VR Scene**) et éclairage recuit.
+- **Vérifié** (éditeur, sans mode Play) : captures avant/après (plus de tiges, bord irrégulier) ; la caisse de la radio a au moins 35 cm de jeu autour de son point de chute et rien ne bloque sa descente (lancer de boîte) ; les deux trous gardent leur lien NavMesh, `fromAbove` et leur poussière. **Non testé** en mode Play (chute réelle d'un zombie du toit et d'une caisse) ni **au casque**.
 

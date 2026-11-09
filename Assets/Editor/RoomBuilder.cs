@@ -95,6 +95,7 @@ public static class RoomBuilder
         PosteSurveillance.RemplacerCarte(roomRoot.transform);   // étagère à écrans, enregistreur, clavier, radio : modèles détaillés
         MursSuperposes.Apply(roomRoot.transform);           // murs qui entrent les uns dans les autres : faces superposées retirées (z-fighting)
         MakeMapColliders(roomRoot.transform);
+        TrousToit.Apply(roomRoot.transform);                // trous du toit : bord de béton cassé, auréole noircie, gravats ; lianes qui pendaient retirées
         SinkTerrainUnderFloors(roomRoot.transform);
         FixFloorDecals(roomRoot.transform);
         FixGardenCabin(roomRoot.transform);
@@ -783,7 +784,7 @@ public static class RoomBuilder
         em.SetBursts(new[] { new ParticleSystem.Burst(0f, 40) });
         var sh = ps.shape;
         sh.shapeType = ParticleSystemShapeType.Box;
-        sh.scale = new Vector3(1.0f, 0.02f, 1.0f);                // le trou fait ~1,2 x 1,2 m
+        sh.scale = new Vector3(0.75f, 0.02f, 0.75f);              // ouverture irrégulière de ~0,8 à 1 m dans le carré de 1,2 m (TrousToit)
         var col = ps.colorOverLifetime;
         col.enabled = true;
         var grad = new Gradient();

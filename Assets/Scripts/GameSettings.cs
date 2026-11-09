@@ -25,7 +25,7 @@ public static class GameSettings
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
     // version PC : sensibilité de la souris (1 = normale), axe vertical inversé, champ de vision vertical (degrés)
     public static readonly float[] MouseSensitivities = { 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f };
-    public static float MouseSensitivity { get => PlayerPrefs.GetFloat("sae501.mouse", 1f); set { PlayerPrefs.SetFloat("sae501.mouse", Mathf.Clamp(value, 0.1f, 4f)); Apply(); } }
+    public static float MouseSensitivity { get => PlayerPrefs.GetFloat("sae501.mouse", 1f); set { PlayerPrefs.SetFloat("sae501.mouse", Mathf.Clamp(value, 0.05f, 10f)); Apply(); } }
     public static bool InvertMouseY { get => PlayerPrefs.GetInt("sae501.mouseinvert", 0) == 1; set { PlayerPrefs.SetInt("sae501.mouseinvert", value ? 1 : 0); Apply(); } }
     public static readonly int[] FieldOfViews = { 60, 70, 80, 90 };
     public static int FieldOfView { get => PlayerPrefs.GetInt("sae501.fov", 70); set { PlayerPrefs.SetInt("sae501.fov", Mathf.Clamp(value, 40, 100)); Apply(); } }

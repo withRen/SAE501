@@ -1,10 +1,10 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Voix d'un zombie : il pousse un cri dès son arrivée, puis de temps en temps tant qu'il est en vie.
-// Chaque cri choisit au hasard parmi les variantes (Zombie_Voix_1 : long cri, Zombie_Voix_2 : cri court).
-// Le son est en 3D : on l'entend venir du couloir ou de la fenêtre. À sa mort le zombie se tait (fondu rapide).
-// Au plus `maxVoicesAtOnce` zombies crient en même temps (sinon tout se mélange et le casque a trop de sons à traiter).
+// Profilage vocal par archétype (Rôdeur, Cogneur, Coureur) : pitch, cadence, pondération Voix_1/Voix_2 et priorité.
+// Au plus `maxVoicesAtOnce` zombies crient en même temps ; un Coureur ou Cogneur proche préempte un Rôdeur éloigné.
 [RequireComponent(typeof(Zombie))]
 public class ZombieVoice : MonoBehaviour
 {
@@ -13,12 +13,13 @@ public class ZombieVoice : MonoBehaviour
     public Vector2 firstCryDelay = new Vector2(0.5f, 2.5f);      // 1er cri après l'apparition (s)
     public Vector2 pauseBetweenCries = new Vector2(5f, 12f);      // silence entre la fin d'un cri et le suivant (s)
     public float maxDistance = 25f;
-    public int maxVoicesAtOnce = 3;
+    public int maxVoicesAtOnce = 4;
 
-    static int voicesNow;
+    static readonly List<ZombieVoice> activeVoices = new List<ZombieVoice>();
     AudioSource src;
     Zombie zombie;
-    bool counted;
+    bool counted, isBruiser, isRunner;
+    float baseVolume = 0.8f;
 
     void Awake()
     {
@@ -35,29 +36,106 @@ public class ZombieVoice : MonoBehaviour
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() => voicesNow = 0;
+    static void ResetStatics() => activeVoices.Clear();
+
+    void ConfigureArchetype()
+    {
+        if (!zombie) return;
+        isBruiser = zombie.IsBruiser;
+        isRunner = zombie.IsRunner;
+        if (isBruiser)
+        {
+            baseVolume = 1.0f;
+            maxDistance = 26f;
+            src.priority = 80;
+            firstCryDelay = new Vector2(0.6f, 1.8f);
+        }
+        else if (isRunner)
+        {
+            baseVolume = 0.9f;
+            maxDistance = 24f;
+            src.priority = 64;
+            firstCryDelay = new Vector2(0.25f, 1.0f);
+        }
+        else
+        {
+            baseVolume = volume;
+            maxDistance = 24f;
+            src.priority = 110;
+        }
+    }
+
+    float DistanceToPlayer()
+    {
+        var ph = PlayerHealth.Instance;
+        return ph ? Vector3.Distance(transform.position, ph.HeadPosition) : 15f;
+    }
+
+    bool AcquireVoiceSlot()
+    {
+        activeVoices.RemoveAll(v => v == null || !v.counted);
+        if (activeVoices.Count < maxVoicesAtOnce) return true;
+        if ((!isRunner && !isBruiser) || DistanceToPlayer() > 10f) return false;
+
+        // Préemption : un Coureur ou Cogneur proche coupe le Rôdeur le plus éloigné
+        ZombieVoice victim = null;
+        float maxD = -1f;
+        foreach (var v in activeVoices)
+        {
+            if (v.isRunner || v.isBruiser) continue;
+            float d = v.DistanceToPlayer();
+            if (d > maxD) { maxD = d; victim = v; }
+        }
+        if (!victim) return false;
+        victim.Preempt();
+        return true;
+    }
+
+    void Preempt()
+    {
+        if (src && src.isPlaying) src.Stop();
+        if (counted) { activeVoices.Remove(this); counted = false; }
+    }
+
+    AudioClip PickClip()
+    {
+        if (variants == null || variants.Length == 0) return null;
+        if (variants.Length == 1) return variants[0];
+        float r = Random.value;
+        if (isBruiser) return r < 0.75f ? variants[0] : variants[1];
+        if (isRunner) return r < 0.20f ? variants[0] : variants[1];
+        return variants[Random.Range(0, variants.Length)];
+    }
 
     IEnumerator Start()
     {
+        ConfigureArchetype();
         if (variants == null || variants.Length == 0) yield break;
         yield return new WaitForSeconds(Random.Range(firstCryDelay.x, firstCryDelay.y));
         while (zombie != null && !zombie.Dead)
         {
-            if (voicesNow < maxVoicesAtOnce)
+            if (AcquireVoiceSlot())
             {
-                var clip = variants[Random.Range(0, variants.Length)];
+                var clip = PickClip();
                 if (clip)
                 {
                     src.clip = clip;
-                    src.pitch = Random.Range(0.92f, 1.08f);     // chaque zombie a une voix un peu différente
+                    src.pitch = isBruiser ? Random.Range(0.72f, 0.82f)
+                              : isRunner  ? Random.Range(1.18f, 1.32f)
+                              :             Random.Range(0.94f, 1.06f);
                     src.Play();
-                    voicesNow++; counted = true;
-                    float end = Time.time + clip.length / src.pitch;
-                    while (Time.time < end && zombie != null && !zombie.Dead) yield return null;
-                    if (counted) { voicesNow--; counted = false; }
+                    activeVoices.Add(this);
+                    counted = true;
+                    float end = Time.time + clip.length / Mathf.Max(0.5f, src.pitch);
+                    while (Time.time < end && zombie != null && !zombie.Dead && counted) yield return null;
+                    if (counted) { activeVoices.Remove(this); counted = false; }
                 }
             }
-            yield return new WaitForSeconds(Random.Range(pauseBetweenCries.x, pauseBetweenCries.y));
+            bool close = DistanceToPlayer() <= 6f;
+            Vector2 pause = isBruiser ? (close ? new Vector2(3.0f, 5.0f) : new Vector2(4.5f, 7.5f))
+                          : isRunner  ? (close ? new Vector2(1.2f, 2.2f) : new Vector2(1.8f, 3.2f))
+                          :             (close ? new Vector2(2.2f, 4.2f) : new Vector2(3.5f, 6.5f));
+            yield return new WaitForSeconds(Random.Range(pause.x, pause.y));
         }
     }
 
@@ -67,21 +145,18 @@ public class ZombieVoice : MonoBehaviour
         if (zombie == null || !zombie.Dead)
         {
             float z = GameSettings.Zombies;
-            src.volume = Mathf.Clamp01(volume * z * 1.6f);       // curseur à 6/10 : volume d'origine (0,77)
-            src.minDistance = Mathf.Lerp(1f, 6f, z);
+            src.volume = Mathf.Clamp01(baseVolume * z * 1.6f);   // curseur à 6/10 : volume d'origine
+            src.minDistance = Mathf.Lerp(1f, isBruiser ? 6.5f : 5.5f, z);
             src.maxDistance = Mathf.Max(maxDistance, src.minDistance + 5f);
             return;
         }
-        // mort : fondu rapide puis silence
-        if (src.isPlaying)
-        {
-            src.volume = Mathf.MoveTowards(src.volume, 0f, Time.deltaTime * 4f);
-            if (src.volume <= 0.01f) src.Stop();
-        }
+        // mort : coupure immédiate pour laisser la place au râle d'agonie (ZombieDeath)
+        if (src.isPlaying) src.Stop();
+        if (counted) { activeVoices.Remove(this); counted = false; }
     }
 
     void OnDestroy()
     {
-        if (counted) { voicesNow--; counted = false; }
+        if (counted) { activeVoices.Remove(this); counted = false; }
     }
 }

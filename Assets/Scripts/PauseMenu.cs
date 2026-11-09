@@ -50,7 +50,8 @@ public class PauseMenu : AmberMenu
         BigButton(p, -0.07f, "PARAMÈTRES", () => ShowSettings(true));
         BigButton(p, -0.23f, "COMMANDES", () => ShowControls(true));
         BigButton(p, -0.39f, "MENU", ToMenu);
-        UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, DesktopMode.Text("Visez un bouton  ·  gâchette pour valider  ·  bouton menu : reprendre", "Souris : visez un bouton  ·  clic gauche pour valider  ·  Échap : reprendre"));
+        if (!DesktopMode.On)
+            UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, "Gâchette : valider");
         return p;
     }
 
@@ -80,6 +81,8 @@ public class PauseMenu : AmberMenu
     {
         if (Paused || leaving || !panel) return;
         if (PlayerHealth.Instance && PlayerHealth.Instance.IsDead) return;   // écran de fin en cours
+        if (WaveManager.Instance && WaveManager.Instance.Victory) return;    // victoire en cours
+        if (GameOverUI.PanelOpen) return;                                    // panneau de fin affiché
         if (!head && Camera.main) head = Camera.main.transform;
         // devant le joueur, à hauteur des yeux, tourné vers lui (seulement le cap : pas penché si on regarde en bas)
         var fwd = head ? head.forward : Vector3.forward; fwd.y = 0f;

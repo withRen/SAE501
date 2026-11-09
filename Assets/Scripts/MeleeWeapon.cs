@@ -22,20 +22,28 @@ public class MeleeWeapon : MonoBehaviour
 
     XRGrabInteractable grab;
     AudioSource src;
-    static AudioClip thud;
+    static AudioClip swingClip, axeClip, crowbarClip;
     Vector3 lastPos, swingDir;
-    float speed;
+    float speed, lastSwingAt = -10f;
+    bool isAxe;
     readonly Dictionary<Zombie, float> lastHit = new Dictionary<Zombie, float>();
     readonly Collider[] hits = new Collider[16];
 
     public float Speed => speed;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => swingClip = axeClip = crowbarClip = null;
+
     void Awake()
     {
         grab = GetComponent<XRGrabInteractable>();
         src = gameObject.AddComponent<AudioSource>();
-        src.spatialBlend = 1f;
-        if (!thud) thud = ProcAudio.Hit();
+        src.spatialBlend = DesktopMode.On ? 0.25f : 0.65f;
+        src.minDistance = 0.8f;
+        src.maxDistance = 14f;
+        src.priority = 36;
+        isAxe = headDamage >= 0.9f || name.IndexOf("Hache", System.StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        if (!swingClip) { swingClip = ProcAudio.MeleeSwing(); axeClip = ProcAudio.AxeImpact(); crowbarClip = ProcAudio.CrowbarImpact(); }
     }
 
     void Start() { if (striker) lastPos = striker.position; }
@@ -50,6 +58,14 @@ public class MeleeWeapon : MonoBehaviour
         if ((p - lastPos).sqrMagnitude > 1e-8f) swingDir = p - lastPos;
         lastPos = p;
         if (!BeltItem.InHand(grab) || speed < minSpeed) return;
+        if (speed >= minSpeed * 1.1f && Time.time - lastSwingAt >= 0.24f)
+        {
+            lastSwingAt = Time.time;
+            src.spatialBlend = DesktopMode.On ? 0.25f : 0.65f;
+            src.pitch = isAxe ? Random.Range(0.88f, 0.96f) : Random.Range(1.06f, 1.16f);
+            src.PlayOneShot(swingClip, isAxe ? 0.60f : 0.52f);
+            Haptic(0.18f, 0.04f);
+        }
         Strike();
     }
 
@@ -67,8 +83,9 @@ public class MeleeWeapon : MonoBehaviour
             float dmg = hb.zone == HitZone.Head ? headDamage : hb.zone == HitZone.Torso ? torsoDamage : legsDamage;
             hb.zombie.HitFeedback(hits[i].ClosestPoint(striker.position), swingDir, hb.zone == HitZone.Head);   // [#113]
             hb.zombie.OnMeleeHit(hb.zone, dmg);
-            src.pitch = Random.Range(0.6f, 0.8f);
-            src.PlayOneShot(thud, 1f);
+            src.spatialBlend = 1f;
+            src.pitch = isAxe ? Random.Range(0.94f, 1.06f) : Random.Range(0.96f, 1.04f);
+            src.PlayOneShot(isAxe ? axeClip : crowbarClip, 0.82f);
             Haptic(0.8f, 0.1f);
             done++;
         }

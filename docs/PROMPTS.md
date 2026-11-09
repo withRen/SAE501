@@ -144,9 +144,18 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [135](#135--escalade-des-fenêtres-corrigée) | 2026-11-09 | Analyser la vidéo du problème d'animation du zombie et le faire passer proprement dans la fenêtre | Zombies | Clips Mixamo faits pour un mur de 2 m + montée du script = zombie au-dessus du cadre ; corrigé : mains sur le rebord, passage dans l'ouverture, chute courte, se relève sans saut ; testé 2 fenêtres × 3 types |
 | [136](#136--chaise-et-desserte-retirées-près-des-fenêtres) | 2026-11-09 | Retirer une chaise et une table proches des fenêtres | Carte | Tabouret du poêle et desserte verte (avec sa marmite) retirés de MainScene et de RoomBuilder, NavMesh et éclairage recuits |
 | [137](#137--textures-pbr-sur-les-objets-en-aplat) | 2026-11-09 | Remplacer les aplats de couleur par des textures PBR | Graphismes | 24 matériaux en couleur unie texturés (albedo, normal, métal/lissé, usure), 22 textures 1024 ASTC 6x6, réappliquées à la reconstruction |
+| [138](#138--initialisation-game-studios-et-gdd) | 2026-11-09 | Initialisation Game Studios, project.yaml et GDD consolidé | Documentation | Création de project.yaml, design/gdd/game-concept.md, production/session-state/active.md et AGENTS.md |
+| [139](#139--intégration-du-gdd-officiel-pdf) | 2026-11-09 | Intégration du GDD complet (21 pages PDF) dans project.yaml et game-concept.md | Documentation | Alignement complet de project.yaml et design/gdd/game-concept.md avec le document officiel (3C, 5 vagues, équilibrage, bestiaire, palette, crédits) |
+| [140](#140--analyse-dun-audit-déquilibrage) | 2026-11-09 | Vérification d'un audit d'équilibrage externe contre le code | Game design | Tableau vrai/faux/périmé par constat et avis sur chaque proposition, aucun code modifié |
+| [141](#141--audit-déquilibrage-game-designer-et-analyse-pcvr) | 2026-11-09 | Juger l'équilibrage du jeu, la cohérence GDD/code et l'écart d'équilibrage PC vs VR | Game design | Audit complet (5 incohérences GDD/code, courbe TTK/économie, 4 asymétries d'équilibrage PC vs VR dans DesktopPlayer/Nail, plan d'ajustement en 6 chantiers) |
+| [142](#142--pipeline-audio-combat-zombies-team-audio-zombies-combat) | 2026-11-09 | `/team-audio zombies-combat` — Direction, specs SFX, accessibilité et implémentation audio de combat | Audio / Accessibilité | 6 documents d'architecture/design audio + implémentation C#/Shader (9 sons procéduraux en cache dans ProcAudio, profilage vocal par archétype, musique adaptative 4 états + ducking, alertes ambre GAP 1/2 et Flash HUD GAP 3) |
+| [143](#143--checkup-du-projet-après-antigravity) | 2026-11-09 | Checkup du projet Unity après la mise à jour faite avec Antigravity | Qualité / Code | Compilation propre, aucun .meta orphelin ni GUID dupliqué ; rapport de 9 points (musique coupable par manque de voix, musique désaccordée, arcs ambres, etc.), rien corrigé avant accord |
+| [144](#144--musique-de-brèche-et-correctifs-du-checkup) | 2026-11-09 | Musique de brèche déclenchée par un zombie dans le bunker et correctifs du checkup | Audio / Code | Brèche = zombie vivant dans le bunker, musique en priorité 0, arc ambre qui n'écrase plus un arc rouge et seulement pour une planche proche hors champ, seuils d'archétype en un seul endroit |
 | [145](#145--modèles-détaillés-du-poste-de-surveillance) | 2026-11-09 | Le poste de surveillance est encore low poly | Graphismes | Radio, enregistreur à LEDs, clavier, étagère à écrans et 5e écran remplacés par des modèles détaillés (Blender, ~15 000 triangles), éclairage recuit |
+| [146](#146--refonte-complète-du-menu-de-fin-de-partie-terminal-bunker-os-world-space) | 2026-11-09 | `/team-ui` Faire proprement le menu de fin de partie | UI / UX | Terminal BUNKER-OS en World Space (bilan, boutons reprendre/recommencer/menu, verrou anti-clic), souris libérée en version PC, pause bloquée en fin de partie |
 | [147](#147--textes-des-portes-cachés-par-les-murs) | 2026-11-09 | Ne plus voir les textes des portes à travers les murs, seulement de près | Interface / Rendu | Shader SAE501/WorldText : test de profondeur (les murs cachent le texte) et fondu entre 3,5 et 5 m calculé dans le shader ; 7 textes du décor (portes, générateur, radio) |
 | [148](#148--murs-qui-entrent-les-uns-dans-les-autres) | 2026-11-09 | Corriger les aberrations des murs qui se chevauchent | Carte / Rendu | 224 triangles superposés retirés sur 39 éléments de structure (z-fighting à côté du disjoncteur, sous les portes, aux angles), copies de maillages dans Assets/Generated/Recouvrements |
+| [149](#149--branche-develop-et-archivage-des-branches-fusionnées) | 2026-11-09 | Pousser dans une branche propre et archiver les branches déjà fusionnées | Git | Branche `develop` poussée (travail du jour + ajouts Antigravity), wiki poussé, 16 branches fusionnées gardées en tags `archive/<nom>` puis supprimées |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2504,6 +2513,121 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 
 ---
 
+## 138 — Initialisation Game Studios et GDD
+
+**Date** : 2026-11-09 · **Domaine** : Documentation
+
+> Dossiers et conventions Game Studios : Le projet ne possède pas encore de fichier project.yaml ni les dossiers standards design/ et production/session-state/. Souhaites-tu qu'on initialise cette compatibilité (/init-studio) sans modifier tes fichiers existants ? Fait le project.yaml en lisant tous le concept du jeu, le gameplay etc, d'ailleurs voici le GDD :
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Initialisation Game Studios** : création sans modifier les fichiers existants de `project.yaml`, `design/gdd/`, `production/session-state/` et `AGENTS.md`.
+- **`project.yaml`** : configuration complète du projet (moteur Unity 6000.6.0f1, URP, cibles Quest 3 Android et PC Desktop, framerate cible 72 FPS, piliers de gameplay, hitboxes, équilibrage des zombies et vagues).
+- **GDD consolidé** : formalisation dans `design/gdd/game-concept.md` du concept, des boucles macro/micro, du système de barricades, des armes, de l'IA zombie et de la gestion CCTV/énergie d'après la documentation et le code source.
+- **Session State** : création de `production/session-state/active.md` consignant les réalisations récentes (portage PC, escalade) et les priorités du sprint final (rendu J-4, 13 novembre 2026).
+
+---
+
+## 139 — Intégration du GDD officiel (PDF)
+
+**Date** : 2026-11-09 · **Domaine** : Documentation
+
+> Voici le gdd
+
+(Document PDF de 21 pages transmis : « Game Design Document: The last survivor / The Last Escapor », SAÉ 5.D.01)
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Extraction et analyse intégrale du GDD (21 pages)** :
+  - **Identité & Équipe** : Rahim Tamhaev, Al Amine Bah, Alban Chabalier, Hugo Delpuech ; profil Bartle (Killer 5/5, Achiever 3/5) ; USP/KSP.
+  - **Gamefeel & 3C** : le corps comme manette, pas de raycast grab, ceinture diégétique, clouage en 3 coups physiques avec planche fantôme, rechargement gestuel sous la poignée, détection cinétique du corps à corps (> 1.6 m/s), caméras nocturnes via disjoncteur.
+  - **Structure des 5 vagues** : 66 zombies au total (4, 8, 12, 18, 24), déblocage progressif des salles (Bunker OG -> Cuisine -> Stockage -> Couloir Ouest -> Générateur et bouton d'évacuation).
+  - **Bestiaire & Hitboxes** : fiches complètes du Rôdeur (1.76 m, 0.9 m/s, 100% PV), du Cogneur (1.93 m, x0.9, 150% PV, coups de poing) et du Coureur (1.69 m, x1.6, 70% PV, coups de pied) ; table des dégâts tête (one-shot), torse (-33 PV, ralentit 1.8s) et jambes (-20 PV, ralentit 2.7s).
+  - **Level Design & Circulatoire** : les 6 zones avec le portail cadenassé et le générateur électrique.
+  - **Direction Artistique & Palette** : intégration des codes couleur exacts (Interface ambre #FFBF45, réticule/contour #8C6926/#FFD166, voyants #33FF4C/#FF261A, ombres #020101).
+- **Mise à jour des fichiers** : `project.yaml` et `design/gdd/game-concept.md` mis à jour pour être en parfaite concordance avec le PDF.
+
+---
+
+## 140 — Analyse d'un audit d'équilibrage
+
+**Date** : 2026-11-09 · **Domaine** : Game design
+
+> Analyse :
+
+(Suivi du texte complet d'un audit d'équilibrage et de cohérence produit par un autre outil d'IA : 5 incohérences GDD/code, analyse chiffrée PV, mêlée, vitesses, munitions, niveau 4, et un plan de 6 chantiers avec un tableau de 18 réglages.)
+
+**Résultat** (fait par l'IA, Claude Code) : chaque constat vérifié dans le code de la branche `feature/portage-pc`. Vrais : PV par niveau et par type, mêlée en part fixe des PV de base, chevauchement des vitesses (Coureur jusqu'à 2,4 m/s au niveau 4), hache utilisable dans le bunker dès la vague 1, un seul clou suffit (choix volontaire du commit 02768f6, le GDD n'a pas suivi), disjoncteur jamais recoupé, porte forcée impossible à refermer (vrai bug), 9 zombies max au niveau 4 et 2 coups pour mourir en Difficile. Faux ou périmés : radio (1 chargeur, une fois par vague, pas 2 toutes les 75 s), chargeurs du bunker (tirés au sort, pas garantis), générateur (la jauge redescend déjà à moitié vitesse, pas de remise à zéro), traque du niveau 4 (seulement hors du bunker), mêlée sans ralenti (elle ralentit). Avis : corriger la porte, envisager le retrait de la hache du bunker et le resserrement des vitesses ; refuser les nouvelles mécaniques (coupure de courant, tête à 150 PV) à 4 jours du rendu. Aucun fichier de code modifié.
+
+
+---
+
+## 141 — Audit d'équilibrage Game Designer et analyse PC/VR
+
+**Date** : 2026-11-09 · **Domaine** : Game design
+
+> Tu es expert Game Designer, Je veux que tu juges l'équilibrage du jeu, ainsi que la cohérence de ce dernier. Ensuite, tu me fera un plan détaillé de quoi modifié pour un meilleur équilibrage.
+> Est-ce que sur ta version tu vois bien la version pc ?
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Audit d'équilibrage et de cohérence GDD vs Code (`Assets/Scripts/`)** :
+  - Analyse croisée de `ZombieLevels.cs`, `WaveManager.cs`, `Zombie.cs`, `MeleeWeapon.cs`, `Plank.cs`, `RoomBuilder.cs`, `RadioEvent.cs` et `Generator.cs`.
+  - Identification des écarts entre le GDD PDF (5 vagues, 66 zombies) et le code (4 niveaux de progression puis mode Survie infini), du calcul des dégâts de mêlée en fraction de `BaseHealth` (ne suivant pas `hpMultiplier`), du chevauchement de `speedRange` (`[0.75, 1.4]`), de la présence de `Hache_Bunker` dès le Niveau 1, et du bug de `HingedDoor.ForceOpen()` empêchant de refermer une porte forcée.
+- **Vérification de la version PC (`feature/portage-pc`)** :
+  - Analyse de `DesktopMode.cs`, `DesktopPlayer.cs`, `DesktopHud.cs` et `DesktopMenuClick.cs`.
+  - Identification de 4 asymétries d'équilibrage PC vs VR :
+    1. Levier du générateur maintenu par une main virtuelle découplée sur PC (`DesktopPlayer.cs`), permettant au joueur PC de reculer ou combattre pendant le maintien de 10 s.
+    2. Poche secondaire (`B`) stockant un second objet lourd rendu invisible (`SetRenderers(pocketed, false)`), contournant la limite d'une seule planche transportable.
+    3. Rechargement automatique en `0.55 s` via `R` avec aspiration de chargeur jusqu'à `2.2 m` (`NearestAvailableMag(2.2f)`).
+    4. Aim-assist de clouage à `18 cm` du centre de la vue (`Nail.HitFromAim`).
+- **Plan détaillé en 6 chantiers** présenté pour sélection avant modification du code.
+
+---
+
+## 142 — Pipeline Audio Combat Zombies (`/team-audio zombies-combat`)
+
+**Date** : 2026-11-09 · **Domaine** : Audio / Accessibilité
+
+> /team-audio zombies-combat
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Artefacts de design & production audio générés** :
+  - `production/audio/zombies-combat/direction.md` (Étape 1 — Direction audio, séparation spectrale 360° Cogneur/Rôdeur/Coureur, choix de l'Option B hybride DSP + synthèse procédurale).
+  - `production/audio/zombies-combat/sfx-spec.md` (Étape 2 — Spécifications SFX complètes, formules DSP 44.1 kHz, matrice des 22 événements P0-P4).
+  - `production/audio/zombies-combat/accessibility.md` (Étape 2 — Audit d'accessibilité multimodale VR/PC, résolution des 3 écarts GAP 1, GAP 2 et GAP 3).
+  - `production/audio/zombies-combat/integration-plan.md` & `production/audio/zombies-combat/engine-notes.md` (Étape 3 — Plan d'intégration Unity 6000.6.0f1, budget RAM < 400 Ko en cache statique, Single-Pass Instanced Stereo).
+  - `design/audio/audio-zombies-combat.md` (Document de design audio consolidé).
+- **Implémentation C# & Shader (Étape 4)** :
+  - `ProcAudio.cs` : ajout de 9 générateurs procéduraux mis en cache statique (`Warmup` + `SubsystemRegistration`) : `ZombieStep_Walker`, `ZombieStep_Bruiser`, `ZombieStep_Runner`, `AttackWindup`, `ZombieDeath`, `BodyThud`, `MeleeSwing`, `AxeImpact`, `CrowbarImpact`, et filtrage anti-stridence sur `ClawSwipe`.
+  - `ZombieVoice.cs` : différenciation vocale par archétype (pitch, cadence, pondération `Voix_1`/`Voix_2`, priorité `64/80/110`) et préemption (`maxVoicesAtOnce = 4`).
+  - `Zombie.cs` : pas au sol par archétype (`GroundSteps`), télégraphe d'attaque (`PlayAttackWindup`) avec alerte d'angle mort, et râle + chute du corps à la mort (`ZombieDeath` + `BodyThud`), modulés par `GameSettings.Zombies`.
+  - `MeleeWeapon.cs` : détection de swing (`MeleeSwing`) et différenciation d'impact Hache (`AxeImpact`) vs Pied-de-biche (`CrowbarImpact`).
+  - `MusicPlayer.cs` : machine à 4 états d'intensité de combat, `priority = 200`, et API `MusicPlayer.Duck(factor, duration)`.
+  - `DamageVignette.shader`, `HealthVignette.cs` & `Plank.cs` : exploitation de `_Hits[k].w` pour afficher un arc périphérique ambre (`NotifyWarningFrom`) lors d'un bris de barricade hors champ (GAP 1) ou d'un `AttackWindup` dans l'angle mort (GAP 2).
+  - `InspectHud.cs` & `Pistol.cs` : `InspectHud.Flash(1.5f)` forcé sur clic à vide `DryFire` (GAP 3) et `spatialBlend` adaptatif VR (`0.65f`) / PC (`0.20f`).
+
+## 143 — Checkup du projet après Antigravity
+
+**Date** : 2026-11-09 · **Domaine** : Qualité / Code
+
+> Ok analyse le projet Unity directement, et cherche les bugs si il y en a dans le code ou autre, j'ai recemment fait une maj avec Antigravity, visuellement aucun bug, cependant le procédé de compilation étant particulier je préfère un checkup de ta part
+
+**Résultat** (fait par l'IA, Claude Code) : relecture du diff non commité (audio de combat d'Antigravity : ProcAudio, Zombie, ZombieVoice, MusicPlayer, MeleeWeapon, Pistol, Plank, HealthVignette, InspectHud, DamageVignette.shader). La compilation passe (Assembly-CSharp recompilé après les dernières modifications, aucune erreur C# dans la console ; seules erreurs : MRUK « global context », bruit du paquet Meta). Aucun .meta orphelin, aucun fichier sans .meta, aucun GUID dupliqué ; les scènes et prefabs du jeu ne pointent vers aucun asset manquant (références manquantes seulement dans les packs tiers et les samples). Problèmes relevés : musique passée en priorité 200 (peut être coupée quand les 32 voix sont prises), hauteur de la musique modifiée (désaccord audible), état « brèche » quasi permanent, arc ambre qui peut écraser un arc rouge actif, arc ambre sur chaque planche cassée même visible ou loin, seuils d'archétype dupliqués entre Zombie et ZombieVoice, clips DontSave qui s'accumulent dans l'éditeur (rechargement de domaine désactivé), wiki pas mis à jour pour l'audio. Rapport envoyé à Rahim, aucun fichier de code modifié avant son accord. Non testé en jeu ni au casque (pas de mode Play lancé).
+
+## 144 — Musique de brèche et correctifs du checkup
+
+**Date** : 2026-11-09 · **Domaine** : Audio / Code
+
+> 1. "L’état « brèche » est presque toujours actif (`MusicPlayer.cs:95`) : il suffit d’une fenêtre sans planche, donc les 4 états de musique ne servent pas vraiment." ouais mais ducoup on ne fait quasiment jamais les planches donc cet état ne sert à rien
+
+> ok
+
+**Résultat** (fait par l'IA, Claude Code) : l'état « brèche » de MusicPlayer se déclenche quand un zombie vivant est dans le bunker (`WaveManager.AnyZombieInBunker`, zone `Zombie.BunkerArea`) au lieu d'une fenêtre sans planche. Musique remise en priorité 0 (jamais coupée faute de voix). HealthVignette : l'arc ambre ne remplace plus un arc rouge de blessure encore affiché ; nouvelle fonction `NotifyWarningIfUnseen` utilisée par Plank (planche à moins de 12 m et hors du champ de vision). Seuils Cogneur/Coureur définis une seule fois dans Zombie (`IsBruiser`, `IsRunner` publics), lus par ZombieVoice. Hauteur de la musique laissée telle quelle. Compilation vérifiée hors éditeur (dotnet build : 0 erreur) ; l'éditeur était en mode Play, donc pas de test en jeu ni au casque. Pas de commit : les mêmes fichiers contiennent les ajouts non commités d'Antigravity.
+
+---
+
 ## 145 — Modèles détaillés du poste de surveillance
 
 **Date** : 2026-11-09 · **Domaine** : Graphismes
@@ -2519,6 +2643,28 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Durable** : `Assets/Editor/PosteSurveillance.cs`, appelé par `RoomBuilder` (carte : avant la création des collisions ; 5e écran : dans `BuildExtraScreen`, avec les boîtes d'origine si le modèle manque). Appliqué aussi dans la `MainScene` ouverte (collisions en boîtes recalées), scène enregistrée.
 - Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée par le script de cuisson.
 - **Vérifié** : captures dans l'éditeur avant/après et vues rapprochées (`docs/captures/textures_usure/modeles_*.jpg`). **Pas testé au casque** (coût réel sur Quest 3 non mesuré, mais le surcoût est faible : ~15 000 triangles statiques regroupés). Rien poussé.
+
+
+---
+
+## 146 — Refonte complète du menu de fin de partie (Terminal BUNKER-OS World Space)
+
+**Date** : 2026-11-09 · **Domaine** : UI / UX (`/team-ui game-over-menu`)
+
+> /team-ui Do the game over menu properly
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Constat** : l'ancien `GameOverUI.cs` collait deux `TextMesh` sans cadre (`TexteGameOver` et `TexteBilan`) directement sur la caméra (`head`), imposait un rechargement automatique au bout de `15 s` (`restartDelay`), exigeait des raccourcis cachés (`Gâchette` ou maintien `B` pendant `1 s`), n'offrait aucun bouton pour revenir au menu principal (`Menu`), et laissait le curseur souris verrouillé/caché en version PC (`DesktopPlayer.cs`).
+- **Spécifications produites (`/team-ui`)** :
+  - `design/ux/game-over-menu.md` (Spécification UX complète 15/15 sections, validée `/ux-review` `APPROVED`).
+  - `design/ux/interaction-patterns.md` (Bibliothèque de patterns BUNKER-OS : `TerminalPanel`, `BigButton`, `BilanBox`/`StatRow`, pointeur VR/PC).
+  - `production/ui/game-over-menu/visual-design.md`, `engine-notes.md`, `review-ux-designer.md`, `review-art-director.md`, `review-accessibility-specialist.md`.
+- **Implémentation C#** :
+  - `Assets/Scripts/GameOverUI.cs` : remplacement du texte collé à la tête par un vrai terminal World Space **BUNKER-OS** (`Panneau_Fin`, `1,52 m x 1,24 m`, `scale = 0.8`, posé à `1,3 m` devant le joueur sur le cap horizontal, `UiKit.SetOnTop(true)`, `Physics.SyncTransforms()`, `MenuPointer`). Bichromie **Défaite** (`BUNKER-OS // ALERTE CRITIQUE`, `VOUS ÊTES MORT` en Rouge/Ambre) vs **Victoire** (`BUNKER-OS // EXTRACTION`, `VOUS AVEZ ÉCHAPPÉ` en Vert/Or). Encadré `BILAN DE MISSION` aligné en 2 colonnes (`StatRow`) avec badge `NOUVEAU RECORD !` en mode Survie. Boutons interactifs `MenuButton` sans relance automatique forcée : 3 boutons (`REPRENDRE AU NIVEAU X`, `RECOMMENCER (NIVEAU 1)`, `MENU PRINCIPAL`) si mort au niveau `>= 2` en Évasion, ou 2 boutons (`REJOUER` / `NOUVELLE PARTIE`, `MENU PRINCIPAL`) sinon, avec verrou anti-missclick `SafetyLock` de `1,0 s` après le fondu. Tous les champs publics historiques sont conservés pour ne pas toucher à `MainScene.unity` ni à `RoomBuilder.cs`.
+  - `Assets/Scripts/Desktop/DesktopPlayer.cs` : déverrouille automatiquement la souris (`LockCursor(false)`), bloque la recapture au clic gauche (`!GameOver`), et oriente doucement la caméra vers `GameOverUI.Instance.PanelTransform` dès que `GameOverUI.PanelOpen` est vrai.
+  - `Assets/Scripts/PauseMenu.cs` : bloque l'ouverture de la pause si `WaveManager.Instance.Victory` ou `GameOverUI.PanelOpen` est vrai.
+  - `Assets/Scripts/MenuButton.cs` : passage de la décroissance de `glow` en `Time.unscaledDeltaTime`.
 
 ---
 
@@ -2555,3 +2701,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Correction durable** : `Assets/Editor/MursSuperposes.cs`, appelé par `RoomBuilder` avant les collisions. Pour la structure fixe (murs, sols, plafonds, plinthes, corniches, lambris, encadrements), un triangle aligné sur les axes, entièrement recouvert par une face d'un autre objet dans le même plan et du même côté, est retiré (il ne se voyait qu'à travers l'autre). Les objets déplaçables ou à prendre ne sont pas touchés. Résultat : 224 triangles retirés sur 39 éléments ; copies des maillages dans `Assets/Generated/Recouvrements` (le FBX n'est pas modifié).
 - Appliqué dans la `MainScene` ouverte, scène enregistrée. Éclairage non recuit : les surfaces restantes sont les mêmes (seuls des doublons dans le même plan sont retirés).
 - **Vérifié** : capture avant/après du mur du disjoncteur (la bande tachée disparaît, seul le papier peint reste au lancer de rayon), vues des autres jonctions (couloir, stockage, cuisine, porte du couloir) sans trou. **Pas testé au casque.** Restent quelques carrés de 2 à 3 cm aux angles de plinthes et de corniches (recouvrement partiel, même matériau) et le bureau de commande qui chevauche le bureau de surveillance (mobilier, non traité).
+
+---
+
+## 149 — Branche develop et archivage des branches fusionnées
+
+**Date** : 2026-11-09 · **Domaine** : Git
+
+> Fait un push dans une branch propre et archive celles qui ont déjà été merge avec celle là
+
+(Puis, aux deux questions posées : « oui » pour inclure les changements Antigravity non commités, « Archive les au cas-où » pour les 16 branches.)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Nouvelle branche distante **`develop`** à partir de `feature/portage-pc` (portage PC, escalade corrigée, PR #146 fusionnée localement, textures PBR et modèles du poste de surveillance, shader WorldText, murs superposés), puis commit des ajouts Antigravity validés : audio de combat (ProcAudio, ZombieVoice, MusicPlayer), vignette de dégâts, musique de brèche et correctifs du checkup, menu de fin de partie, documents Game Studios (`project.yaml`, `AGENTS.md`, `design/`, `production/`) et entrées 138 à 146 du journal. Rien n'est fusionné dans `main`.
+- Restent hors commit : fichiers personnels (réglages URP, profil de build Quest avec l'identifiant du casque, `RuntimeActionBindings.json`, `DevAgentSettings.asset`, `Protection_suite`, `scripts/`), changements automatiques de l'éditeur dans `Assets/Generated` et `Tools/blender/cinematique`.
+- Wiki poussé (4 commits en attente : Version PC, escalade, tabouret et desserte, textes des portes, murs superposés).
+- 16 branches distantes entièrement contenues dans `develop` gardées en tags `archive/<nom>` puis supprimées : Gestion-vague-infini, Nouveau-son, UI-Hugo, claude/project-thread-6whioa, claude/project-thread-vr7je7, feature/7.2-effet-cctv, feature/74-zombie-test, feature/aex_usable, feature/ceinture-marteau, feature/map-finale, feature/menu-accueil, feature/zombie-animation, features/passer-attente, features/tutoriels, features/types-zombies, test/vagues-infinies. Gardées : `main`, `archive/version-pc`, `features/escalade-zombies` (PR #146 encore ouverte) et les 7 branches avec du travail absent de `develop`.
+

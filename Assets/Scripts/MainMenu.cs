@@ -67,7 +67,8 @@ public class MainMenu : AmberMenu
         BigButton(p, -0.315f, "COMMANDES", () => ShowControls(true));
         BigButton(p, -0.45f, "QUITTER", Quit);
 
-        UiKit.Text(p, "Aide", new Vector2(0f, -0.578f), 0.0068f, UiKit.Dim, DesktopMode.Text("Visez un bouton  ·  gâchette pour valider", "Souris : visez un bouton  ·  clic gauche pour valider"));
+        if (!DesktopMode.On)
+            UiKit.Text(p, "Aide", new Vector2(0f, -0.578f), 0.0068f, UiKit.Dim, "Gâchette : valider");
         return p;
     }
 

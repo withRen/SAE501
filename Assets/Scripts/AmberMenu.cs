@@ -31,9 +31,7 @@ public abstract partial class AmberMenu : MonoBehaviour
         {
             // version PC : les réglages du casque n'ont pas de sens ; souris et champ de vision à la place
             Section(p, ref y, "SOURIS ET AFFICHAGE");
-            var sens = GameSettings.MouseSensitivities;
-            Choice(p, ref y, "Sensibilité", System.Array.ConvertAll(sens, s => "×" + s.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture).Replace('.', ',')),
-                   () => Mathf.Max(0, System.Array.FindIndex(sens, s => Mathf.Approximately(s, GameSettings.MouseSensitivity))), i => GameSettings.MouseSensitivity = sens[i]);
+            FloatInput(p, ref y, "Sensibilité", () => GameSettings.MouseSensitivity, v => GameSettings.MouseSensitivity = v, 0.05f, 10f);
             Choice(p, ref y, "Souris inversée", new[] { "NON", "OUI" }, () => GameSettings.InvertMouseY ? 1 : 0, i => GameSettings.InvertMouseY = i == 1);
             var fovs = GameSettings.FieldOfViews;
             Choice(p, ref y, "Champ de vision", System.Array.ConvertAll(fovs, f => f + "°"),
@@ -139,5 +137,152 @@ public abstract partial class AmberMenu : MonoBehaviour
         }
         refresh();
         y -= 0.095f;
+    }
+
+    // champ numérique éditable au clavier (clic gauche pour saisir directement un float, Entrée ou clic extérieur pour valider)
+    protected void FloatInput(Transform p, ref float y, string label, Func<float> get, Action<float> set, float min, float max)
+    {
+        UiKit.Text(p, "Libelle", new Vector2(-HW, y), 0.0105f, UiKit.White, label, TextAnchor.MiddleLeft);
+        const float w = 0.24f;
+        var b = MakeButton(p, new Vector2(HW - w / 2f, y), new Vector2(w, 0.072f), "", 0.0088f, null);
+        var field = b.gameObject.AddComponent<MenuFloatField>();
+        field.Init(b, get, set, min, max);
+        y -= 0.095f;
+    }
+}
+
+// Champ de saisie décimale (float) pour un bouton de menu BUNKER-OS :
+// cliquer active la saisie au clavier (chiffres, '.' ou ',', Retour arrière, Entrée ou clic ailleurs pour valider).
+public class MenuFloatField : MonoBehaviour
+{
+    MenuButton button;
+    Func<float> getter;
+    Action<float> setter;
+    float minVal, maxVal;
+    bool editing, freshEdit;
+    string buffer = "";
+    int editStartFrame;
+
+    public void Init(MenuButton b, Func<float> get, Action<float> set, float min, float max)
+    {
+        button = b;
+        getter = get;
+        setter = set;
+        minVal = min;
+        maxVal = max;
+        button.onClick = ToggleEdit;
+        RefreshLabel();
+    }
+
+    static string Format(float v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    void RefreshLabel()
+    {
+        if (!button || !button.label || getter == null) return;
+        if (!editing)
+            button.label.text = Format(getter());
+        else
+        {
+            bool caret = Mathf.Repeat(Time.unscaledTime, 0.9f) < 0.45f;
+            button.label.text = buffer + (caret ? "|" : " ");
+        }
+    }
+
+    void ToggleEdit()
+    {
+        if (editing) Commit();
+        else StartEdit();
+    }
+
+    void StartEdit()
+    {
+        editing = true;
+        freshEdit = true;
+        editStartFrame = Time.frameCount;
+        buffer = Format(getter());
+        if (button) button.selected = true;
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null)
+        {
+            kb.onTextInput -= OnTextInput;
+            kb.onTextInput += OnTextInput;
+        }
+        RefreshLabel();
+    }
+
+    void StopListening()
+    {
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null) kb.onTextInput -= OnTextInput;
+    }
+
+    void OnDisable()
+    {
+        if (editing) Commit();
+        else StopListening();
+    }
+
+    void OnDestroy() => StopListening();
+
+    void OnTextInput(char c)
+    {
+        if (!editing) return;
+        if (c >= '0' && c <= '9')
+        {
+            if (freshEdit) { buffer = ""; freshEdit = false; }
+            if (buffer.Length < 6) buffer += c;
+        }
+        else if (c == '.' || c == ',')
+        {
+            if (freshEdit) { buffer = "0."; freshEdit = false; }
+            else if (!buffer.Contains(".") && !buffer.Contains(",") && buffer.Length < 5)
+                buffer += buffer.Length == 0 ? "0." : ".";
+        }
+    }
+
+    void Update()
+    {
+        if (!editing) return;
+
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null)
+        {
+            if (kb.backspaceKey.wasPressedThisFrame)
+            {
+                if (freshEdit) { buffer = ""; freshEdit = false; }
+                else if (buffer.Length > 0) buffer = buffer.Substring(0, buffer.Length - 1);
+            }
+            if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)
+            {
+                Commit();
+                return;
+            }
+        }
+
+        var mouse = UnityEngine.InputSystem.Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame && Time.frameCount > editStartFrame)
+        {
+            Commit();
+            return;
+        }
+
+        RefreshLabel();
+    }
+
+    void Commit()
+    {
+        if (!editing) return;
+        editing = false;
+        StopListening();
+        if (button) button.selected = false;
+
+        string norm = buffer.Replace(',', '.').Trim();
+        if (float.TryParse(norm, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
+        {
+            v = Mathf.Clamp(v, minVal, maxVal);
+            setter?.Invoke(v);
+            PlayerPrefs.Save();
+        }
+        RefreshLabel();
     }
 }

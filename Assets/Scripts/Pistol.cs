@@ -64,7 +64,8 @@ public class Pistol : MonoBehaviour
         grab = GetComponent<XRGrabInteractable>();
         grab.activated.AddListener(OnActivate);
         src = gameObject.AddComponent<AudioSource>();
-        src.spatialBlend = 1f;
+        src.spatialBlend = DesktopMode.On ? 0.20f : 0.65f;
+        src.priority = 32;
         if (!shot) { shot = ProcAudio.Shot(); click = ProcAudio.DryFire(); }
         if (flash) flash.enabled = false;
         BuildSmoke();
@@ -95,12 +96,22 @@ public class Pistol : MonoBehaviour
     // un tir complet (son, flash, fumée, animation du pack, douille, haptique, rayon) ; public pour pouvoir être testé sans casque
     public void Fire(IXRActivateInteractor interactor = null)
     {
-        if (ammo <= 0) { src.PlayOneShot(dryFireClip ? dryFireClip : click); Haptic(interactor, emptyHapticAmplitude, 0.03f); return; }
+        src.spatialBlend = DesktopMode.On ? 0.20f : 0.65f;
+        if (ammo <= 0)
+        {
+            src.pitch = 1f;
+            src.PlayOneShot(dryFireClip ? dryFireClip : click, 0.85f);
+            GetComponent<InspectHud>()?.Flash(1.5f);
+            Haptic(interactor, Mathf.Max(emptyHapticAmplitude, 0.35f), 0.04f);
+            return;
+        }
 
         ammo--;
         GameStats.Shot();
         UpdateHud();
-        src.PlayOneShot(shotClip ? shotClip : shot);
+        src.pitch = Random.Range(0.97f, 1.03f);
+        src.PlayOneShot(shotClip ? shotClip : shot, 0.90f);
+        MusicPlayer.Duck(0.63f, 0.30f);
         StartCoroutine(Flash());
         if (smoke) smoke.Emit(14);
         lastShot = Time.time;

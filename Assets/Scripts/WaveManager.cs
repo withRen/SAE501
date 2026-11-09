@@ -119,6 +119,12 @@ public class WaveManager : MonoBehaviour
     public TextMesh StatusText => status;
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
+    // un zombie vivant est entré dans le bunker (musique de combat, état « brèche »)
+    public bool AnyZombieInBunker()
+    {
+        foreach (var z in alive) if (z != null && !z.Dead && Zombie.BunkerArea.Contains(z.transform.position)) return true;
+        return false;
+    }
     public bool Victory => phase == Phase.Victory;
 
     // [#120] progression du niveau en cours (remise à zéro à chaque niveau)

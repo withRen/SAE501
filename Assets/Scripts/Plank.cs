@@ -60,6 +60,7 @@ public class Plank : MonoBehaviour
         foreach (var n in nails) { n.plank = this; n.Refresh(false); }
         src = gameObject.AddComponent<AudioSource>();
         src.spatialBlend = 1f;
+        src.priority = 64;
         src.maxDistance = 25f;                             // le craquement s'entend du bout du bunker
         if (!thud) thud = ProcAudio.Hit();
         if (!clack) { clack = ProcAudio.Clack(); crack = ProcAudio.WoodCrack(); }
@@ -107,8 +108,10 @@ public class Plank : MonoBehaviour
         if (!InSlot) return;
         // [#116] éclats sur toute la longueur de la planche, projetés comme elle vers l'intérieur, et craquement
         Fx.Splinters(transform.position, pushDirection, transform.right * halfLength * 0.8f);
-        src.pitch = Random.Range(0.85f, 1.1f);
+        src.pitch = Random.Range(0.90f, 1.08f);
         src.PlayOneShot(crack, crackVolume);
+        MusicPlayer.Duck(0.70f, 0.35f);
+        HealthVignette.NotifyWarningIfUnseen(transform.position, 12f, 0.65f);     // planche proche et hors du champ de vision
         placedCounted = false;
         ReleaseSlot();
         state = State.Free;

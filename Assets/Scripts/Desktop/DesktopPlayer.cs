@@ -187,21 +187,29 @@ public class DesktopPlayer : MonoBehaviour
         if (rightH == null || leftH == null) return;
 
         bool paused = PauseMenu.Paused;
+        bool gameOverPanel = GameOverUI.PanelOpen;
         bool clickConsumed = false;
-        if (paused) { if (MouseCaptured) LockCursor(false); }
-        else if (wasPaused && Application.isFocused) { LockCursor(true); clickConsumed = true; }   // reprise (bouton ou Échap)
-        else if (!MouseCaptured && mouse.leftButton.wasPressedThisFrame && Application.isFocused)
+        if (paused || gameOverPanel) { if (MouseCaptured) LockCursor(false); }
+        else if (wasPaused && !GameOver && Application.isFocused) { LockCursor(true); clickConsumed = true; }   // reprise (bouton ou Échap)
+        else if (!MouseCaptured && !GameOver && mouse.leftButton.wasPressedThisFrame && Application.isFocused)
         {
             LockCursor(true);                   // 1er clic dans la fenêtre (ou après la pause) : capture la souris
             clickConsumed = true;
         }
-        else if (!MouseCaptured && Time.frameCount < 5) LockCursor(true);
+        else if (!MouseCaptured && !GameOver && Time.frameCount < 5) LockCursor(true);
 
-        // pause : la vue se tourne vers le panneau (la souris sert de pointeur), puis revient où l'on visait
+        // pause ou écran de fin : la vue se tourne vers le panneau (la souris sert de pointeur), puis revient où l'on visait
         if (paused && !wasPaused) { pausePitch = pitch; pauseYaw = yaw; pauseMenu = FindAnyObjectByType<PauseMenu>(); }
         if (paused && pauseMenu)
         {
             var d = Quaternion.Inverse(transform.rotation) * (pauseMenu.transform.position - head.position);
+            float k = 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime);
+            pitch = Mathf.LerpAngle(pitch, -Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg, k);
+            yaw = Mathf.LerpAngle(yaw, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, k);
+        }
+        else if (gameOverPanel && GameOverUI.Instance && GameOverUI.Instance.PanelTransform)
+        {
+            var d = Quaternion.Inverse(transform.rotation) * (GameOverUI.Instance.PanelTransform.position - head.position);
             float k = 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime);
             pitch = Mathf.LerpAngle(pitch, -Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg, k);
             yaw = Mathf.LerpAngle(yaw, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, k);

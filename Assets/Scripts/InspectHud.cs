@@ -54,6 +54,12 @@ public class InspectHud : MonoBehaviour
         SetAlpha(0f);
     }
 
+    /// <summary>Force l'affichage temporaire du compteur (ex. 1,5 s lors d'un clic à vide DryFire en VR — Accessibilité GAP 3).</summary>
+    public void Flash(float duration = 1.5f)
+    {
+        lastSeen = Mathf.Max(lastSeen, Time.time + duration - linger);
+    }
+
     // ───────────────────────── geste ─────────────────────────
     // canon (ou verre de la lampe) tourné vers la gauche du regard : on voit le flanc de l'objet devant soi.
     // La direction est lue dans le repère de la tête et vue de dessus : l'objet peut être relevé ou baissé (jusqu'à ~60°),

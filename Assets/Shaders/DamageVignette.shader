@@ -67,6 +67,7 @@ Shader "SAE501/DamageVignette"
 
             fixed4 frag(v2f i) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float2 sp = i.pos.xy / _ScreenParams.xy;          // 0..1 dans l'image de l'œil
                 float2 p = (sp - 0.5) * 2.0;
                 float r = length(p * float2(0.95, 1.0));
@@ -77,21 +78,27 @@ Shader "SAE501/DamageVignette"
                 float a = saturate(edge * _Intensity * (0.8 + 0.4 * n));
                 float3 col = lerp(_Color.rgb, _Color.rgb * 0.3, edge);
 
-                // indicateurs de direction (distance au centre corrigée du rapport largeur / hauteur : arcs bien ronds)
+                // indicateurs de direction : _Hits[k].w == 0 -> dégât rouge, _Hits[k].w == 1 -> alerte acoustique ambre (brèche / angle mort)
                 float2 q = p * float2(_ScreenParams.x / _ScreenParams.y, 1.0);
                 float rq = length(q);
                 float2 nq = q / max(rq, 1e-4);
-                float h = 0;
+                float hRed = 0;
+                float hWarn = 0;
                 [unroll] for (int k = 0; k < 4; k++)
                 {
                     float w = _Hits[k].z;
-                    float c = dot(nq, _Hits[k].xy);                                      // 1 = pile dans la direction du coup
-                    float arc = smoothstep(0.80, 0.95, c);                               // environ ±30°
-                    float ring = smoothstep(0.42, 0.46, rq) * (1 - smoothstep(0.52, 0.57, rq));
-                    float side = smoothstep(0.75, 1.3, r) * pow(saturate(c), 4);          // bord rouge du côté du coup
-                    h = max(h, w * max(arc * ring * 0.9, side * 0.55));
+                    float isWarn = _Hits[k].w;
+                    float c = dot(nq, _Hits[k].xy);                                      // 1 = pile dans la direction du coup / de l'alerte
+                    float arc = smoothstep(lerp(0.80, 0.85, isWarn), 0.96, c);           // arc plus fin pour une pré-alerte ambre
+                    float ring = smoothstep(lerp(0.42, 0.50, isWarn), lerp(0.46, 0.53, isWarn), rq)
+                               * (1 - smoothstep(lerp(0.52, 0.56, isWarn), lerp(0.57, 0.60, isWarn), rq));
+                    float side = smoothstep(lerp(0.75, 0.82, isWarn), 1.3, r) * pow(saturate(c), 4);
+                    float val = w * max(arc * ring * 0.9, side * 0.55);
+                    if (isWarn > 0.5) hWarn = max(hWarn, val);
+                    else              hRed  = max(hRed,  val);
                 }
-                float3 hc = float3(0.8, 0.02, 0.02);
+                float h = max(hRed, hWarn);
+                float3 hc = lerp(float3(0.8, 0.02, 0.02), float3(1.0, 0.62, 0.08), saturate(hWarn / max(hRed + hWarn, 1e-4)));
                 float aOut = 1 - (1 - a) * (1 - h);
                 col = (col * a * (1 - h) + hc * h) / max(aOut, 1e-4);
                 return fixed4(col, aOut);

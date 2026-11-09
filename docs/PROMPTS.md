@@ -157,6 +157,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [148](#148--murs-qui-entrent-les-uns-dans-les-autres) | 2026-11-09 | Corriger les aberrations des murs qui se chevauchent | Carte / Rendu | 224 triangles superposés retirés sur 39 éléments de structure (z-fighting à côté du disjoncteur, sous les portes, aux angles), copies de maillages dans Assets/Generated/Recouvrements |
 | [149](#149--branche-develop-et-archivage-des-branches-fusionnées) | 2026-11-09 | Pousser dans une branche propre et archiver les branches déjà fusionnées | Git | Branche `develop` poussée (travail du jour + ajouts Antigravity), wiki poussé, 16 branches fusionnées gardées en tags `archive/<nom>` puis supprimées |
 | [150](#150--trous-du-toit-irréguliers) | 2026-11-09 | Trou du toit : forme moins carrée, tiges retirées, effet sur les bords | Carte / Rendu | Bord de béton cassé irrégulier, auréole noircie, gravats, lianes qui pendaient retirées (`TrousToit.cs`), éclairage recuit |
+| [151](#151--trous-du-toit-élargis) | 2026-11-09 | Élargir un peu le trou du toit | Carte / Rendu | Ouverture des deux trous agrandie (~0,9 à 1,15 m), éclairage recuit |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2741,4 +2742,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
   - Coût : ~800 triangles de bord et ~330 d'auréole par trou, 1 matériau opaque et 1 transparent de plus, aucune collision (NavMesh, zombies et caisse inchangés). La poussière du toit tombe d'une zone de 0,75 m (au lieu de 1 m) pour rester dans l'ouverture.
 - Scène reconstruite (**SAE501 → Build VR Scene**) et éclairage recuit.
 - **Vérifié** (éditeur, sans mode Play) : captures avant/après (plus de tiges, bord irrégulier) ; la caisse de la radio a au moins 35 cm de jeu autour de son point de chute et rien ne bloque sa descente (lancer de boîte) ; les deux trous gardent leur lien NavMesh, `fromAbove` et leur poussière. **Non testé** en mode Play (chute réelle d'un zombie du toit et d'une caisse) ni **au casque**.
+
+---
+
+## 151 — Trous du toit élargis
+
+**Date** : 2026-11-09 · **Domaine** : Carte / Rendu
+
+> élargie le trou un peu
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- `TrousToit.cs` : rayon de base de l'ouverture porté de 80 % à 95 % du demi-côté du carré (minimum 75 % au lieu de 62 %), bord de béton plus fin contre le carré d'origine. L'ouverture passe d'environ 0,7-1 m à 0,9-1,15 m ; les coins du carré restent cassés, le bord reste irrégulier.
+- Caisse de la radio : toujours au moins 35 cm de jeu autour de son point de chute. Scène reconstruite, éclairage recuit.
+- **Vérifié** : capture dans l'éditeur. **Non testé** en mode Play ni au casque.
 

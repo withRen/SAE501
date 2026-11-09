@@ -128,14 +128,14 @@ public static class TrousToit
             float th = Mathf.Atan2(dir.y, dir.x);
             // rayon de l'ouverture : grandes bosses (2 et 3 par tour), éclats (5 par tour) et dents au hasard
             float j = Mathf.Lerp(prevJ, R(rnd, -0.05f, 0.05f), 0.6f); prevJ = j;
-            float r = half * 0.8f + 0.06f * Mathf.Sin(2f * th + ph1) + 0.04f * Mathf.Sin(3f * th + ph2) + 0.025f * Mathf.Sin(5f * th + ph3) + j;
+            float r = half * 0.95f + 0.06f * Mathf.Sin(2f * th + ph1) + 0.04f * Mathf.Sin(3f * th + ph2) + 0.025f * Mathf.Sin(5f * th + ph3) + j;
             if (rnd.NextDouble() < 0.12) r -= R(rnd, 0.03f, 0.08f);          // dent de béton qui avance dans le trou
-            r = Mathf.Clamp(r, half * 0.62f, rOut - 0.05f);
+            r = Mathf.Clamp(r, half * 0.75f, rOut - 0.04f);
             if (h.drop.HasValue)                                                // la caisse de la radio doit passer sans toucher
-                while (r < rOut - 0.05f && Vector2.Distance(c + dir * r, h.drop.Value) < CrateClear) r += 0.01f;
-            float rb = Mathf.Min(r + R(rnd, 0.03f, 0.09f), rOut - 0.03f);      // lèvre du dessous (l'enduit est tombé)
-            float rb2 = Mathf.Min(rb + R(rnd, 0.03f, 0.10f), rOut - 0.012f);   // fin de l'écaillage
-            float rt = Mathf.Min(r + R(rnd, 0.0f, 0.06f), rOut - 0.02f);       // arête du dessus
+                while (r < rOut - 0.04f && Vector2.Distance(c + dir * r, h.drop.Value) < CrateClear) r += 0.01f;
+            float rb = Mathf.Min(r + R(rnd, 0.03f, 0.09f), rOut - 0.02f);      // lèvre du dessous (l'enduit est tombé)
+            float rb2 = Mathf.Min(rb + R(rnd, 0.03f, 0.10f), rOut - 0.008f);   // fin de l'écaillage
+            float rt = Mathf.Min(r + R(rnd, 0.0f, 0.06f), rOut - 0.015f);      // arête du dessus
             Vector3 W(float rad, float y) => new Vector3(c.x + dir.x * rad, y, c.y + dir.y * rad);
             ring.Add(new P
             {

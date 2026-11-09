@@ -25,7 +25,7 @@ public abstract partial class AmberMenu
     {
         var p = Panel("Page_Commandes", "BUNKER-OS  //  COMMANDES", "");
         float y = 0.49f;
-        Choice(p, ref y, "Commandes", new[] { "MANETTES", "CLAVIER + SOURIS" }, () => keysPage && keysPage.gameObject.activeSelf ? 1 : 0, ShowControlsTab);
+        Choice(p, ref y, "Commandes", new[] { "MANETTES", "CLAVIER + SOURIS" }, () => keysPage ? (keysPage.gameObject.activeSelf ? 1 : 0) : (DesktopMode.On ? 1 : 0), ShowControlsTab);
         padPage = new GameObject("Manettes").transform;
         padPage.SetParent(p, false);
         BuildPads(padPage);
@@ -146,7 +146,7 @@ public abstract partial class AmberMenu
         y = 0.37f;
         Row(p, -0.1f, ref y, new[] { "E" }, "E", "Prendre, poser une planche,\nutiliser (levier : maintenir)");
         Row(p, -0.1f, ref y, new[] { "R" }, "R", "Recharger (chargeur\nde la ceinture)");
-        Row(p, -0.1f, ref y, new[] { "1", "2", "3", "4" }, "1 2 3 4", "Pistolet, marteau,\nlampe, arme de mêlée");
+        Row(p, -0.1f, ref y, new[] { "1", "2", "3", "4" }, "1 2 3 4", "Pistolet, marteau,\nlampe, mêlée");
         Row(p, -0.1f, ref y, new[] { "F" }, "F", "Allumer la lampe");
         Row(p, -0.1f, ref y, new[] { "G" }, "G", "Lâcher l'objet tenu");
         Row(p, -0.1f, ref y, new[] { "V" }, "V", "Maintenir : inspecter\n(balles, pile)");

@@ -141,6 +141,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [131](#131--portes-déverrouillées-en-fin-de-vague) | 2026-10-22 | Son au déblocage d'une porte + portes débloquées dès la fin de chaque vague | Gameplay / Ressenti | Les zones de la vague N+1 s'ouvrent à la fin de la vague N (début de la pause), son door-open.mp3, annonce « OUVERT : … » sur l'écran du bunker, panneaux « ouverte après la vague N » |
 | [133](#133--portage-pc-clavier--souris) | 2026-11-09 | Portage PC propre : interactions, placement des mains, réticule, ZQSD, E, clic, souris verrouillée | Interaction / Version PC | Version PC dans les mêmes scènes (casque par défaut, PC sans casque) : DesktopPlayer, mains et armes en vue FPS, tir depuis le centre de l'écran, HUD (réticule, aide, munitions), menus à la souris, textes du tutoriel, réglages souris ; testé en mode Play sans casque |
 | [134](#134--fusion-de-la-pr-146-escalade-dans-la-version-pc) | 2026-11-09 | Récupérer la PR #146 (escalade des fenêtres, Al Amine) et la fusionner avec la version PC locale pour tester | Dépôt / Zombies | PR fusionnée localement dans feature/portage-pc sans conflit, contrôleurs des zombies régénérés avec les 3 clips d'escalade ; rien poussé |
+| [135](#135--escalade-des-fenêtres-corrigée) | 2026-11-09 | Analyser la vidéo du problème d'animation du zombie et le faire passer proprement dans la fenêtre | Zombies | Clips Mixamo faits pour un mur de 2 m + montée du script = zombie au-dessus du cadre ; corrigé : mains sur le rebord, passage dans l'ouverture, chute courte, se relève sans saut ; testé 2 fenêtres × 3 types |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2438,3 +2439,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - PR #146 (`features/escalade-zombies`, Al Amine, 1 commit `cb1b973`) récupérée et fusionnée localement dans `feature/portage-pc` (merge, pas de rebase). **Aucun conflit** : la PR touche l'escalade des **zombies** (`ZombieWindowClimb`, `ZombieAnimationBridge`, `ZombieMixamo` et 3 clips Mixamo dans `Assets/Animations/Escalade`), le portage PC ne touche aucun de ces fichiers.
 - La PR ne contenait pas les contrôleurs d'animation régénérés : sans eux, les zombies gardaient l'ancienne escalade (code seul). Régénérés dans l'éditeur (`ZombieMixamo.EnsureController` pour le zombie normal, le Cogneur et le Coureur) : chacun a maintenant les états Climb, Fall et StandUp. Même fichier et même GUID : prefabs et scène inchangés, pas de reconstruction ni de recuisson. Les réglages d'import des 3 FBX (rig humanoïde, noms des clips) sont commités avec.
 - Vérifié : compilation sans erreur (console de l'éditeur vide). **Pas vérifié en mode Play** : l'éditeur était ouvert par Rahim, je n'ai pas lancé le mode Play à sa place ; test à faire par lui (voir le message de rapport). Rien poussé.
+
+---
+
+## 135 — Escalade des fenêtres corrigée
+
+**Date** : 2026-11-09 · **Domaine** : Zombies
+
+> Analyse la vidéo pour constater du problème d'animation du zombi, et corrige la pour qu'il passe proprement dans la fenêtre
+
+(vidéo jointe : `Screen Recording 2026-11-09 at 10.53.37.mov`, version PC, après la fusion de la PR #146)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Constat (vidéo, vers 15–16 s)** : le zombie ne passe pas par l'ouverture. Il monte le long du mur jusqu'au-dessus du cadre de la fenêtre (presque au plafond, décalé vers le bord gauche, à moitié dans le mur), puis tombe de là (~2 m) à plat au sol et se relève.
+- **Cause (mesurée dans l'éditeur en échantillonnant les clips)** : *Climbing* est fait pour un mur de 2 m (mains à 2,15 m au départ, bassin à 2,8 m à la fin) ; *Falling Flat Impact* commence en l'air (bassin à 1,7 m) ; et `ZombieWindowClimb` soulevait en plus le zombie jusqu'au rebord (0,97 m). Les hauteurs s'additionnaient. La ligne d'escalade suivait les bouts du lien NavMesh, pas le centre de la fenêtre. *Zombie Stand Up* commence avec le bassin 1 m devant : saut en se relevant.
+- **Correction** (`ZombieWindowClimb`, `ZombieMixamo`) : avec les vrais clips, le zombie reste au sol au pied du mur, sur une ligne recentrée sur la fenêtre (milieu des emplacements de planches). Après l'Animator (`LateUpdate`), le modèle est décalé pour que les mains restent sur le rebord (2/3 du geste) et que le bassin passe dans l'ouverture ; la chute part du rebord et finit 0,6 m derrière le mur ; en se relevant, le bassin reste en place. À la fin, le décalage est reporté sur le zombie (pas de téléportation). Seule la 2e partie du clip *Climbing* est jouée (à partir de 45 %, ×1,1). L'ancien mouvement (sans les clips) est inchangé. Contrôleurs régénérés (même GUID : pas de reconstruction de scène ni de recuisson).
+- **Vérifié** : compilation sans erreur ; mode Play dans l'éditeur de Rahim (version PC), 2 fenêtres du bunker (SE, SW) × 3 types (normal, Cogneur, Coureur) : bassin au plus haut à 1,48–1,53 m (rebord 0,97 m, haut de fenêtre 1,99 m), écart au centre ≤ 0,36 m, 5 cm de déplacement du bassin quand l'agent reprend la main ; captures image par image : mains sur le rebord, corps dans l'ouverture, chute à plat derrière le mur, relevé. **Pas testé au casque.**
+- Wiki : section « Escalade des fenêtres » de la page Zombies (commit local, pas poussé). Rien poussé.

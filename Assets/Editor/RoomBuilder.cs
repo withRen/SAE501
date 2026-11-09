@@ -80,8 +80,10 @@ public static class RoomBuilder
         var planks = CollectPlanks(roomRoot.transform);
         // retirés : planches clouées sur les fenêtres et sur la porte condamnée du couloir (les ouvertures démarrent sans barricade : c'est au joueur de clouer),
         // planches au sol du bunker (remplacées par la pile de réserve),
-        // porte ouverte du bunker (elle gênait la barricade), marteaux de la cuisine et du stockage (un seul vrai marteau, dans le bunker)
-        RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks");
+        // porte ouverte du bunker (elle gênait la barricade), marteaux de la cuisine et du stockage (un seul vrai marteau, dans le bunker),
+        // tabouret près du poêle et desserte verte (avec sa marmite) sous la fenêtre sud-est (demande de Rahim, journal 136)
+        RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks"
+                                             || n == "Bunker_Stove_Stool_01" || n == "Bunker_ToolCart" || n == "Bunker_Stove_Pot");
         var hammerNode = Find(roomRoot.transform, "Bunker_Hammer_Workbench");
         var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
         var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");

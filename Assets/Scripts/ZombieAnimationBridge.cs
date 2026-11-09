@@ -17,7 +17,7 @@ public class ZombieAnimationBridge : MonoBehaviour
     public float LastSpeed { get; private set; }
 
     // paramètres présents dans le contrôleur, lus une seule fois (animator.parameters renvoie une copie à chaque appel)
-    bool cached, hasSpeed, hasAttack, hasDie;
+    bool cached, hasSpeed, hasAttack, hasDie, hasClimb, hasFall, hasStandUp;
     int speedId, attackId, dieId;
 
     void Cache()
@@ -30,6 +30,9 @@ public class ZombieAnimationBridge : MonoBehaviour
             if (x.name == speedParam) hasSpeed = true;
             else if (x.name == attackTrigger) hasAttack = true;
             else if (x.name == dieTrigger) hasDie = true;
+            else if (x.name == "Climb") hasClimb = true;
+            else if (x.name == "Fall") hasFall = true;
+            else if (x.name == "StandUp") hasStandUp = true;
         }
         speedId = Animator.StringToHash(speedParam);
         attackId = Animator.StringToHash(attackTrigger);
@@ -52,6 +55,13 @@ public class ZombieAnimationBridge : MonoBehaviour
         if (procedural != null) procedural.PlayAttack();
         if (boneAnim != null) boneAnim.PlayAttack();
     }
+
+    /// <summary>Le contrôleur a les 3 clips d'escalade (ZombieMixamo) : se hisser, tomber à plat, se relever.</summary>
+    public bool HasClimbAnims { get { if (!cached) Cache(); return animator != null && hasClimb && hasFall && hasStandUp; } }
+
+    public void ClimbUp() { if (HasClimbAnims) animator.SetTrigger("Climb"); }
+    public void FallFlat() { if (HasClimbAnims) animator.SetTrigger("Fall"); }
+    public void StandUp() { if (HasClimbAnims) animator.SetTrigger("StandUp"); }
 
     public void Die()
     {

@@ -19,6 +19,11 @@ public class ZombieWindowClimb : MonoBehaviour
     public float leanDegrees = 55f;         // penché en avant au sommet
     public float hipHeight = 1.0f;          // point de bascule du corps (hanches)
     public float defaultSill = 0.9f;        // hauteur du rebord si aucune fenêtre n'est trouvée
+    // avec les vraies animations (Climbing, Falling Flat Impact, Zombie Stand Up) : montée plus lente, et il se relève du sol
+    public float climbTimeAnimated = 2.4f;
+    public float standUpTime = 2.6f;        // se relever (clip joué x1,5) avant de repartir
+
+    bool Animated => anim != null && anim.HasClimbAnims;
 
     public bool Climbing { get; private set; }
 
@@ -87,22 +92,25 @@ public class ZombieWindowClimb : MonoBehaviour
             yield return null;
         }
 
-        // 2. se hisse sur le rebord (bras tendus, penché en avant)
-        anim?.Attack();
+        // 2. se hisse sur le rebord (vrai clip d'escalade, sinon bras tendus de l'attaque + corps penché)
+        bool real = Animated;
+        float up = real ? climbTimeAnimated : climbTime;
+        if (real) anim.ClimbUp(); else anim?.Attack();
         a = Along(tWall - 0.35f, 0f); b = Along(tWall + 0.05f, sill);
-        for (float t = 0; t < climbTime; t += Time.deltaTime)
+        for (float t = 0; t < up; t += Time.deltaTime)
         {
             if (Abort()) yield break;
-            float k = Mathf.SmoothStep(0f, 1f, t / climbTime);
+            float k = Mathf.SmoothStep(0f, 1f, t / up);
             // monte d'abord, avance ensuite (on s'agrippe puis on passe le bassin)
             var p = Vector3.Lerp(a, b, k); p.y = Mathf.Lerp(a.y, b.y, Mathf.Sqrt(k));
             transform.SetPositionAndRotation(p, rot);
-            Lean(leanDegrees * k);
+            if (!real) Lean(leanDegrees * k);
             anim?.SetMoveSpeed(0.25f);
             yield return null;
         }
 
-        // 3. bascule et retombe à l'intérieur
+        // 3. bascule et retombe à l'intérieur (avec le clip : il tombe à plat ventre)
+        if (real) anim.FallFlat();
         a = Along(tWall + 0.05f, sill); b = Along(tWall + 0.5f, 0f);
         for (float t = 0; t < dropTime; t += Time.deltaTime)
         {
@@ -110,12 +118,13 @@ public class ZombieWindowClimb : MonoBehaviour
             float k = t / dropTime;
             var p = Vector3.Lerp(a, b, k); p.y = Mathf.Lerp(a.y, b.y, k * k);   // chute qui accélère
             transform.SetPositionAndRotation(p, rot);
-            Lean(Mathf.Lerp(leanDegrees, 20f, k));
+            if (!real) Lean(Mathf.Lerp(leanDegrees, 20f, k));
             yield return null;
         }
 
-        // 4. se redresse
-        for (float t = 0; t < recoverTime; t += Time.deltaTime)
+        // 4. se redresse (avec le clip : se relève du sol, lentement)
+        if (real) { yield return Rise(); if (!Climbing) yield break; }
+        for (float t = 0; t < (real ? 0f : recoverTime); t += Time.deltaTime)
         {
             if (Abort()) yield break;
             Lean(Mathf.Lerp(20f, 0f, t / recoverTime));
@@ -153,15 +162,18 @@ public class ZombieWindowClimb : MonoBehaviour
             yield return null;
         }
         float h = start.y - end.y, fall = Mathf.Sqrt(2f * h / 9.81f);
+        bool real = Animated;
+        if (real) anim.FallFlat();
         for (float t = 0; t < fall; t += Time.deltaTime)
         {
             if (Abort()) yield break;
             transform.position = new Vector3(end.x, start.y - 0.5f * 9.81f * t * t, end.z);
-            Lean(Mathf.Lerp(0f, 25f, t / fall));
+            if (!real) Lean(Mathf.Lerp(0f, 25f, t / fall));
             yield return null;
         }
         transform.position = end;
-        for (float t = 0; t < recoverTime * 2f; t += Time.deltaTime)
+        if (real) { yield return Rise(); if (!Climbing) yield break; }
+        for (float t = 0; t < (real ? 0f : recoverTime * 2f); t += Time.deltaTime)
         {
             if (Abort()) yield break;
             Lean(Mathf.Lerp(25f, 0f, t / (recoverTime * 2f)));
@@ -171,6 +183,14 @@ public class ZombieWindowClimb : MonoBehaviour
         Lean(0f);
         if (agent.enabled && agent.isOnOffMeshLink) agent.CompleteOffMeshLink();
         Climbing = false;
+    }
+
+    // au sol après la chute : un court instant à plat, puis il se relève (clip Zombie Stand Up)
+    IEnumerator Rise()
+    {
+        for (float t = 0; t < 0.4f; t += Time.deltaTime) { if (Abort()) yield break; anim.SetMoveSpeed(0f); yield return null; }
+        anim.StandUp();
+        for (float t = 0; t < standUpTime; t += Time.deltaTime) { if (Abort()) yield break; anim.SetMoveSpeed(0f); yield return null; }
     }
 
     // mort pendant l'escalade : il retombe au sol là où il est

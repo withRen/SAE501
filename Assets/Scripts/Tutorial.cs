@@ -17,6 +17,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 //   - Étapes : planche → poser → marteau → clouer → 2 fenêtres → pistolet → cible → recharger → disjoncteur → caméras.
 //   - Passer tout le tutoriel : la croix en haut à droite du panneau (visée avec une main vide + gâchette, TutorialSkipCross)
 //     ou maintenir A + X pendant 2 s. (Éditeur : N = étape suivante, K = tout passer.)
+//   - Version PC (DesktopMode) : mêmes étapes, textes avec les touches du clavier et de la souris ; croix = réticule + clic, K = tout passer.
 //   - Déjà fait ? Pendant les 10 premières secondes de la partie, maintenir A + X 2 s pour le revoir.
 //   - Un futur bouton du menu « Revoir le tutoriel » peut appeler Tutorial.ForceNext() (ou ResetSaved()).
 public class Tutorial : MonoBehaviour
@@ -122,20 +123,25 @@ public class Tutorial : MonoBehaviour
         yield return Info("BIENVENUE DANS LE BUNKER",
             "Les zombies vont attaquer par les fenêtres.\nApprenons d'abord à les barricader\net à nous défendre.", 5f);
 
-        yield return Step(1, total, GameSettings.HoldToGrab
+        yield return Step(1, total, DesktopMode.On
+                ? "Prenez une planche :\nvisez-la avec le réticule\net appuyez sur E."
+                : GameSettings.HoldToGrab
                 ? "Prenez une planche :\napprochez la main et gardez enfoncé\nle bouton latéral (grip).\nRelâchez-le pour la lâcher."
                 : "Prenez une planche :\napprochez la main et appuyez une fois\nsur le bouton latéral (grip).\nUn 2e appui la lâche.",
             () => Plank.Held != null, () => NearestFreePlank(), "PLANCHE");
 
-        yield return Step(2, total, "Approchez la planche d'une fenêtre\n(planche fantôme) et lâchez-la :\nelle se pose toute seule.",
+        yield return Step(2, total, DesktopMode.Text("Approchez la planche d'une fenêtre\n(planche fantôme) et lâchez-la :\nelle se pose toute seule.",
+                "Approchez-vous d'une fenêtre et visez\nla planche fantôme : la planche s'y cale.\nAppuyez sur E pour la poser."),
             () => NewPlank(p => p.InSlot), () => NearestFreeSlot(sw, se), "ICI");
 
         if (hammer)
-            yield return Step(3, total, "Gardez la planche en place.\nAvec l'autre main, prenez le marteau\nposé sur l'établi.",
+            yield return Step(3, total, DesktopMode.Text("Gardez la planche en place.\nAvec l'autre main, prenez le marteau\nposé sur l'établi.",
+                    "Prenez le marteau posé sur l'établi\n(visez-le + E, ou touche 2\nquand vous êtes à côté)."),
                 () => Hammer.Held || NewPlank(p => p.state == Plank.State.Nailed),
                 () => hammer ? hammer.transform.position : (Vector3?)null, "MARTEAU");
 
-        yield return Step(4, total, "Clouez la planche :\nfrappez chaque clou 3 fois.",
+        yield return Step(4, total, DesktopMode.Text("Clouez la planche :\nfrappez chaque clou 3 fois.",
+                "Clouez la planche : visez un clou\net cliquez (clic gauche) 3 fois par clou."),
             () => NewPlank(p => p.state == Plank.State.Nailed),
             () => NewPlankPosition(), "CLOUS");
 
@@ -147,12 +153,14 @@ public class Tutorial : MonoBehaviour
 
         if (pistolGrab)
         {
-            yield return Step(6, total, "Prenez le pistolet à votre ceinture (à droite).",
+            yield return Step(6, total, DesktopMode.Text("Prenez le pistolet à votre ceinture (à droite).",
+                "Sortez le pistolet de votre ceinture :\ntouche 1."),
                 () => BeltItem.InHand(pistolGrab), () => pistol.transform.position, "PISTOLET");
 
             var target = SpawnTarget();
             // [#105] la règle « Visez la tête » est dite à l'étape de la cible, puis rappelée avec le nombre de tirs
-            yield return Step(7, total, "Tirez sur la cible avec la gâchette.\nRÈGLE : VISEZ LA TÊTE.\nUn tir dans la tête tue un zombie.",
+            yield return Step(7, total, DesktopMode.Text("Tirez sur la cible avec la gâchette.\nRÈGLE : VISEZ LA TÊTE.\nUn tir dans la tête tue un zombie.",
+                    "Tirez sur la cible : clic gauche\n(clic droit pour viser).\nRÈGLE : VISEZ LA TÊTE."),
                 () => target == null || target.Hits >= targetHits,
                 () => target ? target.transform.position + Vector3.up * 0.35f : (Vector3?)null, "CIBLE",
                 () => target ? "Touches : " + target.Hits + " / " + targetHits : "");
@@ -163,7 +171,8 @@ public class Tutorial : MonoBehaviour
 
             EnsureMagazineAvailable();
             int ammoBefore = pistol.ammo;
-            yield return Step(8, total, "Rechargez : prenez le chargeur\nà votre ceinture (à gauche)\net glissez-le sous la poignée du pistolet.",
+            yield return Step(8, total, DesktopMode.Text("Rechargez : prenez le chargeur\nà votre ceinture (à gauche)\net glissez-le sous la poignée du pistolet.",
+                    "Rechargez : touche R.\nLa main gauche prend le chargeur\nà la ceinture et l'insère."),
                 () => pistol == null || pistol.ammo > ammoBefore,
                 () => MagazinePosition(), "CHARGEUR");
             RestoreMagazine();
@@ -171,18 +180,20 @@ public class Tutorial : MonoBehaviour
 
         // les écrans restent noirs tant que le disjoncteur est coupé (Breaker)
         if (breaker && !Breaker.On)
-            yield return Step(9, total, "Allumez les caméras :\nattrapez le levier du disjoncteur (grip)\net abaissez-le jusqu'en bas.",
+            yield return Step(9, total, DesktopMode.Text("Allumez les caméras :\nattrapez le levier du disjoncteur (grip)\net abaissez-le jusqu'en bas.",
+                "Allumez les caméras : visez le levier\ndu disjoncteur et MAINTENEZ E\njusqu'à ce qu'il soit en bas."),
                 () => Breaker.On, () => breaker.transform.position + Vector3.up * 0.3f, "DISJONCTEUR");
 
         if (station)
         {
-            yield return Step(10, total, "Les caméras montrent l'extérieur.\nApprochez la main d'un écran\net appuyez sur le grip.",
+            yield return Step(10, total, DesktopMode.Text("Les caméras montrent l'extérieur.\nApprochez la main d'un écran\net appuyez sur le grip.",
+                "Les caméras montrent l'extérieur.\nVisez un écran et appuyez sur E."),
                 () => station.overlay && station.overlay.gameObject.activeSelf,
                 () => NearestScreen(station), "CAMÉRAS");
             if (!skipAll && station.overlay && station.overlay.gameObject.activeSelf)
             {
                 if (panel) panel.gameObject.SetActive(true);
-                SetPanel("CAMÉRAS", "Appuyez à nouveau sur le grip\npour fermer l'image.", false);
+                SetPanel("CAMÉRAS", DesktopMode.Text("Appuyez à nouveau sur le grip\npour fermer l'image.", "Appuyez à nouveau sur E\npour fermer l'image."), false);
                 float t0 = Time.time;
                 while (station.overlay.gameObject.activeSelf && Time.time - t0 < 8f && !skipAll) yield return null;
             }
@@ -192,9 +203,11 @@ public class Tutorial : MonoBehaviour
         HideMarker();
         // astuces (rien à faire, le panneau se ferme tout seul) : passer l'attente, et la radio si elle est dans la scène
         // (cherchée par son nom : la radio vient d'une autre branche, features/radio-ravitaillement)
-        var tips = "Maintenez B (manette droite) 1 seconde\npour lancer la vague sans attendre\nla fin de la pause.";
+        var tips = DesktopMode.Text("Maintenez B (manette droite) 1 seconde\npour lancer la vague sans attendre\nla fin de la pause.",
+                                    "Maintenez B 1 seconde pour lancer\nla vague sans attendre la fin de la pause.\nF1 : liste des touches.");
         if (GameObject.Find("Radio_Ravitaillement"))
-            tips += "\n\nRadio au mur : bouton rouge =\n1 chargeur livré par le toit\n(1 appel par vague).";
+            tips += DesktopMode.Text("\n\nRadio au mur : bouton rouge =\n1 chargeur livré par le toit\n(1 appel par vague).",
+                                     "\n\nRadio au mur : visez le bouton rouge + E =\n1 chargeur livré par le toit (1 appel par vague).");
         yield return Info("ASTUCES", tips, 8f);
         yield return Info("PRÊT ?", "Survivez aux vagues de zombies.\nRéparez les barricades entre les vagues.\n\nLa première vague arrive…", 4f);
         Finish(true);
@@ -210,7 +223,7 @@ public class Tutorial : MonoBehaviour
         float t0 = Time.time;
         while (Time.time - t0 < replayWindow && WaveManager.Level == 0)
         {
-            SetPanel("TUTORIEL", "Maintenez A + X pour revoir le tutoriel.", false, "", false);
+            SetPanel("TUTORIEL", DesktopMode.Text("Maintenez A + X pour revoir le tutoriel.", "Appuyez sur T pour revoir le tutoriel."), false, "", false);
             UpdateHold(out bool held);
             if (held || Pressed(Key.T))
             {
@@ -521,7 +534,8 @@ public class Tutorial : MonoBehaviour
         if (header.text != title) header.text = title;
         if (body.text != text) body.text = text;
         body.color = success ? new Color(0.35f, 1f, 0.55f) : new Color(0.9f, 0.94f, 0.92f);
-        string f = footerOverride ?? (showSkipHint ? "Passer le tutoriel : la croix (visée + gâchette, main vide) ou A + X pendant 2 s" : "");
+        string f = footerOverride ?? (showSkipHint ? DesktopMode.Text("Passer le tutoriel : la croix (visée + gâchette, main vide) ou A + X pendant 2 s",
+                                                                      "Passer le tutoriel : visez la croix et cliquez, ou touche K") : "");
         if (footer.text != f) footer.text = f;
         if (panelCross) panelCross.SetActive(showSkipHint);              // pas de croix sur l'invitation à revoir le tutoriel
     }

@@ -16,6 +16,9 @@ public class InteractableOutline : MonoBehaviour
     public static readonly Color Hover = new Color(1f, 0.82f, 0.4f, 1f);
     const float IdleWidth = 0.0025f, HoverWidth = 0.006f;
 
+    /// <summary>Version PC : objet visé par le réticule (DesktopPlayer), entouré comme s'il était survolé par une main.</summary>
+    public static XRBaseInteractable PointerHover;
+
     public XRBaseInteractable interactable;
     public Renderer[] targets;                 // renderers à entourer (par défaut : ceux de l'objet et de ses enfants)
 
@@ -110,7 +113,8 @@ public class InteractableOutline : MonoBehaviour
         bool inHand = interactable.isSelected && !(interactable.firstInteractorSelecting is XRSocketInteractor);
         bool on = interactable.isActiveAndEnabled && !inHand;
         bool hov = false;                                                    // survolé par une main (pas par son support)
-        if (on) foreach (var h in interactable.interactorsHovering) if (!(h is XRSocketInteractor)) { hov = true; break; }
+        if (on && DesktopMode.On) hov = PointerHover == interactable;          // version PC : seul l'objet visé (les mains ne survolent pas)
+        else if (on) foreach (var h in interactable.interactorsHovering) if (!(h is XRSocketInteractor)) { hov = true; break; }
         if (on != shown || hov != hovered) Apply(on, hov);
     }
 
@@ -126,5 +130,5 @@ public class InteractableOutline : MonoBehaviour
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { smoothCache.Clear(); idleMat = hoverMat = null; }
+    static void ResetStatics() { smoothCache.Clear(); idleMat = hoverMat = null; PointerHover = null; }
 }

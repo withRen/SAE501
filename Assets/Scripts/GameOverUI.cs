@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 public class GameOverUI : MonoBehaviour
 {
     public static GameOverUI Instance { get; private set; }
+    static string Trigger => DesktopMode.Text("Gâchette", "Clic");
 
     public Transform head;
     public TextMesh gameOverText;       // optionnel : TextMesh avec ta police (sinon écran noir seul)
@@ -103,7 +104,7 @@ public class GameOverUI : MonoBehaviour
         if (summary)
         {
             summary.text = "— BILAN —\n" + GameStats.Summary(WaveManager.Level, ZombieLevels.MaxLevel)
-                         + (resumeLevel > 0 ? "\n\nGâchette : reprendre au niveau " + resumeLevel + "\nMaintenir B : recommencer au niveau 1" : "\n\nGâchette : rejouer");
+                         + (resumeLevel > 0 ? "\n\n" + Trigger + " : reprendre au niveau " + resumeLevel + "\nMaintenir B : recommencer au niveau 1" : "\n\n" + Trigger + " : rejouer");
             summary.GetComponent<MeshRenderer>().enabled = true;
         }
 

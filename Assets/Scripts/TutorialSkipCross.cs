@@ -7,6 +7,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 // On la vise avec une manette dont la main est VIDE (un rayon apparaît seulement quand on vise la croix) et on appuie sur
 // la gâchette. Une main qui tient un objet est ignorée : la gâchette sert alors à tirer ou à allumer la lampe.
 // Sans manettes (éditeur sans casque) : on vise avec le regard et on appuie sur Espace (ou la gâchette).
+// Version PC (DesktopMode) : on vise avec le réticule et on clique (ou E).
 // La zone visée est un carré de `half` (en unités locales de cet objet) autour de lui, dans son plan.
 public class TutorialSkipCross : MonoBehaviour
 {
@@ -46,7 +47,7 @@ public class TutorialSkipCross : MonoBehaviour
         bool aimed = false;
         Vector3 from = Vector3.zero, to = Vector3.zero;
 
-        if (hands)
+        if (hands && !DesktopMode.On)
         {
             aimed |= Hand(left, leftHand, XRNode.LeftHand, ref downL, ref from, ref to);
             aimed |= Hand(right, rightHand, XRNode.RightHand, ref downR, ref from, ref to);
@@ -54,14 +55,15 @@ public class TutorialSkipCross : MonoBehaviour
         else if (head)
         {
             bool hit = Hit(new Ray(head.position, head.forward), out _);
-            bool d = VRInput.AnyTrigger() || VRInput.KeyboardSpace();
+            bool d = DesktopMode.On ? VRInput.MouseLeft() || VRInput.KeyboardKey(UnityEngine.InputSystem.Key.E)
+                                    : VRInput.AnyTrigger() || VRInput.KeyboardSpace();
             if (hit && d && !downHead) { onClick?.Invoke(); return; }
             downHead = d;
             aimed = hit;
         }
 
         if (aimed != hovered) { hovered = aimed; onHover?.Invoke(aimed); }
-        bool show = aimed && hands;
+        bool show = aimed && hands && !DesktopMode.On;
         if (show) rayOwner = this;
         if (rayOwner == this) Line(show, from, to);
     }

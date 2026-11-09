@@ -50,7 +50,7 @@ public class PauseMenu : AmberMenu
         BigButton(p, -0.07f, "PARAMÈTRES", () => ShowSettings(true));
         BigButton(p, -0.23f, "COMMANDES", () => ShowControls(true));
         BigButton(p, -0.39f, "MENU", ToMenu);
-        UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, "Visez un bouton  ·  gâchette pour valider  ·  bouton menu : reprendre");
+        UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, DesktopMode.Text("Visez un bouton  ·  gâchette pour valider  ·  bouton menu : reprendre", "Souris : visez un bouton  ·  clic gauche pour valider  ·  Échap : reprendre"));
         return p;
     }
 

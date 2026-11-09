@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Base commune des menus « terminal de bunker » ambre (menu d'accueil MainMenu, menu pause PauseMenu) :
-// panneau, gros boutons, page PARAMÈTRES (son, confort VR, difficulté), page COMMANDES (AmberMenuControls.cs)
+// panneau, gros boutons, page PARAMÈTRES (son, confort VR ou souris et affichage en version PC, difficulté), page COMMANDES (AmberMenuControls.cs)
 // et briques (curseurs, choix).
 // Tout est construit en code (UiKit) ; le pointeur est MenuPointer.
 public abstract partial class AmberMenu : MonoBehaviour
@@ -27,6 +27,19 @@ public abstract partial class AmberMenu : MonoBehaviour
         Slider(p, ref y, "Musique", () => GameSettings.Music, v => GameSettings.Music = v);
         Slider(p, ref y, "Effets", () => GameSettings.Effects, v => GameSettings.Effects = v);
         Slider(p, ref y, "Zombies", () => GameSettings.Zombies, v => GameSettings.Zombies = v);
+        if (DesktopMode.On)
+        {
+            // version PC : les réglages du casque n'ont pas de sens ; souris et champ de vision à la place
+            Section(p, ref y, "SOURIS ET AFFICHAGE");
+            var sens = GameSettings.MouseSensitivities;
+            Choice(p, ref y, "Sensibilité", System.Array.ConvertAll(sens, s => "×" + s.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture).Replace('.', ',')),
+                   () => Mathf.Max(0, System.Array.FindIndex(sens, s => Mathf.Approximately(s, GameSettings.MouseSensitivity))), i => GameSettings.MouseSensitivity = sens[i]);
+            Choice(p, ref y, "Souris inversée", new[] { "NON", "OUI" }, () => GameSettings.InvertMouseY ? 1 : 0, i => GameSettings.InvertMouseY = i == 1);
+            var fovs = GameSettings.FieldOfViews;
+            Choice(p, ref y, "Champ de vision", System.Array.ConvertAll(fovs, f => f + "°"),
+                   () => Mathf.Max(0, System.Array.IndexOf(fovs, GameSettings.FieldOfView)), i => GameSettings.FieldOfView = fovs[i]);
+        }
+        else
         {
             Section(p, ref y, "CONFORT VR");
             Choice(p, ref y, "Déplacement", new[] { "CONTINU", "TÉLÉPORTATION" }, () => GameSettings.Teleport ? 1 : 0, i => GameSettings.Teleport = i == 1);

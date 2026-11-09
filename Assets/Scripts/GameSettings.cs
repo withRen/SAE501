@@ -5,7 +5,9 @@ using UnityEngine.SceneManagement;
 
 // Réglages du joueur (menu PARAMÈTRES), enregistrés d'une partie à l'autre (PlayerPrefs) et appliqués à chaque scène chargée :
 //   musique / effets / cris des zombies, rotation fluide ou par à-coups, déplacement continu ou téléportation, prise par clic ou maintenue,
-//   bords sombres en mouvement, difficulté.
+//   bords sombres en mouvement, difficulté ;
+//   version PC seulement (DesktopMode) : sensibilité de la souris, souris inversée, champ de vision (au casque, c'est le Quest
+//   qui impose le champ de vision des lentilles : ces réglages n'apparaissent pas).
 public static class GameSettings
 {
     public enum Level { Facile, Normal, Difficile }
@@ -21,6 +23,12 @@ public static class GameSettings
     // prise des objets (grip) : un clic pour prendre, un clic pour lâcher (défaut) ou tenir tant que le grip est enfoncé
     public static bool HoldToGrab { get => PlayerPrefs.GetInt("sae501.holdgrab", 0) == 1; set { PlayerPrefs.SetInt("sae501.holdgrab", value ? 1 : 0); Apply(); } }
     public static bool ComfortVignette { get => PlayerPrefs.GetInt("sae501.vignette", 1) == 1; set { PlayerPrefs.SetInt("sae501.vignette", value ? 1 : 0); Apply(); } }
+    // version PC : sensibilité de la souris (1 = normale), axe vertical inversé, champ de vision vertical (degrés)
+    public static readonly float[] MouseSensitivities = { 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f };
+    public static float MouseSensitivity { get => PlayerPrefs.GetFloat("sae501.mouse", 1f); set { PlayerPrefs.SetFloat("sae501.mouse", Mathf.Clamp(value, 0.1f, 4f)); Apply(); } }
+    public static bool InvertMouseY { get => PlayerPrefs.GetInt("sae501.mouseinvert", 0) == 1; set { PlayerPrefs.SetInt("sae501.mouseinvert", value ? 1 : 0); Apply(); } }
+    public static readonly int[] FieldOfViews = { 60, 70, 80, 90 };
+    public static int FieldOfView { get => PlayerPrefs.GetInt("sae501.fov", 70); set { PlayerPrefs.SetInt("sae501.fov", Mathf.Clamp(value, 40, 100)); Apply(); } }
     public static Level Difficulty { get => (Level)PlayerPrefs.GetInt("sae501.difficulty", 1); set => PlayerPrefs.SetInt("sae501.difficulty", (int)value); }
     // Rééquilibrage : la difficulté change aussi les dégâts reçus (Zombie.ApplyLevel) et la chance de trouver un chargeur dans la carte (RandomSpawn)
     public static float DamageMultiplier => Difficulty == Level.Facile ? 0.75f : Difficulty == Level.Difficile ? 1.25f : 1f;
@@ -56,7 +64,7 @@ public static class GameSettings
         // Les manettes sont éteintes tant qu'elles ne sont pas suivies (XRInputModalityManager) : on les règle aussi éteintes.
         // smoothMotionEnabled de la manette gauche : vrai = le joystick fait marcher ; faux = vers l'avant il vise un point de
         // téléportation (et sur les côtés il tourne). La manette droite est déjà ainsi (tourner + viser) : on n'y touche pas.
-        bool teleport = Teleport;
+        bool teleport = Teleport && !DesktopMode.On;                // version PC : jamais de téléportation
         foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (mb.GetType().Name != "ControllerInputActionManager") continue;
@@ -77,7 +85,10 @@ public static class GameSettings
 
         // vignette de confort des Starter Assets (si présente dans le rig)
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t.name.Contains("TunnelingVignette")) t.gameObject.SetActive(ComfortVignette);
+            if (t.name.Contains("TunnelingVignette")) t.gameObject.SetActive(ComfortVignette && !DesktopMode.On);
+
+        // version PC : champ de vision de la caméra du joueur (pas celle des caméras de surveillance)
+        if (DesktopMode.On && DesktopPlayer.Instance) DesktopPlayer.Instance.ApplySettings();
     }
 
     /// <summary>Difficulté : nombre de zombies, temps entre deux apparitions, vitesse.</summary>

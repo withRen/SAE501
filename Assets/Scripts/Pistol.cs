@@ -115,17 +115,29 @@ public class Pistol : MonoBehaviour
         }
         Haptic(interactor, hapticAmplitude, hapticDuration);
 
-        if (AimedAtOwnHead()) { if (PlayerHealth.Instance) PlayerHealth.Instance.Kill(); return; }
+        if (!DesktopMode.On && AimedAtOwnHead()) { if (PlayerHealth.Instance) PlayerHealth.Instance.Kill(); return; }
 
-        if (Physics.Raycast(muzzle.position, muzzle.forward, out var hit, range, ~0, QueryTriggerInteraction.Ignore))
+        var ray = AimRay();
+        if (Physics.Raycast(ray, out var hit, range, ~0, QueryTriggerInteraction.Ignore))
         {
-            if (hit.rigidbody) hit.rigidbody.AddForceAtPosition(muzzle.forward * 6f, hit.point, ForceMode.Impulse);
+            if (hit.rigidbody) hit.rigidbody.AddForceAtPosition(ray.direction * 6f, hit.point, ForceMode.Impulse);
             var hb = hit.collider.GetComponent<ZombieHitbox>();
             bool head = hb && hb.zone == HitZone.Head && hb.zombie && !hb.zombie.Dead;
             hit.collider.SendMessage("OnShot", hit, SendMessageOptions.DontRequireReceiver);
             // [#113] tête touchée : un deuxième retour, fort, juste après celui du recul de l'arme
             if (head) StartCoroutine(HeadshotHaptic(interactor));
         }
+    }
+
+    // rayon du tir : le canon au casque ; en version PC, le centre de l'écran (le réticule correspond toujours à l'impact)
+    public Ray AimRay()
+    {
+        if (DesktopMode.On && Camera.main)
+        {
+            var cam = Camera.main.transform;
+            return new Ray(cam.position, cam.forward);
+        }
+        return new Ray(muzzle.position, muzzle.forward);
     }
 
     // canon collé contre la tête du joueur et pointé vers elle (la tête n'a pas de collider : test de distance et d'angle)

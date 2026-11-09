@@ -93,6 +93,7 @@ public static class RoomBuilder
         BuildMapLights();
         ReplaceLowPolyBottles(roomRoot.transform);
         PosteSurveillance.RemplacerCarte(roomRoot.transform);   // étagère à écrans, enregistreur, clavier, radio : modèles détaillés
+        MursSuperposes.Apply(roomRoot.transform);           // murs qui entrent les uns dans les autres : faces superposées retirées (z-fighting)
         MakeMapColliders(roomRoot.transform);
         SinkTerrainUnderFloors(roomRoot.transform);
         FixFloorDecals(roomRoot.transform);
@@ -1569,8 +1570,23 @@ public static class RoomBuilder
         var tm = g.AddComponent<TextMesh>();
         tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         tm.fontSize = 64; tm.characterSize = charSize; tm.anchor = TextAnchor.MiddleCenter; tm.alignment = TextAlignment.Center; tm.color = c;
-        g.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
+        var mr = g.GetComponent<MeshRenderer>();
+        mr.sharedMaterial = WorldTextMat();      // caché par les murs, fondu par distance (le matériau de la police passait à travers)
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
         return tm;
+    }
+
+    // matériau partagé des textes du décor (Resources : WorldTextMaterial recopie la texture de la police quand elle est reconstruite)
+    static Material WorldTextMat()
+    {
+        const string path = "Assets/Resources/" + WorldTextMaterial.ResourceName + ".mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null) { m = new Material(Shader.Find("SAE501/WorldText")); AssetDatabase.CreateAsset(m, path); }
+        m.shader = Shader.Find("SAE501/WorldText");
+        m.mainTexture = WorldTextMaterial.Font.material.mainTexture;
+        m.SetFloat("_FadeNear", 3.5f); m.SetFloat("_FadeFar", 5f);
+        EditorUtility.SetDirty(m);
+        return m;
     }
 
     // [#102] écran fixe des annonces de vague : mur sud du bunker, au-dessus du râtelier à planches, entre les deux fenêtres.

@@ -145,6 +145,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [136](#136--chaise-et-desserte-retirées-près-des-fenêtres) | 2026-11-09 | Retirer une chaise et une table proches des fenêtres | Carte | Tabouret du poêle et desserte verte (avec sa marmite) retirés de MainScene et de RoomBuilder, NavMesh et éclairage recuits |
 | [137](#137--textures-pbr-sur-les-objets-en-aplat) | 2026-11-09 | Remplacer les aplats de couleur par des textures PBR | Graphismes | 24 matériaux en couleur unie texturés (albedo, normal, métal/lissé, usure), 22 textures 1024 ASTC 6x6, réappliquées à la reconstruction |
 | [145](#145--modèles-détaillés-du-poste-de-surveillance) | 2026-11-09 | Le poste de surveillance est encore low poly | Graphismes | Radio, enregistreur à LEDs, clavier, étagère à écrans et 5e écran remplacés par des modèles détaillés (Blender, ~15 000 triangles), éclairage recuit |
+| [147](#147--textes-des-portes-cachés-par-les-murs) | 2026-11-09 | Ne plus voir les textes des portes à travers les murs, seulement de près | Interface / Rendu | Shader SAE501/WorldText : test de profondeur (les murs cachent le texte) et fondu entre 3,5 et 5 m calculé dans le shader ; 7 textes du décor (portes, générateur, radio) |
+| [148](#148--murs-qui-entrent-les-uns-dans-les-autres) | 2026-11-09 | Corriger les aberrations des murs qui se chevauchent | Carte / Rendu | 224 triangles superposés retirés sur 39 éléments de structure (z-fighting à côté du disjoncteur, sous les portes, aux angles), copies de maillages dans Assets/Generated/Recouvrements |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2517,3 +2519,39 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Durable** : `Assets/Editor/PosteSurveillance.cs`, appelé par `RoomBuilder` (carte : avant la création des collisions ; 5e écran : dans `BuildExtraScreen`, avec les boîtes d'origine si le modèle manque). Appliqué aussi dans la `MainScene` ouverte (collisions en boîtes recalées), scène enregistrée.
 - Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée par le script de cuisson.
 - **Vérifié** : captures dans l'éditeur avant/après et vues rapprochées (`docs/captures/textures_usure/modeles_*.jpg`). **Pas testé au casque** (coût réel sur Quest 3 non mesuré, mais le surcoût est faible : ~15 000 triangles statiques regroupés). Rien poussé.
+
+---
+
+## 147 — Textes des portes cachés par les murs
+
+**Date** : 2026-11-09 · **Domaine** : Interface / Rendu
+
+> Actuellement il est possible de voir les textes même à travers les murs, fait en sorte que ce ne s'affiche que quand le joueur soit proche de la porte (et qu'il n'y ai pas un mur qui sépare le joueur et le texte), à toi de voir c'est quoi la méthode la plus efficace / optimisée
+
+(capture jointe : panneau rouge « VERROUILLÉ » de la porte du stockage vu à travers un mur)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : les panneaux des portes sont des `TextMesh` avec le matériau par défaut de la police intégrée (`GUI/Text Shader`), dont le test de profondeur dépend d'une variable globale qui vaut « toujours » dans URP : le texte se dessinait par-dessus tout.
+- **Méthode choisie (la moins coûteuse sur Quest 3)** : nouveau shader `Assets/Shaders/WorldText.shader` (`SAE501/WorldText`) : test de profondeur normal (les murs cachent le texte, sans raycast) et fondu selon la distance à la caméra calculé dans le shader (plein jusqu'à 3,5 m, invisible au-delà de 5 m) ; aucun script par image. Compatible stéréo instanciée (VR) et PC.
+- Matériau partagé `Assets/Resources/WorldText.mat` ; `Assets/Scripts/WorldTextMaterial.cs` recopie la texture de la police quand Unity la reconstruit (police dynamique).
+- `RoomBuilder.MakeLabel` l'utilise : panneaux des 4 portes, état du générateur, affichage et étiquette de la radio (ombres coupées). Les textes d'interface (tutoriel, menus, HUD) gardent leur affichage par-dessus tout.
+- Appliqué aussi aux 7 textes de la `MainScene` ouverte, scène enregistrée (pas de reconstruction).
+- **Vérifié** : captures dans l'éditeur du panneau du stockage à 1,6 m (lisible), 4,2 m (estompé), 6 m et derrière la porte (invisible). **Pas testé au casque.**
+
+---
+
+## 148 — Murs qui entrent les uns dans les autres
+
+**Date** : 2026-11-09 · **Domaine** : Carte / Rendu
+
+> Comme on peut le voir il y a des abérations car les murs sont les uns dans les autres corrige ça
+
+(captures jointes : bande tachée à côté du disjoncteur du bunker, vue en fil de fer des murs)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : dans la carte Blender, les murs du couloir droit traversent le mur est du bunker ; leur face d'about tombe exactement dans le plan de la face visible du mur (plâtre du couloir contre papier peint du bunker) : z-fighting, une bande de 15 cm de chaque côté de la porte. Même problème sous les portes (deux planchers), aux angles des murs, des plinthes, des lambris et des corniches.
+- **Correction durable** : `Assets/Editor/MursSuperposes.cs`, appelé par `RoomBuilder` avant les collisions. Pour la structure fixe (murs, sols, plafonds, plinthes, corniches, lambris, encadrements), un triangle aligné sur les axes, entièrement recouvert par une face d'un autre objet dans le même plan et du même côté, est retiré (il ne se voyait qu'à travers l'autre). Les objets déplaçables ou à prendre ne sont pas touchés. Résultat : 224 triangles retirés sur 39 éléments ; copies des maillages dans `Assets/Generated/Recouvrements` (le FBX n'est pas modifié).
+- Appliqué dans la `MainScene` ouverte, scène enregistrée. Éclairage non recuit : les surfaces restantes sont les mêmes (seuls des doublons dans le même plan sont retirés).
+- **Vérifié** : capture avant/après du mur du disjoncteur (la bande tachée disparaît, seul le papier peint reste au lancer de rayon), vues des autres jonctions (couloir, stockage, cuisine, porte du couloir) sans trou. **Pas testé au casque.** Restent quelques carrés de 2 à 3 cm aux angles de plinthes et de corniches (recouvrement partiel, même matériau) et le bureau de commande qui chevauche le bureau de surveillance (mobilier, non traité).

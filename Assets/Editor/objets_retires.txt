@@ -1,0 +1,2 @@
+# Objets de la carte retirés (un nom par ligne). Lu par RoomBuilder via ObjetsRetires.cs à chaque Build VR Scene.
+# Ajouter : sélectionner l'objet dans la scène puis menu SAE501 > Scène > Retirer la sélection (durable).

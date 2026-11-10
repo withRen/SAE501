@@ -84,6 +84,7 @@ public static class RoomBuilder
         // tabouret près du poêle et desserte verte (avec sa marmite) sous la fenêtre sud-est (demande de Rahim, journal 136)
         RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks"
                                              || n == "Bunker_Stove_Stool_01" || n == "Bunker_ToolCart" || n == "Bunker_Stove_Pot");
+        ObjetsRetires.Appliquer(roomRoot.transform);        // objets que Rahim a retirés à la main (liste durable, menu SAE501 > Scène > Retirer la sélection)
         var hammerNode = Find(roomRoot.transform, "Bunker_Hammer_Workbench");
         var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
         var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");

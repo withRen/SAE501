@@ -52,6 +52,24 @@ public static class JardinNature
         AssetDatabase.SaveAssets();
     }
 
+    // Vitres et flaques (transparentes, lisses à 0,6 ou plus) : sans sonde de réflexion, la vue Scène de l'éditeur leur fait refléter son ciel
+    // par défaut bleu clair : fenêtres et flaques deviennent des aplats bleus qui cachent le décor. En jeu (fond noir, réflexions à 0) rien ne
+    // change ; ici on coupe aussi les réflexions de l'environnement sur ces matériaux pour que l'éditeur montre la même chose.
+    public static void NoSkyReflections(Transform root)
+    {
+        var done = new HashSet<Material>();
+        foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            foreach (var m in r.sharedMaterials)
+            {
+                if (!m || !done.Add(m) || !m.HasProperty("_Surface") || m.GetFloat("_Surface") < 0.5f) continue;     // transparents seulement
+                if (!m.HasProperty("_Smoothness") || m.GetFloat("_Smoothness") < 0.6f) continue;
+                m.SetFloat("_EnvironmentReflections", 0f);
+                m.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+                EditorUtility.SetDirty(m);
+            }
+        Debug.Log($"[JardinNature] {done.Count} matériaux examinés : réflexions du ciel coupées sur les vitres et flaques");
+    }
+
     // ---------------------------------------------------------------- sol
     static void Sol(Transform root)
     {

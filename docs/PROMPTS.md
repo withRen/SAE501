@@ -161,6 +161,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [152](#152--portail-du-jardin-en-fer-forgé-vieilli) | 2026-11-10 | Texture de la grille (portail du jardin) plus réaliste | Carte / Rendu | Matériau propre au portail : fer forgé peint en noir, écaillé, rouille, coulures, terre au pied ; UV refaites (`PortailFer.cs`, `generer_portail.py`) |
 | [153](#153--alarme-de-début-de-vague-retirée) | 2026-11-10 | Retirer l'alarme du début des vagues, garder le son de « VAGUE N » | Audio | Alarme procédurale retirée de `WaveManager.StartLevel` ; reste `Vague_Debut` |
 | [153](#153--mini-serveur-pour-le-multijoueur) | 2026-11-10 | Réfléchir à un mini serveur pour le multijoueur | Game design | 3 options comparées (hôte joueur, serveur dédié Unity, mini serveur lobby + scores hors Unity) ; conseil : rien dans le build rendu, option « parties en parallèle » (2,5 à 3 j) sur une branche à part seulement si validée ; rien codé |
+| [155](#155--multijoueur-coop-en-réseau-local-netcode) | 2026-11-10 | Faire l'option A : coop en réseau local avec Netcode | Gameplay / Réseau | Branche `feature/multijoueur` : héberger / rejoindre (découverte Wi-Fi), lobby PRÊT, avatars, zombies relayés par l'hôte, barricades partagées, scores ; testé seul dans l'éditeur, pas à 2 ni au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2807,3 +2808,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `WaveManager.StartLevel` ne joue plus l'alarme à deux tons (`ProcAudio.Alarm`). L'alarme reste jouée une fois au déblocage du générateur au niveau 4 (« LE GÉNÉRATEUR EST PRÊT »), à 60 % du volume : ce n'est pas un début de vague, laissée telle quelle.
 - Script seul, scène non reconstruite. Wiki (page Niveaux et vagues) mis à jour. **Non testé** en mode Play ni au casque.
 
+---
+
+## 155 — Multijoueur coop en réseau local (Netcode)
+
+**Date** : 2026-11-10 · **Domaine** : Gameplay / Réseau
+
+> fait l'option A
+>
+> Go pour netcode alors
+
+**Résultat** (code écrit par l'IA, Claude Code, sur la branche `feature/multijoueur` ; build rendu non touché)
+
+- **Netcode for GameObjects 2.13.3** + Multiplayer Play Mode 3.0.0. Le Meta XR SDK 205 contient un « building block » NGO qui ne compile pas sous Unity 6.6 dès que Netcode est installé : 2 lignes corrigées dans le cache des paquets par `Tools/multijoueur/patch_meta_ngo.sh` (avec l'accord de Rahim). Unity remet le fichier d'origine quand le dossier Library est recréé : relancer le script après un clone.
+- **Menu** : MULTIJOUEUR → HÉBERGER / REJOINDRE (parties trouvées sur le Wi-Fi par diffusion UDP, `LanDiscovery`) → LOBBY (joueurs, PRÊT, compte à rebours de 5 s quand tous sont prêts, puis Vagues infinies pour tous).
+- **Partie** : l'hôte fait tourner vagues et zombies ; les autres casques ont des zombies « marionnettes » (positions 15 fois par seconde, coups, morts) ; leurs tirs sont appliqués par l'hôte. Avatars des joueurs (tête, mains, couleur), vie par joueur (les zombies visent le joueur vivant le plus proche), joueur à terre relevé à la pause, fin quand tous sont tombés. Barricades partagées (pose, clou, retrait, arrachage).
+- **Scores** : 100 par zombie, +50 à la tête, +25 à la mêlée, 20 par planche posée ; équipe = somme + 500 par vague. Affichés sur l'écran du bunker et dans le bilan.
+- Android : permission Internet (profil Meta Quest) et verrou multicast (manifeste).
+- **Vérifié** : compilation sans erreur ; dans l'éditeur, hôte seul : lobby, découverte de la partie, chargement de la scène, avatar, vague, zombie tué et score (150 pour un tir à la tête), double d'un joueur distant qui transmet les coups. **Non testé** : un vrai client (deuxième instance), le Quest, deux casques.
+- Wiki : page `Multijoueur`.

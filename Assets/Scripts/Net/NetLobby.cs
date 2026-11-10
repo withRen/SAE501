@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 // Lobby d'attente (scène Menu) : la liste des joueurs connectés, leur état PRÊT, et le lancement.
 // Objet réseau créé par l'hôte (prefab Resources/Net/NetLobby) dès qu'il héberge ; les clients le reçoivent en se connectant.
 // Quand TOUS les joueurs (au moins MinPlayers) sont prêts : compte à rebours de CountdownTime s, puis l'hôte charge
-// la scène de jeu pour tout le monde (NetworkSceneManager), en mode Vagues infinies.
+// la scène de jeu pour tout le monde (NetworkSceneManager), dans le mode choisi par l'hôte (Vagues infinies ou Évasion).
 // Un joueur qui repasse « pas prêt » ou qui part annule le compte à rebours.
 public class NetLobby : NetworkBehaviour
 {
@@ -34,6 +34,17 @@ public class NetLobby : NetworkBehaviour
 
     public NetworkList<Entry> Players;
     public readonly NetworkVariable<float> Countdown = new NetworkVariable<float>(-1f);   // < 0 : pas de compte à rebours
+    /// <summary>Mode choisi par l'hôte : vrai = Vagues infinies, faux = Évasion (4 niveaux, puis le générateur).</summary>
+    public readonly NetworkVariable<bool> EndlessMode = new NetworkVariable<bool>(true);
+
+    /// <summary>Hôte : change de mode (annule un compte à rebours en cours, tout le monde doit se remettre PRÊT).</summary>
+    public void SetMode(bool endless)
+    {
+        if (!IsServer || EndlessMode.Value == endless) return;
+        EndlessMode.Value = endless;
+        Countdown.Value = -1f;
+        for (int i = 0; i < Players.Count; i++) { var e = Players[i]; e.ready = false; Players[i] = e; }
+    }
 
     /// <summary>Numéro (1..4) attribué à un joueur dans le lobby, gardé pour la partie (avatar, scores).</summary>
     public static readonly System.Collections.Generic.Dictionary<ulong, int> Numbers = new System.Collections.Generic.Dictionary<ulong, int>();
@@ -119,16 +130,17 @@ public class NetLobby : NetworkBehaviour
         launched = true;
         NetSession.InGame = true;
         LanDiscovery.StopAdvertising();
-        StartGameRpc();
+        StartGameRpc(EndlessMode.Value);
         NetworkManager.SceneManager.LoadScene(gameScene, LoadSceneMode.Single);
     }
 
-    // juste avant le chargement : tout le monde passe en Vagues infinies (la difficulté est celle de l'hôte : c'est lui qui crée les zombies)
+    // juste avant le chargement : tout le monde passe dans le mode choisi (la difficulté est celle de l'hôte : c'est lui qui crée les zombies)
     [Rpc(SendTo.Everyone)]
-    void StartGameRpc()
+    void StartGameRpc(bool endless)
     {
         NetSession.InGame = true;
-        WaveManager.Endless = true;
+        WaveManager.Endless = endless;
+        WaveManager.ResumeLevel = 0;
         foreach (var e in Players) Numbers[e.clientId] = e.number;
     }
 }

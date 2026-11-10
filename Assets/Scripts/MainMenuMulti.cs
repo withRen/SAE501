@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Pages MULTIJOUEUR du menu d'accueil (coop en réseau local, mode Vagues infinies) :
+// Pages MULTIJOUEUR du menu d'accueil (coop en réseau local, Vagues infinies ou Évasion, au choix de l'hôte) :
 //   MULTIJOUEUR → HÉBERGER : ce casque (ou le PC) devient l'hôte, le lobby s'ouvre ;
 //              → REJOINDRE : liste des parties trouvées sur le Wi-Fi (LanDiscovery), on vise et on valide ;
 //   LOBBY : les joueurs connectés et leur état, bouton PRÊT ; quand tout le monde est prêt, compte à rebours puis la partie.
@@ -15,9 +15,9 @@ public partial class MainMenu
     readonly List<MenuButton> gameButtons = new List<MenuButton>();
     readonly List<string> gameIps = new List<string>();
     readonly List<TextMesh> playerLines = new List<TextMesh>();
-    MenuButton readyButton;
+    MenuButton readyButton, modeButton;
     MultiPage multiPage;
-    bool localReady;
+    bool localReady, lastMode = true;
     float nextRefresh;
 
     void BuildMultiPages()
@@ -29,7 +29,7 @@ public partial class MainMenu
         BigButton(p, 0.12f, "HÉBERGER", Host);
         UiKit.Text(p, "Desc_Heberger", new Vector2(0f, 0.01f), 0.0068f, UiKit.Dim, "Ce casque crée la partie : les autres le rejoignent", TextAnchor.MiddleCenter);
         BigButton(p, -0.13f, "REJOINDRE", () => ShowMulti(MultiPage.Join));
-        UiKit.Text(p, "Desc_Rejoindre", new Vector2(0f, -0.24f), 0.0068f, UiKit.Dim, "Mode Vagues infinies, 2 à 4 joueurs\nTous sur le même Wi-Fi (partage de connexion conseillé)", TextAnchor.MiddleCenter);
+        UiKit.Text(p, "Desc_Rejoindre", new Vector2(0f, -0.24f), 0.0068f, UiKit.Dim, "Vagues infinies ou Évasion, 2 à 4 joueurs\nTous sur le même Wi-Fi (partage de connexion conseillé)", TextAnchor.MiddleCenter);
         multiInfo = UiKit.Text(p, "Info", new Vector2(0f, -0.38f), 0.0075f, UiKit.Red, "", TextAnchor.MiddleCenter, true);
         Back(p, () => ShowMulti(MultiPage.None));
         p.gameObject.SetActive(false);
@@ -59,6 +59,10 @@ public partial class MainMenu
         lobbyCountdown = UiKit.Text(p, "Compte", new Vector2(0f, -0.35f), 0.0105f, A, "", TextAnchor.MiddleCenter, true);
         var quit = MakeButton(p, new Vector2(-HW + 0.17f, -0.53f), new Vector2(0.34f, 0.09f), "◂  QUITTER", 0.0095f, LeaveLobby);
         quit.textColor = A;
+        // l'hôte choisit le mode (les autres le voient dans la ligne d'information)
+        modeButton = MakeButton(p, new Vector2(HW - 0.27f, -0.53f), new Vector2(0.54f, 0.09f), "", 0.0085f,
+                                () => { if (NetLobby.Instance) NetLobby.Instance.SetMode(!NetLobby.Instance.EndlessMode.Value); });
+        modeButton.textColor = A;
         p.gameObject.SetActive(false);
 
         // retour au menu après une partie en réseau ou une déconnexion : page multijoueur avec la raison
@@ -148,8 +152,13 @@ public partial class MainMenu
             foreach (var t in playerLines) t.text = "";
             return;
         }
-        lobbyInfo.text = NetSession.IsServer ? "Vous hébergez · adresse " + LanDiscovery.LocalIp() + " · mode VAGUES INFINIES"
-                                             : "Connecté · mode VAGUES INFINIES";
+        string mode = lobby.EndlessMode.Value ? "VAGUES INFINIES" : "ÉVASION";
+        lobbyInfo.text = NetSession.IsServer ? "Vous hébergez · adresse " + LanDiscovery.LocalIp() + " · mode " + mode
+                                             : "Connecté · mode " + mode;
+        modeButton.gameObject.SetActive(NetSession.IsServer);
+        modeButton.label.text = "MODE : " + mode;
+        // l'hôte a changé de mode : chacun doit se remettre PRÊT (le serveur a déjà remis les états à zéro)
+        if (lastMode != lobby.EndlessMode.Value) { lastMode = lobby.EndlessMode.Value; localReady = false; readyButton.label.text = "PRÊT"; }
         for (int i = 0; i < playerLines.Count; i++)
         {
             if (i >= lobby.Players.Count) { playerLines[i].text = ""; continue; }

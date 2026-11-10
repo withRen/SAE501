@@ -42,6 +42,8 @@ public class NetGame : NetworkBehaviour
 
     public NetworkList<Score> Scores;
     public readonly NetworkVariable<int> Wave = new NetworkVariable<int>(0);
+    /// <summary>Évasion, niveau 4 : le générateur peut démarrer (décidé par l'hôte).</summary>
+    public readonly NetworkVariable<bool> GeneratorReady = new NetworkVariable<bool>(false);
 
     /// <summary>Somme des scores des joueurs + bonus par vague terminée.</summary>
     public int TeamScore
@@ -78,6 +80,9 @@ public class NetGame : NetworkBehaviour
         Plank.LocalNailed += OnLocalNailed;
         Plank.LocalFreed += OnLocalFreed;
         Zombie.PuppetHit += OnPuppetHit;
+        WaveManager.GeneratorRequested += OnGeneratorRequested;
+        GeneratorReady.OnValueChanged += (_, v) => WaveManager.RemoteGeneratorReady = v;
+        WaveManager.RemoteGeneratorReady = GeneratorReady.Value;
         BuildScoreText();
         Scores.OnListChanged += _ => scoresDirty = true;
         Wave.OnValueChanged += (_, __) => scoresDirty = true;
@@ -92,6 +97,7 @@ public class NetGame : NetworkBehaviour
         WaveManager.StatusSet += OnStatus;
         WaveManager.WaveStarted += OnWaveStarted;
         WaveManager.BreakStarted += OnBreakStarted;
+        WaveManager.VictoryReached += OnVictory;
 
         foreach (var id in NetworkManager.ConnectedClientsIds)
         {
@@ -120,6 +126,8 @@ public class NetGame : NetworkBehaviour
         WaveManager.StatusSet -= OnStatus;
         WaveManager.WaveStarted -= OnWaveStarted;
         WaveManager.BreakStarted -= OnBreakStarted;
+        WaveManager.VictoryReached -= OnVictory;
+        WaveManager.GeneratorRequested -= OnGeneratorRequested;
     }
 
     static List<T> StableOrder<T>(IEnumerable<T> items) where T : Component =>
@@ -137,6 +145,10 @@ public class NetGame : NetworkBehaviour
         if (!IsSpawned) return;
         UpdateScoreText();
         if (!IsServer) return;
+
+        var wm = WaveManager.Instance;
+        bool gen = wm && wm.GeneratorReady;
+        if (GeneratorReady.Value != gen) GeneratorReady.Value = gen;
 
         if (Time.time >= nextState)
         {
@@ -320,6 +332,22 @@ public class NetGame : NetworkBehaviour
         Opening.ApplyingRemote = true;
         try { openings[i].WarnFromAbove(seconds); } finally { Opening.ApplyingRemote = false; }
     }
+
+    // ---------- Évasion : le générateur ----------
+    void OnGeneratorRequested() => GeneratorRpc();
+
+    // un client a tenu le levier assez longtemps : l'hôte active SON générateur (victoire pour tout le monde)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void GeneratorRpc()
+    {
+        var wm = WaveManager.Instance;
+        if (!wm || !wm.GeneratorReady) return;
+        var g = FindFirstObjectByType<Generator>();
+        if (g) g.Activate(); else wm.GeneratorActivated();
+    }
+
+    void OnVictory() => VictoryRpc();
+    [Rpc(SendTo.NotServer)] void VictoryRpc() { if (WaveManager.Instance) WaveManager.Instance.RemoteVictory(); }
 
     [Rpc(SendTo.Everyone)]
     void GameOverRpc()

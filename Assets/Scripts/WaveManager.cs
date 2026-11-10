@@ -133,7 +133,10 @@ public class WaveManager : MonoBehaviour
     bool generatorAnnounced;
     int killsAtLevelStart;
     /// <summary>Le générateur peut démarrer : niveau 4 atteint et (assez de zombies éliminés ou délai écoulé).</summary>
-    public bool GeneratorReady => !Endless && Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    public bool GeneratorReady => NetSession.IsClientOnly ? RemoteGeneratorReady
+                                : !Endless && Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    /// <summary>[Multijoueur] casque client : l'hôte dit si le générateur peut démarrer (NetGame).</summary>
+    public static bool RemoteGeneratorReady;
     public string GeneratorCondition => "Éliminez " + Mathf.Max(0, generatorKills - LevelKills) + " zombie" + (generatorKills - LevelKills > 1 ? "s" : "")
                                       + "\nou tenez " + Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime)) + " s";
 
@@ -157,6 +160,7 @@ public class WaveManager : MonoBehaviour
     {
         Instance = this;
         Level = 0;
+        RemoteGeneratorReady = false;
         if (forceEndless) Endless = true;
         Zombie.HuntPlayer = false;
         // [#121] reprise : on commence directement au niveau atteint, avec plus de temps pour se préparer
@@ -455,12 +459,15 @@ public class WaveManager : MonoBehaviour
     public void GeneratorActivated()
     {
         if (Endless || phase == Phase.Victory) return;      // mode survie : pas de victoire, le générateur est hors service
+        // [Multijoueur] un client a abaissé le levier : c'est l'hôte qui déclare la victoire (NetGame), pour tout le monde
+        if (NetSession.IsClientOnly) { if (!remoteVictory) GeneratorRequested?.Invoke(); return; }
         phase = Phase.Victory;
         Zombie.HuntPlayer = false;
         Debug.Log(GameStats.LogLine("victoire", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
         Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
+        VictoryReached?.Invoke();
         // [#122] bilan de fin (GameOverUI relance la partie) ; sans lui, relance simple
         if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();
         else StartCoroutine(RestartAfter(victoryRestartDelay));
@@ -516,6 +523,21 @@ public class WaveManager : MonoBehaviour
     public static event Action<string> StatusSet;            // ligne de statut
     public static event Action<int> WaveStarted;             // début de vague (numéro)
     public static event Action<int, float> BreakStarted;     // vague terminée (numéro, PV rendus)
+    public static event Action GeneratorRequested;           // client : levier du générateur abaissé
+    public static event Action VictoryReached;               // hôte : générateur activé, victoire
+    bool remoteVictory;
+
+    /// <summary>[Multijoueur] casque client : l'hôte a activé le générateur.</summary>
+    public void RemoteVictory()
+    {
+        if (remoteVictory) return;
+        remoteVictory = true;
+        var gen = FindFirstObjectByType<Generator>();
+        if (gen) gen.Activate();                             // lumière, son ; ne renvoie rien à l'hôte (remoteVictory)
+        phase = Phase.Victory;
+        SetStatus("");
+        if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();
+    }
 
     /// <summary>Phase en cours côté hôte : en pause entre deux vagues (les joueurs tombés sont relevés).</summary>
     public bool InBreak => phase == Phase.Break || phase == Phase.Waiting;

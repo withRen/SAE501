@@ -5,6 +5,11 @@ using UnityEngine;
 // Voix d'un zombie : il pousse un cri dès son arrivée, puis de temps en temps tant qu'il est en vie.
 // Profilage vocal par archétype (Rôdeur, Cogneur, Coureur) : pitch, cadence, pondération Voix_1/Voix_2 et priorité.
 // Au plus `maxVoicesAtOnce` zombies crient en même temps ; un Coureur ou Cogneur proche préempte un Rôdeur éloigné.
+// [SONS, PR #151] Bruitages enregistrés du zombie, appelés par Zombie (aussi sur les marionnettes du multijoueur) :
+//   - touché (balle, hache, pied de biche)  -> flesh_zombie_hit (remplace le bruit de chair procédural) ;
+//   - il frappe le joueur                   -> zombie_bite, calé sur le moment du coup ;
+//   - il meurt                              -> zombie_impact_fall_body_die (remplace le bruit sourd procédural de la chute).
+// Sons réglables ici, sinon pris dans Assets/Resources/Sounds/<nom du fichier>. Le réglage « Zombies » des paramètres les règle aussi.
 [RequireComponent(typeof(Zombie))]
 public class ZombieVoice : MonoBehaviour
 {
@@ -14,6 +19,18 @@ public class ZombieVoice : MonoBehaviour
     public Vector2 pauseBetweenCries = new Vector2(5f, 12f);      // silence entre la fin d'un cri et le suivant (s)
     public float maxDistance = 25f;
     public int maxVoicesAtOnce = 4;
+
+    [Header("Bruitages (sinon Assets/Resources/Sounds/…) [SONS]")]
+    public AudioClip hitSound;        // flesh_zombie_hit
+    public AudioClip biteSound;       // zombie_bite
+    public AudioClip deathSound;      // zombie_impact_fall_body_die
+    [Range(0f, 1f)] public float hitVolume = 0.9f;
+    [Range(0f, 1f)] public float biteVolume = 1f;
+    [Range(0f, 1f)] public float deathVolume = 1f;
+    public float biteLead = 0.2f;     // le pic du son de morsure arrive ~0,2 s après son début : on le lance un peu avant le coup
+
+    AudioSource sfx;
+    AudioClip hitClip, biteClip, deathClip;
 
     static readonly List<ZombieVoice> activeVoices = new List<ZombieVoice>();
     AudioSource src;
@@ -33,6 +50,52 @@ public class ZombieVoice : MonoBehaviour
         src.maxDistance = maxDistance;
         src.volume = volume;
         src.dopplerLevel = 0f;
+
+        // bruitages : source 3D à part (la voix s'éteint à la mort, pas le bruit de la chute)
+        sfx = gameObject.AddComponent<AudioSource>();
+        sfx.playOnAwake = false; sfx.loop = false;
+        sfx.spatialBlend = 1f; sfx.rolloffMode = AudioRolloffMode.Linear;
+        sfx.minDistance = 1.5f; sfx.maxDistance = maxDistance; sfx.dopplerLevel = 0f; sfx.priority = 40;
+        hitClip = AudioSlices.Clip(hitSound, "flesh_zombie_hit");
+        biteClip = AudioSlices.Clip(biteSound, "zombie_bite");
+        deathClip = AudioSlices.Clip(deathSound, "zombie_impact_fall_body_die");
+    }
+
+    // volume des bruitages : même réglage « Zombies » que la voix (curseur à 6/10 = volume d'origine)
+    static float Gain => Mathf.Clamp(GameSettings.Zombies / 0.6f, 0f, 1.5f);
+
+    /// <summary>Zombie touché. Renvoie faux si le son manque (Zombie garde alors son bruit de chair procédural).</summary>
+    public bool PlayHit()
+    {
+        if (!hitClip || !sfx) return false;
+        sfx.pitch = Random.Range(0.92f, 1.08f);
+        sfx.PlayOneShot(hitClip, Mathf.Clamp01(hitVolume * Gain));
+        return true;
+    }
+
+    /// <summary>Le zombie lance un coup sur le joueur : la morsure part un peu avant l'impact (hitDelay = délai du coup).</summary>
+    public void ScheduleBite(float hitDelay)
+    {
+        if (!biteClip) return;
+        CancelInvoke(nameof(Bite));
+        Invoke(nameof(Bite), Mathf.Max(0f, hitDelay - biteLead));
+    }
+
+    void Bite()
+    {
+        if (zombie == null || zombie.Dead || !biteClip) return;
+        sfx.pitch = Random.Range(0.95f, 1.05f);
+        sfx.PlayOneShot(biteClip, Mathf.Clamp01(biteVolume * Gain));
+    }
+
+    /// <summary>Chute du corps à la mort. Renvoie faux si le son manque (Zombie garde alors son bruit sourd procédural).</summary>
+    public bool PlayFall()
+    {
+        if (!deathClip || !sfx) return false;
+        CancelInvoke(nameof(Bite));
+        sfx.pitch = Random.Range(0.95f, 1.05f);
+        sfx.PlayOneShot(deathClip, Mathf.Clamp01(deathVolume * Gain));
+        return true;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

@@ -91,6 +91,7 @@ public class Zombie : MonoBehaviour
     Vector3 stuckAnchor;
     float stuckSince, lurkUntil, nextRoofStep, nextGroundStep;
     AudioSource roofSrc, hitSrc, stepSrc;
+    ZombieVoice voice;                     // [SONS] bruitages enregistrés (touché, morsure, chute)
     static AudioClip roofStep, flesh, headCrack, stepWalker, stepBruiser, stepRunner, windupClip, deathClip, bodyThudClip;
     Vector3 flinchDir; float flinchSpeed;
     static readonly RaycastHit[] sightHits = new RaycastHit[8];
@@ -124,6 +125,7 @@ public class Zombie : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponent<ZombieAnimationBridge>();
+        voice = GetComponent<ZombieVoice>();
         if (!GetComponent<ZombieEyes>()) gameObject.AddComponent<ZombieEyes>();
         ProcAudio.Warmup();
     }
@@ -311,6 +313,7 @@ public class Zombie : MonoBehaviour
         hitSrc.pitch = runner ? Random.Range(1.12f, 1.25f) : (bruiser ? Random.Range(0.76f, 0.86f) : Random.Range(0.92f, 1.08f));
         float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.25f, 1.5f);
         hitSrc.PlayOneShot(windupClip, Mathf.Clamp01(0.88f * zGain));
+        if (voice) voice.ScheduleBite(attackHitDelay);      // [SONS] morsure calée sur le coup
         MusicPlayer.Duck(0.70f, 0.35f);
 
         var cam = Camera.main;
@@ -550,8 +553,10 @@ public class Zombie : MonoBehaviour
         Fx.Blood(point, -direction, head);
         EnsureHitSource();
         if (!flesh) { flesh = ProcAudio.Flesh(); headCrack = ProcAudio.HeadCrack(); }
+        // [SONS] le son enregistré flesh_zombie_hit (ZombieVoice) remplace le bruit de chair ; la tête garde son craquement en plus
+        bool recorded = voice && voice.PlayHit();
         hitSrc.pitch = Random.Range(0.85f, 1.1f);
-        hitSrc.PlayOneShot(head ? headCrack : flesh, fleshVolume);
+        if (head || !recorded) hitSrc.PlayOneShot(head ? headCrack : flesh, fleshVolume);
         direction.y = 0f;
         if (direction.sqrMagnitude > 1e-4f)
         {
@@ -591,6 +596,7 @@ public class Zombie : MonoBehaviour
 
     void PlayBodyThud()
     {
+        if (voice && voice.PlayFall()) return;          // [SONS] chute enregistrée (zombie_impact_fall_body_die)
         if (!hitSrc) return;
         if (!bodyThudClip) bodyThudClip = ProcAudio.BodyThud();
         float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.25f, 1.5f);
@@ -640,7 +646,19 @@ public class Zombie : MonoBehaviour
     }
 
     /// <summary>Animation de coup jouée par l'hôte.</summary>
-    public void PuppetAttack() => anim?.Attack();
+    public void PuppetAttack()
+    {
+        anim?.Attack();
+        // [SONS] la marionnette ne sait pas ce qu'elle frappe : morsure seulement si elle est contre le joueur de ce casque
+        var pl = PlayerHealth.Instance;
+        if (voice && pl && !pl.Dead && FlatDistanceToPlayer(pl) <= attackRange * 1.4f) voice.ScheduleBite(attackHitDelay);
+    }
+
+    float FlatDistanceToPlayer(PlayerHealth pl)
+    {
+        var p = pl.HeadPosition;
+        return Vector2.Distance(new Vector2(p.x, p.z), new Vector2(transform.position.x, transform.position.z));
+    }
 
     void PuppetUpdate()
     {

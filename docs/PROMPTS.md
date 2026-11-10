@@ -163,6 +163,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [153](#153--mini-serveur-pour-le-multijoueur) | 2026-11-10 | Réfléchir à un mini serveur pour le multijoueur | Game design | 3 options comparées (hôte joueur, serveur dédié Unity, mini serveur lobby + scores hors Unity) ; conseil : rien dans le build rendu, option « parties en parallèle » (2,5 à 3 j) sur une branche à part seulement si validée ; rien codé |
 | [155](#155--multijoueur-coop-en-réseau-local-netcode) | 2026-11-10 | Faire l'option A : coop en réseau local avec Netcode | Gameplay / Réseau | Branche `feature/multijoueur` : héberger / rejoindre (découverte Wi-Fi), lobby PRÊT, avatars, zombies relayés par l'hôte, barricades partagées, scores ; testé seul dans l'éditeur, pas à 2 ni au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
+| [161](#161--sons-de-la-pr-151-intégrés-au-portage-pc-et-au-multijoueur) | 2026-11-10 | Récupérer uniquement les sons de la PR #151 (LeCapet) dans la version actuelle | Audio | 7 sons (planches, clous, souffle de la hache, zombie touché / morsure / chute) dans `Assets/Resources/Sounds`, `AudioSlices` sans la banque GameSounds, câblage adapté au multijoueur ; modifs d'UI et `Nail (1).cs` écartées ; compilé hors éditeur, pas écouté en jeu ni au casque |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
 
@@ -2827,3 +2828,23 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Android : permission Internet (profil Meta Quest) et verrou multicast (manifeste).
 - **Vérifié** : compilation sans erreur ; dans l'éditeur, hôte seul : lobby, découverte de la partie, chargement de la scène, avatar, vague, zombie tué et score (150 pour un tir à la tête), double d'un joueur distant qui transmet les coups. **Non testé** : un vrai client (deuxième instance), le Quest, deux casques.
 - Wiki : page `Multijoueur`.
+
+---
+
+## 161 — Sons de la PR #151 intégrés au portage PC et au multijoueur
+
+**Date** : 2026-11-10 · **Domaine** : Audio
+
+> Récupérer uniquement les sons (fichiers audio + le câblage nécessaire pour qu'ils jouent) de la PR #151 de LeCapet, pas les modifs UI. Les intégrer à la version actuelle de Rahim : le portage PC + le multijoueur.
+> (demande transmise par le coordinateur du projet)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Repris de la PR #151** (« Modif UI et rajout son », branche `Nouveau-son` de LeCapet) : les 7 fichiers audio et le code qui les joue. La PR partait d'une base très ancienne (journal 097) : rien n'a été fusionné tel quel, le câblage a été réécrit sur la version actuelle (branche `feature/multijoueur`, qui contient le portage PC).
+- **Sons** : `Assets/Resources/Sounds/` : `wood_hit`, `wood_break`, `Wood_hammer_nail`, `axe_whoosh`, `flesh_zombie_hit`, `zombie_bite`, `zombie_impact_fall_body_die`. Import : mono, Vorbis 0,7, « Decompress On Load » (requis pour le découpage automatique). Placés dans `Resources` pour être trouvés sans reconstruire les prefabs ni la scène.
+- **`AudioSlices.cs`** (de la PR) : découpe toute seule une bande son en frappes séparées (d'après les silences) et coupe la fin silencieuse de `wood_break`. Retiré : la dépendance à une banque `GameSounds` qui n'existe pas dans le dépôt (la PR ne compilait pas sans elle).
+- **Câblage** : planche frappée par un zombie (`wood_hit`, une frappe au hasard) et arrachée (`wood_break`, joué aussi chez les autres joueurs) ; clou enfoncé (`Wood_hammer_nail`) ; souffle de la hache et du pied de biche (`axe_whoosh`, un par grand geste, à la place du souffle procédural) ; zombie touché (`flesh_zombie_hit`, à la place du bruit de chair ; la tête garde son craquement), morsure calée sur le coup (`zombie_bite`), chute du corps (`zombie_impact_fall_body_die`, à la place du bruit sourd). Sans le fichier, chaque script garde son ancien son procédural.
+- **Différence avec la PR pour le multijoueur** : la PR déclenchait les sons de zombie en surveillant ses PV et son état, ce qui ne marche pas sur les marionnettes d'un client. Ils sont appelés directement par `Zombie` (coup reçu, attaque, mort), y compris sur les marionnettes ; la morsure d'une marionnette ne se joue que si elle est contre le joueur de ce casque.
+- **Écarté** : les modifs d'interface (`GameOverUI`, `MainMenu`, `GameStats`, `WaveManager` : mode infini et écran de fin) et le doublon `Nail (1).cs` (deuxième classe `Nail`, erreur de compilation). Aucun son de vague touché (le début de vague reste `Vague_Debut`).
+- **Vérifié** : le code compile (compilateur d'Unity lancé hors de l'éditeur). **Non vérifié** : écoute en jeu, découpage réel des bandes son, réglage des volumes, multijoueur à deux, casque.
+

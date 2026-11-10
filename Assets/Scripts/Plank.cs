@@ -33,6 +33,12 @@ public class Plank : MonoBehaviour
     [Range(0f, 1f)] public float clackVolume = 0.8f;
     [Range(0f, 1f)] public float crackVolume = 1f;
 
+    [Header("Sons : bandes son (sinon Assets/Resources/Sounds/wood_hit et wood_break) [SONS, PR #151]")]
+    public AudioClip hitSound;                         // wood_hit : plusieurs frappes à la suite, découpées automatiquement (une au hasard à chaque coup)
+    public AudioClip breakSound;                       // wood_break : seules les premières secondes contiennent du son
+    [Range(0f, 1f)] public float hitVolume = 0.9f;
+    public float breakSeconds = 2f;                    // durée jouée de wood_break
+
     public State state { get; private set; }
     public bool InSlot => state == State.Placed || state == State.Nailed;     // barricade en place (pas tenue en main)
     public bool CanBeNailed => state != State.Free;                           // clous accessibles au marteau
@@ -45,6 +51,7 @@ public class Plank : MonoBehaviour
     float push, pushVel;                   // recul de la planche quand un zombie frappe (ressort)
     AudioSource src;
     static AudioClip thud, clack, crack;
+    static int lastHitVariant = -1;
     bool placedCounted;                    // déjà comptée comme posée (bilan) : reprise et reposée sur le même emplacement = une seule fois
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -95,11 +102,30 @@ public class Plank : MonoBehaviour
     {
         if (!InSlot) return true;
         Hits++;
-        src.pitch = Random.Range(0.55f, 0.7f);
-        src.PlayOneShot(thud, 0.9f);
+        PlayHit();
         pushVel += 0.9f;                                   // la planche encaisse : petit recul vers l'intérieur
         if (state == State.Placed || Hits >= hitsWhenNailed) { Break(pushDirection); return true; }
         return false;
+    }
+
+    // [SONS] coup de zombie : une frappe au hasard de la bande wood_hit (sinon l'ancien bruit sourd procédural)
+    void PlayHit()
+    {
+        var v = AudioSlices.Split(AudioSlices.Clip(hitSound, "wood_hit"));
+        if (v != null && v.Length > 0)
+        {
+            src.pitch = Random.Range(0.95f, 1.05f);
+            src.PlayOneShot(v[AudioSlices.Pick(v.Length, ref lastHitVariant)], hitVolume);
+        }
+        else { src.pitch = Random.Range(0.55f, 0.7f); src.PlayOneShot(thud, 0.9f); }
+    }
+
+    // [SONS] planche arrachée : le début de wood_break (le reste du fichier est du silence) ; joué aussi chez les autres joueurs (Break à distance)
+    void PlayBreak()
+    {
+        var c = AudioSlices.Trim(AudioSlices.Clip(breakSound, "wood_break"), breakSeconds);
+        if (c) { src.pitch = Random.Range(0.95f, 1.05f); src.PlayOneShot(c, crackVolume); }
+        else { src.pitch = Random.Range(0.90f, 1.08f); src.PlayOneShot(crack, crackVolume); }
     }
 
     // arrachée par un zombie : la planche se détache de l'ouverture et tombe (on peut la ramasser et la reposer)
@@ -109,8 +135,7 @@ public class Plank : MonoBehaviour
         if (!ApplyingRemote) Broken?.Invoke(this, pushDirection);
         // [#116] éclats sur toute la longueur de la planche, projetés comme elle vers l'intérieur, et craquement
         Fx.Splinters(transform.position, pushDirection, transform.right * halfLength * 0.8f);
-        src.pitch = Random.Range(0.90f, 1.08f);
-        src.PlayOneShot(crack, crackVolume);
+        PlayBreak();
         MusicPlayer.Duck(0.70f, 0.35f);
         HealthVignette.NotifyWarningIfUnseen(transform.position, 12f, 0.65f);     // planche proche et hors du champ de vision
         placedCounted = false;

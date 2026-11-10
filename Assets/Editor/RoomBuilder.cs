@@ -98,6 +98,7 @@ public static class RoomBuilder
         TrousToit.Apply(roomRoot.transform);                // trous du toit : bord de béton cassé, auréole noircie, gravats ; lianes qui pendaient retirées
         PortailFer.Apply(roomRoot.transform);               // portail du jardin : fer forgé vieilli (UV refaites, matériau propre)
         SinkTerrainUnderFloors(roomRoot.transform);
+        JardinNature.Apply(roomRoot.transform);             // sol du jardin et de la forêt (Poly Haven), forêt en vrais arbres avec LOD et imposteurs
         FixFloorDecals(roomRoot.transform);
         FixGardenCabin(roomRoot.transform);
         BuildExterior();

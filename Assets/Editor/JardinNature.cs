@@ -206,15 +206,63 @@ public static class JardinNature
             if (o is Mesh m) { if (m.name.StartsWith("LOD0")) lod0 = m; else if (m.name.StartsWith("LOD1")) lod1 = m; }
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TreeFbx);
         var pr = prefab ? prefab.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.name.StartsWith("LOD0")) : null;
-        // matériaux de la carte (island_tree_02*, recréés à chaque import) repris d'un arbre du jardin, par nom
-        var byName = new Dictionary<string, Material>();
-        foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.name.StartsWith("Garden_RealTree_")))
-            foreach (var m in r.sharedMaterials) if (m) byName[m.name] = m;
         if (!lod0 || !lod1 || pr == null) { Debug.LogWarning("[JardinNature] maillages LOD0 / LOD1 introuvables dans " + TreeFbx); return false; }
-        var names = pr.sharedMaterials.Select(m => m ? m.name.Split(' ')[0].Replace(".001", "") : "").ToArray();
-        mats = names.Select(n => byName.TryGetValue(n, out var m) ? m : null).ToArray();
-        if (mats.Any(m => m == null)) { Debug.LogWarning("[JardinNature] matériaux island_tree_02 introuvables : " + string.Join(", ", names)); return false; }
+        // matériaux déjà posés sur un arbre du jardin (island_tree_02*, recréés à chaque import de la carte), dans l'ordre des
+        // sous-maillages (voir plus bas). Leurs textures sont remplacées par celles du jacaranda (Retexture).
+        // ordre des sous-maillages de l'FBX (Tools/blender/arbre_jacaranda.py) : feuilles, rameaux, tronc. Les matériaux sont pris PAR NOM,
+        // sur un arbre du jardin s'il y en a un, sinon dans leurs fichiers.
+        var byName = new Dictionary<string, Material>();
+        if (root != null)
+            foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.name.StartsWith("Garden_RealTree_") && !r.name.Contains("Gnarled")))
+                foreach (var m in r.sharedMaterials) if (m && m.name.StartsWith("island_tree_02")) byName[m.name] = m;
+        Material Get(string n) => byName.TryGetValue(n, out var m) ? m : AssetDatabase.LoadAssetAtPath<Material>($"Assets/Room/Materials/{n}.mat");
+        mats = new[] { Get("island_tree_02_leaves"), Get("island_tree_02_branches"), Get("island_tree_02") };
+        if (mats.Any(m => !m)) { Debug.LogWarning("[JardinNature] matériaux de l'arbre introuvables : arbres non remplacés"); mats = null; return false; }
+        Retexture(mats);
         return true;
+    }
+
+    // textures du jacaranda (Poly Haven, CC0, 1k) sur les trois matériaux de l'arbre : tronc, feuilles (découpe alpha, double face), rameaux
+    const string JacDir = "Assets/Nature/Arbres/Jacaranda";
+    static void Retexture(Material[] m)
+    {
+        var td = Tex($"{JacDir}/jacaranda_tree_trunk_diff_1k.jpg", false); var tn = Tex($"{JacDir}/jacaranda_tree_trunk_nor_gl_1k.jpg", true);
+        var bd = Tex($"{JacDir}/jacaranda_tree_branches_diff_1k.jpg", false); var bn = Tex($"{JacDir}/jacaranda_tree_branches_nor_gl_1k.jpg", true);
+        var ld = Tex($"{JacDir}/jacaranda_tree_leaves_diff_1k.png", false); var ln = Tex($"{JacDir}/jacaranda_tree_leaves_nor_gl_1k.jpg", true);
+        if (!td || !bd || !ld) { Debug.LogWarning($"[JardinNature] textures du jacaranda absentes dans {JacDir}"); return; }
+        var li = (TextureImporter)AssetImporter.GetAtPath($"{JacDir}/jacaranda_tree_leaves_diff_1k.png");
+        if (!li.alphaIsTransparency || !li.mipMapsPreserveCoverage)
+        {
+            li.alphaIsTransparency = true; li.mipMapsPreserveCoverage = true; li.alphaTestReferenceValue = 0.5f; li.SaveAndReimport();
+        }
+        void Set(Material mat, Texture2D d, Texture2D n, float smooth)
+        {
+            mat.SetTexture("_BaseMap", d); mat.SetTextureScale("_BaseMap", Vector2.one); mat.SetTextureOffset("_BaseMap", Vector2.zero);
+            mat.SetColor("_BaseColor", Color.white);
+            if (n) { mat.SetTexture("_BumpMap", n); mat.SetTextureScale("_BumpMap", Vector2.one); mat.SetFloat("_BumpScale", 1f); mat.EnableKeyword("_NORMALMAP"); }
+            mat.SetFloat("_Smoothness", smooth);
+            mat.SetFloat("_Metallic", 0f);
+            mat.SetFloat("_SpecularHighlights", 0f); mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            mat.SetFloat("_EnvironmentReflections", 0f); mat.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+            EditorUtility.SetDirty(mat);
+        }
+        Set(m[0], ld, ln, 0.1f); Set(m[1], bd, bn, 0.12f); Set(m[2], td, tn, 0.12f);     // feuilles, rameaux, tronc
+        m[0].SetFloat("_AlphaClip", 1f); m[0].SetFloat("_Cutoff", 0.5f); m[0].SetFloat("_Cull", 0f); m[0].EnableKeyword("_ALPHATEST_ON");
+        m[0].SetOverrideTag("RenderType", "TransparentCutout"); m[0].renderQueue = (int)RenderQueue.AlphaTest;
+        AssetDatabase.SaveAssets();
+    }
+
+    /// <summary>Met à jour l'arbre dans la scène ouverte SANS la reconstruire : textures, imposteur et panneaux (le maillage vient du FBX, mis à jour tout seul).</summary>
+    [MenuItem("SAE501/Jardin/Mettre à jour l'arbre sans reconstruire")]
+    public static void RafraichirArbres()
+    {
+        var map = GameObject.Find("Carte (Blender)");      // absente si une autre scène est ouverte : les matériaux sont alors pris dans leurs fichiers
+        if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets/Generated", "Nature");
+        if (!LoadTree(map ? map.transform : null, out var lod0, out _, out var mats)) return;
+        AssetDatabase.DeleteAsset(ImpostorPath);
+        Impostor(lod0, mats);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[JardinNature] arbre mis à jour (textures, imposteur) sans reconstruire la scène");
     }
 
     static (Material mat, Mesh cards) Impostor(Mesh lod0, Material[] mats)
@@ -395,9 +443,8 @@ public static class JardinNature
     static void RebuildImpostor()
     {
         var map = GameObject.Find("Carte (Blender)");
-        if (!map) { Debug.LogWarning("[JardinNature] ouvrir MainScene d'abord"); return; }
         if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets/Generated", "Nature");
-        if (LoadTree(map.transform, out var lod0, out _, out var mats)) RenderImpostor(lod0, mats);
+        if (LoadTree(map ? map.transform : null, out var lod0, out _, out var mats)) RenderImpostor(lod0, mats);
     }
 
     // l'arbre vu de côté, en orthographique, avec des matériaux sans éclairage (couleur seule) ; le fond magenta devient transparent

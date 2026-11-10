@@ -159,6 +159,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [150](#150--trous-du-toit-irréguliers) | 2026-11-09 | Trou du toit : forme moins carrée, tiges retirées, effet sur les bords | Carte / Rendu | Bord de béton cassé irrégulier, auréole noircie, gravats, lianes qui pendaient retirées (`TrousToit.cs`), éclairage recuit |
 | [151](#151--trous-du-toit-élargis) | 2026-11-09 | Élargir un peu le trou du toit | Carte / Rendu | Ouverture des deux trous agrandie (~0,9 à 1,15 m), éclairage recuit |
 | [152](#152--portail-du-jardin-en-fer-forgé-vieilli) | 2026-11-10 | Texture de la grille (portail du jardin) plus réaliste | Carte / Rendu | Matériau propre au portail : fer forgé peint en noir, écaillé, rouille, coulures, terre au pied ; UV refaites (`PortailFer.cs`, `generer_portail.py`) |
+| [153](#153--alarme-de-début-de-vague-retirée) | 2026-11-10 | Retirer l'alarme du début des vagues, garder le son de « VAGUE N » | Audio | Alarme procédurale retirée de `WaveManager.StartLevel` ; reste `Vague_Debut` |
 | [153](#153--mini-serveur-pour-le-multijoueur) | 2026-11-10 | Réfléchir à un mini serveur pour le multijoueur | Game design | 3 options comparées (hôte joueur, serveur dédié Unity, mini serveur lobby + scores hors Unity) ; conseil : rien dans le build rendu, option « parties en parallèle » (2,5 à 3 j) sur une branche à part seulement si validée ; rien codé |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
@@ -2791,3 +2792,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Constat : aucun code réseau dans le projet, permission Internet et HTTP non chiffré désactivés, rendu dans 3 jours, gel des fonctionnalités dépassé, multijoueur toujours « NE FERA PAS » dans le GDD.
 - Trois options comparées : hôte = un joueur, serveur dédié Unity sur le Mac (aussi coûteux, la difficulté est la synchronisation du monde, pas le serveur), mini serveur Python de lobby et de scores où chaque casque joue sa propre partie (lobby, prêt, top départ, graine commune, score par joueur et d'équipe, page de classement pour le jury ; 2,5 à 3 j).
 - Conseil : ne pas toucher au build rendu ; option « parties en parallèle » seulement sur une branche à part et seulement si Rahim la valide ; vraie coop après le rendu.
+
+---
+
+## 153 — Alarme de début de vague retirée
+
+**Date** : 2026-11-10 · **Domaine** : Audio
+
+> retire des sons l'alarme du début des vagues, seul le rire ( le sons que je t'avais fait mettre) suffit
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Compris : « le rire » = le son de début de vague ajouté au journal 127 (`Vague_Debut.ogg`, joué par `WaveTitle`, que le code appelle un chuchotement) ; c'est celui qui est gardé. À confirmer par Rahim si c'est un autre son.
+- `WaveManager.StartLevel` ne joue plus l'alarme à deux tons (`ProcAudio.Alarm`). L'alarme reste jouée une fois au déblocage du générateur au niveau 4 (« LE GÉNÉRATEUR EST PRÊT »), à 60 % du volume : ce n'est pas un début de vague, laissée telle quelle.
+- Script seul, scène non reconstruite. Wiki (page Niveaux et vagues) mis à jour. **Non testé** en mode Play ni au casque.
+

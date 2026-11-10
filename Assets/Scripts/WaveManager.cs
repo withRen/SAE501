@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 // Niveaux 1 et 2 : pas de zombie sur le toit (ses trous ne se barricadent pas) : tout arrive par une fenêtre ou une porte.
 // Une vague se termine toujours : un zombie coincé meurt seul au bout de 20 s (Zombie.stuckTimeout).
 // [#102] Annonces et statut sur un écran fixe du bunker (mur sud, au-dessus du râtelier), plus rien ne suit le regard ;
-//   une alarme retentit au début de chaque vague. [#106] L'annonce dit ce que contiennent les zones qui s'ouvrent (ZoneGate).
+//   plus d'alarme au début des vagues (journal 153 : seul le son de « VAGUE N » reste). [#106] L'annonce dit ce que contiennent les zones qui s'ouvrent (ZoneGate).
 // [#120] Niveau 4 : le générateur ne démarre qu'après generatorKills zombies éliminés OU generatorDelay secondes dans le niveau
 //   (on ne gagne plus en courant directement au levier). L'écran annonce le moment où il devient utilisable.
 // [#122] Le temps de jeu est compté pour le bilan (GameStats) ; la victoire affiche le bilan (GameOverUI.ShowVictory).
@@ -101,7 +101,7 @@ public class WaveManager : MonoBehaviour
     [Header("Son")]
     public AudioClip startClip;                // joué au lancement de la partie (début de la scène)
     [Range(0f, 1f)] public float startVolume = 0.9f;
-    [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme de début de vague
+    [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme « générateur prêt » (niveau 4) ; plus jouée au début des vagues
     [Range(0f, 1f)] public float doorVolume = 0.9f;       // portes déverrouillées en fin de vague (Resources/Audio/Porte_Deverrouillee)
 
     enum Phase { Waiting, Wave, Break, Victory }
@@ -255,7 +255,7 @@ public class WaveManager : MonoBehaviour
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);              // d'habitude déjà fait en fin de vague ; utile si la partie commence à un autre niveau (startLevel)
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
-        if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
+        // plus d'alarme au début de la vague (journal 153) : seul le son de WaveTitle (Vague_Debut) est joué
         if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
         if (title) title.Show(Level);
         if (Endless) EndlessRecord.Submit(Level, GameStats.Time);

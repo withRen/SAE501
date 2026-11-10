@@ -409,6 +409,7 @@ public class Zombie : MonoBehaviour
         {
             var t = sightHits[i].transform;
             if (t.IsChildOf(transform) || t.GetComponentInParent<PlayerHealth>() != null) continue;    // lui-même, le joueur
+            if (t.GetComponentInParent<NetPlayer>() != null) continue;                               // [Multijoueur] le corps d'un joueur distant
             if (t.GetComponentInParent<Zombie>() != null) continue;                                   // un autre zombie ne cache pas le joueur
             return false;                                                                             // mur, porte, planche…
         }

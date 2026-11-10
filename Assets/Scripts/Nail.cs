@@ -2,6 +2,7 @@ using UnityEngine;
 
 // Un clou : apparaît quand on a le marteau en main, s'enfonce à chaque coup (3 coups).
 // [#112] Chaque coup fait vibrer la manette du marteau (0,6) ; le coup qui enfonce le clou en entier vibre à fond (1,0).
+// [SONS] Chaque coup joue un son de la bande « Wood_hammer_nail » (découpée toute seule en coups de marteau, un au hasard).
 // Détection des coups sans physique : on teste le trajet de la tête du marteau (segment) contre la tête du clou.
 public class Nail : MonoBehaviour
 {
@@ -14,6 +15,10 @@ public class Nail : MonoBehaviour
     public float minSpeed = 0.9f;      // m/s : en dessous, ce n'est pas un vrai coup
     public float sinkSpeed = 0.5f;     // m/s : vitesse à laquelle le clou s'enfonce visuellement
 
+    [Header("Son [SONS]")]
+    public AudioClip nailSound;        // Wood_hammer_nail : sinon Assets/Resources/Sounds/Wood_hammer_nail
+    [Range(0f, 1f)] public float nailVolume = 0.9f;
+
     [Header("Vibration du marteau [#112]")]
     [Range(0f, 1f)] public float hitHaptic = 0.6f;       // à chaque coup
     [Range(0f, 1f)] public float drivenHaptic = 1f;      // clou entièrement enfoncé
@@ -24,6 +29,7 @@ public class Nail : MonoBehaviour
     float lastHit, z;
     AudioSource src;
     static AudioClip hitClip;
+    static int lastNailVariant = -1;
 
     public bool Driven => hits >= hitsNeeded;
     public int Hits => hits;
@@ -82,8 +88,13 @@ public class Nail : MonoBehaviour
 
         hits++;
         lastHit = Time.time;
-        src.pitch = 0.9f + 0.1f * hits;
-        src.PlayOneShot(hitClip);
+        var v = AudioSlices.Split(AudioSlices.Clip(nailSound, "Wood_hammer_nail"));
+        if (v != null && v.Length > 0)
+        {
+            src.pitch = Random.Range(0.97f, 1.03f);
+            src.PlayOneShot(v[AudioSlices.Pick(v.Length, ref lastNailVariant)], nailVolume);
+        }
+        else { src.pitch = 0.9f + 0.1f * hits; src.PlayOneShot(hitClip); }     // ancien son procédural
         if (Driven) VRInput.Haptic(Hammer.Hand, drivenHaptic, drivenHapticDuration);
         else VRInput.Haptic(Hammer.Hand, hitHaptic, hitHapticDuration);
     }

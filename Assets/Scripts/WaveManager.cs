@@ -24,6 +24,11 @@ using UnityEngine.SceneManagement;
 //   - niveau 4 : dès que le générateur est prêt, les zombies traquent le joueur hors du bunker (Zombie.HuntPlayer) ;
 //   - [#121] après une mort au niveau 2 ou plus, on peut reprendre au début du niveau atteint (ResumeLevel, GameOverUI) ;
 //   - une ligne « [Bilan] » dans le log à chaque vague terminée et à la mort (GameStats.LogLine) pour régler après un playtest.
+// [MODE INFINI + FORMULE] Plus aucun réglage de vague écrit à la main : tout vient de la fonction DefForWave(vague), une suite qui
+//   donne nombre de zombies, cadence, vitesse, zombies simultanés, PV et points d'apparition. Elle part de la difficulté du menu
+//   (GameSettings.Difficulty) et des quantités du GDD (4, 8, 12, 18, 24 en Normal). Deux modes, choisis dans le menu (SOLO) :
+//   - CAMPAGNE : `campaignWaves` vagues puis le générateur (comme avant) ;
+//   - VAGUES INFINIES (WaveManager.Infinite) : les vagues ne s'arrêtent jamais, objectif = survivre le plus longtemps ; records sauvegardés.
 public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
@@ -32,6 +37,24 @@ public class WaveManager : MonoBehaviour
     public static int ResumeLevel;
     public static bool Resumed { get; private set; }       // cette partie est une reprise : pas de tutoriel
 
+    // ---- mode de jeu (choisi dans MainMenu > SOLO), mémorisé d'une partie à l'autre ----
+    static int mode = -1;
+    public static bool Infinite
+    {
+        get { if (mode < 0) mode = PlayerPrefs.GetInt("sae501.endless", 0); return mode == 1; }
+        set { mode = value ? 1 : 0; PlayerPrefs.SetInt("sae501.endless", mode); }
+    }
+    // records du mode infini
+    public static int BestWave { get => PlayerPrefs.GetInt("sae501.endless.bestWave", 0); private set => PlayerPrefs.SetInt("sae501.endless.bestWave", value); }
+    public static float BestTime { get => PlayerPrefs.GetFloat("sae501.endless.bestTime", 0f); private set => PlayerPrefs.SetFloat("sae501.endless.bestTime", value); }
+    int previousBestWave;
+    float previousBestTime;
+    /// <summary>Mode infini : la vague atteinte dépasse le record d'avant cette partie.</summary>
+    public bool NewRecord => Infinite && previousBestWave > 0 && Level > previousBestWave;
+    /// <summary>Mode infini : le temps survécu dépasse le record d'avant cette partie.</summary>
+    public bool NewTimeRecord => Infinite && previousBestTime > 0f && GameStats.Time > previousBestTime;
+
+    // Réglages d'UNE vague, calculés par DefForWave (plus saisis à la main).
     [Serializable]
     public class LevelDef
     {
@@ -40,12 +63,56 @@ public class WaveManager : MonoBehaviour
         public ZombieSpawner.Point[] points = { ZombieSpawner.Point.Exterieur };
         public float speed = 1f;                                        // vitesse de marche (x la vitesse du spawner)
         public int maxAlive = 4;                                        // zombies vivants en même temps, au maximum
-        [TextArea] public string banner;                                // annonce au début du niveau
+        public float hpFactor = 1f;                                     // PV en plus (vagues très avancées du mode infini)
+        [TextArea] public string banner;                                // annonce au début de la vague
+    }
+
+    // Les coefficients de la suite. Normal, vague w (w0 = w - 1) :
+    //   zombies      = base + linéaire·w0 + quadratique·w0²   -> 4, 8, 12, 18, 24, 30, 38, 46, 55, 64…   (puis x facteur de difficulté)
+    //   cadence      = max(min, départ · facteur^w0)           -> 12 s, 9,6, 7,7, 6,1, 4,9, 3,9, 3,1, 2,5 s…
+    //   simultanés   = min(plafond, base + par_vague · w)      -> 3, 5, 7, 9, 11, 13, 14…
+    //   vitesse      = min(plafond, départ + par_vague · w0)   -> 0,8, 0,9, 1,0, 1,1, 1,2…
+    //   PV           = x(1 + croissance · (w - après_vague))   -> seulement après la vague « hpGrowthAfterWave »
+    [Serializable]
+    public class WaveFormula
+    {
+        [Header("Nombre de zombies")]
+        public float zombiesBase = 3.5f;
+        public float zombiesLinear = 3.7f;
+        public float zombiesQuadratic = 0.34f;
+        public int maxZombiesPerWave = 80;
+
+        [Header("Cadence d'apparition (secondes entre deux zombies)")]
+        public float intervalStart = 12f;
+        public float intervalFactor = 0.8f;      // x à chaque vague
+        public float intervalMin = 2.5f;
+
+        [Header("Zombies vivants en même temps (garde les 72 fps du Quest)")]
+        public float maxAliveBase = 1f;
+        public float maxAlivePerWave = 2f;
+        public int maxAliveCap = 14;
+
+        [Header("Vitesse de marche (x la vitesse du spawner)")]
+        public float speedStart = 0.8f;
+        public float speedPerWave = 0.1f;
+        public float speedCap = 1.5f;
+
+        [Header("PV : croissance au-delà du dernier niveau de ZombieLevels (mode infini)")]
+        public int hpGrowthAfterWave = 4;
+        public float hpGrowthPerWave = 0.08f;
+        public float hpGrowthCap = 2.5f;
+
+        [Header("Pause entre deux vagues")]
+        public float breakShrinkPerWave = 1.5f;  // la pause raccourcit à chaque vague…
+        public float breakMin = 18f;             // …jusqu'à ce minimum (mode infini seulement)
     }
 
     public ZombieSpawner spawner;
-    public LevelDef[] levels = DefaultLevels();
-    public int startLevel = 1;                 // test : commencer à un autre niveau
+    public WaveFormula formula = new WaveFormula();
+    [Tooltip("Nombre de vagues de la CAMPAGNE (le générateur s'ouvre à la dernière). Le mode infini ignore ce nombre.")]
+    public int campaignWaves = ZombieLevels.MaxLevel;
+    [HideInInspector] public LevelDef[] levels = new LevelDef[0];   // plus utilisé (remplacé par `formula`) ; gardé pour que GameSettings compile toujours
+    public int startLevel = 1;                 // test : commencer à une autre vague
     public float firstDelay = 15f;             // temps pour se préparer avant la 1re vague
     public float breakBetweenLevels = 35f;     // pause entre deux vagues (réparer les barricades, aller chercher des planches)
     public float skipHoldTime = 1f;            // maintenir B (manette droite) ce temps pour passer l'attente et lancer la vague
@@ -74,6 +141,7 @@ public class WaveManager : MonoBehaviour
     Phase phase = Phase.Waiting;
     float timer, spawnTimer, reinforceTimer;
     int spawned, pointIndex;
+    LevelDef current;                           // réglages de la vague en cours (DefForWave)
     readonly List<Zombie> alive = new List<Zombie>();
     TextMesh banner, status;
     Coroutine bannerRoutine;
@@ -91,25 +159,79 @@ public class WaveManager : MonoBehaviour
     bool generatorAnnounced;
     int killsAtLevelStart;
     /// <summary>Le générateur peut démarrer : niveau 4 atteint et (assez de zombies éliminés ou délai écoulé).</summary>
-    public bool GeneratorReady => Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
-    public string GeneratorCondition => "Éliminez " + Mathf.Max(0, generatorKills - LevelKills) + " zombie" + (generatorKills - LevelKills > 1 ? "s" : "")
+    public bool GeneratorReady => !Infinite && Level >= campaignWaves && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    public string GeneratorCondition => Infinite ? "MODE INFINI :\ngénérateur désactivé" : "Éliminez " + Mathf.Max(0, generatorKills - LevelKills) + " zombie" + (generatorKills - LevelKills > 1 ? "s" : "")
                                       + "\nou tenez " + Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime)) + " s";
 
-    static LevelDef[] DefaultLevels() => new[]
+    // ---------------------------------------------------------------------------------------------------------
+    //  LA SUITE : réglages de la vague n (n = 1, 2, 3… sans limite). Les facteurs de difficulté sont ceux du menu.
+    // ---------------------------------------------------------------------------------------------------------
+    static readonly ZombieSpawner.Point[] PointsExt = { ZombieSpawner.Point.Exterieur };
+    static readonly ZombieSpawner.Point[] PointsCorridors = { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit };
+    static readonly ZombieSpawner.Point[] PointsAll = { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit };
+
+    // nombre et cadence : mêmes facteurs que GameSettings (la vitesse est déjà réglée sur le spawner par GameSettings)
+    static void DifficultyFactors(out float count, out float interval)
     {
-        new LevelDef { zombies = 6, speed = 0.8f, maxAlive = 3, spawnInterval = 10f, points = new[] { ZombieSpawner.Point.Exterieur },
-            banner = "NIVEAU 1\nRestez dans le bunker :\nles couloirs sont verrouillés.\nBalles rares : la hache\net le pied de biche ne s'usent pas." },
-        new LevelDef { zombies = 9, speed = 0.95f, maxAlive = 4, spawnInterval = 8f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit },
-            banner = "NIVEAU 2" },
-        new LevelDef { zombies = 12, speed = 1.05f, maxAlive = 5, spawnInterval = 6.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
-            banner = "NIVEAU 3" },
-        new LevelDef { zombies = 15, speed = 1.2f, maxAlive = 7, spawnInterval = 5.5f, points = new[] { ZombieSpawner.Point.Exterieur, ZombieSpawner.Point.CouloirGauche, ZombieSpawner.Point.CouloirDroit, ZombieSpawner.Point.Toit },
-            // [#107] où aller, quoi faire
-            banner = "NIVEAU 4 · OBJECTIF FINAL\nLe GÉNÉRATEUR est ouvert :\nporte ouest, couloir gauche,\ntout au bout après la cuisine.\nIl démarre après 6 zombies abattus\nou 60 s. Puis abaissez son levier 5 s." },
-    };
+        count = 1f; interval = 1f;
+        switch (GameSettings.Difficulty)
+        {
+            case GameSettings.Level.Facile: count = 0.75f; interval = 1.25f; break;
+            case GameSettings.Level.Difficile: count = 1.3f; interval = 0.8f; break;
+        }
+    }
+
+    public LevelDef DefForWave(int wave)
+    {
+        wave = Mathf.Max(1, wave);
+        int w0 = wave - 1;
+        var f = formula;
+        DifficultyFactors(out float countMul, out float intervalMul);
+
+        float n = (f.zombiesBase + f.zombiesLinear * w0 + f.zombiesQuadratic * w0 * w0) * countMul;
+        return new LevelDef
+        {
+            zombies = Mathf.Clamp(Mathf.FloorToInt(n + 0.5f), 1, Mathf.Max(1, f.maxZombiesPerWave)),
+            spawnInterval = Mathf.Max(f.intervalMin, f.intervalStart * Mathf.Pow(f.intervalFactor, w0) * intervalMul),
+            maxAlive = Mathf.Clamp(Mathf.FloorToInt((f.maxAliveBase + f.maxAlivePerWave * wave) * countMul + 0.5f), 2, Mathf.Max(2, f.maxAliveCap)),
+            speed = Mathf.Min(f.speedCap, f.speedStart + f.speedPerWave * w0),
+            hpFactor = wave > f.hpGrowthAfterWave ? Mathf.Min(f.hpGrowthCap, 1f + f.hpGrowthPerWave * (wave - f.hpGrowthAfterWave)) : 1f,
+            // vague 1 : un seul côté · vague 2 : + couloirs · vague 3+ : + toit (pas de zombie sur le toit aux vagues 1 et 2)
+            points = wave <= 1 ? PointsExt : wave == 2 ? PointsCorridors : PointsAll,
+            banner = BannerFor(wave),
+        };
+    }
+
+    int LastWave => Infinite ? int.MaxValue : Mathf.Max(1, campaignWaves);
+    bool IsLastCampaignWave(int wave) => !Infinite && wave >= Mathf.Max(1, campaignWaves);
+
+    // pause entre deux vagues : constante en campagne, de plus en plus courte en mode infini
+    float BreakFor(int wave) => Infinite ? Mathf.Max(formula.breakMin, breakBetweenLevels - formula.breakShrinkPerWave * (wave - 1)) : breakBetweenLevels;
+
+    string BannerFor(int wave)
+    {
+        if (Infinite)
+        {
+            var n = DefForWaveCount(wave);
+            return wave == 1 ? "MODE INFINI\nSurvivez le plus longtemps possible.\nLes couloirs sont verrouillés.\nBalles rares : la hache\net le pied de biche ne s'usent pas."
+                             : "VAGUE " + wave + "\n" + n + " zombies";
+        }
+        if (IsLastCampaignWave(wave))
+            return "NIVEAU " + wave + " · OBJECTIF FINAL\nLe GÉNÉRATEUR est ouvert :\nporte ouest, couloir gauche,\ntout au bout après la cuisine.\nIl démarre après " + generatorKills + " zombies abattus\nou " + Mathf.RoundToInt(generatorDelay) + " s. Puis abaissez son levier 5 s.";
+        return wave == 1 ? "NIVEAU 1\nRestez dans le bunker :\nles couloirs sont verrouillés.\nBalles rares : la hache\net le pied de biche ne s'usent pas." : "NIVEAU " + wave;
+    }
+
+    // nombre de zombies de la vague (sans reconstruire un LevelDef entier : évite la récursion avec BannerFor)
+    int DefForWaveCount(int wave)
+    {
+        int w0 = Mathf.Max(1, wave) - 1;
+        DifficultyFactors(out float countMul, out _);
+        float n = (formula.zombiesBase + formula.zombiesLinear * w0 + formula.zombiesQuadratic * w0 * w0) * countMul;
+        return Mathf.Clamp(Mathf.FloorToInt(n + 0.5f), 1, Mathf.Max(1, formula.maxZombiesPerWave));
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Level = 0; Instance = null; ResumeLevel = 0; Resumed = false; }
+    static void ResetStatics() { Level = 0; Instance = null; ResumeLevel = 0; Resumed = false; mode = -1; }
 
     void Awake()
     {
@@ -117,9 +239,12 @@ public class WaveManager : MonoBehaviour
         Level = 0;
         Zombie.HuntPlayer = false;
         // [#121] reprise : on commence directement au niveau atteint, avec plus de temps pour se préparer
-        Resumed = ResumeLevel > 1;
-        if (Resumed) { startLevel = Mathf.Clamp(ResumeLevel, 1, levels.Length); firstDelay = Mathf.Max(firstDelay, resumeDelay); }
+        Resumed = !Infinite && ResumeLevel > 1;            // mode infini : pas de reprise (on recommence à la vague 1)
+        if (Resumed) { startLevel = Mathf.Clamp(ResumeLevel, 1, Mathf.Max(1, campaignWaves)); firstDelay = Mathf.Max(firstDelay, resumeDelay); }
         ResumeLevel = 0;
+        startLevel = Mathf.Max(1, startLevel);
+        previousBestWave = BestWave;                       // records d'avant cette partie (pour « NOUVEAU RECORD »)
+        previousBestTime = BestTime;
         timer = firstDelay;
         GameStats.Reset();                     // [#122] nouvelle partie (aussi après « rejouer ») : bilan remis à zéro
     }
@@ -178,7 +303,7 @@ public class WaveManager : MonoBehaviour
             case Phase.Break:
                 timer -= Time.deltaTime;
                 if (StatusChanged(1000 + Level, Mathf.CeilToInt(Mathf.Max(0f, timer))))
-                    SetStatus("Niveau " + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !" + SkipHint);
+                    SetStatus((Infinite ? "Vague " : "Niveau ") + Level + " terminé · prochaine vague dans " + statusValue + " s : réparez !" + SkipHint);
                 if (SkipPressed()) timer = 0f;
                 if (timer <= 0f) StartLevel(Level + 1);
                 break;
@@ -199,8 +324,9 @@ public class WaveManager : MonoBehaviour
 
     void StartLevel(int lvl)
     {
-        Level = Mathf.Clamp(lvl, 1, levels.Length);
-        spawner.level = Level;
+        Level = Mathf.Clamp(lvl, 1, LastWave);
+        current = DefForWave(Level);
+        spawner.level = Mathf.Min(Level, ZombieLevels.MaxLevel);      // types de zombies et dégâts : plafonnés au dernier niveau de ZombieLevels
         spawned = 0; pointIndex = 0; spawnTimer = 1f; reinforceTimer = lastLevelReinforcementEvery;
         killsAtLevelStart = GameStats.Kills; LevelKills = 0; LevelTime = 0f; generatorAnnounced = false;
         Zombie.HuntPlayer = false;
@@ -208,13 +334,14 @@ public class WaveManager : MonoBehaviour
         ZoneGate.UpdateAll(Level);
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
         if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
-        Announce(levels[Level - 1].banner + ZonesOpenedText(Level), 8f);
+        SaveRecords();
+        Announce(current.banner + ZonesOpenedText(Level), 8f);
     }
 
     // [#106] zones ouvertes à ce niveau et ce qu'on y trouve (ZoneGate.contents)
-    static string ZonesOpenedText(int lvl)
+    string ZonesOpenedText(int lvl)
     {
-        if (lvl >= ZombieLevels.MaxLevel) return "";            // niveau 4 : l'annonce dit déjà où aller
+        if (IsLastCampaignWave(lvl)) return "";                  // dernier niveau de la campagne : l'annonce dit déjà où aller
         var sb = new System.Text.StringBuilder();
         foreach (var g in ZoneGate.All)
             if (g.unlockLevel == lvl)
@@ -224,8 +351,8 @@ public class WaveManager : MonoBehaviour
 
     void UpdateWave()
     {
-        var def = levels[Level - 1];
-        bool last = Level == levels.Length;
+        var def = current;
+        bool last = IsLastCampaignWave(Level);
         LevelTime += Time.deltaTime;
         LevelKills = GameStats.Kills - killsAtLevelStart;
         if (last && !generatorAnnounced && GeneratorReady)
@@ -251,10 +378,10 @@ public class WaveManager : MonoBehaviour
         else if (Alive == 0)
         {
             phase = Phase.Break;
-            timer = breakBetweenLevels;
+            timer = BreakFor(Level);
             Debug.Log(GameStats.LogLine("vague terminée", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
             if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(breakHeal);
-            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(breakHeal) + " PV", 5f);
+            Announce("VAGUE " + Level + " TERMINÉE\nRéparez les barricades.\n+" + Mathf.RoundToInt(breakHeal) + " PV" + (Infinite ? "\nSuivante : " + DefForWaveCount(Level + 1) + " zombies" : ""), 5f);
             return;
         }
 
@@ -265,8 +392,15 @@ public class WaveManager : MonoBehaviour
             if (StatusChanged(3000 + left, secs))
                 SetStatus("Générateur bloqué · " + left + " zombie" + (left > 1 ? "s" : "") + " à abattre ou " + secs + " s");
         }
+        else if (Infinite)
+        {
+            // mode infini : vague, zombies restants, temps survécu et record
+            int remaining = Alive + Mathf.Max(0, def.zombies - spawned), secs = Mathf.FloorToInt(GameStats.Time);
+            if (StatusChanged(2000 + Level, remaining * 100000 + secs))
+                SetStatus("Vague " + Level + " · zombies : " + remaining + " · " + GameStats.FormatTime(secs) + (BestWave > 0 ? " · record : vague " + BestWave : ""));
+        }
         else if (StatusChanged(2000 + Level, Alive + Mathf.Max(0, def.zombies - spawned)))
-            SetStatus("Niveau " + Level + "/" + levels.Length + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
+            SetStatus("Niveau " + Level + "/" + campaignWaves + " · zombies : " + statusValue + (last ? " · objectif : le générateur" : ""));
     }
 
     // [#123] poids des points d'apparition par niveau, dans l'ordre de LevelDef.points (Extérieur, couloir gauche, couloir droit, toit).
@@ -282,7 +416,7 @@ public class WaveManager : MonoBehaviour
 
     ZombieSpawner.Point PickPoint(LevelDef def)
     {
-        var w = Level >= 1 && Level <= SpawnWeights.Length ? SpawnWeights[Level - 1] : null;
+        var w = Level >= 1 ? SpawnWeights[Mathf.Min(Level, SpawnWeights.Length) - 1] : null;   // mode infini : au-delà du niveau 4, mêmes poids qu'au niveau 4
         if (w == null || w.Length != def.points.Length) return def.points[pointIndex++ % def.points.Length];   // points changés dans la scène : tour fixe
         float total = 0f;
         foreach (var x in w) total += x;
@@ -296,6 +430,7 @@ public class WaveManager : MonoBehaviour
         var p = PickPoint(def);
         var z = spawner.Spawn(p);
         if (def.speed > 0f) z.walkSpeed *= def.speed;      // le spawner a mis sa vitesse (déjà réglée par la difficulté du menu)
+        if (def.hpFactor > 1.001f) { z.healthMultiplier *= def.hpFactor; z.ApplyLevel(z.level); }   // vagues avancées du mode infini : PV recalculés
         alive.Add(z);
         spawned++;
     }
@@ -323,7 +458,20 @@ public class WaveManager : MonoBehaviour
 
     void OnDestroy() { if (PlayerHealth.Instance) PlayerHealth.Instance.Died -= OnPlayerDied; }
 
-    void OnPlayerDied() => Debug.Log(GameStats.LogLine("mort", Level, 0f, AmmoInGun()));
+    void OnPlayerDied()
+    {
+        Debug.Log(GameStats.LogLine("mort", Level, 0f, AmmoInGun()));
+        SaveRecords();
+    }
+
+    // mode infini : on garde la meilleure vague et le meilleur temps
+    void SaveRecords()
+    {
+        if (!Infinite) return;
+        if (Level > BestWave) BestWave = Level;
+        if (GameStats.Time > BestTime) BestTime = GameStats.Time;
+        PlayerPrefs.Save();
+    }
 
     static int AmmoInGun()
     {

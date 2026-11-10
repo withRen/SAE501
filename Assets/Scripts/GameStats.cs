@@ -54,6 +54,18 @@ public static class GameStats
     // texte du bilan (écran de fin)
     public static string Summary(int level, int maxLevel)
     {
+        // mode infini : pas de « niveau x / y » mais la vague atteinte, le temps survécu et les records
+        if (WaveManager.Infinite)
+        {
+            var wm = WaveManager.Instance;
+            string waveRec = wm != null && wm.NewRecord ? "  ·  NOUVEAU RECORD !" : WaveManager.BestWave > 0 ? "  (record : " + WaveManager.BestWave + ")" : "";
+            string timeRec = wm != null && wm.NewTimeRecord ? "  ·  NOUVEAU RECORD !" : WaveManager.BestTime > 0f ? "  (record : " + FormatTime(WaveManager.BestTime) + ")" : "";
+            return "Zombies éliminés : " + Kills + (MeleeKills > 0 ? "  (dont " + MeleeKills + " à la mêlée)" : "")
+                 + "\nTirs à la tête : " + Mathf.RoundToInt(HeadShotPercent) + " %  (" + HeadShots + " sur " + Shots + " tirs)"
+                 + "\nPlanches posées : " + PlanksPlaced
+                 + "\nVague atteinte : " + Mathf.Max(1, level) + waveRec
+                 + "\nTemps survécu : " + FormatTime(Time) + timeRec;
+        }
         return "Zombies éliminés : " + Kills + (MeleeKills > 0 ? "  (dont " + MeleeKills + " à la mêlée)" : "")
              + "\nTirs à la tête : " + Mathf.RoundToInt(HeadShotPercent) + " %  (" + HeadShots + " sur " + Shots + " tirs)"
              + "\nPlanches posées : " + PlanksPlaced

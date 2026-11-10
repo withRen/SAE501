@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Menu d'accueil (scène « Menu »), style « terminal de bunker » ambre :
-//   SOLO (lance le jeu), MULTIJOUEUR (grisé « BIENTÔT »), PARAMÈTRES (son, confort VR, difficulté), QUITTER.
+//   SOLO (choix du mode : CAMPAGNE ou VAGUES INFINIES, puis lance le jeu), MULTIJOUEUR (grisé « BIENTÔT »), PARAMÈTRES (son, confort VR, difficulté), QUITTER.
 // Le panneau flotte devant le joueur, un peu à droite ; il est construit au lancement (UiKit). Pointeur : MenuPointer.
 public class MainMenu : AmberMenu
 {
@@ -15,7 +15,7 @@ public class MainMenu : AmberMenu
     public float scale = 1.1f;                                   // taille du panneau (1 = 1,52 m de large)
     public string version = "v0.9";
 
-    Transform mainPage, settingsPage;
+    Transform mainPage, modePage, settingsPage;
     Renderer fade;
     bool leaving;
 
@@ -31,6 +31,8 @@ public class MainMenu : AmberMenu
         mainPage = BuildMain();
         settingsPage = BuildSettings(() => ShowSettings(false));
         settingsPage.gameObject.SetActive(false);
+        modePage = BuildMode();
+        modePage.gameObject.SetActive(false);
         // textes toujours devant les fonds (sinon le titre de la bande du haut était caché par la bande)
         foreach (var r in GetComponentsInChildren<Renderer>(true))
             if (r.GetComponent<TextMesh>()) r.material.renderQueue = 3100;
@@ -52,7 +54,7 @@ public class MainMenu : AmberMenu
         UiKit.Text(p, "Titre", new Vector2(0f, 0.348f), 0.0285f, A, "ESCAPOR", TextAnchor.MiddleCenter, true);
         UiKit.Text(p, "Accroche", new Vector2(0f, 0.22f), 0.0075f, UiKit.Dim, "SURVIVRE  ·  CLOUER  ·  S'ÉCHAPPER");
 
-        BigButton(p, 0.078f, "SOLO", () => StartCoroutine(Play()));
+        BigButton(p, 0.078f, "SOLO", () => ShowMode(true));
         var multi = BigButton(p, -0.082f, "MULTIJOUEUR", null);
         multi.interactable = false;
         UiKit.Text(multi.transform, "Bientot", new Vector2(0.565f, 0f), 0.0075f, A, "BIENTÔT", TextAnchor.MiddleRight, true);
@@ -64,6 +66,31 @@ public class MainMenu : AmberMenu
         return p;
     }
 
+    // ---------- page SOLO : choix du mode ----------
+    Transform BuildMode()
+    {
+        var p = Panel("Page_Mode", "BUNKER-OS  //  SOLO", "");
+        UiKit.Text(p, "Titre_Haut", new Vector2(0f, 0.43f), 0.0113f, A, UiKit.Spaced("CHOISIR UN"), TextAnchor.MiddleCenter, true);
+        UiKit.Text(p, "Titre", new Vector2(0f, 0.31f), 0.0285f, A, "MODE", TextAnchor.MiddleCenter, true);
+
+        BigButton(p, 0.1f, "CAMPAGNE", () => StartCoroutine(Play(false)));
+        UiKit.Text(p, "Desc_Campagne", new Vector2(0f, 0.0f), 0.0072f, UiKit.Dim, "Niveaux à enchaîner  ·  ouvrez les zones  ·  activez le générateur");
+
+        BigButton(p, -0.14f, "VAGUES INFINIES", () => StartCoroutine(Play(true)));
+        string rec = WaveManager.BestWave > 0 ? "Record : vague " + WaveManager.BestWave + "  ·  " + GameStats.FormatTime(WaveManager.BestTime) : "Survivez le plus longtemps possible";
+        UiKit.Text(p, "Desc_Infini", new Vector2(0f, -0.24f), 0.0072f, UiKit.Dim, rec);
+
+        var back = MakeButton(p, new Vector2(-HW + 0.17f, -0.53f), new Vector2(0.34f, 0.09f), "◂  RETOUR", 0.0095f, () => ShowMode(false));
+        back.textColor = A;
+        return p;
+    }
+
+    void ShowMode(bool on)
+    {
+        mainPage.gameObject.SetActive(!on);
+        modePage.gameObject.SetActive(on);
+    }
+
     void ShowSettings(bool on)
     {
         mainPage.gameObject.SetActive(!on);
@@ -71,10 +98,11 @@ public class MainMenu : AmberMenu
     }
 
     // ---------- actions ----------
-    IEnumerator Play()
+    IEnumerator Play(bool endless)
     {
         if (leaving) yield break;
         leaving = true;
+        WaveManager.Infinite = endless;         // mode mémorisé : la partie (et « rejouer ») le relisent
         PlayerPrefs.Save();
         yield return Fade(0f, 1f, 0.8f);
         SceneManager.LoadScene(gameScene);

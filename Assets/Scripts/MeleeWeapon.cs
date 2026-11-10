@@ -7,6 +7,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // Un coup compte si l'extrémité de l'arme (striker) touche une zone du zombie (ZombieHitbox) assez vite.
 // Dégâts en part des PV de base du zombie, selon la zone (comme le pistolet) ; un même zombie ne peut être touché
 // qu'une fois par coup (délai entre deux coups).
+// [SONS] Un « whoosh » (axe_whoosh) se déclenche à chaque GRAND geste de l'arme en main (extrémité plus rapide que whooshMinSpeed) :
+// pas pour un petit mouvement. Il se réarme quand le geste est fini.
 public class MeleeWeapon : MonoBehaviour
 {
     [Header("Dégâts (part des PV de base du zombie)")]
@@ -20,9 +22,17 @@ public class MeleeWeapon : MonoBehaviour
     public float minSpeed = 1.6f;          // m/s : en dessous, ce n'est pas un coup (on pose l'arme contre le zombie)
     public float cooldown = 0.45f;         // délai avant de pouvoir retoucher le même zombie
 
+    [Header("Son du geste (axe_whoosh)")]
+    public AudioClip whooshSound;          // sinon Assets/Resources/Sounds/axe_whoosh
+    public float whooshMinSpeed = 2.8f;    // m/s de l'extrémité : en dessous, geste lent ou petit coup : pas de souffle
+    public float whooshCooldown = 0.35f;
+    [Range(0f, 1f)] public float whooshVolume = 0.9f;
+
     XRGrabInteractable grab;
-    AudioSource src;
+    AudioSource src, whooshSrc;
     static AudioClip thud;
+    bool whooshArmed = true;
+    float nextWhoosh;
     Vector3 lastPos, swingDir;
     float speed;
     readonly Dictionary<Zombie, float> lastHit = new Dictionary<Zombie, float>();
@@ -35,6 +45,9 @@ public class MeleeWeapon : MonoBehaviour
         grab = GetComponent<XRGrabInteractable>();
         src = gameObject.AddComponent<AudioSource>();
         src.spatialBlend = 1f;
+        whooshSrc = gameObject.AddComponent<AudioSource>();     // source à part : le pitch du « thud » ne doit pas changer le souffle
+        whooshSrc.spatialBlend = 1f;
+        whooshSrc.playOnAwake = false;
         if (!thud) thud = ProcAudio.Hit();
     }
 
@@ -49,8 +62,24 @@ public class MeleeWeapon : MonoBehaviour
         speed = Mathf.Max((p - lastPos).magnitude / dt, speed * 0.8f);   // vitesse lissée : reste « chaude » le temps du contact
         if ((p - lastPos).sqrMagnitude > 1e-8f) swingDir = p - lastPos;
         lastPos = p;
-        if (!BeltItem.InHand(grab) || speed < minSpeed) return;
+        bool held = BeltItem.InHand(grab);
+        if (held) Whoosh();
+        if (!held || speed < minSpeed) return;
         Strike();
+    }
+
+    // [SONS] souffle de l'arme : un seul par grand geste (armé quand le geste précédent est fini)
+    void Whoosh()
+    {
+        if (speed < whooshMinSpeed * 0.5f) whooshArmed = true;
+        if (!whooshArmed || speed < whooshMinSpeed || Time.time < nextWhoosh) return;
+        var clip = AudioSlices.Clip(whooshSound, "axe_whoosh");
+        if (!clip) return;
+        whooshArmed = false;
+        nextWhoosh = Time.time + whooshCooldown;
+        float power = Mathf.InverseLerp(whooshMinSpeed, whooshMinSpeed * 2.2f, speed);   // geste plus rapide : plus fort et plus aigu
+        whooshSrc.pitch = Random.Range(0.95f, 1.05f) + 0.12f * power;
+        whooshSrc.PlayOneShot(clip, Mathf.Lerp(0.6f, 1f, power) * whooshVolume);
     }
 
     // cherche les zones de zombie touchées par l'extrémité de l'arme ; public pour être testé sans casque

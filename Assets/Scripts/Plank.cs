@@ -10,6 +10,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 //   Nailed  : au moins un clou enfoncé au marteau : elle ne se reprend plus, un zombie doit frapper 3 fois pour l'arracher.
 // [#114] Quand elle se cale sur l'ouverture : « clac » et vibration légère de la main qui la tient.
 // [#116] Arrachée par un zombie : éclats de bois (Fx.Splinters) et craquement, visibles et audibles de loin.
+// [SONS] Frappée par un zombie : un son de la bande « wood_hit » (découpée toute seule en frappes) ; arrachée : début de « wood_break ».
 // [#122] Chaque planche posée par le joueur compte dans le bilan (GameStats.PlanksPlaced).
 public class Plank : MonoBehaviour
 {
@@ -33,6 +34,12 @@ public class Plank : MonoBehaviour
     [Range(0f, 1f)] public float clackVolume = 0.8f;
     [Range(0f, 1f)] public float crackVolume = 1f;
 
+    [Header("Sons : bandes son (sinon Assets/Resources/Sounds/wood_hit et wood_break)")]
+    public AudioClip hitSound;                         // wood_hit : plusieurs frappes à la suite, découpées automatiquement (une au hasard à chaque coup)
+    public AudioClip breakSound;                       // wood_break : seules les premières secondes contiennent du son
+    [Range(0f, 1f)] public float hitVolume = 0.9f;
+    public float breakSeconds = 2f;                    // durée jouée de wood_break
+
     public State state { get; private set; }
     public bool InSlot => state == State.Placed || state == State.Nailed;     // barricade en place (pas tenue en main)
     public bool CanBeNailed => state != State.Free;                           // clous accessibles au marteau
@@ -45,6 +52,7 @@ public class Plank : MonoBehaviour
     float push, pushVel;                   // recul de la planche quand un zombie frappe (ressort)
     AudioSource src;
     static AudioClip thud, clack, crack;
+    static int lastHitVariant = -1;
     bool placedCounted;                    // déjà comptée comme posée (bilan) : reprise et reposée sur le même emplacement = une seule fois
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -94,11 +102,31 @@ public class Plank : MonoBehaviour
     {
         if (!InSlot) return true;
         Hits++;
-        src.pitch = Random.Range(0.55f, 0.7f);
-        src.PlayOneShot(thud, 0.9f);
+        PlayHit();
         pushVel += 0.9f;                                   // la planche encaisse : petit recul vers l'intérieur
         if (state == State.Placed || Hits >= hitsWhenNailed) { Break(pushDirection); return true; }
         return false;
+    }
+
+    // [SONS] coup de zombie : une frappe au hasard de la bande wood_hit (sinon l'ancien bruit sourd procédural)
+    void PlayHit()
+    {
+        var v = AudioSlices.Split(AudioSlices.Clip(hitSound, "wood_hit"));
+        if (v != null && v.Length > 0)
+        {
+            src.pitch = Random.Range(0.95f, 1.05f);
+            src.PlayOneShot(v[AudioSlices.Pick(v.Length, ref lastHitVariant)], hitVolume);
+        }
+        else { src.pitch = Random.Range(0.55f, 0.7f); src.PlayOneShot(thud, 0.9f); }
+    }
+
+    // [SONS] planche arrachée : le début de wood_break (le reste du fichier est du silence)
+    void PlayBreak()
+    {
+        var c = AudioSlices.Trim(AudioSlices.Clip(breakSound, "wood_break"), breakSeconds);
+        src.pitch = Random.Range(0.95f, 1.05f);
+        if (c) src.PlayOneShot(c, crackVolume);
+        else { src.pitch = Random.Range(0.85f, 1.1f); src.PlayOneShot(crack, crackVolume); }
     }
 
     // arrachée par un zombie : la planche se détache de l'ouverture et tombe (on peut la ramasser et la reposer)
@@ -107,8 +135,7 @@ public class Plank : MonoBehaviour
         if (!InSlot) return;
         // [#116] éclats sur toute la longueur de la planche, projetés comme elle vers l'intérieur, et craquement
         Fx.Splinters(transform.position, pushDirection, transform.right * halfLength * 0.8f);
-        src.pitch = Random.Range(0.85f, 1.1f);
-        src.PlayOneShot(crack, crackVolume);
+        PlayBreak();
         placedCounted = false;
         ReleaseSlot();
         state = State.Free;

@@ -96,6 +96,7 @@ public static class RoomBuilder
         MursSuperposes.Apply(roomRoot.transform);           // murs qui entrent les uns dans les autres : faces superposées retirées (z-fighting)
         MakeMapColliders(roomRoot.transform);
         TrousToit.Apply(roomRoot.transform);                // trous du toit : bord de béton cassé, auréole noircie, gravats ; lianes qui pendaient retirées
+        PortailFer.Apply(roomRoot.transform);               // portail du jardin : fer forgé vieilli (UV refaites, matériau propre)
         SinkTerrainUnderFloors(roomRoot.transform);
         FixFloorDecals(roomRoot.transform);
         FixGardenCabin(roomRoot.transform);

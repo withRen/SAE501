@@ -16,7 +16,7 @@ public static class TexturesUsure
     // matériau -> (albedo, famille)
     static readonly Dictionary<string, (string albedo, string famille)> Table = new()
     {
-        // cadres des écrans CCTV, meuble, magnétoscope à LEDs et clavier, portail, caméras
+        // cadres des écrans CCTV, meuble, magnétoscope à LEDs et clavier, caméras (le portail du jardin a son matériau : PortailFer)
         { "Assets/Room/Materials/MetalDark.mat", ("MetalSombre", "Peinture") },
         { "Assets/Generated/Dark.mat", ("MetalSombre", "Peinture") },            // 5e écran, radio d'annonces
         { "Assets/Room/Materials/Mat_CCTV_CameraBody.mat", ("BoitierCamera", "Peinture") },

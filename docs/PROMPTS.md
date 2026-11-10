@@ -158,6 +158,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [149](#149--branche-develop-et-archivage-des-branches-fusionnées) | 2026-11-09 | Pousser dans une branche propre et archiver les branches déjà fusionnées | Git | Branche `develop` poussée (travail du jour + ajouts Antigravity), wiki poussé, 16 branches fusionnées gardées en tags `archive/<nom>` puis supprimées |
 | [150](#150--trous-du-toit-irréguliers) | 2026-11-09 | Trou du toit : forme moins carrée, tiges retirées, effet sur les bords | Carte / Rendu | Bord de béton cassé irrégulier, auréole noircie, gravats, lianes qui pendaient retirées (`TrousToit.cs`), éclairage recuit |
 | [151](#151--trous-du-toit-élargis) | 2026-11-09 | Élargir un peu le trou du toit | Carte / Rendu | Ouverture des deux trous agrandie (~0,9 à 1,15 m), éclairage recuit |
+| [152](#152--portail-du-jardin-en-fer-forgé-vieilli) | 2026-11-10 | Texture de la grille (portail du jardin) plus réaliste | Carte / Rendu | Matériau propre au portail : fer forgé peint en noir, écaillé, rouille, coulures, terre au pied ; UV refaites (`PortailFer.cs`, `generer_portail.py`) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2756,4 +2757,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `TrousToit.cs` : rayon de base de l'ouverture porté de 80 % à 95 % du demi-côté du carré (minimum 75 % au lieu de 62 %), bord de béton plus fin contre le carré d'origine. L'ouverture passe d'environ 0,7-1 m à 0,9-1,15 m ; les coins du carré restent cassés, le bord reste irrégulier.
 - Caisse de la radio : toujours au moins 35 cm de jeu autour de son point de chute. Scène reconstruite, éclairage recuit.
 - **Vérifié** : capture dans l'éditeur. **Non testé** en mode Play ni au casque.
+
+---
+
+## 152 — Portail du jardin en fer forgé vieilli
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Rendu
+
+> Update la texture de la grille pour qu'lle soit plus réaliste
+
+(capture jointe : portail de sortie du jardin, barreaux noirs unis)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : les deux battants (`Garden_ExitGate_Left` / `_Right`) utilisaient `MetalDark`, le noir des cadres d'écrans, avec des UV incohérentes dans le FBX (barreaux écrasés ou étirés) : la texture d'usure n'y donnait presque rien.
+- **Textures** : `Tools/textures/generer_portail.py` (Python, à partir de `rust_coarse_01` de Poly Haven, CC0) génère albedo, normal et métal/lissé 1024 (`Assets/Room/Textures/Usure/Portail_Fer_*`) : peinture noire satinée écaillée, éclats rouillés plus nombreux au pied, coulures de rouille sous les éclats, terre et mousse sur les 50 premiers centimètres, relief martelé du fer forgé. ASTC 6x6 sur Quest (réglages de `TexturesUsure`).
+- **Application durable** : `Assets/Editor/PortailFer.cs`, appelé par `RoomBuilder` : UV refaites par projection sur les faces (u = 1 m de largeur, v = hauteur du battant, pour que la rouille soit en bas et les coulures vers le bas), matériau propre `Portail_Fer`. Même nombre de triangles, un matériau de plus. Le cadenas n'est pas touché.
+- Scène reconstruite, éclairage recuit.
+- **Vérifié** : captures dans l'éditeur (vue d'ensemble et de près). **Non testé** au casque.
 

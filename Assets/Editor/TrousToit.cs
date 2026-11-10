@@ -38,7 +38,50 @@ public static class TrousToit
         if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets/Generated", "TrousToit");
 
         RemoveHangingVines(root);
+        foreach (var t in root.GetComponentsInChildren<Transform>(true).Where(t => t.name.EndsWith("_CeilingVines")).ToList()) Object.DestroyImmediate(t.gameObject);   // lianes du plafond de la salle du générateur
 
+        // Rahim (journal 173) : trous bouchés. Un bouchon de la même épaisseur que la dalle et du même matériau remplit chaque carré ;
+        // plus de bord cassé, d'auréole ni de gravats (le code qui les fabriquait reste plus bas, inutilisé, pour un retour en arrière).
+        var plaster = ceiling.sharedMaterial;
+        var holder = new GameObject("Bouchons_Toit").transform;
+        holder.SetParent(root, false);
+        foreach (var h in Holes)
+        {
+            var plug = new GameObject("Bouchon_" + h.name);
+            plug.transform.SetParent(holder, false);
+            plug.AddComponent<MeshFilter>().sharedMesh = Save(PlugMesh(h), "Bouchon_" + h.name);
+            var mr = plug.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = plaster;
+            mr.receiveGI = ReceiveGI.LightProbes;
+            GameObjectUtility.SetStaticEditorFlags(plug, StaticEditorFlags.BatchingStatic);
+        }
+        Debug.Log($"[TrousToit] {Holes.Length} trous du toit bouchés");
+    }
+
+    // dalle pleine : face du dessous (vers le bas) et du dessus (vers le haut), UV du plafond ; 1 cm de recouvrement sur chaque bord
+    static Mesh PlugMesh((string name, float x0, float x1, float z0, float z1, Vector2? drop, int seed) h)
+    {
+        const float e = 0.01f;
+        float x0 = h.x0 - e, x1 = h.x1 + e, z0 = h.z0 - e, z1 = h.z1 + e;
+        var v = new List<Vector3>(); var uv = new List<Vector2>(); var n = new List<Vector3>(); var t = new List<int>();
+        void Face(float y, Vector3 normal, bool flip)
+        {
+            int o = v.Count;
+            foreach (var (x, z) in new[] { (x0, z0), (x1, z0), (x1, z1), (x0, z1) })
+            { v.Add(new Vector3(x, y, z)); uv.Add(new Vector2(UvScale * x, UvScale * z)); n.Add(normal); }
+            if (flip) t.AddRange(new[] { o, o + 1, o + 2, o, o + 2, o + 3 }); else t.AddRange(new[] { o, o + 2, o + 1, o, o + 3, o + 2 });
+        }
+        Face(Bottom, Vector3.down, true);
+        Face(Top, Vector3.up, false);
+        var m = new Mesh { name = "Bouchon_" + h.name };
+        m.SetVertices(v); m.SetUVs(0, uv); m.SetNormals(n); m.SetTriangles(t, 0);
+        m.RecalculateBounds();
+        return m;
+    }
+
+    // ---------- code des anciens trous (inutilisé) ----------
+    static void ApplyAncienTrou(Transform root, MeshRenderer ceiling)
+    {
         var plaster = ceiling.sharedMaterial;
         var broken = BrokenMaterial(plaster);
         var soot = SootMaterial();
@@ -87,7 +130,8 @@ public static class TrousToit
                 Vector3 a = M.MultiplyPoint3x4(v[t[i]]), b = M.MultiplyPoint3x4(v[t[i + 1]]), c = M.MultiplyPoint3x4(v[t[i + 2]]);
                 var m = (a + b + c) / 3f;
                 // sous le trou (carré + 25 cm) et en l'air : liane qui pend ; les taches de mousse au sol (y < 5 cm) restent
-                bool hanging = m.y > 1.0f && Holes.Any(h => m.x > h.x0 - 0.25f && m.x < h.x1 + 0.25f && m.z > h.z0 - 0.25f && m.z < h.z1 + 0.25f);
+                // journal 173 : partout, plus seulement sous les trous (Rahim : « les éléments qui tombent du toit », des tiges sombres pendaient aussi dans le couloir)
+                bool hanging = m.y > 1.0f;
                 if (hanging) { gone++; continue; }
                 keep.Add(t[i]); keep.Add(t[i + 1]); keep.Add(t[i + 2]);
             }

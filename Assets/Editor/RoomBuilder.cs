@@ -101,6 +101,7 @@ public static class RoomBuilder
         JardinNature.Apply(roomRoot.transform);             // sol du jardin et de la forêt (Poly Haven), forêt en vrais arbres avec LOD et imposteurs
         FixFloorDecals(roomRoot.transform);
         FixGardenCabin(roomRoot.transform);
+        MurCouloir.Apply(roomRoot.transform);               // mur manquant du couloir, à droite de la porte de la cuisine
         JardinNature.NoSkyReflections(roomRoot.transform);   // vitres et flaques : plus de reflet du ciel par défaut de la vue Scène (aplats bleu clair)
         BuildExterior();
         BuildPlanks(planks);
@@ -708,10 +709,7 @@ public static class RoomBuilder
         MakeOpening(holder, "Est", B(3.72f, -10.1f, 1.0f), B(4.6f, -10.1f, 0f), B(2.6f, -10.1f, 0f), false);
         MakeOpening(holder, "SW", B(-4.4f, -13.92f, 1.5f), B(-4.4f, -14.9f, 0f), B(-4.4f, -12.6f, 0f), true);
         MakeOpening(holder, "SE", B(0.7f, -13.92f, 1.5f), B(0.7f, -14.9f, 0f), B(0.95f, -12.45f, 0f), true);
-        // trous du toit du bunker (carte finale, repérés par rayons : ~1,2 x 1,2 m) : les zombies du toit s'y laissent tomber.
-        // Pas de planches : on ne peut pas les barricader. Approche sur le toit (y = 2,8 m), arrivée au sol dessous.
-        MakeOpening(holder, "Toit_Lits", new Vector3(3.9f, 2.8f, 7.9f), new Vector3(3.9f, 2.8f, 6.85f), new Vector3(3.9f, 0f, 7.9f), true);
-        MakeOpening(holder, "Toit_Etabli", new Vector3(-1.1f, 2.8f, 12.3f), new Vector3(-1.1f, 2.8f, 13.35f), new Vector3(-1.0f, 0f, 12.0f), true);
+        // trous du toit bouchés (journal 173, TrousToit) : plus d'ouvertures Toit_Lits / Toit_Etabli ; les zombies du toit entrent par les portes et fenêtres
     }
 
     // window = vrai : le zombie passe par la fenêtre grâce à un lien NavMesh (il n'y a pas de sol continu sous l'allège)
@@ -1759,9 +1757,9 @@ public static class RoomBuilder
 
     // ---------- radio de ravitaillement (SupplyRadio) ----------
     // Une radio fixée au mur du bunker : bouton rouge = commander des chargeurs. Après une attente (selon la difficulté),
-    // une caisse tombe par le trou du toit au-dessus de l'établi (Toit_Etabli, voir BuildBunkerOpenings) avec les chargeurs dedans.
+    // une caisse tombe sous le plafond au-dessus de l'établi (les trous du toit sont bouchés) avec les chargeurs dedans.
     // La caisse et le chargeur sont des modèles cachés, copiés à chaque livraison.
-    static readonly Vector3 SupplyDrop = new Vector3(-1.05f, 4.0f, 12.15f);     // au-dessus du trou du toit côté établi
+    static readonly Vector3 SupplyDrop = new Vector3(-1.05f, 2.45f, 12.15f);    // sous le plafond, au-dessus de l'établi (le trou du toit est bouché : la caisse apparaît là et tombe de 1,5 m)
 
     static void BuildSupplyRadio()
     {

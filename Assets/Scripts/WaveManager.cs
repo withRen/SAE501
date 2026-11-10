@@ -209,7 +209,10 @@ public class WaveManager : MonoBehaviour
     {
         // pendant le tutoriel : rien ne bouge (pas de compte à rebours, pas de zombie), même si le WaveManager a été réactivé
         if (spawner == null || Tutorial.Running) return;
-        if (phase != Phase.Victory && !(PlayerHealth.Instance && PlayerHealth.Instance.Dead)) GameStats.Tick(Time.deltaTime);   // [#122] temps de jeu (figé à la fin)
+        // [Multijoueur] la partie continue tant qu'un joueur est debout ; sur un casque client, l'hôte décide de tout (NetGame relaie)
+        bool running = NetSession.Active ? PlayerHealth.NearestAlive(Vector3.zero) != null : !(PlayerHealth.Instance && PlayerHealth.Instance.Dead);
+        if (phase != Phase.Victory && running) GameStats.Tick(Time.deltaTime);   // [#122] temps de jeu (figé à la fin)
+        if (NetSession.IsClientOnly) return;
         switch (phase)
         {
             case Phase.Waiting:
@@ -258,7 +261,8 @@ public class WaveManager : MonoBehaviour
         // plus d'alarme au début de la vague (journal 153) : seul le son de WaveTitle (Vague_Debut) est joué
         if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
         if (title) title.Show(Level);
-        if (Endless) EndlessRecord.Submit(Level, GameStats.Time);
+        if (Endless && !NetSession.Active) EndlessRecord.Submit(Level, GameStats.Time);   // record solo seulement
+        WaveStarted?.Invoke(Level);
         Announce(Endless ? EndlessBanner(Level) : cur.banner, 8f);
     }
 
@@ -313,6 +317,7 @@ public class WaveManager : MonoBehaviour
             Debug.Log(GameStats.LogLine("vague terminée", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
             float heal = Endless ? EndlessHeal(Level) : breakHeal;
             if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(heal);
+            BreakStarted?.Invoke(Level, heal);
             // [Portes] les zones de la vague suivante s'ouvrent tout de suite, pour toute la pause
             bool doorsOpened = ZoneGate.UpdateAll(Level + 1);
             if (doorsOpened && sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
@@ -470,7 +475,7 @@ public class WaveManager : MonoBehaviour
     void OnDestroy()
     {
         if (PlayerHealth.Instance) PlayerHealth.Instance.Died -= OnPlayerDied;
-        if (Endless && Level >= 1) EndlessRecord.Submit(Level, GameStats.Time);   // quitter la partie (menu pause, rejouer…) : la progression du mode survie compte pour le record
+        if (Endless && Level >= 1 && !NetSession.Active) EndlessRecord.Submit(Level, GameStats.Time);   // quitter la partie (menu pause, rejouer…) : la progression du mode survie compte pour le record
     }
 
     void OnPlayerDied() => Debug.Log(GameStats.LogLine("mort", Level, 0f, AmmoInGun()));
@@ -484,7 +489,12 @@ public class WaveManager : MonoBehaviour
     // pour les tests / le debug : saute directement à un niveau
     public void SkipToLevel(int lvl) => StartLevel(lvl);
 
-    void SetStatus(string s) { if (status && status.text != s) status.text = s; }
+    void SetStatus(string s)
+    {
+        if (!status || status.text == s) return;
+        status.text = s;
+        StatusSet?.Invoke(s);
+    }
 
     // le texte de statut n'est reconstruit que si ce qu'il affiche a changé (évite une chaîne neuve à chaque image)
     int statusKey = -1, statusValue = -1, statusExtra = -1;
@@ -501,9 +511,41 @@ public class WaveManager : MonoBehaviour
         return (t / 60) + ":" + (t % 60).ToString("00");
     }
 
+    // ---------- [Multijoueur] l'hôte relaie (NetGame) ce que les casques clients affichent et font ----------
+    public static event Action<string, float> Announced;    // annonce sur l'écran du bunker
+    public static event Action<string> StatusSet;            // ligne de statut
+    public static event Action<int> WaveStarted;             // début de vague (numéro)
+    public static event Action<int, float> BreakStarted;     // vague terminée (numéro, PV rendus)
+
+    /// <summary>Phase en cours côté hôte : en pause entre deux vagues (les joueurs tombés sont relevés).</summary>
+    public bool InBreak => phase == Phase.Break || phase == Phase.Waiting;
+
+    public void RemoteAnnounce(string text, float seconds) { if (banner && !string.IsNullOrEmpty(text)) { if (bannerRoutine != null) StopCoroutine(bannerRoutine); bannerRoutine = StartCoroutine(ShowBanner(text, seconds)); } }
+    public void RemoteStatus(string text) { if (status) status.text = text; }
+
+    public void RemoteWaveStart(int lvl)
+    {
+        Level = lvl;
+        phase = Phase.Wave;
+        ZoneGate.UpdateAll(Level);
+        if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
+        if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
+        if (title) title.Show(Level);
+    }
+
+    public void RemoteBreak(int lvl, float heal)
+    {
+        Level = lvl;
+        phase = Phase.Break;
+        if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(heal);
+        bool doorsOpened = ZoneGate.UpdateAll(Level + 1);
+        if (doorsOpened && sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
+    }
+
     void Announce(string text, float seconds)
     {
         if (!banner || string.IsNullOrEmpty(text)) return;
+        Announced?.Invoke(text, seconds);
         if (bannerRoutine != null) StopCoroutine(bannerRoutine);
         bannerRoutine = StartCoroutine(ShowBanner(text, seconds));
     }

@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Menu d'accueil (scène « Menu »), style « terminal de bunker » ambre :
-//   SOLO (choix du mode : ÉVASION = 4 niveaux et le générateur, SURVIE = vagues infinies), MULTIJOUEUR (grisé « BIENTÔT »), PARAMÈTRES (son, confort VR, difficulté),
+//   SOLO (choix du mode : ÉVASION = 4 niveaux et le générateur, SURVIE = vagues infinies), MULTIJOUEUR (HÉBERGER / REJOINDRE / lobby, MainMenuMulti.cs), PARAMÈTRES (son, confort VR, difficulté),
 //   COMMANDES (schéma des manettes, AmberMenuControls), QUITTER.
 // Le panneau flotte devant le joueur, un peu à droite ; il est construit au lancement (UiKit). Pointeur : MenuPointer.
-public class MainMenu : AmberMenu
+public partial class MainMenu : AmberMenu
 {
     public string gameScene = "MainScene";
     public Transform head;
@@ -36,6 +36,7 @@ public class MainMenu : AmberMenu
         settingsPage.gameObject.SetActive(false);
         controlsPage = BuildControls(() => ShowControls(false));
         controlsPage.gameObject.SetActive(false);
+        BuildMultiPages();
         // textes toujours devant les fonds (sinon le titre de la bande du haut était caché par la bande)
         foreach (var r in GetComponentsInChildren<Renderer>(true))
             if (r.GetComponent<TextMesh>()) r.material.renderQueue = 3100;
@@ -59,10 +60,8 @@ public class MainMenu : AmberMenu
 
         // 5 boutons, 0,135 m d'écart (0,16 m quand il n'y en avait que 4)
         BigButton(p, 0.09f, "SOLO", () => ShowModes(true));
-        var multi = BigButton(p, -0.045f, "MULTIJOUEUR", null);
-        multi.interactable = false;
-        UiKit.Text(multi.transform, "Bientot", new Vector2(0.565f, 0f), 0.0075f, A, "BIENTÔT", TextAnchor.MiddleRight, true);
-        UiKit.Frame(multi.transform, new Vector2(0.56f - 0.09f, 0f), new Vector2(0.22f, 0.055f), 0.003f, A, -1, 0.004f);
+        BigButton(p, -0.045f, "MULTIJOUEUR", () => ShowMulti(MultiPage.Choice));
+        UiKit.Text(p, "Multi_LAN", new Vector2(0.565f, -0.045f), 0.0075f, A, "LAN · COOP", TextAnchor.MiddleRight, true);
         BigButton(p, -0.18f, "PARAMÈTRES", () => ShowSettings(true));
         BigButton(p, -0.315f, "COMMANDES", () => ShowControls(true));
         BigButton(p, -0.45f, "QUITTER", Quit);

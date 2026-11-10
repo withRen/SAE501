@@ -97,8 +97,16 @@ public class GameOverUI : MonoBehaviour
     // Mode survie : pas de reprise au niveau atteint (on repart de la vague 1, le record compte)
     void OnDied()
     {
+        if (NetSession.Active) return;      // [Multijoueur] la partie continue tant qu'un joueur est debout (NetGame appelle ShowTeamDefeat)
         if (!running)
             StartCoroutine(Run(false, 0f, !WaveManager.Endless && WaveManager.Level >= 2 ? WaveManager.Level : 0));
+    }
+
+    /// <summary>[Multijoueur] tous les joueurs sont tombés : bilan d'équipe pour tout le monde.</summary>
+    public void ShowTeamDefeat()
+    {
+        if (!running)
+            StartCoroutine(Run(false, 0f, 0));
     }
 
     public void ShowVictory()
@@ -203,7 +211,7 @@ public class GameOverUI : MonoBehaviour
                    UiKit.Spaced(victory ? "SIGNAL TRANSMIS" : "SYSTÈME DÉFAILLANT"),
                    TextAnchor.MiddleCenter, true, 4600);
         UiKit.Text(panel, "Titre_Principal", new Vector2(0f, 0.448f), 0.0235f, mainTitleCol,
-                   victory ? "VOUS AVEZ ÉCHAPPÉ" : "VOUS ÊTES MORT",
+                   victory ? "VOUS AVEZ ÉCHAPPÉ" : NetSession.Active ? "L'ÉQUIPE EST TOMBÉE" : "VOUS ÊTES MORT",
                    TextAnchor.MiddleCenter, true, 4600);
         string subTitle = victory ? "Le générateur est en marche."
                         : endless ? "Vous avez succombé à la horde."
@@ -225,7 +233,12 @@ public class GameOverUI : MonoBehaviour
 
         // Zone 4 — Barre d'actions (MenuButton)
         bool hasResume = !victory && !endless && resumeLevel >= 2;
-        if (hasResume)
+        if (NetSession.Active)
+        {
+            // [Multijoueur] pas de « rejouer » : on repasse par le lobby (l'hôte qui quitte ferme la partie de tous)
+            MakeActionButton(new Vector2(0f, -0.380f), new Vector2(1.20f, 0.110f), 0.0113f, "QUITTER LA PARTIE", ReturnToMainMenu);
+        }
+        else if (hasResume)
         {
             MakeActionButton(new Vector2(0f, -0.290f), new Vector2(1.20f, 0.094f), 0.0105f,
                              "REPRENDRE AU NIVEAU " + resumeLevel, ResumeAtLevel);
@@ -259,6 +272,7 @@ public class GameOverUI : MonoBehaviour
 
     void PopulateStats(bool endless)
     {
+        if (NetSession.Active && NetGame.Instance) { PopulateTeamStats(); return; }
         int level = Mathf.Max(1, WaveManager.Level);
         if (endless)
             EndlessRecord.Submit(level, GameStats.Time);
@@ -285,6 +299,26 @@ public class GameOverUI : MonoBehaviour
             string timeVal = GameStats.FormatTime(GameStats.Time);
             StatRow(4, -0.098f, "Niveau atteint", lvlVal, UiKit.White);
             StatRow(5, -0.176f, "Temps total", timeVal, UiKit.White);
+        }
+    }
+
+    // [Multijoueur] score d'équipe, vague, temps, puis une ligne par joueur (du meilleur score au moins bon)
+    void PopulateTeamStats()
+    {
+        var g = NetGame.Instance;
+        int level = Mathf.Max(1, WaveManager.Level);
+        StatRow(1, 0.140f, "Score d'équipe", g.TeamScore.ToString("N0"), UiKit.Amber);
+        StatRow(2, 0.080f, "Vague atteinte · temps", level + "  ·  " + GameStats.FormatTime(GameStats.Time), UiKit.White);
+        float y = 0.010f;
+        int i = 3;
+        foreach (var sc in g.SortedScores())
+        {
+            bool me = sc.clientId == NetSession.LocalId;
+            StatRow(i++, y, "Joueur " + sc.number + (me ? " (vous)" : ""),
+                    sc.score.ToString("N0") + " pts  ·  " + sc.kills + " zombies  ·  " + sc.heads + " têtes  ·  " + sc.planks + " planches",
+                    me ? UiKit.Amber : UiKit.White);
+            y -= 0.058f;
+            if (i > 6) break;
         }
     }
 
@@ -350,6 +384,7 @@ public class GameOverUI : MonoBehaviour
         SetButtonsInteractable(false);
         WaveManager.ResumeLevel = 0;
         ClosePanelState();
+        if (NetSession.Active) { NetSession.Leave(); NetSession.LastError = null; }
         if (Application.CanStreamedLevelBeLoaded(menuScene))
             SceneManager.LoadScene(menuScene);
         else

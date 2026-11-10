@@ -136,7 +136,8 @@ public class Zombie : MonoBehaviour
 
     void Start()
     {
-        player = PlayerHealth.Instance;
+        player = PlayerHealth.NearestAlive(transform.position) ?? PlayerHealth.Instance;
+        if (Puppet) return;
         agent.speed = walkSpeed;
         agent.areaMask = WalkMask;
         stuckAnchor = transform.position; stuckSince = Time.time;
@@ -170,7 +171,14 @@ public class Zombie : MonoBehaviour
     void Update()
     {
         if (Dead) return;
-        if (player == null) player = PlayerHealth.Instance;
+        if (Puppet) { PuppetUpdate(); return; }
+        // [Multijoueur] cible : le joueur vivant le plus proche (en solo, toujours le joueur)
+        if (player == null || player.Dead || Time.time >= nextTarget)
+        {
+            nextTarget = Time.time + 0.5f;
+            var p = PlayerHealth.NearestAlive(transform.position);
+            if (p != null) player = p; else if (player == null) player = PlayerHealth.Instance;
+        }
 
         agent.speed = walkSpeed * (Time.time < slowUntil ? slowFactor : 1f);
         anim?.SetMoveSpeed(agent.isStopped ? 0f : agent.velocity.magnitude);
@@ -352,7 +360,7 @@ public class Zombie : MonoBehaviour
         {
             pendingPlayerHit = true;
             FaceToward(player.HeadPosition);
-            anim?.Attack();
+            AnimAttack();
             PlayAttackWindup();
             hitAt = Time.time + attackHitDelay;
             nextBreak = Time.time + breakInterval;
@@ -361,7 +369,7 @@ public class Zombie : MonoBehaviour
         // porte fermée devant les planches : il l'enfonce d'abord (HingedDoor : 3 coups)
         if (target.DoorClosed)
         {
-            if (Time.time >= nextBreak && hitAt < 0f) { anim?.Attack(); hitAt = Time.time + attackHitDelay; nextBreak = Time.time + breakInterval; }
+            if (Time.time >= nextBreak && hitAt < 0f) { AnimAttack(); hitAt = Time.time + attackHitDelay; nextBreak = Time.time + breakInterval; }
             if (hitAt > 0f && Time.time >= hitAt) { hitAt = -1f; target.door.ZombieHit(); }
             return;
         }
@@ -369,7 +377,7 @@ public class Zombie : MonoBehaviour
         {
             pendingPlank = target.NextPlankToBreak();
             if (pendingPlank == null) { StartEntering(); return; }
-            anim?.Attack();
+            AnimAttack();
             hitAt = Time.time + attackHitDelay;
             nextBreak = Time.time + breakInterval;
         }
@@ -484,7 +492,7 @@ public class Zombie : MonoBehaviour
         if (Time.time >= nextAttack)
         {
             nextAttack = Time.time + attackCooldown;
-            anim?.Attack();
+            AnimAttack();
             PlayAttackWindup();
             hitAt = Time.time + attackHitDelay;
         }
@@ -512,7 +520,9 @@ public class Zombie : MonoBehaviour
     public void OnHit(HitZone zone)
     {
         if (Dead) return;
+        if (Puppet) { PuppetHit?.Invoke(this, zone, 0f); return; }
         lastHitMelee = false;
+        lastHitHead = zone == HitZone.Head;
         if (zone == HitZone.Head) { Health = 0f; Die(true); return; }
 
         Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
@@ -524,7 +534,9 @@ public class Zombie : MonoBehaviour
     public void OnMeleeHit(HitZone zone, float fractionOfBase)
     {
         if (Dead) return;
+        if (Puppet) { PuppetHit?.Invoke(this, zone, fractionOfBase); return; }
         lastHitMelee = true;
+        lastHitHead = false;
         Health -= ZombieLevels.BaseHealth * fractionOfBase;
         if (Health <= 0.01f) { Health = 0f; Die(true); return; }
         slowUntil = Time.time + slowDuration;
@@ -561,8 +573,8 @@ public class Zombie : MonoBehaviour
         if (Dead) return;
         if (byPlayer) GameStats.Kill(lastHitMelee);
         state = State.Dead;
-        agent.isStopped = true;
-        agent.enabled = false;
+        if (agent.enabled) { agent.isStopped = true; agent.enabled = false; }
+        Killed?.Invoke(this, byPlayer);
         anim?.Die();
         if (byPlayer)
         {
@@ -585,4 +597,61 @@ public class Zombie : MonoBehaviour
         hitSrc.pitch = IsBruiser ? Random.Range(0.78f, 0.90f) : Random.Range(0.88f, 1.06f);
         hitSrc.PlayOneShot(bodyThudClip, Mathf.Clamp01(0.78f * zGain));
     }
+
+    // ---------- [Multijoueur] ----------
+    // Sur l'hôte, les zombies sont les vrais (IA, NavMesh). Sur les autres casques, chaque zombie est une « marionnette » :
+    // pas d'IA ni d'agent, il suit la position et l'allure envoyées par l'hôte (NetGame) et joue ses animations.
+    // Un tir sur une marionnette ne retire pas de PV ici : il part à l'hôte (PuppetHit), qui décide.
+    public ushort NetId;
+    public bool Puppet { get; private set; }
+    /// <summary>Joueur (id réseau) qui a porté le dernier coup : crédité de l'élimination dans les scores. 0 = l'hôte.</summary>
+    public ulong LastHitBy;
+    public bool LastHitHead => lastHitHead;
+    public bool LastHitMelee => lastHitMelee;
+    public static event System.Action<Zombie> AttackAnimPlayed;
+    public static event System.Action<Zombie, bool> Killed;              // (zombie, tué par un joueur)
+    public static event System.Action<Zombie, HitZone, float> PuppetHit;  // (marionnette, zone, part de PV à la mêlée ; 0 = balle)
+    bool lastHitHead;
+    float nextTarget;
+    Vector3 netPos; float netYaw, netSpeed; bool netInit;
+
+    void AnimAttack()
+    {
+        anim?.Attack();
+        if (!Puppet) AttackAnimPlayed?.Invoke(this);
+    }
+
+    /// <summary>À appeler juste après la création, avant Start (NetGame, casque client).</summary>
+    public void MakePuppet(ushort id)
+    {
+        Puppet = true;
+        NetId = id;
+        if (!agent) agent = GetComponent<NavMeshAgent>();
+        agent.enabled = false;
+        var climb = GetComponent<ZombieWindowClimb>();
+        if (climb) climb.enabled = false;
+        netPos = transform.position; netYaw = transform.eulerAngles.y;
+    }
+
+    public void PuppetState(Vector3 pos, float yaw, float speed)
+    {
+        netPos = pos; netYaw = yaw; netSpeed = speed;
+        if (!netInit) { netInit = true; transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw, 0f)); }
+    }
+
+    /// <summary>Animation de coup jouée par l'hôte.</summary>
+    public void PuppetAttack() => anim?.Attack();
+
+    void PuppetUpdate()
+    {
+        // interpolation douce vers la dernière position reçue (15 envois par seconde) ; saut direct si trop loin (chute du toit)
+        var d = netPos - transform.position;
+        if (d.sqrMagnitude > 9f) transform.position = netPos;
+        else transform.position = Vector3.Lerp(transform.position, netPos, 1f - Mathf.Exp(-Time.deltaTime * 12f));
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, netYaw, 0f), 1f - Mathf.Exp(-Time.deltaTime * 10f));
+        anim?.SetMoveSpeed(netSpeed);
+    }
+
+    /// <summary>Allure actuelle (pour l'envoi aux marionnettes).</summary>
+    public float NetMoveSpeed => Dead || !agent.enabled || agent.isStopped ? 0f : agent.velocity.magnitude;
 }

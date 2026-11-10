@@ -53,6 +53,7 @@ public class Tutorial : MonoBehaviour
     {
         if (!WaveManager.Instance || FindFirstObjectByType<Tutorial>()) return;
         if (WaveManager.Resumed) return;            // [#121] reprise au niveau atteint : ni tutoriel ni proposition de le revoir
+        if (NetSession.Active) return;              // [Multijoueur] pas de tutoriel : il arrêterait les vagues de tout le monde
         var t = new GameObject("Tutoriel").AddComponent<Tutorial>();
         t.replayOnly = Done && !forceNext;
         forceNext = false;

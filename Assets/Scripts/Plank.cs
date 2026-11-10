@@ -106,6 +106,7 @@ public class Plank : MonoBehaviour
     public void Break(Vector3 pushDirection)
     {
         if (!InSlot) return;
+        if (!ApplyingRemote) Broken?.Invoke(this, pushDirection);
         // [#116] éclats sur toute la longueur de la planche, projetés comme elle vers l'intérieur, et craquement
         Fx.Splinters(transform.position, pushDirection, transform.right * halfLength * 0.8f);
         src.pitch = Random.Range(0.90f, 1.08f);
@@ -171,7 +172,7 @@ public class Plank : MonoBehaviour
                 break;
 
             case State.Placed:
-                if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
+                if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; LocalNailed?.Invoke(this); }
                 break;
         }
 
@@ -217,14 +218,17 @@ public class Plank : MonoBehaviour
         grab.trackPosition = grab.trackRotation = true;
         Hits = 0;
         stored = false;
+        bool fresh = !placedCounted;
         if (!placedCounted) { placedCounted = true; GameStats.PlankPlaced(); }
         if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
         else { state = State.Placed; grab.enabled = true; }
         foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
+        if (!ApplyingRemote) LocalPlaced?.Invoke(this, slot, state == State.Nailed, fresh);
     }
 
     void Unsnap()
     {
+        bool wasPlaced = slot != null;
         placedCounted = false;
         ReleaseSlot();
         state = State.Free;
@@ -232,6 +236,58 @@ public class Plank : MonoBehaviour
         grab.trackRotation = true;
         foreach (var n in nails) n.ResetHits();
         if (!grab.isSelected) { rb.isKinematic = false; rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }   // elle tombe
+        if (wasPlaced && !ApplyingRemote) LocalFreed?.Invoke(this);
+    }
+
+    // ---------- [Multijoueur] barricades partagées (NetGame) ----------
+    // Chaque casque a ses planches ; ce qui est posé, cloué, retiré ou arraché sur une ouverture est envoyé aux autres,
+    // qui mettent LEUR planche du même numéro dans le même état. Les zombies (chez l'hôte) voient donc les barricades de tous.
+    public static event System.Action<Plank, BarricadeSlot, bool, bool> LocalPlaced;   // (planche, emplacement, clouée, nouvelle pose)
+    public static event System.Action<Plank> LocalNailed, LocalFreed;
+    public static event System.Action<Plank, Vector3> Broken;                    // arrachée par un zombie (hôte)
+    public static bool ApplyingRemote;
+
+    /// <summary>Un autre joueur a posé (ou cloué) cette planche sur cet emplacement.</summary>
+    public void NetPlace(BarricadeSlot s, bool nailed)
+    {
+        ApplyingRemote = true;
+        try
+        {
+            if (grab.isSelected && grab.interactionManager) grab.interactionManager.CancelInteractableSelection((UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable)grab);
+            if (slot != s) { ReleaseSlot(); if (s.Plank && s.Plank != this) s.Plank.NetFree(); }
+            TakeSlot(s);
+            transform.SetPositionAndRotation(s.transform.position, s.transform.rotation);
+            grab.trackPosition = grab.trackRotation = true;
+            Hits = 0; stored = false; placedCounted = true;
+            if (nailed) { foreach (var n in nails) n.SetDriven(); state = State.Nailed; grab.enabled = false; }
+            else { state = State.Placed; grab.enabled = true; }
+        }
+        finally { ApplyingRemote = false; }
+    }
+
+    /// <summary>Un autre joueur a retiré cette planche de son emplacement.</summary>
+    public void NetFree()
+    {
+        if (state == State.Free) return;
+        ApplyingRemote = true;
+        try
+        {
+            if (grab.isSelected && grab.interactionManager) grab.interactionManager.CancelInteractableSelection((UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable)grab);
+            ReleaseSlot();
+            state = State.Free; Hits = 0; placedCounted = false;
+            foreach (var n in nails) n.ResetHits();
+            grab.enabled = Held == null;
+            grab.trackPosition = grab.trackRotation = true;
+            rb.isKinematic = false;
+        }
+        finally { ApplyingRemote = false; }
+    }
+
+    /// <summary>L'hôte : un zombie a arraché cette planche.</summary>
+    public void NetBreak(Vector3 pushDirection)
+    {
+        ApplyingRemote = true;
+        try { Break(pushDirection); } finally { ApplyingRemote = false; }
     }
 
     void LateUpdate()

@@ -94,8 +94,11 @@ public class PauseMenu : AmberMenu
         panel.gameObject.SetActive(true);
         Physics.SyncTransforms();        // temps figé : la physique ne met plus à jour les colliders du panneau toute seule
         UiKit.SetOnTop(true);            // le panneau passe devant le décor et les zombies (sinon un meuble ou un zombie le cache)
-        Time.timeScale = 0f;
-        AudioListener.pause = true;
+        if (!NetSession.Active)              // [Multijoueur] le temps ne s'arrête pas pour les autres joueurs
+        {
+            Time.timeScale = 0f;
+            AudioListener.pause = true;
+        }
         Paused = true;
     }
 
@@ -115,6 +118,7 @@ public class PauseMenu : AmberMenu
         if (leaving) return;
         leaving = true;
         Resume();
+        if (NetSession.Active) { NetSession.Leave(); NetSession.LastError = null; }   // l'hôte qui part ferme la partie de tous
         SceneManager.LoadScene(menuScene);
     }
 

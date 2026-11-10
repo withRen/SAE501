@@ -20,9 +20,14 @@ public class Opening : MonoBehaviour
     AudioSource dustSrc;
     static AudioClip dustClip;
 
+    // [Multijoueur] l'hôte relaie l'avertissement aux autres casques (NetGame)
+    public static event System.Action<Opening, float> Warned;
+    public static bool ApplyingRemote;
+
     // un zombie va tomber par ce trou dans `seconds` : poussière et gravats qui tombent, bruit de ruissellement
     public void WarnFromAbove(float seconds)
     {
+        if (!ApplyingRemote) Warned?.Invoke(this, seconds);
         if (dust)
         {
             var main = dust.main;

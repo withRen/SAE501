@@ -65,9 +65,13 @@ public static class JardinNature
                 if (!m.HasProperty("_Smoothness") || m.GetFloat("_Smoothness") < 0.6f) continue;
                 m.SetFloat("_EnvironmentReflections", 0f);
                 m.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+                // un matériau transparent prémultiplié ajoute son reflet spéculaire sans l'atténuer par l'alpha : la lune bleue
+                // y fait des aplats bleu clair (flaques, vitres). On coupe aussi les reflets de la lumière principale.
+                m.SetFloat("_SpecularHighlights", 0f);
+                m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
                 EditorUtility.SetDirty(m);
             }
-        Debug.Log($"[JardinNature] {done.Count} matériaux examinés : réflexions du ciel coupées sur les vitres et flaques");
+        Debug.Log($"[JardinNature] {done.Count} matériaux examinés : réflexions du ciel et reflets de la lune coupés sur les vitres et flaques");
     }
 
     // ---------------------------------------------------------------- sol

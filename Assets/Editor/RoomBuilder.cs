@@ -102,7 +102,6 @@ public static class RoomBuilder
         JardinNature.Apply(roomRoot.transform);             // sol du jardin et de la forêt (Poly Haven), forêt en vrais arbres avec LOD et imposteurs
         FixFloorDecals(roomRoot.transform);
         FixGardenCabin(roomRoot.transform);
-        MurCouloir.Apply(roomRoot.transform);               // mur manquant du couloir, à droite de la porte de la cuisine
         JardinNature.NoSkyReflections(roomRoot.transform);   // vitres et flaques : plus de reflet du ciel par défaut de la vue Scène (aplats bleu clair)
         BuildExterior();
         BuildPlanks(planks);

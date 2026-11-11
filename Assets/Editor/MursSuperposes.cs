@@ -60,7 +60,10 @@ public static class MursSuperposes
             }
         }
 
-        // un triangle est recouvert si ses trois sommets (ramenés de 2 mm vers son centre) sont dans des triangles d'un autre objet
+        // un triangle est recouvert si toute sa surface est dans des triangles d'un autre objet : ses trois sommets (ramenés de 2 mm
+        // vers son centre) ET une grille de points à l'intérieur. Tester les sommets seuls ne suffit pas (journal 189) : le grand pan
+        // du mur ouest du couloir (z -1,6 à 3,1) avait ses coins dans les petits bouts des murs voisins (cuisine, salle du générateur)
+        // et il était retiré alors que rien ne le cachait entre les deux, ce qui laissait voir à travers le mur.
         foreach (var t in all)
         {
             var others = new List<Tri>();
@@ -69,14 +72,7 @@ public static class MursSuperposes
                 if (byPlane.TryGetValue((t.axis, t.sign, k0 + dk), out var l))
                     others.AddRange(l.Where(o => o.mf != t.mf && !o.removed && Mathf.Abs(o.d - t.d) <= PlaneTol));
             if (others.Count == 0) continue;
-            var center = (t.a + t.b + t.c) / 3f;
-            bool covered = true;
-            foreach (var p in new[] { t.a, t.b, t.c })
-            {
-                var q = p + (center - p).normalized * Mathf.Min(EdgeTol, (center - p).magnitude);
-                if (!others.Any(o => Inside(q, o.a, o.b, o.c))) { covered = false; break; }
-            }
-            if (covered) t.removed = true;
+            if (Covered(t, others)) t.removed = true;
         }
 
         // copies des maillages concernés, sans les triangles retirés
@@ -108,6 +104,26 @@ public static class MursSuperposes
         Debug.Log($"[RoomBuilder] faces superposées retirées : {total} triangles sur {removedBy.Count} objets ("
                   + string.Join(", ", removedBy.Select(g => g.Key.name + " " + g.Count())) + ")");
         return total;
+    }
+
+    const int Grid = 8;                  // points de contrôle par côté à l'intérieur du triangle (45 points au total)
+
+    static bool Covered(Tri t, List<Tri> others)
+    {
+        var center = (t.a + t.b + t.c) / 3f;
+        foreach (var p in new[] { t.a, t.b, t.c })
+        {
+            var q = p + (center - p).normalized * Mathf.Min(EdgeTol, (center - p).magnitude);
+            if (!others.Any(o => Inside(q, o.a, o.b, o.c))) return false;
+        }
+        for (int i = 0; i <= Grid; i++)
+            for (int j = 0; i + j <= Grid; j++)
+            {
+                float u = (i + 0.5f) / (Grid + 1.5f), w = (j + 0.5f) / (Grid + 1.5f);
+                var q = t.a + (t.b - t.a) * u + (t.c - t.a) * w;
+                if (!others.Any(o => Inside(q, o.a, o.b, o.c))) return false;
+            }
+        return true;
     }
 
     static bool Inside(Vector2 p, Vector2 a, Vector2 b, Vector2 c)

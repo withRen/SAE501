@@ -1537,6 +1537,21 @@ public static class RoomBuilder
     }
 
     // UI diégétique de l'équipe : vignettage rouge selon les PV, écran noir + texte à la mort, puis relance de la scène
+    /// <summary>
+    /// Systèmes du joueur de MainScene pour une autre scène (arène 1v1) : vignette de dégâts et écran de fin (HealthVignette, GameOverUI),
+    /// musique et menu pause. Ne fait rien pour ce qui existe déjà.
+    /// </summary>
+    public static void AddPlayerSystems(GameObject rig)
+    {
+        if (!Object.FindAnyObjectByType<HealthVignette>(FindObjectsInactive.Include)) BuildHealthUI(rig);
+        if (!Object.FindAnyObjectByType<PauseMenu>(FindObjectsInactive.Include)) new GameObject("Menu_Pause").AddComponent<PauseMenu>();
+        if (!Object.FindAnyObjectByType<MusicPlayer>(FindObjectsInactive.Include))
+        {
+            bunkerRoot = null;          // pas de racine « Bunker » dans l'arène (le champ garde l'ancienne scène)
+            BuildMusic();
+        }
+    }
+
     static void BuildHealthUI(GameObject rig)
     {
         var head = rig.GetComponentInChildren<Camera>().transform;
@@ -1664,6 +1679,23 @@ public static class RoomBuilder
         var m = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (m == null) { m = new Material(Shader.Find("Sprites/Default")); AssetDatabase.CreateAsset(m, path); }
         return m;
+    }
+
+    /// <summary>
+    /// Le pistolet de MainScene, à l'identique, dans une autre scène (arène 1v1) : modèle M1911 et son animation de tir, sons du tir et du chargeur,
+    /// fumée, douille éjectée, flash du canon et lumière, compteur de balles à l'inclinaison, emplacement du chargeur, règles de prise.
+    /// </summary>
+    public static GameObject CreatePistol(Transform parent, Vector3 pos, string name)
+    {
+        var saved = items;
+        items = parent;                 // MakePistol range le pistolet sous « items »
+        try
+        {
+            var grab = MakePistol(pos);
+            grab.name = name;
+            return grab.gameObject;
+        }
+        finally { items = saved; }
     }
 
     static XRGrabInteractable MakePistol(Vector3 pos)

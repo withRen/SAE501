@@ -21,6 +21,16 @@ public abstract partial class AmberMenu : MonoBehaviour
     // onBack : action du bouton RETOUR
     protected Transform BuildSettings(Action onBack)
     {
+        // version PC : deux lignes de plus (VSync, limite FPS) ; lignes un peu plus serrées pour garder RETOUR en bas
+        if (DesktopMode.On) { rowStep = 0.082f; sectionStep = 0.078f; }
+        try { return BuildSettingsPage(onBack); }
+        finally { rowStep = 0.095f; sectionStep = 0.085f; }
+    }
+
+    float rowStep = 0.095f, sectionStep = 0.085f;
+
+    Transform BuildSettingsPage(Action onBack)
+    {
         var p = Panel("Page_Parametres", "BUNKER-OS  //  PARAMÈTRES", "");
         float y = 0.49f;
         Section(p, ref y, "SON");
@@ -36,6 +46,15 @@ public abstract partial class AmberMenu : MonoBehaviour
             var fovs = GameSettings.FieldOfViews;
             Choice(p, ref y, "Champ de vision", System.Array.ConvertAll(fovs, f => f + "°"),
                    () => Mathf.Max(0, System.Array.IndexOf(fovs, GameSettings.FieldOfView)), i => GameSettings.FieldOfView = fovs[i]);
+            // VSync (fréquence de l'écran) ou limite d'images par seconde ; la limite est grisée tant que le VSync est actif
+            // (Unity ignore alors Application.targetFrameRate)
+            List<MenuButton> fpsButtons = null;
+            Action greyFps = () => { if (fpsButtons != null) foreach (var b in fpsButtons) b.interactable = !GameSettings.VSync; };
+            Choice(p, ref y, "VSync", new[] { "NON", "OUI" }, () => GameSettings.VSync ? 1 : 0, i => { GameSettings.VSync = i == 1; greyFps(); });
+            var caps = GameSettings.FrameRateCaps;
+            fpsButtons = Choice(p, ref y, "Limite FPS", System.Array.ConvertAll(caps, c => c <= 0 ? "SANS" : c.ToString()),
+                   () => Mathf.Max(0, System.Array.IndexOf(caps, GameSettings.FrameRateCap)), i => GameSettings.FrameRateCap = caps[i]);
+            greyFps();
         }
         else
         {
@@ -100,7 +119,7 @@ public abstract partial class AmberMenu : MonoBehaviour
     {
         UiKit.Text(p, "Section", new Vector2(-HW, y), 0.0075f, A, title, TextAnchor.MiddleLeft, true);
         UiKit.Quad(p, "Trait", new Vector2(0f, y - 0.035f), new Vector2(2f * HW, 0.002f), new Color(A.r, A.g, A.b, 0.4f), -1, 0.006f);
-        y -= 0.085f;
+        y -= sectionStep;
     }
 
     // curseur en 10 segments (cliquer un segment règle la valeur)
@@ -117,10 +136,10 @@ public abstract partial class AmberMenu : MonoBehaviour
             segs.Add(s);
         }
         refresh();
-        y -= 0.095f;
+        y -= rowStep;
     }
 
-    protected void Choice(Transform p, ref float y, string label, string[] options, Func<int> get, Action<int> set)
+    protected List<MenuButton> Choice(Transform p, ref float y, string label, string[] options, Func<int> get, Action<int> set)
     {
         UiKit.Text(p, "Libelle", new Vector2(-HW, y), 0.0105f, UiKit.White, label, TextAnchor.MiddleLeft);
         var buttons = new List<MenuButton>();
@@ -136,7 +155,8 @@ public abstract partial class AmberMenu : MonoBehaviour
             right -= w + 0.02f;
         }
         refresh();
-        y -= 0.095f;
+        y -= rowStep;
+        return buttons;
     }
 
     // champ numérique éditable au clavier (clic gauche pour saisir directement un float, Entrée ou clic extérieur pour valider)
@@ -147,7 +167,7 @@ public abstract partial class AmberMenu : MonoBehaviour
         var b = MakeButton(p, new Vector2(HW - w / 2f, y), new Vector2(w, 0.072f), "", 0.0088f, null);
         var field = b.gameObject.AddComponent<MenuFloatField>();
         field.Init(b, get, set, min, max);
-        y -= 0.095f;
+        y -= rowStep;
     }
 }
 

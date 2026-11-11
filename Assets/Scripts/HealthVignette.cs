@@ -38,16 +38,29 @@ public class HealthVignette : MonoBehaviour
     float shown, flash;
     float hp, max;
 
-    // coups récents (4 au plus, comme dans le shader) : position de l'attaquant et heure du coup
+    // coups récents (4 au plus, comme dans le shader) : position de l'attaquant, heure du coup et type (0 = dégât rouge, 1 = alerte ambre)
+    public static HealthVignette Instance { get; private set; }
     readonly Vector3[] hitFrom = new Vector3[4];
     readonly float[] hitTime = { -99f, -99f, -99f, -99f };
+    readonly float[] hitScale = { 1f, 1f, 1f, 1f };
+    readonly bool[] hitWarn = new bool[4];
     readonly Vector4[] hits = new Vector4[4];
     AudioSource hurtSrc, swipeSrc;
     AudioClip hurtClip, swipeClip, heartClip;
-    float lastBeatPhase = 1f;
+    float lastBeatPhase = 1f, lastSwipeTime = -10f;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => Instance = null;
+
+    /// <summary>Affiche un arc périphérique ambre (sans flash de blessure) pour une brèche ou une attaque dans l'angle mort (Accessibilité GAP 1 & 2).</summary>
+    public static void NotifyWarningFrom(Vector3 from, float intensity = 0.65f)
+    {
+        if (Instance) Instance.AddWarning(from, intensity);
+    }
 
     void Start()
     {
+        Instance = this;
         if (!head && Camera.main) head = Camera.main.transform;
 
         // quad collé à la tête : sa position n'a pas d'importance (le shader le met en plein écran) mais il doit rester dans le champ de vision
@@ -69,17 +82,19 @@ public class HealthVignette : MonoBehaviour
         hp = h.Health; max = h.maxHealth;
         h.Changed += (c, m) => { hp = c; max = m; };
         h.Damaged += a => flash = Mathf.Max(flash, hitFlash * Mathf.Lerp(0.8f, 1.5f, Mathf.Clamp01(a / (max * 0.35f))));
-        h.Damaged += _ => { if (hurtSrc) hurtSrc.PlayOneShot(hurtClip, hurtVolume); };
+        h.Damaged += _ => { if (hurtSrc) hurtSrc.PlayOneShot(hurtClip, hurtVolume); MusicPlayer.Duck(0.50f, 0.50f); };
         h.DamagedFrom += (_, from) => OnHitFrom(from);
 
         hurtClip = ProcAudio.PlayerHurt(); swipeClip = ProcAudio.ClawSwipe(); heartClip = ProcAudio.Heartbeat(0.3f / heartbeatHz);
         hurtSrc = head.gameObject.AddComponent<AudioSource>();
-        hurtSrc.playOnAwake = false; hurtSrc.spatialBlend = 0f;
+        hurtSrc.playOnAwake = false; hurtSrc.spatialBlend = 0f; hurtSrc.priority = 12;
         var sw = new GameObject("SonGriffure");                  // déplacé du côté du zombie à chaque coup
         sw.transform.SetParent(head, false);
         swipeSrc = sw.AddComponent<AudioSource>();
-        swipeSrc.playOnAwake = false; swipeSrc.spatialBlend = 1f; swipeSrc.minDistance = 1f; swipeSrc.maxDistance = 10f;
+        swipeSrc.playOnAwake = false; swipeSrc.spatialBlend = 1f; swipeSrc.minDistance = 1f; swipeSrc.maxDistance = 10f; swipeSrc.priority = 16;
     }
+
+    void OnDestroy() { if (Instance == this) Instance = null; }
 
     void OnHitFrom(Vector3 from)
     {
@@ -90,15 +105,53 @@ public class HealthVignette : MonoBehaviour
             if (Time.time - hitTime[i] < indicatorHold + indicatorFade && (hitFrom[i] - from).sqrMagnitude < 1f) { slot = i; break; }
             if (hitTime[i] < hitTime[slot]) slot = i;
         }
-        hitFrom[slot] = from; hitTime[slot] = Time.time;
+        hitFrom[slot] = from; hitTime[slot] = Time.time; hitScale[slot] = 1f; hitWarn[slot] = false;
 
-        if (swipeSrc)
+        if (swipeSrc && Time.time - lastSwipeTime >= 0.15f)
         {
+            lastSwipeTime = Time.time;
             var d = Vector3.ProjectOnPlane(from - head.position, Vector3.up);
             swipeSrc.transform.position = head.position + (d.sqrMagnitude > 1e-4f ? d.normalized : head.forward) * 0.7f;
             swipeSrc.pitch = Random.Range(0.9f, 1.15f);
             swipeSrc.PlayOneShot(swipeClip, swipeVolume);
+            MusicPlayer.Duck(0.63f, 0.35f);
         }
+    }
+
+    /// <summary>Alerte ambre seulement si la source est proche (maxDistance) et hors du champ de vision (Accessibilité GAP 1).</summary>
+    public static void NotifyWarningIfUnseen(Vector3 from, float maxDistance, float intensity = 0.65f)
+    {
+        var inst = Instance;
+        if (!inst || !inst.head) return;
+        var d = from - inst.head.position;
+        if (d.sqrMagnitude > maxDistance * maxDistance) return;
+        var flat = Vector3.ProjectOnPlane(d, Vector3.up);
+        var fwd = Vector3.ProjectOnPlane(inst.head.forward, Vector3.up);
+        if (flat.sqrMagnitude > 1e-4f && fwd.sqrMagnitude > 1e-4f && Vector3.Dot(fwd.normalized, flat.normalized) >= 0.35f) return;   // visible
+        inst.AddWarning(from, intensity);
+    }
+
+    void AddWarning(Vector3 from, float intensity)
+    {
+        if (!head) return;
+        int slot = 0;
+        for (int i = 0; i < hitFrom.Length; i++)
+        {
+            if (Time.time - hitTime[i] < indicatorHold + indicatorFade && (hitFrom[i] - from).sqrMagnitude < 1.5f)
+            {
+                if (!hitWarn[i]) return; // ne remplace pas un arc de blessure rouge actif au même endroit
+                slot = i;
+                break;
+            }
+            if (hitTime[i] < hitTime[slot]) slot = i;
+        }
+        // plus ancien emplacement encore occupé par un arc rouge : on garde la blessure, pas d'alerte ambre
+        if (!hitWarn[slot] && Time.time - hitTime[slot] < indicatorHold + indicatorFade && (hitFrom[slot] - from).sqrMagnitude >= 1.5f) return;
+        hitFrom[slot] = from;
+        // durée plus courte qu'une blessure : on avance hitTime pour que l'arc ambre s'estompe en ~0.65s
+        hitTime[slot] = Time.time - indicatorHold * 0.65f;
+        hitScale[slot] = Mathf.Clamp(intensity, 0.25f, 1f);
+        hitWarn[slot] = true;
     }
 
     // direction de l'attaquant dans le repère de la tête, à plat (x = droite, y = devant) : l'arc ne dépend que du cap du regard
@@ -142,9 +195,9 @@ public class HealthVignette : MonoBehaviour
         for (int i = 0; i < hits.Length; i++)
         {
             float age = Time.time - hitTime[i];
-            float w = hp > 0f ? 1f - Mathf.Clamp01((age - indicatorHold) / indicatorFade) : 0f;
+            float w = hp > 0f ? (1f - Mathf.Clamp01((age - indicatorHold) / indicatorFade)) * hitScale[i] : 0f;
             var d = w > 0f ? FlatDirection(hitFrom[i]) : Vector2.up;
-            hits[i] = new Vector4(d.x, d.y, w, 0f);
+            hits[i] = new Vector4(d.x, d.y, w, hitWarn[i] ? 1f : 0f);
             anyHit |= w > 0f;
         }
         mat.SetVectorArray("_Hits", hits);

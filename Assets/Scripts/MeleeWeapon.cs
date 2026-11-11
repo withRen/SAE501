@@ -7,6 +7,8 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // Un coup compte si l'extrémité de l'arme (striker) touche une zone du zombie (ZombieHitbox) assez vite.
 // Dégâts en part des PV de base du zombie, selon la zone (comme le pistolet) ; un même zombie ne peut être touché
 // qu'une fois par coup (délai entre deux coups).
+// [SONS, PR #151] Le souffle du geste est le vrai son « axe_whoosh » : un seul par GRAND geste (extrémité plus rapide que
+// whooshMinSpeed), réarmé quand le geste est fini. Sans le fichier : l'ancien souffle procédural, au seuil d'avant.
 public class MeleeWeapon : MonoBehaviour
 {
     [Header("Dégâts (part des PV de base du zombie)")]
@@ -20,22 +22,40 @@ public class MeleeWeapon : MonoBehaviour
     public float minSpeed = 1.6f;          // m/s : en dessous, ce n'est pas un coup (on pose l'arme contre le zombie)
     public float cooldown = 0.45f;         // délai avant de pouvoir retoucher le même zombie
 
+    [Header("Son du geste (axe_whoosh) [SONS]")]
+    public AudioClip whooshSound;          // sinon Assets/Resources/Sounds/axe_whoosh
+    public float whooshMinSpeed = 2.8f;    // m/s de l'extrémité : en dessous, geste lent ou petit coup : pas de souffle
+    public float whooshCooldown = 0.35f;
+    [Range(0f, 1f)] public float whooshVolume = 0.9f;
+
     XRGrabInteractable grab;
-    AudioSource src;
-    static AudioClip thud;
+    AudioSource src, whooshSrc;            // source à part pour le souffle : le pitch de l'impact ne doit pas le changer
+    bool whooshArmed = true;
+    static AudioClip swingClip, axeClip, crowbarClip;
     Vector3 lastPos, swingDir;
-    float speed;
+    float speed, lastSwingAt = -10f;
+    bool isAxe;
     readonly Dictionary<Zombie, float> lastHit = new Dictionary<Zombie, float>();
     readonly Collider[] hits = new Collider[16];
 
     public float Speed => speed;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => swingClip = axeClip = crowbarClip = null;
+
     void Awake()
     {
         grab = GetComponent<XRGrabInteractable>();
         src = gameObject.AddComponent<AudioSource>();
-        src.spatialBlend = 1f;
-        if (!thud) thud = ProcAudio.Hit();
+        src.spatialBlend = DesktopMode.On ? 0.25f : 0.65f;
+        src.minDistance = 0.8f;
+        src.maxDistance = 14f;
+        src.priority = 36;
+        whooshSrc = gameObject.AddComponent<AudioSource>();
+        whooshSrc.playOnAwake = false;
+        whooshSrc.minDistance = 0.8f; whooshSrc.maxDistance = 14f; whooshSrc.priority = 36;
+        isAxe = headDamage >= 0.9f || name.IndexOf("Hache", System.StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("Axe", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        if (!swingClip) { swingClip = ProcAudio.MeleeSwing(); axeClip = ProcAudio.AxeImpact(); crowbarClip = ProcAudio.CrowbarImpact(); }
     }
 
     void Start() { if (striker) lastPos = striker.position; }
@@ -49,8 +69,36 @@ public class MeleeWeapon : MonoBehaviour
         speed = Mathf.Max((p - lastPos).magnitude / dt, speed * 0.8f);   // vitesse lissée : reste « chaude » le temps du contact
         if ((p - lastPos).sqrMagnitude > 1e-8f) swingDir = p - lastPos;
         lastPos = p;
-        if (!BeltItem.InHand(grab) || speed < minSpeed) return;
+        bool held = BeltItem.InHand(grab);
+        if (held) Whoosh();
+        if (!held || speed < minSpeed) return;
         Strike();
+    }
+
+    // souffle de l'arme : axe_whoosh, un seul par grand geste (plus fort et plus aigu si le geste est rapide)
+    void Whoosh()
+    {
+        var clip = AudioSlices.Clip(whooshSound, "axe_whoosh");
+        if (!clip)
+        {
+            // ancien souffle procédural
+            if (speed < minSpeed * 1.1f || Time.time - lastSwingAt < 0.24f) return;
+            lastSwingAt = Time.time;
+            src.spatialBlend = DesktopMode.On ? 0.25f : 0.65f;
+            src.pitch = isAxe ? Random.Range(0.88f, 0.96f) : Random.Range(1.06f, 1.16f);
+            src.PlayOneShot(swingClip, isAxe ? 0.60f : 0.52f);
+            Haptic(0.18f, 0.04f);
+            return;
+        }
+        if (speed < whooshMinSpeed * 0.5f) whooshArmed = true;
+        if (!whooshArmed || speed < whooshMinSpeed || Time.time - lastSwingAt < whooshCooldown) return;
+        whooshArmed = false;
+        lastSwingAt = Time.time;
+        float power = Mathf.InverseLerp(whooshMinSpeed, whooshMinSpeed * 2.2f, speed);
+        whooshSrc.spatialBlend = DesktopMode.On ? 0.25f : 0.65f;
+        whooshSrc.pitch = Random.Range(0.95f, 1.05f) + 0.12f * power + (isAxe ? -0.05f : 0.05f);
+        whooshSrc.PlayOneShot(clip, Mathf.Lerp(0.6f, 1f, power) * whooshVolume);
+        Haptic(0.18f, 0.04f);
     }
 
     // cherche les zones de zombie touchées par l'extrémité de l'arme ; public pour être testé sans casque
@@ -67,8 +115,9 @@ public class MeleeWeapon : MonoBehaviour
             float dmg = hb.zone == HitZone.Head ? headDamage : hb.zone == HitZone.Torso ? torsoDamage : legsDamage;
             hb.zombie.HitFeedback(hits[i].ClosestPoint(striker.position), swingDir, hb.zone == HitZone.Head);   // [#113]
             hb.zombie.OnMeleeHit(hb.zone, dmg);
-            src.pitch = Random.Range(0.6f, 0.8f);
-            src.PlayOneShot(thud, 1f);
+            src.spatialBlend = 1f;
+            src.pitch = isAxe ? Random.Range(0.94f, 1.06f) : Random.Range(0.96f, 1.04f);
+            src.PlayOneShot(isAxe ? axeClip : crowbarClip, 0.82f);
             Haptic(0.8f, 0.1f);
             done++;
         }

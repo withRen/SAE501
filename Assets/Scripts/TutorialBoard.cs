@@ -52,7 +52,8 @@ public class TutorialBoard : MonoBehaviour
         body = Txt("Texte", new Vector2(0, 10), new Vector2(840, 300), 40, FontStyle.Normal, TextCol, TextAnchor.MiddleCenter);
         body.text = text;
         footer = Txt("Aide", new Vector2(0, -200), new Vector2(860, 40), 24, FontStyle.Normal, Dim, TextAnchor.MiddleCenter);
-        footer.text = "Passer le tutoriel : visez la croix et appuyez sur la gâchette (main vide), ou A + X pendant 2 s";
+        footer.text = DesktopMode.Text("Passer le tutoriel : visez la croix et appuyez sur la gâchette (main vide), ou A + X pendant 2 s",
+                                       "Passer le tutoriel : visez la croix et cliquez, ou touche K");
 
         if (!lineMat) { lineMat = new Material(Shader.Find("Universal Render Pipeline/Unlit")); lineMat.SetColor("_BaseColor", Amber); }
         var lg = new GameObject("Trait");

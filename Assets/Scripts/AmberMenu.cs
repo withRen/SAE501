@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Base commune des menus « terminal de bunker » ambre (menu d'accueil MainMenu, menu pause PauseMenu) :
-// panneau, gros boutons, page PARAMÈTRES (son, confort VR, difficulté), page COMMANDES (AmberMenuControls.cs)
+// panneau, gros boutons, page PARAMÈTRES (son, confort VR ou souris et affichage en version PC, difficulté), page COMMANDES (AmberMenuControls.cs)
 // et briques (curseurs, choix).
 // Tout est construit en code (UiKit) ; le pointeur est MenuPointer.
 public abstract partial class AmberMenu : MonoBehaviour
@@ -21,12 +21,42 @@ public abstract partial class AmberMenu : MonoBehaviour
     // onBack : action du bouton RETOUR
     protected Transform BuildSettings(Action onBack)
     {
+        // version PC : deux lignes de plus (VSync, limite FPS) ; lignes un peu plus serrées pour garder RETOUR en bas
+        if (DesktopMode.On) { rowStep = 0.082f; sectionStep = 0.078f; }
+        try { return BuildSettingsPage(onBack); }
+        finally { rowStep = 0.095f; sectionStep = 0.085f; }
+    }
+
+    float rowStep = 0.095f, sectionStep = 0.085f;
+
+    Transform BuildSettingsPage(Action onBack)
+    {
         var p = Panel("Page_Parametres", "BUNKER-OS  //  PARAMÈTRES", "");
         float y = 0.49f;
         Section(p, ref y, "SON");
         Slider(p, ref y, "Musique", () => GameSettings.Music, v => GameSettings.Music = v);
         Slider(p, ref y, "Effets", () => GameSettings.Effects, v => GameSettings.Effects = v);
         Slider(p, ref y, "Zombies", () => GameSettings.Zombies, v => GameSettings.Zombies = v);
+        if (DesktopMode.On)
+        {
+            // version PC : les réglages du casque n'ont pas de sens ; souris et champ de vision à la place
+            Section(p, ref y, "SOURIS ET AFFICHAGE");
+            FloatInput(p, ref y, "Sensibilité", () => GameSettings.MouseSensitivity, v => GameSettings.MouseSensitivity = v, 0.05f, 10f);
+            Choice(p, ref y, "Souris inversée", new[] { "NON", "OUI" }, () => GameSettings.InvertMouseY ? 1 : 0, i => GameSettings.InvertMouseY = i == 1);
+            var fovs = GameSettings.FieldOfViews;
+            Choice(p, ref y, "Champ de vision", System.Array.ConvertAll(fovs, f => f + "°"),
+                   () => Mathf.Max(0, System.Array.IndexOf(fovs, GameSettings.FieldOfView)), i => GameSettings.FieldOfView = fovs[i]);
+            // VSync (fréquence de l'écran) ou limite d'images par seconde ; la limite est grisée tant que le VSync est actif
+            // (Unity ignore alors Application.targetFrameRate)
+            List<MenuButton> fpsButtons = null;
+            Action greyFps = () => { if (fpsButtons != null) foreach (var b in fpsButtons) b.interactable = !GameSettings.VSync; };
+            Choice(p, ref y, "VSync", new[] { "NON", "OUI" }, () => GameSettings.VSync ? 1 : 0, i => { GameSettings.VSync = i == 1; greyFps(); });
+            var caps = GameSettings.FrameRateCaps;
+            fpsButtons = Choice(p, ref y, "Limite FPS", System.Array.ConvertAll(caps, c => c <= 0 ? "SANS" : c.ToString()),
+                   () => Mathf.Max(0, System.Array.IndexOf(caps, GameSettings.FrameRateCap)), i => GameSettings.FrameRateCap = caps[i]);
+            greyFps();
+        }
+        else
         {
             Section(p, ref y, "CONFORT VR");
             Choice(p, ref y, "Déplacement", new[] { "CONTINU", "TÉLÉPORTATION" }, () => GameSettings.Teleport ? 1 : 0, i => GameSettings.Teleport = i == 1);
@@ -89,7 +119,7 @@ public abstract partial class AmberMenu : MonoBehaviour
     {
         UiKit.Text(p, "Section", new Vector2(-HW, y), 0.0075f, A, title, TextAnchor.MiddleLeft, true);
         UiKit.Quad(p, "Trait", new Vector2(0f, y - 0.035f), new Vector2(2f * HW, 0.002f), new Color(A.r, A.g, A.b, 0.4f), -1, 0.006f);
-        y -= 0.085f;
+        y -= sectionStep;
     }
 
     // curseur en 10 segments (cliquer un segment règle la valeur)
@@ -106,10 +136,10 @@ public abstract partial class AmberMenu : MonoBehaviour
             segs.Add(s);
         }
         refresh();
-        y -= 0.095f;
+        y -= rowStep;
     }
 
-    protected void Choice(Transform p, ref float y, string label, string[] options, Func<int> get, Action<int> set)
+    protected List<MenuButton> Choice(Transform p, ref float y, string label, string[] options, Func<int> get, Action<int> set)
     {
         UiKit.Text(p, "Libelle", new Vector2(-HW, y), 0.0105f, UiKit.White, label, TextAnchor.MiddleLeft);
         var buttons = new List<MenuButton>();
@@ -125,6 +155,154 @@ public abstract partial class AmberMenu : MonoBehaviour
             right -= w + 0.02f;
         }
         refresh();
-        y -= 0.095f;
+        y -= rowStep;
+        return buttons;
+    }
+
+    // champ numérique éditable au clavier (clic gauche pour saisir directement un float, Entrée ou clic extérieur pour valider)
+    protected void FloatInput(Transform p, ref float y, string label, Func<float> get, Action<float> set, float min, float max)
+    {
+        UiKit.Text(p, "Libelle", new Vector2(-HW, y), 0.0105f, UiKit.White, label, TextAnchor.MiddleLeft);
+        const float w = 0.24f;
+        var b = MakeButton(p, new Vector2(HW - w / 2f, y), new Vector2(w, 0.072f), "", 0.0088f, null);
+        var field = b.gameObject.AddComponent<MenuFloatField>();
+        field.Init(b, get, set, min, max);
+        y -= rowStep;
+    }
+}
+
+// Champ de saisie décimale (float) pour un bouton de menu BUNKER-OS :
+// cliquer active la saisie au clavier (chiffres, '.' ou ',', Retour arrière, Entrée ou clic ailleurs pour valider).
+public class MenuFloatField : MonoBehaviour
+{
+    MenuButton button;
+    Func<float> getter;
+    Action<float> setter;
+    float minVal, maxVal;
+    bool editing, freshEdit;
+    string buffer = "";
+    int editStartFrame;
+
+    public void Init(MenuButton b, Func<float> get, Action<float> set, float min, float max)
+    {
+        button = b;
+        getter = get;
+        setter = set;
+        minVal = min;
+        maxVal = max;
+        button.onClick = ToggleEdit;
+        RefreshLabel();
+    }
+
+    static string Format(float v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    void RefreshLabel()
+    {
+        if (!button || !button.label || getter == null) return;
+        if (!editing)
+            button.label.text = Format(getter());
+        else
+        {
+            bool caret = Mathf.Repeat(Time.unscaledTime, 0.9f) < 0.45f;
+            button.label.text = buffer + (caret ? "|" : " ");
+        }
+    }
+
+    void ToggleEdit()
+    {
+        if (editing) Commit();
+        else StartEdit();
+    }
+
+    void StartEdit()
+    {
+        editing = true;
+        freshEdit = true;
+        editStartFrame = Time.frameCount;
+        buffer = Format(getter());
+        if (button) button.selected = true;
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null)
+        {
+            kb.onTextInput -= OnTextInput;
+            kb.onTextInput += OnTextInput;
+        }
+        RefreshLabel();
+    }
+
+    void StopListening()
+    {
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null) kb.onTextInput -= OnTextInput;
+    }
+
+    void OnDisable()
+    {
+        if (editing) Commit();
+        else StopListening();
+    }
+
+    void OnDestroy() => StopListening();
+
+    void OnTextInput(char c)
+    {
+        if (!editing) return;
+        if (c >= '0' && c <= '9')
+        {
+            if (freshEdit) { buffer = ""; freshEdit = false; }
+            if (buffer.Length < 6) buffer += c;
+        }
+        else if (c == '.' || c == ',')
+        {
+            if (freshEdit) { buffer = "0."; freshEdit = false; }
+            else if (!buffer.Contains(".") && !buffer.Contains(",") && buffer.Length < 5)
+                buffer += buffer.Length == 0 ? "0." : ".";
+        }
+    }
+
+    void Update()
+    {
+        if (!editing) return;
+
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null)
+        {
+            if (kb.backspaceKey.wasPressedThisFrame)
+            {
+                if (freshEdit) { buffer = ""; freshEdit = false; }
+                else if (buffer.Length > 0) buffer = buffer.Substring(0, buffer.Length - 1);
+            }
+            if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)
+            {
+                Commit();
+                return;
+            }
+        }
+
+        var mouse = UnityEngine.InputSystem.Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame && Time.frameCount > editStartFrame)
+        {
+            Commit();
+            return;
+        }
+
+        RefreshLabel();
+    }
+
+    void Commit()
+    {
+        if (!editing) return;
+        editing = false;
+        StopListening();
+        if (button) button.selected = false;
+
+        string norm = buffer.Replace(',', '.').Trim();
+        if (float.TryParse(norm, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
+        {
+            v = Mathf.Clamp(v, minVal, maxVal);
+            setter?.Invoke(v);
+            PlayerPrefs.Save();
+        }
+        RefreshLabel();
     }
 }

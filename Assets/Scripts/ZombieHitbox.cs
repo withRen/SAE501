@@ -14,7 +14,7 @@ public class ZombieHitbox : MonoBehaviour
         if (zombie == null || zombie.Dead) return;
         var dir = hit.point - (Camera.main ? Camera.main.transform.position : hit.point - transform.forward);
         if (zone == HitZone.Head) GameStats.HeadShot();
-        zombie.HitFeedback(hit.point, dir, zone == HitZone.Head);
+        zombie.HitFeedback(hit.point, dir, zone == HitZone.Head, bullet: true);
         zombie.OnHit(zone);
     }
 }

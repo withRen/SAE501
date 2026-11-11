@@ -14,6 +14,8 @@
 Réimport : exporter depuis Blender en FBX (axes Y haut / -Z avant), puis menu **SAE501 → Salle → 1 - Importer la salle**, puis **SAE501 → Build VR Scene**.
 Textures issues de Poly Haven (CC0) et modèles Poly Haven (CC0).
 Clé de la cabane : modèle « Key » de Quaternius ([Poly Pizza](https://poly.pizza/m/y3bSVdIjTh), CC0) et texture rusty_metal_04 de Poly Haven ([lien](https://polyhaven.com/a/rusty_metal_04), CC0), dans `Assets/Cle/`. Liste complète des sources : page wiki [Textures et modèles](https://github.com/withRen/SAE501/wiki/Textures-et-modeles).
+Textures d'usure (`Assets/Room/Textures/Usure/`, métal peint, acier, plastique, papier) : générées par `Tools/textures/generer_usure.py` à partir de rust_coarse_01 et dirty_concrete de Poly Haven (CC0) ; albedo des pierres du jardin : stone_01 de Poly Haven (CC0). Appliquées par **SAE501 → Salle → Appliquer les textures d'usure (PBR)** (aussi à l'import de la carte et à la reconstruction de la scène).
+Poste de surveillance (`Assets/Decor/Surveillance/`) : étagère à écrans, enregistreur, clavier, radio et 5e écran modélisés par `Tools/blender/poste_surveillance.py` (fait par l'IA), placés par `Assets/Editor/PosteSurveillance.cs` (appelé par RoomBuilder).
 
 ## 1. Armes et outils (le kit du joueur)
 
@@ -93,3 +95,16 @@ Les packs utilisés sont **commités dans le dépôt** pour que tout le groupe o
 | Free Shirtless Zombie (NewPunch) | `Assets/NewPunch` | 92 Mo | Modèle des zombies |
 
 ⚠️ Ce sont des assets de l'Asset Store : le dépôt doit rester **privé**, et ils ne sont à publier nulle part en clair (README, release, démo en ligne).
+
+## Sons téléchargés (CC0)
+
+Détail, liens et extraits utilisés : `Tools/sons_cc0/CREDITS.md`.
+
+| Son | Auteur | Source | Licence | Utilisé pour |
+|---|---|---|---|---|
+| Rattling at an iron gate | launemax | [Freesound 274766](https://freesound.org/people/launemax/sounds/274766/) | CC0 1.0 | Zombies qui secouent la grille (cinématique de fin), cadenas qui tombe (portail du jardin) |
+| Gate Close and rattle | Alex_hears_things | [Freesound 494823](https://freesound.org/people/Alex_hears_things/sounds/494823/) | CC0 1.0 | Grille qui claque (cinématique), battants contre leurs butées (portail du jardin) |
+| VisceralBulletImpacts | u1769092 | [Freesound 423301](https://freesound.org/people/u1769092/sounds/423301/) | CC0 1.0 | Balle de pistolet dans un zombie (5 variantes) — `Tools/sons_cc0/zombies/CREDITS.md` |
+| Meaty Damage Impact | modusmogulus | [Freesound 779805](https://freesound.org/people/modusmogulus/sounds/779805/) | CC0 1.0 | Balle de pistolet dans un zombie (6e variante) |
+| pas zombie route | indieground | [Freesound 223815](https://freesound.org/people/indieground/sounds/223815/) | CC0 1.0 | Pas traînants du Rôdeur |
+| Heavy Footsteps \| Crunchy Thuds | GammaGool | [Freesound 854190](https://freesound.org/people/GammaGool/sounds/854190/) | CC0 1.0 | Pas du Cogneur et du Coureur |

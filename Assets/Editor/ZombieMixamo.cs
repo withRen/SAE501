@@ -102,7 +102,64 @@ public static class ZombieMixamo
         AssetDatabase.FindAssets("t:Model").Select(AssetDatabase.GUIDToAssetPath)
             .FirstOrDefault(p => Path.GetFileNameWithoutExtension(p).Equals(fileName, StringComparison.OrdinalIgnoreCase));
 
-    static void SetupClip(string path, string clipName, bool loop)
+    // ---------- escalade des fenêtres (ZombieWindowClimb) : 3 clips Mixamo enchaînés ----------
+    //   Climbing (3,83 s) : se hisser ; Falling Flat Impact (1,57 s) : basculer et tomber à plat ; Zombie Stand Up (6 s) : se relever.
+    // Absents du projet : l'escalade garde l'ancien mouvement (bras de l'attaque + corps penché par le code).
+    public const string ClimbPath = "Assets/Animations/Escalade/Climbing.fbx";
+    public const string FallPath = "Assets/Animations/Escalade/Falling Flat Impact.fbx";
+    public const string StandUpPath = "Assets/Animations/Escalade/Zombie Stand Up.fbx";
+    // Le clip Climbing est fait pour un mur de 2 m : au début le zombie est debout, mains à 2,15 m. Sur un rebord de 0,9 m
+    // (fenêtres du bunker) on ne garde que la 2e partie, quand il se hisse (à partir de 45 % du clip), jouée ×1,1 :
+    // (1 - 0,45) × 3,83 s / 1,1 = 1,9 s (ZombieWindowClimb.climbTimeAnimated). ZombieWindowClimb cale les mains sur le rebord.
+    public const float ClimbClipSpeed = 1.1f;
+    public const float ClimbStartOffset = 0.45f;
+    public const float StandUpClipSpeed = 1.5f;    // 6 s joué en 4 s ; debout vers 3,6 s du clip, donc vers 2,4 s
+    public const float FallStartOffset = 0.1f;     // le clip commence en l'air : on saute ses premières images
+
+    static bool climbReady;
+    static AnimationClip climbClip, fallClip, standUpClip;
+
+    static void EnsureClimbClips()
+    {
+        climbReady = false;
+        if (AssetImporter.GetAtPath(ClimbPath) == null || AssetImporter.GetAtPath(FallPath) == null || AssetImporter.GetAtPath(StandUpPath) == null) return;
+        // Climbing : la montée (1,7 m dans le clip) est extraite, c'est le code qui soulève le zombie jusqu'au rebord
+        SetupClip(ClimbPath, "Zombie_Climb", loop: false, bakeHeight: false);
+        SetupClip(FallPath, "Zombie_Fall", loop: false);           // hauteur gardée : il tombe vraiment au sol
+        SetupClip(StandUpPath, "Zombie_StandUp", loop: false);
+        climbClip = LoadClip(ClimbPath); fallClip = LoadClip(FallPath); standUpClip = LoadClip(StandUpPath);
+        climbReady = climbClip && fallClip && standUpClip;
+    }
+
+    static void AddClimbStates(AnimatorController ctrl, AnimatorStateMachine sm, AnimatorState walk)
+    {
+        if (!climbReady) return;
+        ctrl.AddParameter("Climb", AnimatorControllerParameterType.Trigger);
+        ctrl.AddParameter("Fall", AnimatorControllerParameterType.Trigger);
+        ctrl.AddParameter("StandUp", AnimatorControllerParameterType.Trigger);
+
+        var sClimb = sm.AddState("Climb", new Vector3(0, 240, 0));
+        sClimb.motion = climbClip; sClimb.speed = ClimbClipSpeed;
+        var sFall = sm.AddState("Fall", new Vector3(300, 240, 0));
+        sFall.motion = fallClip;
+        var sUp = sm.AddState("StandUp", new Vector3(600, 240, 0));
+        sUp.motion = standUpClip; sUp.speed = StandUpClipSpeed;
+
+        var tc = sm.AddAnyStateTransition(sClimb);
+        tc.hasExitTime = false; tc.duration = 0.15f; tc.canTransitionToSelf = false; tc.offset = ClimbStartOffset;
+        tc.AddCondition(AnimatorConditionMode.If, 0, "Climb");
+        var tf = sm.AddAnyStateTransition(sFall);
+        tf.hasExitTime = false; tf.duration = 0.1f; tf.canTransitionToSelf = false; tf.offset = FallStartOffset;
+        tf.AddCondition(AnimatorConditionMode.If, 0, "Fall");
+        var tu = sm.AddAnyStateTransition(sUp);
+        tu.hasExitTime = false; tu.duration = 0.25f; tu.canTransitionToSelf = false;
+        tu.AddCondition(AnimatorConditionMode.If, 0, "StandUp");
+        // debout : retour à la marche (vers 3,6 s du clip = 0,6 de sa durée)
+        var tw = sUp.AddTransition(walk);
+        tw.hasExitTime = true; tw.exitTime = 0.6f; tw.duration = 0.4f;
+    }
+
+    static void SetupClip(string path, string clipName, bool loop, bool bakeHeight = true)
     {
         var imp = (ModelImporter)AssetImporter.GetAtPath(path);
         if (imp.animationType != ModelImporterAnimationType.Human)
@@ -122,13 +179,13 @@ public static class ZombieMixamo
             // Si ce déplacement est intégré à la pose (lockRootPositionXZ = vrai), le corps s'éloigne pendant le cycle
             // puis revient d'un coup au début de la boucle (la marche « se recharge »). On l'extrait donc en root motion,
             // que l'Animator ignore (applyRootMotion = faux) : le zombie marche sur place, c'est le NavMeshAgent qui avance.
-            dirty |= c.name != clipName || c.loopTime != loop || !c.lockRootRotation || c.lockRootPositionXZ || !c.lockRootHeightY
+            dirty |= c.name != clipName || c.loopTime != loop || !c.lockRootRotation || c.lockRootPositionXZ || c.lockRootHeightY != bakeHeight
                      || !c.keepOriginalOrientation || !c.keepOriginalPositionY || c.keepOriginalPositionXZ;
             c.name = clipName;
             c.loopTime = loop;
             c.lockRootRotation = true;      // l'orientation reste dans la pose : le zombie ne tourne pas tout seul
             c.lockRootPositionXZ = false;   // déplacement horizontal extrait (puis ignoré) : pas de saut en fin de boucle
-            c.lockRootHeightY = true;       // hauteur gardée dans la pose : à la mort le corps descend vraiment jusqu'au sol
+            c.lockRootHeightY = bakeHeight; // hauteur gardée dans la pose : à la mort le corps descend vraiment jusqu'au sol
                                             // (extraite en root motion, elle serait ignorée et le corps resterait à hauteur de hanche)
             c.keepOriginalOrientation = true;
             c.keepOriginalPositionY = true;
@@ -154,6 +211,7 @@ public static class ZombieMixamo
         foreach (var t in sm.anyStateTransitions) sm.RemoveAnyStateTransition(t);
         foreach (var s in sm.states) sm.RemoveState(s.state);
         foreach (var p in ctrl.parameters) ctrl.RemoveParameter(p);
+        EnsureClimbClips();
 
         // mêmes noms que ZombieAnimationBridge
         ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
@@ -174,6 +232,7 @@ public static class ZombieMixamo
         var sDeath = sm.AddState("Death", new Vector3(600, 60, 0));
         sDeath.motion = death;
         sm.defaultState = sWalk;
+        AddClimbStates(ctrl, sm, sWalk);
 
         // Marche -> Attaque (à chaque coup, planche ou joueur), puis retour à la marche à la fin du clip
         var t1 = sWalk.AddTransition(sAttack);

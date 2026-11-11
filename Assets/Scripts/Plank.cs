@@ -33,6 +33,12 @@ public class Plank : MonoBehaviour
     [Range(0f, 1f)] public float clackVolume = 0.8f;
     [Range(0f, 1f)] public float crackVolume = 1f;
 
+    [Header("Sons : bandes son (sinon Assets/Resources/Sounds/wood_hit et wood_break) [SONS, PR #151]")]
+    public AudioClip hitSound;                         // wood_hit : plusieurs frappes à la suite, découpées automatiquement (une au hasard à chaque coup)
+    public AudioClip breakSound;                       // wood_break : seules les premières secondes contiennent du son
+    [Range(0f, 1f)] public float hitVolume = 0.9f;
+    public float breakSeconds = 2f;                    // durée jouée de wood_break
+
     public State state { get; private set; }
     public bool InSlot => state == State.Placed || state == State.Nailed;     // barricade en place (pas tenue en main)
     public bool CanBeNailed => state != State.Free;                           // clous accessibles au marteau
@@ -45,6 +51,7 @@ public class Plank : MonoBehaviour
     float push, pushVel;                   // recul de la planche quand un zombie frappe (ressort)
     AudioSource src;
     static AudioClip thud, clack, crack;
+    static int lastHitVariant = -1;
     bool placedCounted;                    // déjà comptée comme posée (bilan) : reprise et reposée sur le même emplacement = une seule fois
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -60,6 +67,7 @@ public class Plank : MonoBehaviour
         foreach (var n in nails) { n.plank = this; n.Refresh(false); }
         src = gameObject.AddComponent<AudioSource>();
         src.spatialBlend = 1f;
+        src.priority = 64;
         src.maxDistance = 25f;                             // le craquement s'entend du bout du bunker
         if (!thud) thud = ProcAudio.Hit();
         if (!clack) { clack = ProcAudio.Clack(); crack = ProcAudio.WoodCrack(); }
@@ -94,21 +102,42 @@ public class Plank : MonoBehaviour
     {
         if (!InSlot) return true;
         Hits++;
-        src.pitch = Random.Range(0.55f, 0.7f);
-        src.PlayOneShot(thud, 0.9f);
+        PlayHit();
         pushVel += 0.9f;                                   // la planche encaisse : petit recul vers l'intérieur
         if (state == State.Placed || Hits >= hitsWhenNailed) { Break(pushDirection); return true; }
         return false;
+    }
+
+    // [SONS] coup de zombie : une frappe au hasard de la bande wood_hit (sinon l'ancien bruit sourd procédural)
+    void PlayHit()
+    {
+        var v = AudioSlices.Split(AudioSlices.Clip(hitSound, "wood_hit"));
+        if (v != null && v.Length > 0)
+        {
+            src.pitch = Random.Range(0.95f, 1.05f);
+            src.PlayOneShot(v[AudioSlices.Pick(v.Length, ref lastHitVariant)], hitVolume);
+        }
+        else { src.pitch = Random.Range(0.55f, 0.7f); src.PlayOneShot(thud, 0.9f); }
+    }
+
+    // [SONS] planche arrachée : le début de wood_break (le reste du fichier est du silence) ; joué aussi chez les autres joueurs (Break à distance)
+    void PlayBreak()
+    {
+        var c = AudioSlices.Trim(AudioSlices.Clip(breakSound, "wood_break"), breakSeconds);
+        if (c) { src.pitch = Random.Range(0.95f, 1.05f); src.PlayOneShot(c, crackVolume); }
+        else { src.pitch = Random.Range(0.90f, 1.08f); src.PlayOneShot(crack, crackVolume); }
     }
 
     // arrachée par un zombie : la planche se détache de l'ouverture et tombe (on peut la ramasser et la reposer)
     public void Break(Vector3 pushDirection)
     {
         if (!InSlot) return;
+        if (!ApplyingRemote) Broken?.Invoke(this, pushDirection);
         // [#116] éclats sur toute la longueur de la planche, projetés comme elle vers l'intérieur, et craquement
         Fx.Splinters(transform.position, pushDirection, transform.right * halfLength * 0.8f);
-        src.pitch = Random.Range(0.85f, 1.1f);
-        src.PlayOneShot(crack, crackVolume);
+        PlayBreak();
+        MusicPlayer.Duck(0.70f, 0.35f);
+        HealthVignette.NotifyWarningIfUnseen(transform.position, 12f, 0.65f);     // planche proche et hors du champ de vision
         placedCounted = false;
         ReleaseSlot();
         state = State.Free;
@@ -168,7 +197,7 @@ public class Plank : MonoBehaviour
                 break;
 
             case State.Placed:
-                if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
+                if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; LocalNailed?.Invoke(this); }
                 break;
         }
 
@@ -214,14 +243,17 @@ public class Plank : MonoBehaviour
         grab.trackPosition = grab.trackRotation = true;
         Hits = 0;
         stored = false;
+        bool fresh = !placedCounted;
         if (!placedCounted) { placedCounted = true; GameStats.PlankPlaced(); }
         if (DrivenCount() >= 1) { state = State.Nailed; grab.enabled = false; }
         else { state = State.Placed; grab.enabled = true; }
         foreach (var p in All) if (p.state == State.Free) p.grab.enabled = true;
+        if (!ApplyingRemote) LocalPlaced?.Invoke(this, slot, state == State.Nailed, fresh);
     }
 
     void Unsnap()
     {
+        bool wasPlaced = slot != null;
         placedCounted = false;
         ReleaseSlot();
         state = State.Free;
@@ -229,6 +261,58 @@ public class Plank : MonoBehaviour
         grab.trackRotation = true;
         foreach (var n in nails) n.ResetHits();
         if (!grab.isSelected) { rb.isKinematic = false; rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }   // elle tombe
+        if (wasPlaced && !ApplyingRemote) LocalFreed?.Invoke(this);
+    }
+
+    // ---------- [Multijoueur] barricades partagées (NetGame) ----------
+    // Chaque casque a ses planches ; ce qui est posé, cloué, retiré ou arraché sur une ouverture est envoyé aux autres,
+    // qui mettent LEUR planche du même numéro dans le même état. Les zombies (chez l'hôte) voient donc les barricades de tous.
+    public static event System.Action<Plank, BarricadeSlot, bool, bool> LocalPlaced;   // (planche, emplacement, clouée, nouvelle pose)
+    public static event System.Action<Plank> LocalNailed, LocalFreed;
+    public static event System.Action<Plank, Vector3> Broken;                    // arrachée par un zombie (hôte)
+    public static bool ApplyingRemote;
+
+    /// <summary>Un autre joueur a posé (ou cloué) cette planche sur cet emplacement.</summary>
+    public void NetPlace(BarricadeSlot s, bool nailed)
+    {
+        ApplyingRemote = true;
+        try
+        {
+            if (grab.isSelected && grab.interactionManager) grab.interactionManager.CancelInteractableSelection((UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable)grab);
+            if (slot != s) { ReleaseSlot(); if (s.Plank && s.Plank != this) s.Plank.NetFree(); }
+            TakeSlot(s);
+            transform.SetPositionAndRotation(s.transform.position, s.transform.rotation);
+            grab.trackPosition = grab.trackRotation = true;
+            Hits = 0; stored = false; placedCounted = true;
+            if (nailed) { foreach (var n in nails) n.SetDriven(); state = State.Nailed; grab.enabled = false; }
+            else { state = State.Placed; grab.enabled = true; }
+        }
+        finally { ApplyingRemote = false; }
+    }
+
+    /// <summary>Un autre joueur a retiré cette planche de son emplacement.</summary>
+    public void NetFree()
+    {
+        if (state == State.Free) return;
+        ApplyingRemote = true;
+        try
+        {
+            if (grab.isSelected && grab.interactionManager) grab.interactionManager.CancelInteractableSelection((UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable)grab);
+            ReleaseSlot();
+            state = State.Free; Hits = 0; placedCounted = false;
+            foreach (var n in nails) n.ResetHits();
+            grab.enabled = Held == null;
+            grab.trackPosition = grab.trackRotation = true;
+            rb.isKinematic = false;
+        }
+        finally { ApplyingRemote = false; }
+    }
+
+    /// <summary>L'hôte : un zombie a arraché cette planche.</summary>
+    public void NetBreak(Vector3 pushDirection)
+    {
+        ApplyingRemote = true;
+        try { Break(pushDirection); } finally { ApplyingRemote = false; }
     }
 
     void LateUpdate()

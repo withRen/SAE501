@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Page COMMANDES des menus ambre (menu d'accueil et menu pause) : schéma des manettes Quest 3,
+// Page COMMANDES des menus ambre (menu d'accueil et menu pause) : schéma des manettes Quest 3 ou du clavier et de la souris
+// (onglet ouvert par défaut selon la version : casque ou PC, DesktopMode),
 // avec des traits de rappel vers l'action de chaque bouton. Les textes suivent les réglages en cours
 // (téléportation ou déplacement continu, prise en un clic ou en maintenant, rotation par à-coups ou fluide) :
 // ils sont relus à chaque ouverture de la page (RefreshControls).
@@ -18,18 +19,30 @@ public abstract partial class AmberMenu
     const float Tc = 0.0046f;                                                          // taille des textes du schéma
 
     readonly List<(TextMesh text, Func<string> get)> controlTexts = new List<(TextMesh, Func<string>)>();
-    Transform padPage;
+    Transform padPage, keysPage;
 
     protected Transform BuildControls(Action onBack)
     {
         var p = Panel("Page_Commandes", "BUNKER-OS  //  COMMANDES", "");
+        float y = 0.49f;
+        Choice(p, ref y, "Commandes", new[] { "MANETTES", "CLAVIER + SOURIS" }, () => keysPage ? (keysPage.gameObject.activeSelf ? 1 : 0) : (DesktopMode.On ? 1 : 0), ShowControlsTab);
         padPage = new GameObject("Manettes").transform;
         padPage.SetParent(p, false);
         BuildPads(padPage);
+        keysPage = new GameObject("Clavier").transform;
+        keysPage.SetParent(p, false);
+        BuildKeys(keysPage);
+        ShowControlsTab(DesktopMode.On ? 1 : 0);
 
         var back = MakeButton(p, new Vector2(-HW + 0.17f, -0.53f), new Vector2(0.34f, 0.09f), "◂  RETOUR", 0.0095f, onBack);
         back.textColor = A;
         return p;
+    }
+
+    void ShowControlsTab(int i)
+    {
+        padPage.gameObject.SetActive(i == 0);
+        keysPage.gameObject.SetActive(i == 1);
     }
 
     /// <summary>Relit les réglages (déplacement, prise, rotation) et met les textes de la page à jour.</summary>
@@ -109,5 +122,74 @@ public abstract partial class AmberMenu
         var d = b - a;
         var r = UiKit.Quad(p, "Trait", (a + b) / 2f, new Vector2(d.magnitude + thickness, thickness), col, -1, 0.002f);
         r.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
+    }
+
+    // ---------- clavier et souris (version PC : DesktopPlayer) ----------
+    void BuildKeys(Transform p)
+    {
+        // déplacement : Z Q S D en T inversé (touches physiques W A S D)
+        const float k = 0.07f, gap = 0.008f;
+        var zq = new Vector2(-0.6f, 0.31f);                // bord gauche de Z et S
+        Key(p, zq + new Vector2(0f, (k + gap) / 2f), "Z");
+        Key(p, zq + new Vector2(-k - gap, -(k + gap) / 2f), "Q");
+        Key(p, zq + new Vector2(0f, -(k + gap) / 2f), "S");
+        Key(p, zq + new Vector2(k + gap, -(k + gap) / 2f), "D");
+        Label(p, new Vector2(-0.43f, 0.31f), TextAnchor.MiddleLeft, "ZQSD", () => "Se déplacer\n(W A S D en QWERTY)");
+
+        float y = 0.14f;
+        Row(p, -0.68f, ref y, new[] { "ESPACE" }, "ESPACE", "Sauter");
+        Row(p, -0.68f, ref y, new[] { "CTRL" }, "CTRL (OU C)", "S'accroupir");
+        Row(p, -0.68f, ref y, new[] { "ÉCHAP" }, "ÉCHAP", "Pause (souris libre)");
+        Row(p, -0.68f, ref y, new[] { "B" }, "B", "Maintenir : vague suivante");
+        Row(p, -0.68f, ref y, new[] { "F1" }, "F1", "Aide à l'écran");
+
+        y = 0.37f;
+        Row(p, -0.1f, ref y, new[] { "E" }, "E", "Prendre, poser une planche,\nutiliser (levier : maintenir)");
+        Row(p, -0.1f, ref y, new[] { "R" }, "R", "Recharger (chargeur\nde la ceinture)");
+        Row(p, -0.1f, ref y, new[] { "1", "2", "3", "4" }, "1 2 3 4", "Pistolet, marteau,\nlampe, mêlée");
+        Row(p, -0.1f, ref y, new[] { "F" }, "F", "Allumer la lampe");
+        Row(p, -0.1f, ref y, new[] { "G" }, "G", "Lâcher l'objet tenu");
+        Row(p, -0.1f, ref y, new[] { "V" }, "V", "Maintenir : inspecter\n(balles, pile)");
+
+        // souris : corps, deux boutons (G et D), libellés dessous
+        var m = new Vector2(0.57f, 0.3f);
+        var body = new Vector2(0.13f, 0.2f);
+        var fill = new Color(A.r, A.g, A.b, 0.25f);
+        UiKit.Frame(p, m, body, 0.005f, A, -1, 0.004f);
+        UiKit.Quad(p, "Souris_Milieu", m + new Vector2(0f, body.y / 4f), new Vector2(0.005f, body.y / 2f), A, -1, 0.004f);
+        UiKit.Quad(p, "Souris_Boutons", m, new Vector2(body.x, 0.005f), A, -1, 0.004f);
+        for (int i = -1; i <= 1; i += 2)
+        {
+            var c = m + new Vector2(i * body.x / 4f, body.y / 4f);
+            UiKit.Quad(p, "Souris_Bouton", c, new Vector2(body.x / 2f, body.y / 2f), fill, -1, 0.005f);
+            UiKit.Text(p, "Souris_Lettre", c, 0.0062f, UiKit.White, i < 0 ? "G" : "D", TextAnchor.MiddleCenter, true);
+        }
+        Label(p, new Vector2(0.43f, 0.12f), TextAnchor.MiddleLeft, "CLIC GAUCHE (G)", () => "Tirer, frapper, clouer");
+        Label(p, new Vector2(0.43f, 0.02f), TextAnchor.MiddleLeft, "CLIC DROIT (D)", () => "Viser au pistolet");
+        Label(p, new Vector2(0.43f, -0.08f), TextAnchor.MiddleLeft, "MOLETTE", () => "Changer d'objet");
+        Label(p, new Vector2(0.43f, -0.18f), TextAnchor.MiddleLeft, "SOURIS", () => "Regarder, viser\n(réticule au centre)");
+
+        UiKit.Text(p, "Astuce", new Vector2(0f, -0.38f), Tc, UiKit.Dim,
+                   "Planche : visez la fenêtre (planche fantôme) puis E.  Clous : visez un clou et cliquez 3 fois.\n"
+                   + "Tutoriel : la croix (visée + clic) ou K pour le passer, T pour le revoir.  Cliquez dans la fenêtre pour capturer la souris.");
+    }
+
+    void Row(Transform p, float x, ref float y, string[] keys, string title, string action)
+    {
+        float kx = x;
+        foreach (var key in keys) kx += Key(p, new Vector2(kx, y), key) + 0.01f;
+        Label(p, new Vector2(Mathf.Max(kx + 0.01f, x + 0.1f), y), TextAnchor.MiddleLeft, title, () => action);
+        y -= 0.1f;
+    }
+
+    // touche dessinée (cadre + lettre), posée par son bord gauche en x ; renvoie sa largeur
+    float Key(Transform p, Vector2 leftCenter, string key)
+    {
+        float w = Mathf.Max(0.07f, 0.035f + key.Length * 0.024f);
+        var c = leftCenter + new Vector2(w / 2f, 0f);
+        UiKit.Quad(p, "Touche_Fond", c, new Vector2(w, 0.07f), new Color(A.r, A.g, A.b, 0.12f), -1, 0.005f);
+        UiKit.Frame(p, c, new Vector2(w, 0.07f), 0.004f, A, -1, 0.004f);
+        UiKit.Text(p, "Touche_" + key, c, 0.0058f, UiKit.White, key, TextAnchor.MiddleCenter, true);
+        return w;
     }
 }

@@ -80,8 +80,11 @@ public static class RoomBuilder
         var planks = CollectPlanks(roomRoot.transform);
         // retirés : planches clouées sur les fenêtres et sur la porte condamnée du couloir (les ouvertures démarrent sans barricade : c'est au joueur de clouer),
         // planches au sol du bunker (remplacées par la pile de réserve),
-        // porte ouverte du bunker (elle gênait la barricade), marteaux de la cuisine et du stockage (un seul vrai marteau, dans le bunker)
-        RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks");
+        // porte ouverte du bunker (elle gênait la barricade), marteaux de la cuisine et du stockage (un seul vrai marteau, dans le bunker),
+        // tabouret près du poêle et desserte verte (avec sa marmite) sous la fenêtre sud-est (demande de Rahim, journal 136)
+        RemoveNodes(roomRoot.transform, n => n.StartsWith("Bunker_WindowPlank_") || n.StartsWith("Bunker_WinNE_FloorPlank_") || n == "Corridor_Door" || n == "Hammer" || n == "Stockage_Hammer" || n == "Door_Boarded_Planks"
+                                             || n == "Bunker_Stove_Stool_01" || n == "Bunker_ToolCart" || n == "Bunker_Stove_Pot");
+        ObjetsRetires.Appliquer(roomRoot.transform);        // objets que Rahim a retirés à la main (liste durable, menu SAE501 > Scène > Retirer la sélection)
         var hammerNode = Find(roomRoot.transform, "Bunker_Hammer_Workbench");
         var crowbarNode = Find(roomRoot.transform, "Bunker_Crowbar_Workbench");
         var axeNode = Find(roomRoot.transform, "Stockage_PH_Axe");
@@ -90,10 +93,16 @@ public static class RoomBuilder
 
         BuildMapLights();
         ReplaceLowPolyBottles(roomRoot.transform);
+        PosteSurveillance.RemplacerCarte(roomRoot.transform);   // étagère à écrans, enregistreur, clavier, radio : modèles détaillés
+        MursSuperposes.Apply(roomRoot.transform);           // murs qui entrent les uns dans les autres : faces superposées retirées (z-fighting)
         MakeMapColliders(roomRoot.transform);
+        TrousToit.Apply(roomRoot.transform);                // trous du toit : bord de béton cassé, auréole noircie, gravats ; lianes qui pendaient retirées
+        PortailFer.Apply(roomRoot.transform);               // portail du jardin : fer forgé vieilli (UV refaites, matériau propre)
         SinkTerrainUnderFloors(roomRoot.transform);
+        JardinNature.Apply(roomRoot.transform);             // sol du jardin et de la forêt (Poly Haven), forêt en vrais arbres avec LOD et imposteurs
         FixFloorDecals(roomRoot.transform);
         FixGardenCabin(roomRoot.transform);
+        JardinNature.NoSkyReflections(roomRoot.transform);   // vitres et flaques : plus de reflet du ciel par défaut de la vue Scène (aplats bleu clair)
         BuildExterior();
         BuildPlanks(planks);
         BuildHammer(hammerNode);
@@ -120,6 +129,7 @@ public static class RoomBuilder
         LodBuilder.Build(roomRoot.transform);          // [#118] après le NavMesh : les LOD1 n'y entrent pas
         BuildLightProbes();
         UnbatchInteractables();
+        TexturesUsure.Appliquer();                     // textures PBR des matériaux recréés en couleur unie (Dark, Metal, Radio)
         LightBaker.ApplySettings();
     }
 
@@ -699,10 +709,7 @@ public static class RoomBuilder
         MakeOpening(holder, "Est", B(3.72f, -10.1f, 1.0f), B(4.6f, -10.1f, 0f), B(2.6f, -10.1f, 0f), false);
         MakeOpening(holder, "SW", B(-4.4f, -13.92f, 1.5f), B(-4.4f, -14.9f, 0f), B(-4.4f, -12.6f, 0f), true);
         MakeOpening(holder, "SE", B(0.7f, -13.92f, 1.5f), B(0.7f, -14.9f, 0f), B(0.95f, -12.45f, 0f), true);
-        // trous du toit du bunker (carte finale, repérés par rayons : ~1,2 x 1,2 m) : les zombies du toit s'y laissent tomber.
-        // Pas de planches : on ne peut pas les barricader. Approche sur le toit (y = 2,8 m), arrivée au sol dessous.
-        MakeOpening(holder, "Toit_Lits", new Vector3(3.9f, 2.8f, 7.9f), new Vector3(3.9f, 2.8f, 6.85f), new Vector3(3.9f, 0f, 7.9f), true);
-        MakeOpening(holder, "Toit_Etabli", new Vector3(-1.1f, 2.8f, 12.3f), new Vector3(-1.1f, 2.8f, 13.35f), new Vector3(-1.0f, 0f, 12.0f), true);
+        // trous du toit bouchés (journal 173, TrousToit) : plus d'ouvertures Toit_Lits / Toit_Etabli ; les zombies du toit entrent par les portes et fenêtres
     }
 
     // window = vrai : le zombie passe par la fenêtre grâce à un lien NavMesh (il n'y a pas de sol continu sous l'allège)
@@ -778,7 +785,7 @@ public static class RoomBuilder
         em.SetBursts(new[] { new ParticleSystem.Burst(0f, 40) });
         var sh = ps.shape;
         sh.shapeType = ParticleSystemShapeType.Box;
-        sh.scale = new Vector3(1.0f, 0.02f, 1.0f);                // le trou fait ~1,2 x 1,2 m
+        sh.scale = new Vector3(0.75f, 0.02f, 0.75f);              // ouverture irrégulière de ~0,8 à 1 m dans le carré de 1,2 m (TrousToit)
         var col = ps.colorOverLifetime;
         col.enabled = true;
         var grad = new Gradient();
@@ -1081,8 +1088,11 @@ public static class RoomBuilder
         var mon = new GameObject("CCTV_Monitor_05").transform;
         mon.SetParent(parent, false);
         mon.SetPositionAndRotation(pos, face);
-        Box("Boitier", mon, new Vector3(0f, 0f, 0.035f), new Vector3(0.47f, 0.36f, 0.06f), darkM, false);
-        Box("Pied", mon, new Vector3(0f, -(pos.y - 0.79f) / 2f - 0.09f, 0.05f), new Vector3(0.05f, pos.y - 0.79f - 0.18f, 0.05f), metalM, false);
+        if (!PosteSurveillance.Moniteur(mon))       // moniteur détaillé (coque, cadre, pied et socle) ; sinon les boîtes d'origine
+        {
+            Box("Boitier", mon, new Vector3(0f, 0f, 0.035f), new Vector3(0.47f, 0.36f, 0.06f), darkM, false);
+            Box("Pied", mon, new Vector3(0f, -(pos.y - 0.79f) / 2f - 0.09f, 0.05f), new Vector3(0.05f, pos.y - 0.79f - 0.18f, 0.05f), metalM, false);
+        }
         var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
         q.name = name;
         q.transform.SetParent(mon, false);
@@ -1527,6 +1537,21 @@ public static class RoomBuilder
     }
 
     // UI diégétique de l'équipe : vignettage rouge selon les PV, écran noir + texte à la mort, puis relance de la scène
+    /// <summary>
+    /// Systèmes du joueur de MainScene pour une autre scène (arène 1v1) : vignette de dégâts et écran de fin (HealthVignette, GameOverUI),
+    /// musique et menu pause. Ne fait rien pour ce qui existe déjà.
+    /// </summary>
+    public static void AddPlayerSystems(GameObject rig)
+    {
+        if (!Object.FindAnyObjectByType<HealthVignette>(FindObjectsInactive.Include)) BuildHealthUI(rig);
+        if (!Object.FindAnyObjectByType<PauseMenu>(FindObjectsInactive.Include)) new GameObject("Menu_Pause").AddComponent<PauseMenu>();
+        if (!Object.FindAnyObjectByType<MusicPlayer>(FindObjectsInactive.Include))
+        {
+            bunkerRoot = null;          // pas de racine « Bunker » dans l'arène (le champ garde l'ancienne scène)
+            BuildMusic();
+        }
+    }
+
     static void BuildHealthUI(GameObject rig)
     {
         var head = rig.GetComponentInChildren<Camera>().transform;
@@ -1562,8 +1587,23 @@ public static class RoomBuilder
         var tm = g.AddComponent<TextMesh>();
         tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         tm.fontSize = 64; tm.characterSize = charSize; tm.anchor = TextAnchor.MiddleCenter; tm.alignment = TextAlignment.Center; tm.color = c;
-        g.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
+        var mr = g.GetComponent<MeshRenderer>();
+        mr.sharedMaterial = WorldTextMat();      // caché par les murs, fondu par distance (le matériau de la police passait à travers)
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
         return tm;
+    }
+
+    // matériau partagé des textes du décor (Resources : WorldTextMaterial recopie la texture de la police quand elle est reconstruite)
+    static Material WorldTextMat()
+    {
+        const string path = "Assets/Resources/" + WorldTextMaterial.ResourceName + ".mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null) { m = new Material(Shader.Find("SAE501/WorldText")); AssetDatabase.CreateAsset(m, path); }
+        m.shader = Shader.Find("SAE501/WorldText");
+        m.mainTexture = WorldTextMaterial.Font.material.mainTexture;
+        m.SetFloat("_FadeNear", 3.5f); m.SetFloat("_FadeFar", 5f);
+        EditorUtility.SetDirty(m);
+        return m;
     }
 
     // [#102] écran fixe des annonces de vague : mur sud du bunker, au-dessus du râtelier à planches, entre les deux fenêtres.
@@ -1639,6 +1679,23 @@ public static class RoomBuilder
         var m = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (m == null) { m = new Material(Shader.Find("Sprites/Default")); AssetDatabase.CreateAsset(m, path); }
         return m;
+    }
+
+    /// <summary>
+    /// Le pistolet de MainScene, à l'identique, dans une autre scène (arène 1v1) : modèle M1911 et son animation de tir, sons du tir et du chargeur,
+    /// fumée, douille éjectée, flash du canon et lumière, compteur de balles à l'inclinaison, emplacement du chargeur, règles de prise.
+    /// </summary>
+    public static GameObject CreatePistol(Transform parent, Vector3 pos, string name)
+    {
+        var saved = items;
+        items = parent;                 // MakePistol range le pistolet sous « items »
+        try
+        {
+            var grab = MakePistol(pos);
+            grab.name = name;
+            return grab.gameObject;
+        }
+        finally { items = saved; }
     }
 
     static XRGrabInteractable MakePistol(Vector3 pos)
@@ -1732,9 +1789,9 @@ public static class RoomBuilder
 
     // ---------- radio de ravitaillement (SupplyRadio) ----------
     // Une radio fixée au mur du bunker : bouton rouge = commander des chargeurs. Après une attente (selon la difficulté),
-    // une caisse tombe par le trou du toit au-dessus de l'établi (Toit_Etabli, voir BuildBunkerOpenings) avec les chargeurs dedans.
+    // une caisse tombe sous le plafond au-dessus de l'établi (les trous du toit sont bouchés) avec les chargeurs dedans.
     // La caisse et le chargeur sont des modèles cachés, copiés à chaque livraison.
-    static readonly Vector3 SupplyDrop = new Vector3(-1.05f, 4.0f, 12.15f);     // au-dessus du trou du toit côté établi
+    static readonly Vector3 SupplyDrop = new Vector3(-1.05f, 2.45f, 12.15f);    // sous le plafond, au-dessus de l'établi (le trou du toit est bouché : la caisse apparaît là et tombe de 1,5 m)
 
     static void BuildSupplyRadio()
     {

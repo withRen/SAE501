@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 // Niveaux 1 et 2 : pas de zombie sur le toit (ses trous ne se barricadent pas) : tout arrive par une fenêtre ou une porte.
 // Une vague se termine toujours : un zombie coincé meurt seul au bout de 20 s (Zombie.stuckTimeout).
 // [#102] Annonces et statut sur un écran fixe du bunker (mur sud, au-dessus du râtelier), plus rien ne suit le regard ;
-//   une alarme retentit au début de chaque vague. [#106] L'annonce dit ce que contiennent les zones qui s'ouvrent (ZoneGate).
+//   plus d'alarme au début des vagues (journal 153 : seul le son de « VAGUE N » reste). [#106] L'annonce dit ce que contiennent les zones qui s'ouvrent (ZoneGate).
 // [#120] Niveau 4 : le générateur ne démarre qu'après generatorKills zombies éliminés OU generatorDelay secondes dans le niveau
 //   (on ne gagne plus en courant directement au levier). L'écran annonce le moment où il devient utilisable.
 // [#122] Le temps de jeu est compté pour le bilan (GameStats) ; la victoire affiche le bilan (GameOverUI.ShowVictory).
@@ -28,6 +28,9 @@ using UnityEngine.SceneManagement;
 //   Les 4 vagues définies dans `levels` servent de base (mêmes zombies, même rythme) ; au-delà, BuildEndlessWave() prolonge chaque
 //   réglage par une formule (suite arithmétique pour le nombre de zombies, approche d'un plafond pour la vitesse, le nombre de zombies
 //   vivants en même temps et le délai entre deux apparitions). Aucun tableau de vagues à remplir à la main.
+// [Évasion] Activer le générateur ne suffit plus : il ouvre le PORTAIL DU JARDIN (EscapeGate) et la partie passe en phase Escape
+//   (les renforts du niveau 4 continuent, les zombies traquent toujours le joueur). La victoire tombe quand un joueur franchit
+//   le portail (PlayerEscaped) : bilan précédé de la cinématique de fin (GameOverUI -> EscapeVideo). Le mode survie ne change pas.
 // [Portes] Les portes d'une zone (ZoneGate.unlockLevel = N) se déverrouillent dès la fin de la vague N-1, au début de la pause,
 //   et pas au début de la vague N : le joueur a toute la pause pour aller y chercher des planches. Un son (doorClip) l'annonce.
 public class WaveManager : MonoBehaviour
@@ -101,10 +104,10 @@ public class WaveManager : MonoBehaviour
     [Header("Son")]
     public AudioClip startClip;                // joué au lancement de la partie (début de la scène)
     [Range(0f, 1f)] public float startVolume = 0.9f;
-    [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme de début de vague
+    [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme « générateur prêt » (niveau 4) ; plus jouée au début des vagues
     [Range(0f, 1f)] public float doorVolume = 0.9f;       // portes déverrouillées en fin de vague (Resources/Audio/Porte_Deverrouillee)
 
-    enum Phase { Waiting, Wave, Break, Victory }
+    enum Phase { Waiting, Wave, Break, Escape, Victory }
     Phase phase = Phase.Waiting;
     LevelDef cur;                              // vague en cours (celle de `levels`, ou celle calculée en mode survie)
     float timer, spawnTimer, reinforceTimer;
@@ -119,7 +122,15 @@ public class WaveManager : MonoBehaviour
     public TextMesh StatusText => status;
 
     public int Alive { get { alive.RemoveAll(z => z == null || z.Dead); return alive.Count; } }
+    // un zombie vivant est entré dans le bunker (musique de combat, état « brèche »)
+    public bool AnyZombieInBunker()
+    {
+        foreach (var z in alive) if (z != null && !z.Dead && Zombie.BunkerArea.Contains(z.transform.position)) return true;
+        return false;
+    }
     public bool Victory => phase == Phase.Victory;
+    /// <summary>[Évasion] le générateur tourne, le portail du jardin est ouvert : il reste à le franchir.</summary>
+    public bool Escaping => phase == Phase.Escape;
 
     // [#120] progression du niveau en cours (remise à zéro à chaque niveau)
     public int LevelKills { get; private set; }
@@ -127,7 +138,10 @@ public class WaveManager : MonoBehaviour
     bool generatorAnnounced;
     int killsAtLevelStart;
     /// <summary>Le générateur peut démarrer : niveau 4 atteint et (assez de zombies éliminés ou délai écoulé).</summary>
-    public bool GeneratorReady => !Endless && Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    public bool GeneratorReady => NetSession.IsClientOnly ? RemoteGeneratorReady
+                                : !Endless && Level >= levels.Length && (LevelKills >= generatorKills || LevelTime >= generatorDelay);
+    /// <summary>[Multijoueur] casque client : l'hôte dit si le générateur peut démarrer (NetGame).</summary>
+    public static bool RemoteGeneratorReady;
     public string GeneratorCondition => "Éliminez " + Mathf.Max(0, generatorKills - LevelKills) + " zombie" + (generatorKills - LevelKills > 1 ? "s" : "")
                                       + "\nou tenez " + Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime)) + " s";
 
@@ -151,6 +165,7 @@ public class WaveManager : MonoBehaviour
     {
         Instance = this;
         Level = 0;
+        RemoteGeneratorReady = false;
         if (forceEndless) Endless = true;
         Zombie.HuntPlayer = false;
         // [#121] reprise : on commence directement au niveau atteint, avec plus de temps pour se préparer
@@ -203,7 +218,10 @@ public class WaveManager : MonoBehaviour
     {
         // pendant le tutoriel : rien ne bouge (pas de compte à rebours, pas de zombie), même si le WaveManager a été réactivé
         if (spawner == null || Tutorial.Running) return;
-        if (phase != Phase.Victory && !(PlayerHealth.Instance && PlayerHealth.Instance.Dead)) GameStats.Tick(Time.deltaTime);   // [#122] temps de jeu (figé à la fin)
+        // [Multijoueur] la partie continue tant qu'un joueur est debout ; sur un casque client, l'hôte décide de tout (NetGame relaie)
+        bool running = NetSession.Active ? PlayerHealth.NearestAlive(Vector3.zero) != null : !(PlayerHealth.Instance && PlayerHealth.Instance.Dead);
+        if (phase != Phase.Victory && running) GameStats.Tick(Time.deltaTime);   // [#122] temps de jeu (figé à la fin)
+        if (NetSession.IsClientOnly) return;
         switch (phase)
         {
             case Phase.Waiting:
@@ -214,7 +232,8 @@ public class WaveManager : MonoBehaviour
                 if (timer <= 0f) StartLevel(startLevel);
                 break;
 
-            case Phase.Wave: UpdateWave(); break;
+            case Phase.Wave:
+            case Phase.Escape: UpdateWave(); break;      // [Évasion] portail ouvert : les renforts continuent jusqu'à la fuite
 
             case Phase.Break:
                 timer -= Time.deltaTime;
@@ -249,10 +268,11 @@ public class WaveManager : MonoBehaviour
         phase = Phase.Wave;
         ZoneGate.UpdateAll(Level);              // d'habitude déjà fait en fin de vague ; utile si la partie commence à un autre niveau (startLevel)
         if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
-        if (sfx && alarm) sfx.PlayOneShot(alarm, alarmVolume);
+        // plus d'alarme au début de la vague (journal 153) : seul le son de WaveTitle (Vague_Debut) est joué
         if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
         if (title) title.Show(Level);
-        if (Endless) EndlessRecord.Submit(Level, GameStats.Time);
+        if (Endless && !NetSession.Active) EndlessRecord.Submit(Level, GameStats.Time);   // record solo seulement
+        WaveStarted?.Invoke(Level);
         Announce(Endless ? EndlessBanner(Level) : cur.banner, 8f);
     }
 
@@ -307,6 +327,7 @@ public class WaveManager : MonoBehaviour
             Debug.Log(GameStats.LogLine("vague terminée", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
             float heal = Endless ? EndlessHeal(Level) : breakHeal;
             if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(heal);
+            BreakStarted?.Invoke(Level, heal);
             // [Portes] les zones de la vague suivante s'ouvrent tout de suite, pour toute la pause
             bool doorsOpened = ZoneGate.UpdateAll(Level + 1);
             if (doorsOpened && sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
@@ -315,7 +336,11 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        if (last && !GeneratorReady)
+        if (phase == Phase.Escape)
+        {
+            if (StatusChanged(4000, 0)) SetStatus("Générateur en marche · FUYEZ PAR LE PORTAIL DU JARDIN");
+        }
+        else if (last && !GeneratorReady)
         {
             // [#120] tant que le générateur est bloqué : ce qu'il reste à faire
             int left = Mathf.Max(0, generatorKills - LevelKills), secs = Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime));
@@ -440,17 +465,38 @@ public class WaveManager : MonoBehaviour
         spawned++;
     }
 
-    // le joueur a activé le générateur
+    // le joueur a activé le générateur : le portail du jardin s'ouvre (EscapeGate), il reste à fuir par là
     public void GeneratorActivated()
     {
-        if (Endless || phase == Phase.Victory) return;      // mode survie : pas de victoire, le générateur est hors service
+        if (Endless || phase == Phase.Escape || phase == Phase.Victory) return;   // mode survie : pas d'évasion, le générateur est hors service
+        // [Multijoueur] un client a abaissé le levier : c'est l'hôte qui ouvre le portail (NetGame), pour tout le monde
+        if (NetSession.IsClientOnly) { if (!remoteEscape) GeneratorRequested?.Invoke(); return; }
+        OpenEscape();
+    }
+
+    void OpenEscape()
+    {
+        phase = Phase.Escape;
+        Zombie.HuntPlayer = true;
+        Debug.Log(GameStats.LogLine("générateur activé", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
+        if (sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
+        Announce("GÉNÉRATEUR ACTIVÉ\nLe PORTAIL DU JARDIN s'ouvre :\nFUYEZ PAR LÀ !", 9f);
+        EscapeOpened?.Invoke();
+    }
+
+    /// <summary>[Évasion] un joueur a franchi le portail du jardin (EscapeGate) : victoire.</summary>
+    public void PlayerEscaped()
+    {
+        if (phase != Phase.Escape) return;
+        if (NetSession.IsClientOnly) { if (!remoteVictory) EscapeRequested?.Invoke(); return; }
         phase = Phase.Victory;
         Zombie.HuntPlayer = false;
         Debug.Log(GameStats.LogLine("victoire", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
-        Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
-        // [#122] bilan de fin (GameOverUI relance la partie) ; sans lui, relance simple
+        Announce("VICTOIRE\nVous avez réussi à vous enfuir.", victoryRestartDelay);
+        VictoryReached?.Invoke();
+        // [#122] bilan de fin, précédé de la cinématique (GameOverUI relance la partie) ; sans lui, relance simple
         if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();
         else StartCoroutine(RestartAfter(victoryRestartDelay));
     }
@@ -464,7 +510,7 @@ public class WaveManager : MonoBehaviour
     void OnDestroy()
     {
         if (PlayerHealth.Instance) PlayerHealth.Instance.Died -= OnPlayerDied;
-        if (Endless && Level >= 1) EndlessRecord.Submit(Level, GameStats.Time);   // quitter la partie (menu pause, rejouer…) : la progression du mode survie compte pour le record
+        if (Endless && Level >= 1 && !NetSession.Active) EndlessRecord.Submit(Level, GameStats.Time);   // quitter la partie (menu pause, rejouer…) : la progression du mode survie compte pour le record
     }
 
     void OnPlayerDied() => Debug.Log(GameStats.LogLine("mort", Level, 0f, AmmoInGun()));
@@ -478,7 +524,12 @@ public class WaveManager : MonoBehaviour
     // pour les tests / le debug : saute directement à un niveau
     public void SkipToLevel(int lvl) => StartLevel(lvl);
 
-    void SetStatus(string s) { if (status && status.text != s) status.text = s; }
+    void SetStatus(string s)
+    {
+        if (!status || status.text == s) return;
+        status.text = s;
+        StatusSet?.Invoke(s);
+    }
 
     // le texte de statut n'est reconstruit que si ce qu'il affiche a changé (évite une chaîne neuve à chaque image)
     int statusKey = -1, statusValue = -1, statusExtra = -1;
@@ -495,9 +546,68 @@ public class WaveManager : MonoBehaviour
         return (t / 60) + ":" + (t % 60).ToString("00");
     }
 
+    // ---------- [Multijoueur] l'hôte relaie (NetGame) ce que les casques clients affichent et font ----------
+    public static event Action<string, float> Announced;    // annonce sur l'écran du bunker
+    public static event Action<string> StatusSet;            // ligne de statut
+    public static event Action<int> WaveStarted;             // début de vague (numéro)
+    public static event Action<int, float> BreakStarted;     // vague terminée (numéro, PV rendus)
+    public static event Action GeneratorRequested;           // client : levier du générateur abaissé
+    public static event Action VictoryReached;               // hôte : un joueur a franchi le portail, victoire
+    public static event Action EscapeOpened;                 // générateur activé : le portail du jardin s'ouvre (EscapeGate ; hôte : relayé aux clients)
+    public static event Action EscapeRequested;              // client : son joueur a franchi le portail
+    bool remoteVictory, remoteEscape;
+
+    /// <summary>[Multijoueur] casque client : l'hôte a activé le générateur, le portail s'ouvre.</summary>
+    public void RemoteEscapeOpen()
+    {
+        if (remoteEscape || phase == Phase.Victory) return;
+        remoteEscape = true;
+        var gen = FindFirstObjectByType<Generator>();
+        if (gen && !gen.IsOn) gen.Activate();                // lumière, son ; ne renvoie rien à l'hôte (remoteEscape)
+        phase = Phase.Escape;
+        EscapeOpened?.Invoke();
+    }
+
+    /// <summary>[Multijoueur] casque client : l'hôte a activé le générateur.</summary>
+    public void RemoteVictory()
+    {
+        if (remoteVictory) return;
+        remoteVictory = true;
+        if (!remoteEscape) RemoteEscapeOpen();               // générateur et portail, si le message d'ouverture n'est pas arrivé
+        phase = Phase.Victory;
+        SetStatus("");
+        if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();
+    }
+
+    /// <summary>Phase en cours côté hôte : en pause entre deux vagues (les joueurs tombés sont relevés).</summary>
+    public bool InBreak => phase == Phase.Break || phase == Phase.Waiting;
+
+    public void RemoteAnnounce(string text, float seconds) { if (banner && !string.IsNullOrEmpty(text)) { if (bannerRoutine != null) StopCoroutine(bannerRoutine); bannerRoutine = StartCoroutine(ShowBanner(text, seconds)); } }
+    public void RemoteStatus(string text) { if (status) status.text = text; }
+
+    public void RemoteWaveStart(int lvl)
+    {
+        Level = lvl;
+        phase = Phase.Wave;
+        ZoneGate.UpdateAll(Level);
+        if (PlayerHealth.Instance) PlayerHealth.Instance.NewWave();
+        if (!title) title = WaveTitle.Create(Camera.main ? Camera.main.transform : null);
+        if (title) title.Show(Level);
+    }
+
+    public void RemoteBreak(int lvl, float heal)
+    {
+        Level = lvl;
+        phase = Phase.Break;
+        if (PlayerHealth.Instance) PlayerHealth.Instance.Heal(heal);
+        bool doorsOpened = ZoneGate.UpdateAll(Level + 1);
+        if (doorsOpened && sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
+    }
+
     void Announce(string text, float seconds)
     {
         if (!banner || string.IsNullOrEmpty(text)) return;
+        Announced?.Invoke(text, seconds);
         if (bannerRoutine != null) StopCoroutine(bannerRoutine);
         bannerRoutine = StartCoroutine(ShowBanner(text, seconds));
     }

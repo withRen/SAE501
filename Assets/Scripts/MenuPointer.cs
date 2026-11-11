@@ -3,6 +3,8 @@ using UnityEngine.XR;
 
 // Pointeur du menu : un rayon part de chaque manette ; le bouton visé s'allume (petite vibration),
 // la gâchette de CETTE main le valide. Sans manettes (éditeur) : le regard sert de rayon, barre espace = gâchette.
+// Version PC (DesktopMode) : pas de rayons ; la souris (libre) vise le bouton sous le curseur, clic gauche pour valider
+// (souris capturée : le réticule au centre de l'écran).
 public class MenuPointer : MonoBehaviour
 {
     public Transform left, right, head;
@@ -10,6 +12,9 @@ public class MenuPointer : MonoBehaviour
     public Color color = UiKit.Amber;
 
     LineRenderer lineL, lineR;
+    float enabledAt;
+
+    void OnEnable() => enabledAt = Time.unscaledTime;
     MenuButton hovL, hovR, hovHead;
     bool downL = true, downR = true, downHead = true;
 
@@ -42,6 +47,7 @@ public class MenuPointer : MonoBehaviour
 
     void Update()
     {
+        if (DesktopMode.On) { MouseUpdate(); return; }
         bool hasHands = (left && left.gameObject.activeInHierarchy) || (right && right.gameObject.activeInHierarchy);
         var newL = Hand(left, lineL, XRNode.LeftHand, hovL, ref downL);
         var newR = Hand(right, lineR, XRNode.RightHand, hovR, ref downR);
@@ -55,6 +61,28 @@ public class MenuPointer : MonoBehaviour
         }
         Refresh(hovL, hovR, hovHead, false);
         hovL = newL; hovR = newR; hovHead = newH;
+        Refresh(hovL, hovR, hovHead, true);
+    }
+
+    // version PC : rayon sous le curseur de la souris, clic gauche
+    void MouseUpdate()
+    {
+        if (lineL) lineL.enabled = false;
+        if (lineR) lineR.enabled = false;
+        var cam = Camera.main;
+        var mouse = UnityEngine.InputSystem.Mouse.current;
+        MenuButton b = null;
+        if (cam && mouse != null)
+        {
+            var ray = Cursor.lockState == CursorLockMode.Locked
+                ? new Ray(cam.transform.position, cam.transform.forward)
+                : cam.ScreenPointToRay(mouse.position.ReadValue());
+            b = Cast(ray, out _);
+            // pas de clic pendant la première demi-seconde (clic qui a chargé la scène, fondu d'entrée)
+            if (b && mouse.leftButton.wasPressedThisFrame && b.interactable && Time.unscaledTime - enabledAt > 0.5f) b.Click();
+        }
+        Refresh(hovL, hovR, hovHead, false);
+        hovL = hovR = null; hovHead = b;
         Refresh(hovL, hovR, hovHead, true);
     }
 

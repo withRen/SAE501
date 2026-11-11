@@ -110,6 +110,7 @@ public static class RoomImport
             made[kv.Key] = m;
         }
         AssetDatabase.SaveAssets();
+        TexturesUsure.Appliquer();      // textures PBR des matériaux restés en couleur unie (métal peint, radios, papiers…)
 
         // 3) le FBX utilise ces matériaux
         var mi = (ModelImporter)AssetImporter.GetAtPath(FbxPath);

@@ -2,7 +2,7 @@ using UnityEngine;
 using Unity.XR.CoreUtils;
 
 // S'accroupir : tant que le JOYSTICK GAUCHE est enfoncé (clic), la vue descend (pour passer sous un obstacle, ramasser au sol,
-// viser sous une planche) ; relâché, on se relève. Sur le XR Origin, ajouté par SetupVRScene. Éditeur sans casque : touche C.
+// viser sous une planche) ; relâché, on se relève. Sur le XR Origin, ajouté par SetupVRScene. Éditeur sans casque : touche C ; version PC : Ctrl (ou C).
 [RequireComponent(typeof(XROrigin))]
 public class Crouch : MonoBehaviour
 {
@@ -23,7 +23,9 @@ public class Crouch : MonoBehaviour
 
     void Update()
     {
-        bool want = VRInput.LeftStickClick() || VRInput.KeyboardKey(UnityEngine.InputSystem.Key.C);
+        bool want = VRInput.LeftStickClick() || VRInput.KeyboardKey(UnityEngine.InputSystem.Key.C)
+                    || DesktopMode.On && (VRInput.KeyboardKey(UnityEngine.InputSystem.Key.LeftCtrl) || VRInput.KeyboardKey(UnityEngine.InputSystem.Key.RightCtrl));
+        if (DesktopMode.On && PauseMenu.Paused) want = Crouching;
         Crouching = want;
         float goal = want ? standY - crouchDrop : standY;
         current = Mathf.Lerp(current, goal, 1f - Mathf.Exp(-speed * Time.deltaTime));

@@ -27,7 +27,7 @@ public class MenuButton : MonoBehaviour
 
     void Update()
     {
-        glow = Mathf.MoveTowards(glow, 0f, Time.deltaTime * 4f);
+        glow = Mathf.MoveTowards(glow, 0f, Time.unscaledDeltaTime * 4f);
         float a = !interactable ? 0.04f : selected ? 0.42f : hovered ? 0.3f : 0.1f;
         if (background) { var c = accent; c.a = Mathf.Clamp01(a + glow * 0.5f); background.material.color = c; }
         if (label) label.color = !interactable ? new Color(0.45f, 0.42f, 0.36f) : (hovered || selected) ? accent : textColor;

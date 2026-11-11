@@ -4,6 +4,7 @@ using UnityEngine.XR;
 
 // Lecture simple des gâchettes des manettes (écrans de début / de fin, menu).
 // Dans l'éditeur sans casque : la barre espace fait office de gâchette (nouveau Input System : le projet n'utilise que lui).
+// Version PC (DesktopMode) : le clic gauche aussi (écrans de fin, croix du tutoriel), B maintenu = bouton B.
 public static class VRInput
 {
     static readonly List<InputDevice> devices = new List<InputDevice>();
@@ -14,7 +15,7 @@ public static class VRInput
         InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.Controller, devices);
         foreach (var d in devices)
             if (d.TryGetFeatureValue(CommonUsages.triggerButton, out bool b) && b) return true;
-        return KeyboardSpace();
+        return KeyboardSpace() || MouseLeft();
     }
 
     /// <summary>Gâchette d'une main précise (XRNode.LeftHand / RightHand).</summary>
@@ -55,13 +56,20 @@ public static class VRInput
         return XRNode.RightHand;
     }
 
-    /// <summary>Bouton B de la manette droite ; dans l'éditeur sans casque : touche Entrée.</summary>
+    /// <summary>Bouton B de la manette droite ; dans l'éditeur sans casque : touche Entrée (et B en version PC).</summary>
     public static bool RightB()
     {
         var d = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
         if (d.isValid && d.TryGetFeatureValue(CommonUsages.secondaryButton, out bool b) && b) return true;
         var k = UnityEngine.InputSystem.Keyboard.current;
-        return k != null && k.enterKey.isPressed;
+        return k != null && (k.enterKey.isPressed || DesktopMode.On && k.bKey.isPressed);
+    }
+
+    /// <summary>Version PC : clic gauche enfoncé (jamais au casque).</summary>
+    public static bool MouseLeft()
+    {
+        var m = UnityEngine.InputSystem.Mouse.current;
+        return DesktopMode.On && m != null && m.leftButton.isPressed;
     }
 
     /// <summary>Joystick gauche enfoncé (clic).</summary>

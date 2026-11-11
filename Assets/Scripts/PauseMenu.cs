@@ -50,7 +50,8 @@ public class PauseMenu : AmberMenu
         BigButton(p, -0.07f, "PARAMÈTRES", () => ShowSettings(true));
         BigButton(p, -0.23f, "COMMANDES", () => ShowControls(true));
         BigButton(p, -0.39f, "MENU", ToMenu);
-        UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, "Visez un bouton  ·  gâchette pour valider  ·  bouton menu : reprendre");
+        if (!DesktopMode.On)
+            UiKit.Text(p, "Aide", new Vector2(0f, -0.53f), 0.0068f, UiKit.Dim, "Gâchette : valider");
         return p;
     }
 
@@ -80,6 +81,8 @@ public class PauseMenu : AmberMenu
     {
         if (Paused || leaving || !panel) return;
         if (PlayerHealth.Instance && PlayerHealth.Instance.IsDead) return;   // écran de fin en cours
+        if (WaveManager.Instance && WaveManager.Instance.Victory) return;    // victoire en cours
+        if (GameOverUI.PanelOpen) return;                                    // panneau de fin affiché
         if (!head && Camera.main) head = Camera.main.transform;
         // devant le joueur, à hauteur des yeux, tourné vers lui (seulement le cap : pas penché si on regarde en bas)
         var fwd = head ? head.forward : Vector3.forward; fwd.y = 0f;
@@ -91,8 +94,11 @@ public class PauseMenu : AmberMenu
         panel.gameObject.SetActive(true);
         Physics.SyncTransforms();        // temps figé : la physique ne met plus à jour les colliders du panneau toute seule
         UiKit.SetOnTop(true);            // le panneau passe devant le décor et les zombies (sinon un meuble ou un zombie le cache)
-        Time.timeScale = 0f;
-        AudioListener.pause = true;
+        if (!NetSession.Active)              // [Multijoueur] le temps ne s'arrête pas pour les autres joueurs
+        {
+            Time.timeScale = 0f;
+            AudioListener.pause = true;
+        }
         Paused = true;
     }
 
@@ -112,6 +118,7 @@ public class PauseMenu : AmberMenu
         if (leaving) return;
         leaving = true;
         Resume();
+        if (NetSession.Active) { NetSession.Leave(); NetSession.LastError = null; }   // l'hôte qui part ferme la partie de tous
         SceneManager.LoadScene(menuScene);
     }
 

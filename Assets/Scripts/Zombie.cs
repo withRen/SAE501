@@ -44,7 +44,12 @@ public class Zombie : MonoBehaviour
     // Niveau 4, générateur prêt (WaveManager) : tous les zombies traquent le joueur dès qu'il quitte le bunker, sans distance ni vue
     public static bool HuntPlayer;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() => HuntPlayer = false;
+    static void ResetStatics()
+    {
+        HuntPlayer = false;
+        roofStep = flesh = headCrack = stepWalker = stepBruiser = stepRunner = windupClip = deathClip = bodyThudClip = null;
+        stepsShuffle = stepsHeavy = null; stepWindowStart = 0f; stepsInWindow = 0;
+    }
 
     [Header("Toit : avertissement avant la chute [#104]")]
     public Vector2 dropWarning = new Vector2(3f, 4f);    // secondes de poussière avant de sauter par le trou
@@ -85,11 +90,20 @@ public class Zombie : MonoBehaviour
     bool lastHitWasPlayer;                  // dernier coup à la barricade porté au joueur : le suivant va à une planche (alternance)
     bool lastHitMelee;                      // dernier coup reçu : arme de mêlée (pour le bilan)
     Vector3 stuckAnchor;
-    float stuckSince, lurkUntil, nextRoofStep;
-    AudioSource roofSrc, hitSrc;
-    static AudioClip roofStep, flesh, headCrack;
+    float stuckSince, lurkUntil, nextRoofStep, nextGroundStep;
+    AudioSource roofSrc, hitSrc, stepSrc;
+    ZombieVoice voice;                     // [SONS] bruitages enregistrés (touché, morsure, chute)
+    static AudioClip roofStep, flesh, headCrack, stepWalker, stepBruiser, stepRunner, windupClip, deathClip, bodyThudClip;
+    static AudioClip[] stepsShuffle, stepsHeavy;          // [SONS] pas enregistrés (Resources/Sounds/Pas_Zombie, Pas_Lourd)
+    static float stepWindowStart; static int stepsInWindow;
+    float lastWalkPhase = -1f; int lastStepVariant = -1;
+    static readonly int WalkStateHash = Animator.StringToHash("Walk");
     Vector3 flinchDir; float flinchSpeed;
     static readonly RaycastHit[] sightHits = new RaycastHit[8];
+
+    // archétype (ZombieBuilder : Cogneur PV x1,5, Coureur vitesse x1,6) ; lu aussi par ZombieVoice
+    public bool IsBruiser => healthMultiplier > 1.2f || string.Equals(typeName, "Cogneur", System.StringComparison.OrdinalIgnoreCase);
+    public bool IsRunner => !IsBruiser && (speedMultiplier > 1.25f || string.Equals(typeName, "Coureur", System.StringComparison.OrdinalIgnoreCase));
 
     // intérieur du bunker (repère Unity ; MAP.md : Blender x -7,5..3,8 · y -14,1..-6,1) : là, le joueur est protégé par ses barricades
     public static readonly Bounds BunkerArea = new Bounds(new Vector3(1.85f, 1.5f, 10.1f), new Vector3(11.3f, 4f, 8f));
@@ -116,7 +130,9 @@ public class Zombie : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponent<ZombieAnimationBridge>();
+        voice = GetComponent<ZombieVoice>();
         if (!GetComponent<ZombieEyes>()) gameObject.AddComponent<ZombieEyes>();
+        ProcAudio.Warmup();
     }
 
     // Liens de passage des fenêtres et des trous du toit (zone NavMesh 3) : réservés aux zombies qui ENTRENT.
@@ -127,7 +143,8 @@ public class Zombie : MonoBehaviour
 
     void Start()
     {
-        player = PlayerHealth.Instance;
+        player = PlayerHealth.NearestAlive(transform.position) ?? PlayerHealth.Instance;
+        if (Puppet) return;
         agent.speed = walkSpeed;
         agent.areaMask = WalkMask;
         stuckAnchor = transform.position; stuckSince = Time.time;
@@ -161,7 +178,14 @@ public class Zombie : MonoBehaviour
     void Update()
     {
         if (Dead) return;
-        if (player == null) player = PlayerHealth.Instance;
+        if (Puppet) { PuppetUpdate(); return; }
+        // [Multijoueur] cible : le joueur vivant le plus proche (en solo, toujours le joueur)
+        if (player == null || player.Dead || Time.time >= nextTarget)
+        {
+            nextTarget = Time.time + 0.5f;
+            var p = PlayerHealth.NearestAlive(transform.position);
+            if (p != null) player = p; else if (player == null) player = PlayerHealth.Instance;
+        }
 
         agent.speed = walkSpeed * (Time.time < slowUntil ? slowFactor : 1f);
         anim?.SetMoveSpeed(agent.isStopped ? 0f : agent.velocity.magnitude);
@@ -176,6 +200,7 @@ public class Zombie : MonoBehaviour
             case State.Lurking: UpdateLurking(); break;
         }
         RoofSteps();
+        GroundSteps(agent.isStopped ? 0f : agent.velocity.magnitude);
         Flinch();
         if (!Dead) CheckStuck();
     }
@@ -239,11 +264,125 @@ public class Zombie : MonoBehaviour
         if (!roofSrc)
         {
             roofSrc = gameObject.AddComponent<AudioSource>();
-            roofSrc.spatialBlend = 1f; roofSrc.minDistance = 2f; roofSrc.maxDistance = 16f; roofSrc.playOnAwake = false;
+            roofSrc.spatialBlend = 1f; roofSrc.minDistance = 2f; roofSrc.maxDistance = 16f; roofSrc.playOnAwake = false; roofSrc.priority = 24;
         }
         if (!roofStep) roofStep = ProcAudio.RoofStep();
         roofSrc.pitch = Random.Range(0.85f, 1.1f);
         roofSrc.PlayOneShot(roofStep, 1f);
+        MusicPlayer.Duck(0.70f, 0.35f);
+    }
+
+    // [SONS] Pas au sol, calés sur l'animation de marche : un pas quand le pied touche le sol dans le clip.
+    // Avant, un minuteur fixe (0,62 s pour le Rôdeur) jouait ~3 pas pour 1 pas visible : le clip de marche du Rôdeur
+    // ne fait que 2 pas en 4 s (joué à la vitesse réelle du zombie). Instants d'appui mesurés dans les clips
+    // (fraction du cycle, pied gauche puis droit) : Rôdeur « Zombie Walk », Cogneur « Walking », Coureur « Zombie Running ».
+    Vector2 FootPlantPhases => IsRunner ? new Vector2(0.36f, 0.86f) : (IsBruiser ? new Vector2(0.02f, 0.60f) : new Vector2(0.09f, 0.58f));
+    public const int MaxStepsAtOnce = 4;        // au plus 4 pas dans la même fenêtre de 0,15 s, tous zombies confondus
+    const float StepWindow = 0.15f;
+
+    void GroundSteps(float speed)
+    {
+        if (Dead || transform.position.y >= roofHeight || speed < 0.08f) { lastWalkPhase = -1f; return; }
+        var an = anim ? anim.animator : null;
+        if (an && an.isActiveAndEnabled && an.runtimeAnimatorController)
+        {
+            var st = an.GetCurrentAnimatorStateInfo(0);
+            if (st.shortNameHash != WalkStateHash) { lastWalkPhase = -1f; return; }
+            float ph = st.normalizedTime - Mathf.Floor(st.normalizedTime);
+            var fp = FootPlantPhases;
+            if (lastWalkPhase >= 0f && (Crossed(lastWalkPhase, ph, fp.x) || Crossed(lastWalkPhase, ph, fp.y))) PlayGroundStep();
+            lastWalkPhase = ph;
+            return;
+        }
+        // repli sans Animator (zombie provisoire) : minuteur, comme avant
+        if (Time.time < nextGroundStep) return;
+        float baseInterval = IsRunner ? 0.29f : (IsBruiser ? 0.78f : 0.62f);
+        nextGroundStep = Time.time + baseInterval * (Time.time < slowUntil ? 1.35f : 1f) * Random.Range(0.88f, 1.12f);
+        PlayGroundStep();
+    }
+
+    // la phase est passée par p entre deux images (en tenant compte du retour à 0 en fin de cycle)
+    static bool Crossed(float a, float b, float p) => a <= b ? (p > a && p <= b) : (p > a || p <= b);
+
+    void PlayGroundStep()
+    {
+        // trop de zombies : on ne joue pas tous les pas en même temps (bouillie sonore, voix audio du Quest)
+        if (Time.time - stepWindowStart > StepWindow) { stepWindowStart = Time.time; stepsInWindow = 0; }
+        if (stepsInWindow >= MaxStepsAtOnce) return;
+
+        bool runner = IsRunner, bruiser = IsBruiser;
+        if (!stepSrc)
+        {
+            stepSrc = gameObject.AddComponent<AudioSource>();
+            stepSrc.spatialBlend = 1f;
+            stepSrc.rolloffMode = AudioRolloffMode.Linear;
+            stepSrc.minDistance = 1.5f;
+            stepSrc.maxDistance = runner ? 16f : (bruiser ? 15f : 12f);
+            stepSrc.dopplerLevel = 0f;
+            stepSrc.playOnAwake = false;
+            stepSrc.priority = runner ? 96 : (bruiser ? 104 : 120);    // moins prioritaires que les voix et les impacts
+        }
+        var listener = Camera.main;
+        if (listener && (listener.transform.position - transform.position).sqrMagnitude > stepSrc.maxDistance * stepSrc.maxDistance) return;
+        stepsInWindow++;
+
+        if (stepsShuffle == null)
+        {
+            stepsShuffle = Resources.LoadAll<AudioClip>("Sounds/Pas_Zombie");
+            stepsHeavy = Resources.LoadAll<AudioClip>("Sounds/Pas_Lourd");
+        }
+        // Rôdeur : pas traînants ; Cogneur : pas lourds plus graves ; Coureur : pas lourds plus aigus et plus secs
+        var set = runner || bruiser ? stepsHeavy : stepsShuffle;
+        AudioClip clip = set.Length > 0 ? set[AudioSlices.Pick(set.Length, ref lastStepVariant)] : null;
+        if (!clip)
+        {
+            if (!stepWalker) { stepWalker = ProcAudio.ZombieStep_Walker(); stepBruiser = ProcAudio.ZombieStep_Bruiser(); stepRunner = ProcAudio.ZombieStep_Runner(); }
+            clip = runner ? stepRunner : (bruiser ? stepBruiser : stepWalker);
+        }
+        float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.2f, 1.5f);
+        stepSrc.pitch = runner ? Random.Range(1.08f, 1.2f) : bruiser ? Random.Range(0.82f, 0.92f) : Random.Range(0.94f, 1.06f);
+        float vol = (runner ? 0.55f : (bruiser ? 0.7f : 0.5f)) * zGain;
+        stepSrc.PlayOneShot(clip, Mathf.Clamp01(vol));
+    }
+
+    // télégraphe d'attaque (~0,25 s avant l'impact) + alerte ambre / pré-haptique si hors du champ de vision (Accessibilité GAP 2)
+    void PlayAttackWindup()
+    {
+        EnsureHitSource();
+        if (!windupClip) windupClip = ProcAudio.AttackWindup();
+        bool runner = IsRunner;
+        bool bruiser = IsBruiser;
+        hitSrc.pitch = runner ? Random.Range(1.12f, 1.25f) : (bruiser ? Random.Range(0.76f, 0.86f) : Random.Range(0.92f, 1.08f));
+        float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.25f, 1.5f);
+        hitSrc.PlayOneShot(windupClip, Mathf.Clamp01(0.88f * zGain));
+        if (voice) voice.ScheduleBite(attackHitDelay);      // [SONS] morsure calée sur le coup
+        MusicPlayer.Duck(0.70f, 0.35f);
+
+        var cam = Camera.main;
+        if (!cam) return;
+        var flatToZombie = Vector3.ProjectOnPlane(transform.position - cam.transform.position, Vector3.up);
+        var flatFwd = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
+        if (flatToZombie.sqrMagnitude > 1e-4f && flatFwd.sqrMagnitude > 1e-4f)
+        {
+            float dot = Vector3.Dot(flatFwd.normalized, flatToZombie.normalized);
+            if (dot < 0.35f)
+            {
+                HealthVignette.NotifyWarningFrom(transform.position, 0.75f);
+                if (!DesktopMode.On)
+                {
+                    float side = Vector3.Dot(cam.transform.right, flatToZombie.normalized);
+                    if (side <= 0.15f) VRInput.Haptic(UnityEngine.XR.XRNode.LeftHand, 0.35f, 0.09f);
+                    if (side >= -0.15f) VRInput.Haptic(UnityEngine.XR.XRNode.RightHand, 0.35f, 0.09f);
+                }
+            }
+        }
+    }
+
+    void EnsureHitSource()
+    {
+        if (hitSrc) return;
+        hitSrc = gameObject.AddComponent<AudioSource>();
+        hitSrc.spatialBlend = 1f; hitSrc.minDistance = 1.5f; hitSrc.maxDistance = 25f; hitSrc.playOnAwake = false; hitSrc.priority = 24;
     }
 
     void UpdateBreaking()
@@ -266,7 +405,8 @@ public class Zombie : MonoBehaviour
         {
             pendingPlayerHit = true;
             FaceToward(player.HeadPosition);
-            anim?.Attack();
+            AnimAttack();
+            PlayAttackWindup();
             hitAt = Time.time + attackHitDelay;
             nextBreak = Time.time + breakInterval;
             return;
@@ -274,7 +414,7 @@ public class Zombie : MonoBehaviour
         // porte fermée devant les planches : il l'enfonce d'abord (HingedDoor : 3 coups)
         if (target.DoorClosed)
         {
-            if (Time.time >= nextBreak && hitAt < 0f) { anim?.Attack(); hitAt = Time.time + attackHitDelay; nextBreak = Time.time + breakInterval; }
+            if (Time.time >= nextBreak && hitAt < 0f) { AnimAttack(); hitAt = Time.time + attackHitDelay; nextBreak = Time.time + breakInterval; }
             if (hitAt > 0f && Time.time >= hitAt) { hitAt = -1f; target.door.ZombieHit(); }
             return;
         }
@@ -282,7 +422,7 @@ public class Zombie : MonoBehaviour
         {
             pendingPlank = target.NextPlankToBreak();
             if (pendingPlank == null) { StartEntering(); return; }
-            anim?.Attack();
+            AnimAttack();
             hitAt = Time.time + attackHitDelay;
             nextBreak = Time.time + breakInterval;
         }
@@ -311,6 +451,7 @@ public class Zombie : MonoBehaviour
         {
             var t = sightHits[i].transform;
             if (t.IsChildOf(transform) || t.GetComponentInParent<PlayerHealth>() != null) continue;    // lui-même, le joueur
+            if (t.GetComponentInParent<NetPlayer>() != null) continue;                               // [Multijoueur] le corps d'un joueur distant
             if (t.GetComponentInParent<Zombie>() != null) continue;                                   // un autre zombie ne cache pas le joueur
             return false;                                                                             // mur, porte, planche…
         }
@@ -397,7 +538,8 @@ public class Zombie : MonoBehaviour
         if (Time.time >= nextAttack)
         {
             nextAttack = Time.time + attackCooldown;
-            anim?.Attack();
+            AnimAttack();
+            PlayAttackWindup();
             hitAt = Time.time + attackHitDelay;
         }
         if (hitAt > 0f && Time.time >= hitAt)
@@ -424,7 +566,9 @@ public class Zombie : MonoBehaviour
     public void OnHit(HitZone zone)
     {
         if (Dead) return;
+        if (Puppet) { PuppetHit?.Invoke(this, zone, 0f); return; }
         lastHitMelee = false;
+        lastHitHead = zone == HitZone.Head;
         if (zone == HitZone.Head) { Health = 0f; Die(true); return; }
 
         Health -= ZombieLevels.BaseHealth * ZombieLevels.ShotFraction(zone);
@@ -436,7 +580,9 @@ public class Zombie : MonoBehaviour
     public void OnMeleeHit(HitZone zone, float fractionOfBase)
     {
         if (Dead) return;
+        if (Puppet) { PuppetHit?.Invoke(this, zone, fractionOfBase); return; }
         lastHitMelee = true;
+        lastHitHead = false;
         Health -= ZombieLevels.BaseHealth * fractionOfBase;
         if (Health <= 0.01f) { Health = 0f; Die(true); return; }
         slowUntil = Time.time + slowDuration;
@@ -444,18 +590,17 @@ public class Zombie : MonoBehaviour
 
     // [#113] retour d'impact (balle ou arme) : particules au point touché, son de chair, petit recul dans le sens du coup.
     // Appelé avant OnHit / OnMeleeHit : le zombie qui meurt du coup a lui aussi sa gerbe et son son.
-    public void HitFeedback(Vector3 point, Vector3 direction, bool head)
+    public void HitFeedback(Vector3 point, Vector3 direction, bool head, bool bullet = false)
     {
         if (Dead) return;
         Fx.Blood(point, -direction, head);
-        if (!hitSrc)
-        {
-            hitSrc = gameObject.AddComponent<AudioSource>();
-            hitSrc.spatialBlend = 1f; hitSrc.minDistance = 1.5f; hitSrc.maxDistance = 25f; hitSrc.playOnAwake = false;
-        }
+        EnsureHitSource();
         if (!flesh) { flesh = ProcAudio.Flesh(); headCrack = ProcAudio.HeadCrack(); }
+        // [SONS] le son enregistré flesh_zombie_hit (ZombieVoice) remplace le bruit de chair ; la tête garde son craquement en plus
+        // [SONS] balle de pistolet : impact de chair enregistré (variantes) au lieu de flesh_zombie_hit
+        bool recorded = voice && (bullet ? voice.PlayBulletHit() : voice.PlayHit());
         hitSrc.pitch = Random.Range(0.85f, 1.1f);
-        hitSrc.PlayOneShot(head ? headCrack : flesh, fleshVolume);
+        if (head || !recorded) hitSrc.PlayOneShot(head ? headCrack : flesh, fleshVolume);
         direction.y = 0f;
         if (direction.sqrMagnitude > 1e-4f)
         {
@@ -477,10 +622,99 @@ public class Zombie : MonoBehaviour
         if (Dead) return;
         if (byPlayer) GameStats.Kill(lastHitMelee);
         state = State.Dead;
-        agent.isStopped = true;
-        agent.enabled = false;
+        if (agent.enabled) { agent.isStopped = true; agent.enabled = false; }
+        Killed?.Invoke(this, byPlayer);
         anim?.Die();
+        if (byPlayer)
+        {
+            EnsureHitSource();
+            if (!deathClip) { deathClip = ProcAudio.ZombieDeath(); bodyThudClip = ProcAudio.BodyThud(); }
+            float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.25f, 1.5f);
+            hitSrc.pitch = IsRunner ? Random.Range(1.08f, 1.22f) : (IsBruiser ? Random.Range(0.75f, 0.86f) : Random.Range(0.90f, 1.06f));
+            hitSrc.PlayOneShot(deathClip, Mathf.Clamp01(0.82f * zGain));
+            Invoke(nameof(PlayBodyThud), 0.36f);
+        }
         foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
         Destroy(gameObject, 6f);
     }
+
+    void PlayBodyThud()
+    {
+        if (voice && voice.PlayFall()) return;          // [SONS] chute enregistrée (zombie_impact_fall_body_die)
+        if (!hitSrc) return;
+        if (!bodyThudClip) bodyThudClip = ProcAudio.BodyThud();
+        float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.25f, 1.5f);
+        hitSrc.pitch = IsBruiser ? Random.Range(0.78f, 0.90f) : Random.Range(0.88f, 1.06f);
+        hitSrc.PlayOneShot(bodyThudClip, Mathf.Clamp01(0.78f * zGain));
+    }
+
+    // ---------- [Multijoueur] ----------
+    // Sur l'hôte, les zombies sont les vrais (IA, NavMesh). Sur les autres casques, chaque zombie est une « marionnette » :
+    // pas d'IA ni d'agent, il suit la position et l'allure envoyées par l'hôte (NetGame) et joue ses animations.
+    // Un tir sur une marionnette ne retire pas de PV ici : il part à l'hôte (PuppetHit), qui décide.
+    public ushort NetId;
+    public bool Puppet { get; private set; }
+    /// <summary>Joueur (id réseau) qui a porté le dernier coup : crédité de l'élimination dans les scores. 0 = l'hôte.</summary>
+    public ulong LastHitBy;
+    public bool LastHitHead => lastHitHead;
+    public bool LastHitMelee => lastHitMelee;
+    public static event System.Action<Zombie> AttackAnimPlayed;
+    public static event System.Action<Zombie, bool> Killed;              // (zombie, tué par un joueur)
+    public static event System.Action<Zombie, HitZone, float> PuppetHit;  // (marionnette, zone, part de PV à la mêlée ; 0 = balle)
+    bool lastHitHead;
+    float nextTarget;
+    Vector3 netPos; float netYaw, netSpeed; bool netInit;
+
+    void AnimAttack()
+    {
+        anim?.Attack();
+        if (!Puppet) AttackAnimPlayed?.Invoke(this);
+    }
+
+    /// <summary>À appeler juste après la création, avant Start (NetGame, casque client).</summary>
+    public void MakePuppet(ushort id)
+    {
+        Puppet = true;
+        NetId = id;
+        if (!agent) agent = GetComponent<NavMeshAgent>();
+        agent.enabled = false;
+        var climb = GetComponent<ZombieWindowClimb>();
+        if (climb) climb.enabled = false;
+        netPos = transform.position; netYaw = transform.eulerAngles.y;
+    }
+
+    public void PuppetState(Vector3 pos, float yaw, float speed)
+    {
+        netPos = pos; netYaw = yaw; netSpeed = speed;
+        if (!netInit) { netInit = true; transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw, 0f)); }
+    }
+
+    /// <summary>Animation de coup jouée par l'hôte.</summary>
+    public void PuppetAttack()
+    {
+        anim?.Attack();
+        // [SONS] la marionnette ne sait pas ce qu'elle frappe : morsure seulement si elle est contre le joueur de ce casque
+        var pl = PlayerHealth.Instance;
+        if (voice && pl && !pl.Dead && FlatDistanceToPlayer(pl) <= attackRange * 1.4f) voice.ScheduleBite(attackHitDelay);
+    }
+
+    float FlatDistanceToPlayer(PlayerHealth pl)
+    {
+        var p = pl.HeadPosition;
+        return Vector2.Distance(new Vector2(p.x, p.z), new Vector2(transform.position.x, transform.position.z));
+    }
+
+    void PuppetUpdate()
+    {
+        // interpolation douce vers la dernière position reçue (15 envois par seconde) ; saut direct si trop loin (chute du toit)
+        var d = netPos - transform.position;
+        if (d.sqrMagnitude > 9f) transform.position = netPos;
+        else transform.position = Vector3.Lerp(transform.position, netPos, 1f - Mathf.Exp(-Time.deltaTime * 12f));
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, netYaw, 0f), 1f - Mathf.Exp(-Time.deltaTime * 10f));
+        anim?.SetMoveSpeed(netSpeed);
+        GroundSteps(netSpeed);                      // pas aussi sur les casques des autres joueurs, calés sur la même animation
+    }
+
+    /// <summary>Allure actuelle (pour l'envoi aux marionnettes).</summary>
+    public float NetMoveSpeed => Dead || !agent.enabled || agent.isStopped ? 0f : agent.velocity.magnitude;
 }

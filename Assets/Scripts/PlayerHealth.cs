@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Logique de santé du joueur : 100 PV (= 100 %). Les zombies retirent un pourcentage de la vie max (voir ZombieLevels).
@@ -9,9 +10,21 @@ using UnityEngine;
 // [#115] Chaque coup reçu fait vibrer les deux manettes : on le sent même sans voir le zombie (plus fort si le coup tue).
 // Coup venant d'un zombie (TakeDamage avec sa position) : la manette du côté du zombie vibre plus fort que l'autre,
 // et DamagedFrom donne la position de l'attaquant (indicateur de direction de HealthVignette).
+// [Multijoueur] Sur l'hôte, chaque joueur distant a un « double » (IsProxy, créé par NetPlayer sur son avatar) : les zombies
+// le visent comme le joueur local (All, NearestAlive). Un coup reçu par un double n'enlève rien ici : il part au casque
+// de ce joueur (RemoteDamaged), qui l'applique à sa vraie santé ; la vie du double suit celle du joueur (SetProxyHealth).
 public class PlayerHealth : MonoBehaviour
 {
+    /// <summary>Le joueur de CE casque (jamais un double).</summary>
     public static PlayerHealth Instance { get; private set; }
+    /// <summary>Tous les joueurs visables par les zombies : le joueur local et, sur l'hôte, les doubles des joueurs distants.</summary>
+    public static readonly List<PlayerHealth> All = new List<PlayerHealth>();
+
+    public bool IsProxy { get; private set; }
+    public event Action<float, Vector3> RemoteDamaged;  // double : coup à transmettre au casque du joueur
+    static bool nextIsProxy;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() { All.Clear(); nextIsProxy = false; }
 
     [Header("Règles du GDD")]
     public float maxHealth = 100f;
@@ -38,8 +51,42 @@ public class PlayerHealth : MonoBehaviour
 
     void Awake()
     {
-        Instance = this;
+        IsProxy = nextIsProxy;
+        if (!IsProxy) Instance = this;
+        All.Add(this);
         Health = maxHealth;
+    }
+
+    /// <summary>Double d'un joueur distant (hôte uniquement), posé sur la tête de son avatar.</summary>
+    public static PlayerHealth CreateProxy(GameObject on, Transform head)
+    {
+        nextIsProxy = true;
+        var h = on.AddComponent<PlayerHealth>();
+        nextIsProxy = false;
+        h.head = head;
+        return h;
+    }
+
+    public void SetProxyHealth(float hp)
+    {
+        if (!IsProxy || Mathf.Approximately(hp, Health)) return;
+        bool wasDead = IsDead;
+        Health = hp;
+        Changed?.Invoke(Health, maxHealth);
+        if (!wasDead && IsDead) Died?.Invoke();
+    }
+
+    /// <summary>Joueur vivant le plus proche d'un point (à plat) ; null si tous sont morts.</summary>
+    public static PlayerHealth NearestAlive(Vector3 from)
+    {
+        PlayerHealth best = null; float bd = float.MaxValue;
+        foreach (var p in All)
+        {
+            if (p == null || p.IsDead) continue;
+            var d = p.HeadPosition - from; d.y = 0f;
+            if (d.sqrMagnitude < bd) { bd = d.sqrMagnitude; best = p; }
+        }
+        return best;
     }
 
     void Start() => Changed?.Invoke(Health, maxHealth);
@@ -47,6 +94,7 @@ public class PlayerHealth : MonoBehaviour
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        All.Remove(this);
     }
 
     // position de la tête du joueur (là où les zombies se dirigent)
@@ -61,7 +109,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Update()
     {
-        if (IsDead) return;
+        if (IsDead || IsProxy) return;
 
         sinceLastHit += Time.deltaTime;
         if (Health < maxHealth && regenThisWave < maxRegenPerWave && sinceLastHit >= regenDelay)
@@ -82,6 +130,7 @@ public class PlayerHealth : MonoBehaviour
     public void TakeDamage(float amount, Vector3? from)
     {
         if (IsDead) return;
+        if (IsProxy) { RemoteDamaged?.Invoke(amount, from ?? HeadPosition); return; }
 
         GameStats.Damage(Mathf.Min(amount, Health));
         Health = Mathf.Max(0f, Health - amount);
@@ -125,6 +174,18 @@ public class PlayerHealth : MonoBehaviour
         Health = Mathf.Min(maxHealth, Health + amount);
         Changed?.Invoke(Health, maxHealth);
     }
+
+    // [Multijoueur] joueur tombé pendant la vague : relevé à la pause suivante avec `amount` PV (NetGame)
+    public void Revive(float amount)
+    {
+        if (!IsDead || IsProxy) return;
+        Health = Mathf.Clamp(amount, 1f, maxHealth);
+        sinceLastHit = 0f;
+        Changed?.Invoke(Health, maxHealth);
+        Revived?.Invoke();
+    }
+
+    public event Action Revived;
 
     // À appeler au début de chaque vague (WaveManager) : remet le quota de régénération à zéro.
     public void NewWave()

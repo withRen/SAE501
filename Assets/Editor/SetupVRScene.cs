@@ -77,6 +77,12 @@ public static class SetupVRScene
         var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
         if (System.IO.File.Exists(MenuBuilder.ScenePath)) scenes.Add(new EditorBuildSettingsScene(MenuBuilder.ScenePath, true));
         scenes.Add(new EditorBuildSettingsScene(path, true));
+        // les cartes du duel 1v1 (ArenaMaps : Alvéole 17, Quai 9) : sans elles, le chargement en réseau échoue
+        foreach (var map in ArenaMaps.All)
+        {
+            string arena = "Assets/Scenes/" + map.scene + ".unity";
+            if (System.IO.File.Exists(arena)) scenes.Add(new EditorBuildSettingsScene(arena, true));
+        }
         EditorBuildSettings.scenes = scenes.ToArray();
         Debug.Log("SAE501: scene built");
     }
@@ -114,7 +120,7 @@ public static class SetupVRScene
     // - à la place, un XRDirectInteractor : sphère de 15 cm autour de la main, point d'accroche dans la paume
     //   (valeurs de My project : sphère centrée en (0 ; -0,05 ; 0,05), accroche en (0 ; -0,07 ; 0,04)).
     // Les boutons sont repris du Near-Far Interactor (grip = attraper, gâchette = utiliser) ; prise par clic (ClickGrab).
-    static void UseDirectInteractor(Transform controller, float sideSign)
+    public static void UseDirectInteractor(Transform controller, float sideSign)
     {
         var nearFar = controller.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.NearFarInteractor>(true);
 

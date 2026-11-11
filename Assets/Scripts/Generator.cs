@@ -3,7 +3,8 @@ using UnityEngine;
 // Objectif du jeu : activer le générateur (salle Générateur, déverrouillée au niveau 4).
 // [#111] Levier physique à ressort (Lever) : on l'attrape (grip), on l'ABAISSE jusqu'en bas et on le tient `holdSeconds` ;
 // lâché, il remonte tout seul et la jauge redescend.
-// À la fin : lumière de la salle rallumée, victoire (WaveManager.GeneratorActivated).
+// À la fin : lumière de la salle rallumée, le portail du jardin s'ouvre (WaveManager.GeneratorActivated -> EscapeGate) ;
+// la victoire ne tombe qu'une fois le portail franchi.
 // [#120] Au niveau 4, le levier reste bloqué tant que WaveManager.GeneratorReady est faux (X zombies abattus ou 60 s) ;
 // le panneau affiche ce qu'il reste à faire.
 public class Generator : MonoBehaviour
@@ -71,7 +72,7 @@ public class Generator : MonoBehaviour
     {
         on = true;
         if (lever) { lever.Snap(true); lever.locked = true; }      // le levier reste en bas
-        SetLabel("GÉNÉRATEUR ACTIVÉ");
+        SetLabel(WaveManager.Endless ? "GÉNÉRATEUR ACTIVÉ" : "GÉNÉRATEUR ACTIVÉ\nPORTAIL DU JARDIN OUVERT");
         SetButtonColor(buttonOn);
         if (lamp) { lamp.color = new Color(1f, 0.8f, 0.5f); lamp.intensity = 3f; lamp.range = 9f; }
         if (roomLights != null)

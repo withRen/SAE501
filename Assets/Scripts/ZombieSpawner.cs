@@ -45,11 +45,36 @@ public class ZombieSpawner : MonoBehaviour
         var pos = p.position;
         if (UnityEngine.AI.NavMesh.SamplePosition(pos, out var hit, 1f, UnityEngine.AI.NavMesh.AllAreas)
             || UnityEngine.AI.NavMesh.SamplePosition(pos, out hit, 4f, UnityEngine.AI.NavMesh.AllAreas)) pos = hit.position;
-        var go = Instantiate(PickPrefab(), pos, p.rotation);
+        var prefab = PickPrefab();
+        var go = Instantiate(prefab, pos, p.rotation);
         var z = go.GetComponent<Zombie>();
+        LastPrefabIndex = PrefabIndex(prefab);
         z.ApplyLevel(level);
         // chaque zombie a son allure (tirage), multipliée par celle de son type (Cogneur, Coureur…)
         z.walkSpeed = zombieSpeed * Random.Range(speedRange.x, speedRange.y) * z.speedMultiplier;
+        Spawned?.Invoke(z, LastPrefabIndex);
+        return z;
+    }
+
+    // [Multijoueur] type du dernier zombie créé (0 = prefab principal, 1.. = ZombieVariants.others), envoyé aux autres casques
+    public int LastPrefabIndex { get; private set; }
+    /// <summary>[Multijoueur] un zombie vient d'apparaître chez l'hôte (zombie, type) : NetGame le crée chez les autres.</summary>
+    public static event System.Action<Zombie, int> Spawned;
+
+    int PrefabIndex(GameObject prefab)
+    {
+        var v = zombiePrefab ? zombiePrefab.GetComponent<ZombieVariants>() : null;
+        if (v != null && v.others != null) for (int i = 0; i < v.others.Length; i++) if (v.others[i] == prefab) return i + 1;
+        return 0;
+    }
+
+    /// <summary>[Multijoueur] casque client : zombie « marionnette » du type donné, piloté par l'hôte (voir Zombie.MakePuppet).</summary>
+    public Zombie SpawnPuppet(int prefabIndex, ushort id, Vector3 pos, float yaw)
+    {
+        var v = zombiePrefab ? zombiePrefab.GetComponent<ZombieVariants>() : null;
+        var prefab = prefabIndex > 0 && v != null && v.others != null && prefabIndex <= v.others.Length ? v.others[prefabIndex - 1] : zombiePrefab;
+        var z = Instantiate(prefab, pos, Quaternion.Euler(0f, yaw, 0f)).GetComponent<Zombie>();
+        z.MakePuppet(id);
         return z;
     }
 

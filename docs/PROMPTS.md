@@ -139,6 +139,64 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [129](#129--retrait-de-la-version-pc) | 2026-10-22 | Retirer toute trace de la version PC pour l'instant | Outils | Scène MainScene_PC, scripts Desktop, menu Play PC Version, champ de vision, onglet clavier et cas « mode PC » retirés ; état sauvé sur la branche archive/version-pc ; wiki nettoyé |
 | [130](#130--release-apk-quest-v090) | 2026-10-22 | Publier l'APK de la dernière version dans les releases GitHub, nom du jeu et icône | Outils | Build Quest 0.9.0 depuis main (menu + scène de jeu), icônes Android depuis le branding, release GitHub « The Last Escapor v0.9.0 » avec l'APK |
 | [131](#131--portes-déverrouillées-en-fin-de-vague) | 2026-10-22 | Son au déblocage d'une porte + portes débloquées dès la fin de chaque vague | Gameplay / Ressenti | Les zones de la vague N+1 s'ouvrent à la fin de la vague N (début de la pause), son door-open.mp3, annonce « OUVERT : … » sur l'écran du bunker, panneaux « ouverte après la vague N » |
+| [133](#133--portage-pc-clavier--souris) | 2026-11-09 | Portage PC propre : interactions, placement des mains, réticule, ZQSD, E, clic, souris verrouillée | Interaction / Version PC | Version PC dans les mêmes scènes (casque par défaut, PC sans casque) : DesktopPlayer, mains et armes en vue FPS, tir depuis le centre de l'écran, HUD (réticule, aide, munitions), menus à la souris, textes du tutoriel, réglages souris ; testé en mode Play sans casque |
+| [134](#134--fusion-de-la-pr-146-escalade-dans-la-version-pc) | 2026-11-09 | Récupérer la PR #146 (escalade des fenêtres, Al Amine) et la fusionner avec la version PC locale pour tester | Dépôt / Zombies | PR fusionnée localement dans feature/portage-pc sans conflit, contrôleurs des zombies régénérés avec les 3 clips d'escalade ; rien poussé |
+| [135](#135--escalade-des-fenêtres-corrigée) | 2026-11-09 | Analyser la vidéo du problème d'animation du zombie et le faire passer proprement dans la fenêtre | Zombies | Clips Mixamo faits pour un mur de 2 m + montée du script = zombie au-dessus du cadre ; corrigé : mains sur le rebord, passage dans l'ouverture, chute courte, se relève sans saut ; testé 2 fenêtres × 3 types |
+| [136](#136--chaise-et-desserte-retirées-près-des-fenêtres) | 2026-11-09 | Retirer une chaise et une table proches des fenêtres | Carte | Tabouret du poêle et desserte verte (avec sa marmite) retirés de MainScene et de RoomBuilder, NavMesh et éclairage recuits |
+| [137](#137--textures-pbr-sur-les-objets-en-aplat) | 2026-11-09 | Remplacer les aplats de couleur par des textures PBR | Graphismes | 24 matériaux en couleur unie texturés (albedo, normal, métal/lissé, usure), 22 textures 1024 ASTC 6x6, réappliquées à la reconstruction |
+| [138](#138--initialisation-game-studios-et-gdd) | 2026-11-09 | Initialisation Game Studios, project.yaml et GDD consolidé | Documentation | Création de project.yaml, design/gdd/game-concept.md, production/session-state/active.md et AGENTS.md |
+| [139](#139--intégration-du-gdd-officiel-pdf) | 2026-11-09 | Intégration du GDD complet (21 pages PDF) dans project.yaml et game-concept.md | Documentation | Alignement complet de project.yaml et design/gdd/game-concept.md avec le document officiel (3C, 5 vagues, équilibrage, bestiaire, palette, crédits) |
+| [140](#140--analyse-dun-audit-déquilibrage) | 2026-11-09 | Vérification d'un audit d'équilibrage externe contre le code | Game design | Tableau vrai/faux/périmé par constat et avis sur chaque proposition, aucun code modifié |
+| [141](#141--audit-déquilibrage-game-designer-et-analyse-pcvr) | 2026-11-09 | Juger l'équilibrage du jeu, la cohérence GDD/code et l'écart d'équilibrage PC vs VR | Game design | Audit complet (5 incohérences GDD/code, courbe TTK/économie, 4 asymétries d'équilibrage PC vs VR dans DesktopPlayer/Nail, plan d'ajustement en 6 chantiers) |
+| [142](#142--pipeline-audio-combat-zombies-team-audio-zombies-combat) | 2026-11-09 | `/team-audio zombies-combat` — Direction, specs SFX, accessibilité et implémentation audio de combat | Audio / Accessibilité | 6 documents d'architecture/design audio + implémentation C#/Shader (9 sons procéduraux en cache dans ProcAudio, profilage vocal par archétype, musique adaptative 4 états + ducking, alertes ambre GAP 1/2 et Flash HUD GAP 3) |
+| [143](#143--checkup-du-projet-après-antigravity) | 2026-11-09 | Checkup du projet Unity après la mise à jour faite avec Antigravity | Qualité / Code | Compilation propre, aucun .meta orphelin ni GUID dupliqué ; rapport de 9 points (musique coupable par manque de voix, musique désaccordée, arcs ambres, etc.), rien corrigé avant accord |
+| [144](#144--musique-de-brèche-et-correctifs-du-checkup) | 2026-11-09 | Musique de brèche déclenchée par un zombie dans le bunker et correctifs du checkup | Audio / Code | Brèche = zombie vivant dans le bunker, musique en priorité 0, arc ambre qui n'écrase plus un arc rouge et seulement pour une planche proche hors champ, seuils d'archétype en un seul endroit |
+| [145](#145--modèles-détaillés-du-poste-de-surveillance) | 2026-11-09 | Le poste de surveillance est encore low poly | Graphismes | Radio, enregistreur à LEDs, clavier, étagère à écrans et 5e écran remplacés par des modèles détaillés (Blender, ~15 000 triangles), éclairage recuit |
+| [146](#146--refonte-complète-du-menu-de-fin-de-partie-terminal-bunker-os-world-space) | 2026-11-09 | `/team-ui` Faire proprement le menu de fin de partie | UI / UX | Terminal BUNKER-OS en World Space (bilan, boutons reprendre/recommencer/menu, verrou anti-clic), souris libérée en version PC, pause bloquée en fin de partie |
+| [147](#147--textes-des-portes-cachés-par-les-murs) | 2026-11-09 | Ne plus voir les textes des portes à travers les murs, seulement de près | Interface / Rendu | Shader SAE501/WorldText : test de profondeur (les murs cachent le texte) et fondu entre 3,5 et 5 m calculé dans le shader ; 7 textes du décor (portes, générateur, radio) |
+| [148](#148--murs-qui-entrent-les-uns-dans-les-autres) | 2026-11-09 | Corriger les aberrations des murs qui se chevauchent | Carte / Rendu | 224 triangles superposés retirés sur 39 éléments de structure (z-fighting à côté du disjoncteur, sous les portes, aux angles), copies de maillages dans Assets/Generated/Recouvrements |
+| [149](#149--branche-develop-et-archivage-des-branches-fusionnées) | 2026-11-09 | Pousser dans une branche propre et archiver les branches déjà fusionnées | Git | Branche `develop` poussée (travail du jour + ajouts Antigravity), wiki poussé, 16 branches fusionnées gardées en tags `archive/<nom>` puis supprimées |
+| [150](#150--trous-du-toit-irréguliers) | 2026-11-09 | Trou du toit : forme moins carrée, tiges retirées, effet sur les bords | Carte / Rendu | Bord de béton cassé irrégulier, auréole noircie, gravats, lianes qui pendaient retirées (`TrousToit.cs`), éclairage recuit |
+| [151](#151--trous-du-toit-élargis) | 2026-11-09 | Élargir un peu le trou du toit | Carte / Rendu | Ouverture des deux trous agrandie (~0,9 à 1,15 m), éclairage recuit |
+| [152](#152--portail-du-jardin-en-fer-forgé-vieilli) | 2026-11-10 | Texture de la grille (portail du jardin) plus réaliste | Carte / Rendu | Matériau propre au portail : fer forgé peint en noir, écaillé, rouille, coulures, terre au pied ; UV refaites (`PortailFer.cs`, `generer_portail.py`) |
+| [153](#153--alarme-de-début-de-vague-retirée) | 2026-11-10 | Retirer l'alarme du début des vagues, garder le son de « VAGUE N » | Audio | Alarme procédurale retirée de `WaveManager.StartLevel` ; reste `Vague_Debut` |
+| [153](#153--mini-serveur-pour-le-multijoueur) | 2026-11-10 | Réfléchir à un mini serveur pour le multijoueur | Game design | 3 options comparées (hôte joueur, serveur dédié Unity, mini serveur lobby + scores hors Unity) ; conseil : rien dans le build rendu, option « parties en parallèle » (2,5 à 3 j) sur une branche à part seulement si validée ; rien codé |
+| [154](#154--modélisation-de-larène-1v1-dans-blender-via-mcp-et-décomposition-des-systèmes) | 2026-11-10 | `/map-systems` Modélisation de l'arène 1v1 dans Blender via MCP et décomposition des systèmes | Carte / Game design | Connexion live MCP Blender 5.2.1, modélisation arène symétrique 30x16m (`arena_1v1_bunker.blend/.fbx`), chicanes, piliers, props, spawns, index des systèmes et LD spec |
+| [155](#155--multijoueur-coop-en-réseau-local-netcode) | 2026-11-10 | Faire l'option A : coop en réseau local avec Netcode | Gameplay / Réseau | Branche `feature/multijoueur` : héberger / rejoindre (découverte Wi-Fi), lobby PRÊT, avatars, zombies relayés par l'hôte, barricades partagées, scores ; testé seul dans l'éditeur, pas à 2 ni au casque |
+| [155](#155--texturing-pbr-procédural-et-lighting-design-de-larène-1v1-dans-blender-via-mcp) | 2026-11-10 | Texturing PBR procédural et lighting design de l'arène 1v1 | Carte / Graphismes | Shaders PBR procéduraux (béton, dalle, acier, rouille, jaune alerte), projection UV cube, 15 sources lumineuses (ambre, néon froid, alerte, rim lights), profil AgX Punchy |
+| [156](#156--passe-dirrégularités-réalistes-et-props-industriels-sur-larène-1v1-dans-blender-via-mcp) | 2026-11-10 | Passe d'irrégularités réalistes et props industriels sur l'arène 1v1 | Carte / Modélisation | Biseautages des arêtes et ébréchures de béton, 8 tuyauteries industrielles suspendues, caisses empilées de travers, barils renversés, gravats et 4 flaques d'eau réfléchissantes |
+| [157](#157--déconstruction-des-formes-cubiques-et-enrichissement-réaliste-de-larène-1v1-dans-blender-via-mcp) | 2026-11-10 | Déconstruction des formes cubiques et silhouettes non-carrées de l'arène 1v1 | Carte / Modélisation | Piliers octogonaux et piliers fracturés, barrières en diagonale 15° brisées, mur central à meurtrière, hérissons tchèques, tôles ondulées cintrées et redoutes de sacs de sable en arc |
+| [158](#158--élargissement-de-larène-1v1-passerelles-surélevées-et-escaliers-daccès-dans-blender-via-mcp) | 2026-11-10 | Élargissement de l'arène 1v1, passerelles surélevées et escaliers d'accès | Carte / Level Design | Arène portée à 34x26m (5.2m sous plafond), 2 passerelles à +2.4m avec rambardes et nids de tir, 2 escaliers de 11 marches, 4 spots supplémentaires, réexport FBX |
+| [161](#161--sons-de-la-pr-151-intégrés-au-portage-pc-et-au-multijoueur) | 2026-11-10 | Récupérer uniquement les sons de la PR #151 (LeCapet) dans la version actuelle | Audio | 7 sons (planches, clous, souffle de la hache, zombie touché / morsure / chute) dans `Assets/Resources/Sounds`, `AudioSlices` sans la banque GameSounds, câblage adapté au multijoueur ; modifs d'UI et `Nail (1).cs` écartées ; compilé hors éditeur, pas écouté en jeu ni au casque |
+| [162](#162--ajout-du-toit-en-béton-armé-poutres-maîtresses-en-acier-et-gaine-de-ventilation-dans-blender-via-mcp) | 2026-11-10 | Rajout d'un toit en béton armé, poutrelles acier et gaine HVAC | Carte / Modélisation | Dalle 34.8x26.8m, 5 poutres acier 26m, gaine ventilation 33m suspendue |
+| [163](#163--rehaussement-de-la-hauteur-sous-plafond-à-70-m-piliers-et-toiture-dans-blender-via-mcp) | 2026-11-10 | Rehaussement de la hauteur sous plafond à 7.0 m | Carte / Modélisation | Murs, contreforts et piliers à 7.0m, dalle à Z=7.0m (+4.6m de dégagement sur passerelles) |
+| [164](#164--import-propre-de-larène-1v1-dans-unity-alvéole-17-nouvelle-scène-et-intégration-menu-multijoueur) | 2026-11-10 | Import propre dans Unity, scène Alvéole 17 et mode Duel 1v1 dans le menu | Unity 6 / Multijoueur | FBX, 8 matériaux URP, constructeur de scène C#, mode 1v1 dans NetLobby/MainMenuMulti, NetDuel |
+| [165](#165--élimination-du-flickering-et-du-grésillement-des-lumières-urp-sur-larène-1v1) | 2026-11-10 | Correction du scintillement et flickering des lumières dans Unity | Carte / Rendu URP | Dépassement limite URP (8 lumières/objet) résolu : Directional Light + 5 spots sans ombres, zéro flickering |
+| [166](#166--paquets-en-erreur-après-limport-dune-arme-et-dune-map) | 2026-11-10 | Paquets en erreur après l'import d'une arme et d'une map | Paquets Unity | HDRP, Ads, Analytics et Purchasing ajoutés par un vieil import, retirés ; manifest et réglages graphiques restaurés |
+| [167](#167--textures-des-murs-de-larène-1v1-et-combinaison-en-urp) | 2026-11-10 | Textures de l'arène 1v1 et combinaison en URP | Carte / Matériaux URP | UV en mètres à l'import du FBX, béton, rouille et acier texturés ; matériaux Protection_suite passés en URP Lit |
+| [168](#168--personnages-survivalist-et-choix-du-skin-en-multijoueur) | 2026-11-10 | Configurer les personnages Survivalist (animations arme tenue / interactions, VR et PC) et choix du skin en multi | Gameplay / Réseau | `PlayerAvatar` (bras par cinématique inverse, doigts, jambes animées), 4 tenues, objet tenu visible, choix dans le lobby avec aperçu ; vérifié en images et dans le lobby, pas à 2 joueurs ni au casque |
+| [169](#169--pack-survivalist-allégé-et-bouton-forcer-le-lancement-du-1v1) | 2026-11-10 | Alléger le pack de personnages, l'intégrer au dépôt, bouton pour forcer le lancement du 1v1 seul | Gameplay / Réseau | Pack 214 → 63 Mo commité (Git LFS, quota 10 Go) ; bouton « FORCER LE LANCEMENT » (hôte, duel) : la scène de l'arène se charge avec un seul joueur ; NetDuel et NetPlayer ne se créent pas encore dans l'arène |
+| [170](#170--correctifs-du-mode-1v1) | 2026-11-10 | Corriger le mode 1v1 bugué (armes qui ne marchent pas) | Gameplay / Réseau | Cause : l'arène n'avait pas d'interacteur direct (pas de prise ni de tir en version PC) ; pistolet de départ en main, munitions infinies, NetDuel en prefab réseau, joueurs réseau créés ; testé seul dans l'éditeur, pas à 2 joueurs ni au casque |
+| [171](#171--systèmes-et-pistolet-de-mainscene-dans-larène-1v1) | 2026-11-10 | Reprendre du mode zombie les systèmes du joueur (pause, tir, animations, style) dans l'arène 1v1 | Gameplay | Pause, vignette de dégâts, musique, ceinture avec holster, et le pistolet complet de MainScene (animation de tir, son, douille, flash, fumée) ; arène réparée sans reconstruction ; testé dans l'éditeur, pas au casque |
+| [172](#172--arbres-et-sol-du-jardin-refaits-fluidité) | 2026-11-10 | Arbres horribles, texture du sol du jardin horrible, « pas vraiment smooth » | Carte / Rendu / Optimisation | Arbre Poly Haven refait dans Blender (`arbre_quest.py`), forêt en cônes remplacée, sols Poly Haven 1024 en UV métriques, terrain extérieur descendu sous le jardin, LOD + imposteurs (`JardinNature.cs`) ; vérifié en captures de l'éditeur, pas au casque |
+| [173](#173--trous-du-toit-bouchés-lianes-retirées-mur-du-couloir-ajouté) | 2026-11-10 | Mur manquant dans le couloir, retirer le trou et les éléments qui tombent du toit | Carte | 2 trous du toit bouchés (`TrousToit.cs`), lianes qui pendent retirées partout, mur ajouté à droite de la porte de la cuisine (`MurCouloir.cs`), zombies du toit par les portes et fenêtres, caisse de la radio sous le plafond |
+| [174](#174--liste-durable-des-objets-retirés-à-la-main) | 2026-11-10 | Arrêter de replacer les éléments que je retire à la main | Outils | Cause : chaque « Build VR Scene » recrée tout le FBX ; liste durable `objets_retires.txt` lue par `RoomBuilder`, menu « Retirer la sélection (durable) » (`ObjetsRetires.cs`) |
+| [175](#175--arbre-du-jardin-remplacé-par-un-jacaranda-sans-rebuild) | 2026-11-10 | L'arbre n'est toujours pas bon : un arbre classique, un seul tronc et une couronne de feuilles, sans rebuild | Carte / Rendu | Jacaranda Poly Haven allégé dans Blender (`arbre_jacaranda.py`, 32 323 / 13 083 triangles), mis à la place de l'olivier en remplaçant le FBX et les textures des 3 matériaux, sans reconstruire la scène ; reflets de la lune coupés sur les flaques |
+| [176](#176--évasion--portail-du-jardin-puis-cinématique-avec-de-vrais-sons) | 2026-11-11 | La victoire en Évasion = générateur puis fuite par le portail du jardin ; sons de la cinématique horribles, coups sur la grille pas réalistes | Gameplay / Son | Le générateur ouvre le portail (cadenas, battants, lampe verte), le franchir déclenche la victoire puis la cinématique de fin (reprise de `feature/cinematiques`, VR et PC) ; bande-son refaite avec les sons du jeu et deux sons de grille CC0 (Freesound) |
+| [177](#177--bilan-de-victoire-par-dessus-la-vidéo-de-fin) | 2026-11-11 | Le menu « vous avez échappé » doit apparaître par-dessus l'animation de fin, à la moitié | UI / Cinématique | Bilan affiché devant l'écran de cinéma à 50 % de la vidéo (ou tout de suite si on passe), vidéo qui continue derrière puis se fige avant son fondu |
+| [178](#178--bilan-de-victoire--victoire-et-panneau-élargi) | 2026-11-11 | Menu pas assez large ; « Vous avez échappé » pas français : « victoire » ; retirer « Signal transmis » ; nouveau sous-titre | UI | Titre « VICTOIRE », sur-titre retiré, sous-titre « Vous avez réussi à vous enfuir. », panneau 1,52 -> 1,84 m |
+| [179](#179--à-quoi-sert-la-clé-du-cabanon-) | 2026-11-11 | À quoi sert la clé du cabanon ? | Question | Elle n'ouvre rien : objet décoratif qu'on peut prendre en main, sans lien avec le portail |
+| [180](#180--fichier-temporaire-introuvable-et-licensing-connection-lost) | 2026-11-11 | Patch « Opening file failed: …/Temp/UnityTempFile-… » et l'erreur « Licensing connection lost » | Outils / Éditeur | Cause : « Quit on close » de Vorssaint ferme les processus Unity sans fenêtre ; Temp recréé, garde-fou `TempDirGuard`, licence reconnectée seule |
+| [181](#181--arènes-du-duel--alvéole-17-corrigée-2-nouvelles-cartes-et-choix-de-la-carte) | 2026-11-11 | Level design : corriger la map 1v1, proposer 2 autres maps, capture et choix de la carte dans le lobby | Carte / Multijoueur | Alvéole 17 corrigée (escaliers, caisses, sas, gravats, flaques) ; Bloc C et Quai 9 construits ; sélecteur avec aperçu dans le lobby ; non commité |
+| [182](#182--arènes-du-duel--vraies-textures-sur-les-blocs) | 2026-11-11 | Les maps 1v1 manquent de textures : beaucoup de blocs sans texture | Carte / Textures | Textures générées (tôle ondulée, portes de conteneur, sacs, barils, casiers, carrelage, bandes de danger) + reliefs ajoutés ; captures refaites ; non commité |
+| [183](#183--arènes-du-duel--optimisation-quest-barils-low-poly-fusion-colliders) | 2026-11-11 | « C'est pas très optimisé ça » (baril en fil de fer) | Optimisation | Barils 124 → 48 triangles, Alvéole 17 : 216 → 25 rendus, plus aucun MeshCollider sur les props ; non commité |
+| [184](#184--arènes-du-duel--barils-et-barrières-refaits-bloc-c-supprimé) | 2026-11-11 | Corriger les barils et barrières d'Alvéole 17, retirer la map hôpital | Carte / Optimisation | Barils et barrières refaits proprement, contrôle 0 interpénétration / 0 objet flottant, Bloc C supprimé ; non commité |
+| [185](#185--paramètres--vsync-et-limite-dimages-par-seconde) | 2026-11-11 | Ajouter le VSync ou une limite de FPS dans les paramètres | Menus / Performance | Version PC : VSync (défaut oui) et Limite FPS sans / 60 / 72 / 90 / 144 / 240, grisée sous VSync ; au casque, cadence du runtime XR ; commit `fa5c328`, journal non commité |
+| [186](#186--duel--avatar-distant-qui-tient-son-arme-à-la-3e-personne) | 2026-11-11 | Corriger la tenue d'arme de l'avatar distant (style Counter-Strike) | Multijoueur / Animation | Joueur PC : arme posée devant l'épaule dans l'axe du regard, deux mains dessus, buste qui suit la visée ; commit `c0ff733` (PlayerAvatar), NetPlayer et journal non commités |
+| [187](#187--duel--postures-darmes-façon-counter-strike) | 2026-11-11 | Corriger les postures de tenue des armes en s'inspirant de Counter-Strike | Multijoueur / Animation | Une posture par type d'arme (pistolet, fusil d'assaut, sniper), corps de trois quarts, main de soutien sous le garde-main ; commit `6489101`, NetPlayer et journal non commités |
+| [188](#188--sons-des-zombies--impact-de-balle-et-pas) | 2026-11-11 | Rendre réalistes le son de balle sur un zombie et les pas des zombies | Audio | Sons CC0 Freesound (6 impacts, pas traînants et lourds) ; pas calés sur les appuis de pied des animations au lieu d'un minuteur, 4 pas max à la fois ; en attente d'écoute |
+| [189](#189--mur-manquant-du-couloir-près-de-la-salle-du-générateur) | 2026-11-11 | Remettre le mur manquant à gauche de la salle du générateur | Carte / Outils éditeur | Face du mur ouest du couloir retirée à tort par MursSuperposes (test sur les seuls sommets) ; test refait sur toute la surface, face remise sans reconstruire la scène, rustine MurCouloir retirée, éclairage recuit |
+| [190](#190--fusion-de-tout-le-travail-dans-main) | 2026-11-12 | Pousser proprement tout le travail dans main | Git / Documentation | Travail non commité rangé en 4 commits, feature/multijoueur (avec develop) fusionnée dans main, fichiers locaux laissés hors du dépôt, page wiki Historique des versions |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -2400,3 +2458,1203 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `ZoneGate.UpdateAll` dit maintenant si une porte vient de s'ouvrir ; `WaveManager` joue le son en fin de vague. Scène ni reconstruite ni recuite (le son est chargé depuis `Resources`, les textes sont posés au lancement).
 - Vérifié en mode Play (mode Évasion, vagues terminées par script) : pendant la vague 1, les 4 portes restent verrouillées ; dès la fin de la vague 1, les deux portes de couloir se déverrouillent (poignée active), l'annonce affiche les deux zones ; fin de la vague 2 : le stockage s'ouvre ; le générateur reste fermé. Le son est chargé et la ligne qui le joue s'exécute, mais je ne l'ai pas écouté. **Pas testé au casque.**
 - Source du son : non précisée (crédit à compléter dans le README).
+
+---
+
+## 133 — Portage PC (clavier + souris)
+
+**Date** : 2026-11-09 · **Domaine** : Interaction / Version PC
+
+> Il me faudrait un port pc de tout avec les bonnes interractions, les placement des mains, et rajouter un crossair pour savoir où on vise. touches pour boger ZQSD avec interraction sur E, clique en tire gauche, mouvement de la camera en lock ouris, en gros faire un portage propre de la version pc
+
+**Résultat** (fait par l'IA, Claude Code ; numéro 133 car l'entrée 132 est sur la branche `feature/musiques-playlist`, pas encore dans `main`)
+
+- Branche `feature/portage-pc` créée depuis `main`. La version PC retirée le 22 octobre (journal 129, branche `archive/version-pc`) a servi de point de départ pour le principe (même rig XRI piloté au clavier) ; le reste est réécrit.
+- **Le casque reste le mode par défaut** : `DesktopMode` choisit au lancement. Quest → casque ; PC avec casque actif (OpenXR démarré, affichage XR en marche) → casque ; sinon → version PC. Forçable par l'argument `-pc` / `-vr`, et dans l'éditeur par le menu **SAE501 > Mode de jeu** (Automatique / Casque / PC) et **SAE501 > Jouer en version PC**. Plus de scène séparée : la version PC tourne dans `Menu` et `MainScene` (scènes non modifiées, pas de reconstruction ni de recuisson).
+- **Joueur PC** (`DesktopPlayer`, ajouté au XR Origin seulement en version PC) : souris verrouillée (sensibilité réglable, pente limitée à ±85°), ZQSD (touches physiques, donc AZERTY et QWERTY), Espace saut du rig, Ctrl accroupi, E interagir, clic gauche tirer / frapper, clic droit viser, R recharger, 1-4 et molette pour changer d'objet, F lampe, G lâcher, V inspecter, B lancer la vague, Échap pause (souris libérée, menu à la souris).
+- **Mains et objets en vue FPS** : chaque type d'objet a sa pose par rapport à la caméra (pistolet bas droite, lampe main gauche, marteau levé, planche portée en diagonale) ; le script place la manette pour que l'accroche de la main tombe sur celle de l'objet, donc la main serre vraiment la crosse ou le manche (poing fermé animé). Prise animée (0,2 s), balancement à la marche, recul au tir, arme qui recule devant un mur proche.
+- **Toutes les interactions passent par XRI comme au casque** (mêmes règles) : tir depuis le centre de l'écran (`Pistol.AimRay` en version PC, l'impact est sous le réticule), rechargement par la main gauche qui monte le chargeur de la ceinture sous la crosse (inséré par `MagWell`), coups de marteau qui passent par la tête du clou visé (aide à la visée de 12 cm), armes de mêlée, planche posée sur la fenêtre visée, levier (E maintenu), portes (E : la main tire la poignée), boutons et écrans, radio, croix du tutoriel (réticule + clic), écrans de fin (« Clic : rejouer »).
+- **HUD** (`DesktopHud`) : réticule qui s'ouvre en ambre sur un objet utilisable, aide « E Prendre le pistolet », munitions et chargeur, charge de la lampe, aide F1. L'objet visé reçoit le liseré épais du contour.
+- **Menus** : pointeur souris (`MenuPointer`), PARAMÈTRES > SOURIS ET AFFICHAGE (sensibilité, souris inversée, champ de vision) à la place de CONFORT VR, page COMMANDES avec un onglet CLAVIER + SOURIS. **Tutoriel** : textes avec les touches PC (`DesktopMode.Text`).
+- Code partagé : seulement des cas « si version PC » (`Pistol`, `VRInput`, `Crouch`, `MenuPointer`, `TutorialSkipCross`, `InteractableOutline`, `InspectHud`, `ClickGrab`, `GameSettings`, `AmberMenu`, `AmberMenuControls`, `Tutorial`, `TutorialBoard`, `GameOverUI`, `MainMenu`, `PauseMenu`). L'API `DesktopMode.On` / `DesktopPlayer` garde les mêmes noms que l'ancienne version (utilisés par `PlayerDeathFall` sur la branche `feature/cinematiques`).
+- **Vérifié** : compilation sans erreur ; scénario automatique en mode Play (version PC forcée, MainScene pendant le tutoriel puis menu d'accueil, captures d'écran) : marche, pistolet sorti de la ceinture, 2 tirs puis rechargement R (10 → 12 balles), visée, lampe dans la main gauche allumée, marteau pris sur l'établi puis rangé et ressorti, planche prise et posée sur une fenêtre, **2 clous enfoncés en 3 coups chacun (planche clouée)**, disjoncteur abaissé en maintenant E, écran de caméra ouvert et refermé, radio appelée (« CAISSE DANS 30 s »), porte de zone ouverte (92°), Ctrl accroupi, pause par Échap et reprise, menu d'accueil (pages COMMANDES et PARAMÈTRES) ; aucune erreur dans la console. Les touches simulées (marche, E maintenu, Ctrl, Échap) ne passent que quand la fenêtre de l'éditeur a le focus : elles ont réussi lors des passages où elle l'avait.
+- **Pas testé** : au casque (le code VR n'est pas modifié, mais la détection automatique avec un casque Link / Air Link n'a pas été essayée), une vraie partie jouée à la main au clavier, un build Windows / macOS. Script de test non commité.
+- Wiki : nouvelle page [Version PC](https://github.com/withRen/SAE501/wiki/Version-PC) ; Accueil, menu, Commandes, Menus et Tutoriel mis à jour (commit local du wiki, pas encore poussé).
+
+---
+
+## 134 — Fusion de la PR #146 (escalade) dans la version PC
+
+**Date** : 2026-11-09 · **Domaine** : Dépôt / Zombies
+
+> Il y a eu un push de patch d'animation, c'est sous la pull request : Escalade des fenêtres : vraies animations (se hisser, tomber à plat, #146) de AL amine, pull la et merge la avec la version pc locale qu'on fasse un test
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- PR #146 (`features/escalade-zombies`, Al Amine, 1 commit `cb1b973`) récupérée et fusionnée localement dans `feature/portage-pc` (merge, pas de rebase). **Aucun conflit** : la PR touche l'escalade des **zombies** (`ZombieWindowClimb`, `ZombieAnimationBridge`, `ZombieMixamo` et 3 clips Mixamo dans `Assets/Animations/Escalade`), le portage PC ne touche aucun de ces fichiers.
+- La PR ne contenait pas les contrôleurs d'animation régénérés : sans eux, les zombies gardaient l'ancienne escalade (code seul). Régénérés dans l'éditeur (`ZombieMixamo.EnsureController` pour le zombie normal, le Cogneur et le Coureur) : chacun a maintenant les états Climb, Fall et StandUp. Même fichier et même GUID : prefabs et scène inchangés, pas de reconstruction ni de recuisson. Les réglages d'import des 3 FBX (rig humanoïde, noms des clips) sont commités avec.
+- Vérifié : compilation sans erreur (console de l'éditeur vide). **Pas vérifié en mode Play** : l'éditeur était ouvert par Rahim, je n'ai pas lancé le mode Play à sa place ; test à faire par lui (voir le message de rapport). Rien poussé.
+
+---
+
+## 135 — Escalade des fenêtres corrigée
+
+**Date** : 2026-11-09 · **Domaine** : Zombies
+
+> Analyse la vidéo pour constater du problème d'animation du zombi, et corrige la pour qu'il passe proprement dans la fenêtre
+
+(vidéo jointe : `Screen Recording 2026-11-09 at 10.53.37.mov`, version PC, après la fusion de la PR #146)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Constat (vidéo, vers 15–16 s)** : le zombie ne passe pas par l'ouverture. Il monte le long du mur jusqu'au-dessus du cadre de la fenêtre (presque au plafond, décalé vers le bord gauche, à moitié dans le mur), puis tombe de là (~2 m) à plat au sol et se relève.
+- **Cause (mesurée dans l'éditeur en échantillonnant les clips)** : *Climbing* est fait pour un mur de 2 m (mains à 2,15 m au départ, bassin à 2,8 m à la fin) ; *Falling Flat Impact* commence en l'air (bassin à 1,7 m) ; et `ZombieWindowClimb` soulevait en plus le zombie jusqu'au rebord (0,97 m). Les hauteurs s'additionnaient. La ligne d'escalade suivait les bouts du lien NavMesh, pas le centre de la fenêtre. *Zombie Stand Up* commence avec le bassin 1 m devant : saut en se relevant.
+- **Correction** (`ZombieWindowClimb`, `ZombieMixamo`) : avec les vrais clips, le zombie reste au sol au pied du mur, sur une ligne recentrée sur la fenêtre (milieu des emplacements de planches). Après l'Animator (`LateUpdate`), le modèle est décalé pour que les mains restent sur le rebord (2/3 du geste) et que le bassin passe dans l'ouverture ; la chute part du rebord et finit 0,6 m derrière le mur ; en se relevant, le bassin reste en place. À la fin, le décalage est reporté sur le zombie (pas de téléportation). Seule la 2e partie du clip *Climbing* est jouée (à partir de 45 %, ×1,1). L'ancien mouvement (sans les clips) est inchangé. Contrôleurs régénérés (même GUID : pas de reconstruction de scène ni de recuisson).
+- **Vérifié** : compilation sans erreur ; mode Play dans l'éditeur de Rahim (version PC), 2 fenêtres du bunker (SE, SW) × 3 types (normal, Cogneur, Coureur) : bassin au plus haut à 1,48–1,53 m (rebord 0,97 m, haut de fenêtre 1,99 m), écart au centre ≤ 0,36 m, 5 cm de déplacement du bassin quand l'agent reprend la main ; captures image par image : mains sur le rebord, corps dans l'ouverture, chute à plat derrière le mur, relevé. **Pas testé au casque.**
+- Wiki : section « Escalade des fenêtres » de la page Zombies (commit local, pas poussé). Rien poussé.
+
+---
+
+## 136 — Chaise et desserte retirées près des fenêtres
+
+**Date** : 2026-11-09 · **Domaine** : Carte
+
+> Retire cette chaise ainsi que cette table proche des fenêtres
+
+(2 captures jointes, version PC, MainScene)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Objets reconnus (captures comparées dans l'éditeur) : la chaise = `Bunker_Stove_Stool_01` (tabouret haut en métal sur le tapis, à côté du fût) ; la table = `Bunker_ToolCart` (desserte verte à roulettes sous la fenêtre sud-est), avec la marmite posée dessus (`Bunker_Stove_Pot`, simple décor : retirée avec elle). Tapis et papiers gardés. Aucun script ne les utilisait.
+- Retirés de `MainScene` (dans l'éditeur ouvert de Rahim) et ajoutés à la liste des objets retirés de `RoomBuilder` (une reconstruction de la scène ne les remet pas).
+- NavMesh recuit (la desserte était un obstacle sous la fenêtre où entrent les zombies) : 2133 → 2125 triangles, chemins dehors → dedans complets pour les fenêtres SE et SW. Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée. Capture après : plus de desserte ni de tabouret, pas d'ombre restante au sol.
+- Avertissement « Retain Transform Parent… Items is deactivated » de la console : il vient des holsters de la ceinture et du puits du pistolet (`XRSocketInteractor.OnDisable`) quand la scène se ferme (fin du mode Play, rechargement) : « Items » est déjà désactivé au moment où ils lâchent pistolet, lampe et chargeur. Sans effet en jeu ; non modifié (le changer toucherait la prise des objets au casque).
+- **Pas testé au casque.** Rien poussé.
+
+---
+
+## 137 — Textures PBR sur les objets en aplat
+
+**Date** : 2026-11-09 · **Domaine** : Graphismes
+
+> Fais l'inventaire des matériaux/objets restés low poly (couleurs unies, sans texture PBR) dans MainScene, propose et applique des textures PBR plus réalistes et détaillées (albedo/normal/roughness, usure, saleté, cohérents avec l'ambiance hôpital/bunker sombre), en gardant le budget Quest 3 (textures 1024-2048 max, compression ASTC, pas de coût de perf excessif). Si les modèles n'ont pas d'UV, signale-le. Après changement des matériaux, rebake l'éclairage avant commit. Montre des captures avant/après.
+
+(demande transmise avec une capture du poste de surveillance : écrans CCTV, radio, boîtier à LEDs, clavier, lampe, bureau en aplats unis)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Inventaire** (script dans l'éditeur, MainScene) : 24 matériaux de décor sans texture. Poste de surveillance : `MetalDark` (cadres des écrans, meuble, magnétoscope à LEDs, clavier), `Dark`/`Metal` (5e écran généré), `RadioBody`/`RadioBlack`/`HammerSteel` (radio), `Radio` (radio générée). Ailleurs : `DoorMetal` (caisses, fûts, portes), `GeneratorPaint`, `FuelRed`, `Chrome`, `Rubber`, `LampShade`, `Paper`, `Countertop`, `FridgeEnamel`, `SinkEnamel`, `Mat_CCTV_CameraBody`, `stone_01` (pierres du jardin : normale sans couleur). Laissés tels quels : LED, ampoules, verres, écrans CCTV (shader animé), interface, manettes.
+- **Sans UV** (texture impossible, restent unis) : les 4 caméras CCTV et leurs supports muraux, l'armoire de premiers secours, le tableau de carte tactique. À déplier dans Blender.
+- `textures.zip` ne contenait que des textures de jardin (arbres, rochers, pierre) : seule la couleur de stone_01 a servi. Rien téléchargé.
+- **Textures** : `Tools/textures/generer_usure.py` (Python, numpy) fabrique des textures raccordables 1024 px à partir de rust_coarse_01 et dirty_concrete (Poly Haven, CC0, déjà sur le Mac) : un albedo par matériau (couleur d'origine + éclats de peinture, rouille, rayures, saleté), une normale et une carte métal/lissé par famille (peinture, acier, plastique, papier). 22 textures dans `Assets/Room/Textures/Usure/`, ASTC 6x6 sur Android, mipmaps, environ 14 Mo de mémoire en tout.
+- **Application** : `Assets/Editor/TexturesUsure.cs` (menu SAE501 > Salle > Appliquer les textures d'usure), appelé aussi à la fin de `RoomImport.Import` et de `RoomBuilder.Populate` (ces deux scripts recréent les matériaux en couleur unie).
+- **Vérifié** : captures avant/après du poste de surveillance dans le mode Play de l'éditeur (`docs/captures/textures_usure/`). Défaut visible : sur le clavier (face du dessus aux UV étirées), les rayures sont étirées.
+- Éclairage recuit avec les modèles de l'entrée 145 (même session).
+- **Pas testé au casque** (coût réel sur Quest 3 non mesuré). Rien poussé.
+
+---
+
+## 138 — Initialisation Game Studios et GDD
+
+**Date** : 2026-11-09 · **Domaine** : Documentation
+
+> Dossiers et conventions Game Studios : Le projet ne possède pas encore de fichier project.yaml ni les dossiers standards design/ et production/session-state/. Souhaites-tu qu'on initialise cette compatibilité (/init-studio) sans modifier tes fichiers existants ? Fait le project.yaml en lisant tous le concept du jeu, le gameplay etc, d'ailleurs voici le GDD :
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Initialisation Game Studios** : création sans modifier les fichiers existants de `project.yaml`, `design/gdd/`, `production/session-state/` et `AGENTS.md`.
+- **`project.yaml`** : configuration complète du projet (moteur Unity 6000.6.0f1, URP, cibles Quest 3 Android et PC Desktop, framerate cible 72 FPS, piliers de gameplay, hitboxes, équilibrage des zombies et vagues).
+- **GDD consolidé** : formalisation dans `design/gdd/game-concept.md` du concept, des boucles macro/micro, du système de barricades, des armes, de l'IA zombie et de la gestion CCTV/énergie d'après la documentation et le code source.
+- **Session State** : création de `production/session-state/active.md` consignant les réalisations récentes (portage PC, escalade) et les priorités du sprint final (rendu J-4, 13 novembre 2026).
+
+---
+
+## 139 — Intégration du GDD officiel (PDF)
+
+**Date** : 2026-11-09 · **Domaine** : Documentation
+
+> Voici le gdd
+
+(Document PDF de 21 pages transmis : « Game Design Document: The last survivor / The Last Escapor », SAÉ 5.D.01)
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Extraction et analyse intégrale du GDD (21 pages)** :
+  - **Identité & Équipe** : Rahim Tamhaev, Al Amine Bah, Alban Chabalier, Hugo Delpuech ; profil Bartle (Killer 5/5, Achiever 3/5) ; USP/KSP.
+  - **Gamefeel & 3C** : le corps comme manette, pas de raycast grab, ceinture diégétique, clouage en 3 coups physiques avec planche fantôme, rechargement gestuel sous la poignée, détection cinétique du corps à corps (> 1.6 m/s), caméras nocturnes via disjoncteur.
+  - **Structure des 5 vagues** : 66 zombies au total (4, 8, 12, 18, 24), déblocage progressif des salles (Bunker OG -> Cuisine -> Stockage -> Couloir Ouest -> Générateur et bouton d'évacuation).
+  - **Bestiaire & Hitboxes** : fiches complètes du Rôdeur (1.76 m, 0.9 m/s, 100% PV), du Cogneur (1.93 m, x0.9, 150% PV, coups de poing) et du Coureur (1.69 m, x1.6, 70% PV, coups de pied) ; table des dégâts tête (one-shot), torse (-33 PV, ralentit 1.8s) et jambes (-20 PV, ralentit 2.7s).
+  - **Level Design & Circulatoire** : les 6 zones avec le portail cadenassé et le générateur électrique.
+  - **Direction Artistique & Palette** : intégration des codes couleur exacts (Interface ambre #FFBF45, réticule/contour #8C6926/#FFD166, voyants #33FF4C/#FF261A, ombres #020101).
+- **Mise à jour des fichiers** : `project.yaml` et `design/gdd/game-concept.md` mis à jour pour être en parfaite concordance avec le PDF.
+
+---
+
+## 140 — Analyse d'un audit d'équilibrage
+
+**Date** : 2026-11-09 · **Domaine** : Game design
+
+> Analyse :
+
+(Suivi du texte complet d'un audit d'équilibrage et de cohérence produit par un autre outil d'IA : 5 incohérences GDD/code, analyse chiffrée PV, mêlée, vitesses, munitions, niveau 4, et un plan de 6 chantiers avec un tableau de 18 réglages.)
+
+**Résultat** (fait par l'IA, Claude Code) : chaque constat vérifié dans le code de la branche `feature/portage-pc`. Vrais : PV par niveau et par type, mêlée en part fixe des PV de base, chevauchement des vitesses (Coureur jusqu'à 2,4 m/s au niveau 4), hache utilisable dans le bunker dès la vague 1, un seul clou suffit (choix volontaire du commit 02768f6, le GDD n'a pas suivi), disjoncteur jamais recoupé, porte forcée impossible à refermer (vrai bug), 9 zombies max au niveau 4 et 2 coups pour mourir en Difficile. Faux ou périmés : radio (1 chargeur, une fois par vague, pas 2 toutes les 75 s), chargeurs du bunker (tirés au sort, pas garantis), générateur (la jauge redescend déjà à moitié vitesse, pas de remise à zéro), traque du niveau 4 (seulement hors du bunker), mêlée sans ralenti (elle ralentit). Avis : corriger la porte, envisager le retrait de la hache du bunker et le resserrement des vitesses ; refuser les nouvelles mécaniques (coupure de courant, tête à 150 PV) à 4 jours du rendu. Aucun fichier de code modifié.
+
+
+---
+
+## 141 — Audit d'équilibrage Game Designer et analyse PC/VR
+
+**Date** : 2026-11-09 · **Domaine** : Game design
+
+> Tu es expert Game Designer, Je veux que tu juges l'équilibrage du jeu, ainsi que la cohérence de ce dernier. Ensuite, tu me fera un plan détaillé de quoi modifié pour un meilleur équilibrage.
+> Est-ce que sur ta version tu vois bien la version pc ?
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Audit d'équilibrage et de cohérence GDD vs Code (`Assets/Scripts/`)** :
+  - Analyse croisée de `ZombieLevels.cs`, `WaveManager.cs`, `Zombie.cs`, `MeleeWeapon.cs`, `Plank.cs`, `RoomBuilder.cs`, `RadioEvent.cs` et `Generator.cs`.
+  - Identification des écarts entre le GDD PDF (5 vagues, 66 zombies) et le code (4 niveaux de progression puis mode Survie infini), du calcul des dégâts de mêlée en fraction de `BaseHealth` (ne suivant pas `hpMultiplier`), du chevauchement de `speedRange` (`[0.75, 1.4]`), de la présence de `Hache_Bunker` dès le Niveau 1, et du bug de `HingedDoor.ForceOpen()` empêchant de refermer une porte forcée.
+- **Vérification de la version PC (`feature/portage-pc`)** :
+  - Analyse de `DesktopMode.cs`, `DesktopPlayer.cs`, `DesktopHud.cs` et `DesktopMenuClick.cs`.
+  - Identification de 4 asymétries d'équilibrage PC vs VR :
+    1. Levier du générateur maintenu par une main virtuelle découplée sur PC (`DesktopPlayer.cs`), permettant au joueur PC de reculer ou combattre pendant le maintien de 10 s.
+    2. Poche secondaire (`B`) stockant un second objet lourd rendu invisible (`SetRenderers(pocketed, false)`), contournant la limite d'une seule planche transportable.
+    3. Rechargement automatique en `0.55 s` via `R` avec aspiration de chargeur jusqu'à `2.2 m` (`NearestAvailableMag(2.2f)`).
+    4. Aim-assist de clouage à `18 cm` du centre de la vue (`Nail.HitFromAim`).
+- **Plan détaillé en 6 chantiers** présenté pour sélection avant modification du code.
+
+---
+
+## 142 — Pipeline Audio Combat Zombies (`/team-audio zombies-combat`)
+
+**Date** : 2026-11-09 · **Domaine** : Audio / Accessibilité
+
+> /team-audio zombies-combat
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Artefacts de design & production audio générés** :
+  - `production/audio/zombies-combat/direction.md` (Étape 1 — Direction audio, séparation spectrale 360° Cogneur/Rôdeur/Coureur, choix de l'Option B hybride DSP + synthèse procédurale).
+  - `production/audio/zombies-combat/sfx-spec.md` (Étape 2 — Spécifications SFX complètes, formules DSP 44.1 kHz, matrice des 22 événements P0-P4).
+  - `production/audio/zombies-combat/accessibility.md` (Étape 2 — Audit d'accessibilité multimodale VR/PC, résolution des 3 écarts GAP 1, GAP 2 et GAP 3).
+  - `production/audio/zombies-combat/integration-plan.md` & `production/audio/zombies-combat/engine-notes.md` (Étape 3 — Plan d'intégration Unity 6000.6.0f1, budget RAM < 400 Ko en cache statique, Single-Pass Instanced Stereo).
+  - `design/audio/audio-zombies-combat.md` (Document de design audio consolidé).
+- **Implémentation C# & Shader (Étape 4)** :
+  - `ProcAudio.cs` : ajout de 9 générateurs procéduraux mis en cache statique (`Warmup` + `SubsystemRegistration`) : `ZombieStep_Walker`, `ZombieStep_Bruiser`, `ZombieStep_Runner`, `AttackWindup`, `ZombieDeath`, `BodyThud`, `MeleeSwing`, `AxeImpact`, `CrowbarImpact`, et filtrage anti-stridence sur `ClawSwipe`.
+  - `ZombieVoice.cs` : différenciation vocale par archétype (pitch, cadence, pondération `Voix_1`/`Voix_2`, priorité `64/80/110`) et préemption (`maxVoicesAtOnce = 4`).
+  - `Zombie.cs` : pas au sol par archétype (`GroundSteps`), télégraphe d'attaque (`PlayAttackWindup`) avec alerte d'angle mort, et râle + chute du corps à la mort (`ZombieDeath` + `BodyThud`), modulés par `GameSettings.Zombies`.
+  - `MeleeWeapon.cs` : détection de swing (`MeleeSwing`) et différenciation d'impact Hache (`AxeImpact`) vs Pied-de-biche (`CrowbarImpact`).
+  - `MusicPlayer.cs` : machine à 4 états d'intensité de combat, `priority = 200`, et API `MusicPlayer.Duck(factor, duration)`.
+  - `DamageVignette.shader`, `HealthVignette.cs` & `Plank.cs` : exploitation de `_Hits[k].w` pour afficher un arc périphérique ambre (`NotifyWarningFrom`) lors d'un bris de barricade hors champ (GAP 1) ou d'un `AttackWindup` dans l'angle mort (GAP 2).
+  - `InspectHud.cs` & `Pistol.cs` : `InspectHud.Flash(1.5f)` forcé sur clic à vide `DryFire` (GAP 3) et `spatialBlend` adaptatif VR (`0.65f`) / PC (`0.20f`).
+
+## 143 — Checkup du projet après Antigravity
+
+**Date** : 2026-11-09 · **Domaine** : Qualité / Code
+
+> Ok analyse le projet Unity directement, et cherche les bugs si il y en a dans le code ou autre, j'ai recemment fait une maj avec Antigravity, visuellement aucun bug, cependant le procédé de compilation étant particulier je préfère un checkup de ta part
+
+**Résultat** (fait par l'IA, Claude Code) : relecture du diff non commité (audio de combat d'Antigravity : ProcAudio, Zombie, ZombieVoice, MusicPlayer, MeleeWeapon, Pistol, Plank, HealthVignette, InspectHud, DamageVignette.shader). La compilation passe (Assembly-CSharp recompilé après les dernières modifications, aucune erreur C# dans la console ; seules erreurs : MRUK « global context », bruit du paquet Meta). Aucun .meta orphelin, aucun fichier sans .meta, aucun GUID dupliqué ; les scènes et prefabs du jeu ne pointent vers aucun asset manquant (références manquantes seulement dans les packs tiers et les samples). Problèmes relevés : musique passée en priorité 200 (peut être coupée quand les 32 voix sont prises), hauteur de la musique modifiée (désaccord audible), état « brèche » quasi permanent, arc ambre qui peut écraser un arc rouge actif, arc ambre sur chaque planche cassée même visible ou loin, seuils d'archétype dupliqués entre Zombie et ZombieVoice, clips DontSave qui s'accumulent dans l'éditeur (rechargement de domaine désactivé), wiki pas mis à jour pour l'audio. Rapport envoyé à Rahim, aucun fichier de code modifié avant son accord. Non testé en jeu ni au casque (pas de mode Play lancé).
+
+## 144 — Musique de brèche et correctifs du checkup
+
+**Date** : 2026-11-09 · **Domaine** : Audio / Code
+
+> 1. "L’état « brèche » est presque toujours actif (`MusicPlayer.cs:95`) : il suffit d’une fenêtre sans planche, donc les 4 états de musique ne servent pas vraiment." ouais mais ducoup on ne fait quasiment jamais les planches donc cet état ne sert à rien
+
+> ok
+
+**Résultat** (fait par l'IA, Claude Code) : l'état « brèche » de MusicPlayer se déclenche quand un zombie vivant est dans le bunker (`WaveManager.AnyZombieInBunker`, zone `Zombie.BunkerArea`) au lieu d'une fenêtre sans planche. Musique remise en priorité 0 (jamais coupée faute de voix). HealthVignette : l'arc ambre ne remplace plus un arc rouge de blessure encore affiché ; nouvelle fonction `NotifyWarningIfUnseen` utilisée par Plank (planche à moins de 12 m et hors du champ de vision). Seuils Cogneur/Coureur définis une seule fois dans Zombie (`IsBruiser`, `IsRunner` publics), lus par ZombieVoice. Hauteur de la musique laissée telle quelle. Compilation vérifiée hors éditeur (dotnet build : 0 erreur) ; l'éditeur était en mode Play, donc pas de test en jeu ni au casque. Pas de commit : les mêmes fichiers contiennent les ajouts non commités d'Antigravity.
+
+---
+
+## 145 — Modèles détaillés du poste de surveillance
+
+**Date** : 2026-11-09 · **Domaine** : Graphismes
+
+> C'est encore low poly, corrige ça en utilisant de bonnes textures réalistes et optimisé
+
+(capture jointe : poste de surveillance en vue scène, après l'entrée 137)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Constat** : les textures de l'entrée 137 étaient bien appliquées et enregistrées ; le problème venait de la forme. La radio, l'enregistreur à LEDs, le clavier, l'étagère à écrans et le 5e écran (avec son pied) étaient de simples boîtes, et aucune texture ne pouvait le masquer.
+- **Modèles** : `Tools/blender/poste_surveillance.py` (Blender 5.2, en ligne de commande) construit 5 modèles détaillés, à la place exacte des boîtes, dans `Assets/Decor/Surveillance/` : étagère en tôle pliée sur montants tubulaires avec semelles vissées, écharpes et goulotte de câbles ; enregistreur avec façade, oreilles de baie vissées, fente cassette, boutons, molette, ouïes et pieds ; clavier à touches beiges et pupitre de commande des caméras (manette, boutons, molette, afficheur) sur socle incliné ; radio aux coins arrondis avec grille de haut-parleur, cadran, boutons, poignée et antenne télescopique ; moniteur avec cadre, coque arrière, boutons, rotule et socle. Arêtes biseautées, UV en projection cube (texture répétée tous les 0,6 m environ). Environ 15 000 triangles pour les 5 modèles, sans nouvelle texture : ils réutilisent les matériaux d'usure de l'entrée 137.
+- **Durable** : `Assets/Editor/PosteSurveillance.cs`, appelé par `RoomBuilder` (carte : avant la création des collisions ; 5e écran : dans `BuildExtraScreen`, avec les boîtes d'origine si le modèle manque). Appliqué aussi dans la `MainScene` ouverte (collisions en boîtes recalées), scène enregistrée.
+- Éclairage recuit (SAE501 > Cuire l'éclairage), scène enregistrée par le script de cuisson.
+- **Vérifié** : captures dans l'éditeur avant/après et vues rapprochées (`docs/captures/textures_usure/modeles_*.jpg`). **Pas testé au casque** (coût réel sur Quest 3 non mesuré, mais le surcoût est faible : ~15 000 triangles statiques regroupés). Rien poussé.
+
+
+---
+
+## 146 — Refonte complète du menu de fin de partie (Terminal BUNKER-OS World Space)
+
+**Date** : 2026-11-09 · **Domaine** : UI / UX (`/team-ui game-over-menu`)
+
+> /team-ui Do the game over menu properly
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Constat** : l'ancien `GameOverUI.cs` collait deux `TextMesh` sans cadre (`TexteGameOver` et `TexteBilan`) directement sur la caméra (`head`), imposait un rechargement automatique au bout de `15 s` (`restartDelay`), exigeait des raccourcis cachés (`Gâchette` ou maintien `B` pendant `1 s`), n'offrait aucun bouton pour revenir au menu principal (`Menu`), et laissait le curseur souris verrouillé/caché en version PC (`DesktopPlayer.cs`).
+- **Spécifications produites (`/team-ui`)** :
+  - `design/ux/game-over-menu.md` (Spécification UX complète 15/15 sections, validée `/ux-review` `APPROVED`).
+  - `design/ux/interaction-patterns.md` (Bibliothèque de patterns BUNKER-OS : `TerminalPanel`, `BigButton`, `BilanBox`/`StatRow`, pointeur VR/PC).
+  - `production/ui/game-over-menu/visual-design.md`, `engine-notes.md`, `review-ux-designer.md`, `review-art-director.md`, `review-accessibility-specialist.md`.
+- **Implémentation C#** :
+  - `Assets/Scripts/GameOverUI.cs` : remplacement du texte collé à la tête par un vrai terminal World Space **BUNKER-OS** (`Panneau_Fin`, `1,52 m x 1,24 m`, `scale = 0.8`, posé à `1,3 m` devant le joueur sur le cap horizontal, `UiKit.SetOnTop(true)`, `Physics.SyncTransforms()`, `MenuPointer`). Bichromie **Défaite** (`BUNKER-OS // ALERTE CRITIQUE`, `VOUS ÊTES MORT` en Rouge/Ambre) vs **Victoire** (`BUNKER-OS // EXTRACTION`, `VOUS AVEZ ÉCHAPPÉ` en Vert/Or). Encadré `BILAN DE MISSION` aligné en 2 colonnes (`StatRow`) avec badge `NOUVEAU RECORD !` en mode Survie. Boutons interactifs `MenuButton` sans relance automatique forcée : 3 boutons (`REPRENDRE AU NIVEAU X`, `RECOMMENCER (NIVEAU 1)`, `MENU PRINCIPAL`) si mort au niveau `>= 2` en Évasion, ou 2 boutons (`REJOUER` / `NOUVELLE PARTIE`, `MENU PRINCIPAL`) sinon, avec verrou anti-missclick `SafetyLock` de `1,0 s` après le fondu. Tous les champs publics historiques sont conservés pour ne pas toucher à `MainScene.unity` ni à `RoomBuilder.cs`.
+  - `Assets/Scripts/Desktop/DesktopPlayer.cs` : déverrouille automatiquement la souris (`LockCursor(false)`), bloque la recapture au clic gauche (`!GameOver`), et oriente doucement la caméra vers `GameOverUI.Instance.PanelTransform` dès que `GameOverUI.PanelOpen` est vrai.
+  - `Assets/Scripts/PauseMenu.cs` : bloque l'ouverture de la pause si `WaveManager.Instance.Victory` ou `GameOverUI.PanelOpen` est vrai.
+  - `Assets/Scripts/MenuButton.cs` : passage de la décroissance de `glow` en `Time.unscaledDeltaTime`.
+
+---
+
+## 147 — Textes des portes cachés par les murs
+
+**Date** : 2026-11-09 · **Domaine** : Interface / Rendu
+
+> Actuellement il est possible de voir les textes même à travers les murs, fait en sorte que ce ne s'affiche que quand le joueur soit proche de la porte (et qu'il n'y ai pas un mur qui sépare le joueur et le texte), à toi de voir c'est quoi la méthode la plus efficace / optimisée
+
+(capture jointe : panneau rouge « VERROUILLÉ » de la porte du stockage vu à travers un mur)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : les panneaux des portes sont des `TextMesh` avec le matériau par défaut de la police intégrée (`GUI/Text Shader`), dont le test de profondeur dépend d'une variable globale qui vaut « toujours » dans URP : le texte se dessinait par-dessus tout.
+- **Méthode choisie (la moins coûteuse sur Quest 3)** : nouveau shader `Assets/Shaders/WorldText.shader` (`SAE501/WorldText`) : test de profondeur normal (les murs cachent le texte, sans raycast) et fondu selon la distance à la caméra calculé dans le shader (plein jusqu'à 3,5 m, invisible au-delà de 5 m) ; aucun script par image. Compatible stéréo instanciée (VR) et PC.
+- Matériau partagé `Assets/Resources/WorldText.mat` ; `Assets/Scripts/WorldTextMaterial.cs` recopie la texture de la police quand Unity la reconstruit (police dynamique).
+- `RoomBuilder.MakeLabel` l'utilise : panneaux des 4 portes, état du générateur, affichage et étiquette de la radio (ombres coupées). Les textes d'interface (tutoriel, menus, HUD) gardent leur affichage par-dessus tout.
+- Appliqué aussi aux 7 textes de la `MainScene` ouverte, scène enregistrée (pas de reconstruction).
+- **Vérifié** : captures dans l'éditeur du panneau du stockage à 1,6 m (lisible), 4,2 m (estompé), 6 m et derrière la porte (invisible). **Pas testé au casque.**
+
+---
+
+## 148 — Murs qui entrent les uns dans les autres
+
+**Date** : 2026-11-09 · **Domaine** : Carte / Rendu
+
+> Comme on peut le voir il y a des abérations car les murs sont les uns dans les autres corrige ça
+
+(captures jointes : bande tachée à côté du disjoncteur du bunker, vue en fil de fer des murs)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : dans la carte Blender, les murs du couloir droit traversent le mur est du bunker ; leur face d'about tombe exactement dans le plan de la face visible du mur (plâtre du couloir contre papier peint du bunker) : z-fighting, une bande de 15 cm de chaque côté de la porte. Même problème sous les portes (deux planchers), aux angles des murs, des plinthes, des lambris et des corniches.
+- **Correction durable** : `Assets/Editor/MursSuperposes.cs`, appelé par `RoomBuilder` avant les collisions. Pour la structure fixe (murs, sols, plafonds, plinthes, corniches, lambris, encadrements), un triangle aligné sur les axes, entièrement recouvert par une face d'un autre objet dans le même plan et du même côté, est retiré (il ne se voyait qu'à travers l'autre). Les objets déplaçables ou à prendre ne sont pas touchés. Résultat : 224 triangles retirés sur 39 éléments ; copies des maillages dans `Assets/Generated/Recouvrements` (le FBX n'est pas modifié).
+- Appliqué dans la `MainScene` ouverte, scène enregistrée. Éclairage non recuit : les surfaces restantes sont les mêmes (seuls des doublons dans le même plan sont retirés).
+- **Vérifié** : capture avant/après du mur du disjoncteur (la bande tachée disparaît, seul le papier peint reste au lancer de rayon), vues des autres jonctions (couloir, stockage, cuisine, porte du couloir) sans trou. **Pas testé au casque.** Restent quelques carrés de 2 à 3 cm aux angles de plinthes et de corniches (recouvrement partiel, même matériau) et le bureau de commande qui chevauche le bureau de surveillance (mobilier, non traité).
+
+---
+
+## 149 — Branche develop et archivage des branches fusionnées
+
+**Date** : 2026-11-09 · **Domaine** : Git
+
+> Fait un push dans une branch propre et archive celles qui ont déjà été merge avec celle là
+
+(Puis, aux deux questions posées : « oui » pour inclure les changements Antigravity non commités, « Archive les au cas-où » pour les 16 branches.)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Nouvelle branche distante **`develop`** à partir de `feature/portage-pc` (portage PC, escalade corrigée, PR #146 fusionnée localement, textures PBR et modèles du poste de surveillance, shader WorldText, murs superposés), puis commit des ajouts Antigravity validés : audio de combat (ProcAudio, ZombieVoice, MusicPlayer), vignette de dégâts, musique de brèche et correctifs du checkup, menu de fin de partie, documents Game Studios (`project.yaml`, `AGENTS.md`, `design/`, `production/`) et entrées 138 à 146 du journal. Rien n'est fusionné dans `main`.
+- Restent hors commit : fichiers personnels (réglages URP, profil de build Quest avec l'identifiant du casque, `RuntimeActionBindings.json`, `DevAgentSettings.asset`, `Protection_suite`, `scripts/`), changements automatiques de l'éditeur dans `Assets/Generated` et `Tools/blender/cinematique`.
+- Wiki poussé (4 commits en attente : Version PC, escalade, tabouret et desserte, textes des portes, murs superposés).
+- 16 branches distantes entièrement contenues dans `develop` gardées en tags `archive/<nom>` puis supprimées : Gestion-vague-infini, Nouveau-son, UI-Hugo, claude/project-thread-6whioa, claude/project-thread-vr7je7, feature/7.2-effet-cctv, feature/74-zombie-test, feature/aex_usable, feature/ceinture-marteau, feature/map-finale, feature/menu-accueil, feature/zombie-animation, features/passer-attente, features/tutoriels, features/types-zombies, test/vagues-infinies. Gardées : `main`, `archive/version-pc`, `features/escalade-zombies` (PR #146 encore ouverte) et les 7 branches avec du travail absent de `develop`.
+
+---
+
+## 150 — Trous du toit irréguliers
+
+**Date** : 2026-11-09 · **Domaine** : Carte / Rendu
+
+> Change la forme du trou, un peu plus varié que juste un carré, et retire les tiges qui tombent du toit, fait un effet sur les bords du trou
+
+(capture jointe : trou carré au-dessus de l'établi, avec des tiges sombres qui pendent ; puis « Et la suite ? », pris comme accord pour quitter le mode Play et reconstruire)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : les deux trous du toit du bunker (au-dessus des lits et de l'établi) sont des carrés de 1,2 x 1,2 m découpés dans la dalle `Bunker_Ceiling` de la carte Blender ; les « tiges » sont 9 lianes en boîtes sombres de `Apoc_Vines_And_Moss` qui pendent de chaque trou jusqu'à 1,3 m du sol.
+- **Correction durable** : `Assets/Editor/TrousToit.cs`, appelé par `RoomBuilder` après les collisions (le FBX n'est pas modifié) :
+  - lianes qui pendaient des trous retirées (copie du maillage ; les taches de mousse au sol restent) ;
+  - **bord de béton cassé** qui remplit les coins du carré : ouverture irrégulière (~0,7 à 1,3 m), arête ébréchée, enduit tombé sous la dalle, tranche en béton nu plus sombre ; dessus et dessous dans le plan de la dalle avec les mêmes UV que le plafond (pas de raccord) ;
+  - **auréole noircie** (suie et saleté, texture de bruit, transparente vers l'extérieur) sous le plafond autour du trou ;
+  - **gravats** au sol sous chaque trou (9 éclats de 8 triangles, seulement sur le sol, pas sur les meubles).
+  - Coût : ~800 triangles de bord et ~330 d'auréole par trou, 1 matériau opaque et 1 transparent de plus, aucune collision (NavMesh, zombies et caisse inchangés). La poussière du toit tombe d'une zone de 0,75 m (au lieu de 1 m) pour rester dans l'ouverture.
+- Scène reconstruite (**SAE501 → Build VR Scene**) et éclairage recuit.
+- **Vérifié** (éditeur, sans mode Play) : captures avant/après (plus de tiges, bord irrégulier) ; la caisse de la radio a au moins 35 cm de jeu autour de son point de chute et rien ne bloque sa descente (lancer de boîte) ; les deux trous gardent leur lien NavMesh, `fromAbove` et leur poussière. **Non testé** en mode Play (chute réelle d'un zombie du toit et d'une caisse) ni **au casque**.
+
+---
+
+## 151 — Trous du toit élargis
+
+**Date** : 2026-11-09 · **Domaine** : Carte / Rendu
+
+> élargie le trou un peu
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- `TrousToit.cs` : rayon de base de l'ouverture porté de 80 % à 95 % du demi-côté du carré (minimum 75 % au lieu de 62 %), bord de béton plus fin contre le carré d'origine. L'ouverture passe d'environ 0,7-1 m à 0,9-1,15 m ; les coins du carré restent cassés, le bord reste irrégulier.
+- Caisse de la radio : toujours au moins 35 cm de jeu autour de son point de chute. Scène reconstruite, éclairage recuit.
+- **Vérifié** : capture dans l'éditeur. **Non testé** en mode Play ni au casque.
+
+---
+
+## 152 — Portail du jardin en fer forgé vieilli
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Rendu
+
+> Update la texture de la grille pour qu'lle soit plus réaliste
+
+(capture jointe : portail de sortie du jardin, barreaux noirs unis)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Cause** : les deux battants (`Garden_ExitGate_Left` / `_Right`) utilisaient `MetalDark`, le noir des cadres d'écrans, avec des UV incohérentes dans le FBX (barreaux écrasés ou étirés) : la texture d'usure n'y donnait presque rien.
+- **Textures** : `Tools/textures/generer_portail.py` (Python, à partir de `rust_coarse_01` de Poly Haven, CC0) génère albedo, normal et métal/lissé 1024 (`Assets/Room/Textures/Usure/Portail_Fer_*`) : peinture noire satinée écaillée, éclats rouillés plus nombreux au pied, coulures de rouille sous les éclats, terre et mousse sur les 50 premiers centimètres, relief martelé du fer forgé. ASTC 6x6 sur Quest (réglages de `TexturesUsure`).
+- **Application durable** : `Assets/Editor/PortailFer.cs`, appelé par `RoomBuilder` : UV refaites par projection sur les faces (u = 1 m de largeur, v = hauteur du battant, pour que la rouille soit en bas et les coulures vers le bas), matériau propre `Portail_Fer`. Même nombre de triangles, un matériau de plus. Le cadenas n'est pas touché.
+- Scène reconstruite, éclairage recuit.
+- **Vérifié** : captures dans l'éditeur (vue d'ensemble et de près). **Non testé** au casque.
+
+---
+
+## 153 — Mini serveur pour le multijoueur
+
+**Date** : 2026-11-10 · **Domaine** : Game design
+
+> Ok réfléchissons à commentre mettre en place un mini serveur pour le mode multijoueur
+
+**Résultat** (réflexion écrite par l'IA, Claude Code ; aucun code)
+
+- Document : `Mini_serveur_multijoueur.md` dans les fichiers du projet Claude (pas dans le dépôt), suite du plan 103.
+- Constat : aucun code réseau dans le projet, permission Internet et HTTP non chiffré désactivés, rendu dans 3 jours, gel des fonctionnalités dépassé, multijoueur toujours « NE FERA PAS » dans le GDD.
+- Trois options comparées : hôte = un joueur, serveur dédié Unity sur le Mac (aussi coûteux, la difficulté est la synchronisation du monde, pas le serveur), mini serveur Python de lobby et de scores où chaque casque joue sa propre partie (lobby, prêt, top départ, graine commune, score par joueur et d'équipe, page de classement pour le jury ; 2,5 à 3 j).
+- Conseil : ne pas toucher au build rendu ; option « parties en parallèle » seulement sur une branche à part et seulement si Rahim la valide ; vraie coop après le rendu.
+
+---
+
+## 153 — Alarme de début de vague retirée
+
+**Date** : 2026-11-10 · **Domaine** : Audio
+
+> retire des sons l'alarme du début des vagues, seul le rire ( le sons que je t'avais fait mettre) suffit
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Compris : « le rire » = le son de début de vague ajouté au journal 127 (`Vague_Debut.ogg`, joué par `WaveTitle`, que le code appelle un chuchotement) ; c'est celui qui est gardé. À confirmer par Rahim si c'est un autre son.
+- `WaveManager.StartLevel` ne joue plus l'alarme à deux tons (`ProcAudio.Alarm`). L'alarme reste jouée une fois au déblocage du générateur au niveau 4 (« LE GÉNÉRATEUR EST PRÊT »), à 60 % du volume : ce n'est pas un début de vague, laissée telle quelle.
+- Script seul, scène non reconstruite. Wiki (page Niveaux et vagues) mis à jour. **Non testé** en mode Play ni au casque.
+
+
+---
+
+## 154 — Modélisation de l'arène 1v1 dans Blender via MCP et décomposition des systèmes
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Level Design / Game design
+
+> /map-systems En te connectant a blender en MCP et en t'inspirant de l'univers de la map actuellement contruite sur Unity / Le thème du jeu : Créer moi une map 1V1
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Connexion MCP Blender** : Détection et exécution directe de scripts Python dans Blender 5.2.1 LTS.
+- **Création 3D de l'Arène Bunker 1v1 (`Tools/blender/arena_1v1/arena_1v1_bunker.blend` et `.fbx`)** :
+  - **Layout & Structure** : Dimensions 30 m x 16 m x 4 m, sol béton industriel, murs d'enceinte renforcés.
+  - **Level Design tactique symétrique à 180°** : Brise-vue central en béton (6 m x 2.8 m) interdisant tout tir immédiat au spawn, 8 piliers porteurs massifs (1.2 m), 4 chicanes métalliques d'approche.
+  - **Couvertures & Props** : Barils métalliques aux couloirs de flanquement, établis d'atelier, caisses d'approvisionnement disputées au centre.
+  - **Repères de spawn & gameplay** : Empties `Spawn_Player_1`, `Spawn_Player_2`, et 5 points de ramassage d'armes/munitions (`Pickup_Weapon_*`, `Pickup_Ammo_*`, `Pickup_Special_Center`).
+  - **Éclairage d'ambiance** : Points lumineux d'ambiance ambre aux bases de réapparition, néons froids industriels sur les couloirs latéraux, alerte centrale, caméra en plongée tactique.
+- **Documentation Game Design & Systèmes** :
+  - Création de `design/gdd/systems-index.md` (décomposition complète des 15 systèmes du jeu, intégration du 1v1).
+  - Rédaction de la fiche de Level Design dans `design/gdd/arena-1v1-map.md`.
+  - Mise à jour du point de contrôle de session `production/session-state/active.md`.
+
+---
+
+## 155 — Texturing PBR procédural et Lighting Design de l'Arène 1v1 dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Graphismes / Éclairage
+
+> Pour le blocking de la map je suis d'accord, fait le texturing / lightning aussi
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Texturing PBR Procédural & UV Mapping** :
+  - `Mat_Concrete_Floor` : Shader complet combinant macro-bruit d'humidité et micro-grain, roughness graduée et bump relief. Projection UV cube 4.0m.
+  - `Mat_Concrete_Wall` : Béton de bunker militaire sombre texturé avec grain de coffrage, salissures et bump.
+  - `Mat_Steel_Dark` : Acier laminé métallique (0.92) avec micro-rayures bruitées.
+  - `Mat_Rust_Cover` : Oxydation étagée (brique et brun foncé) sur barils et tôles.
+  - `Mat_Hazard_Yellow` : Jaune alerte industriel dégradé sur les caisses centrales.
+- **Lighting Design (15 sources d'éclairage équilibrées)** :
+  - **Spawns Joueur 1 & Joueur 2** : Spots verticaux chauds Ambre 450 W (`#FF9933`) et fills doux 60 W.
+  - **Couloirs de flanquement** : 4 spots néons industriels froids blafards 380 W (`#66B2FF`) créant une alternance d'ombres et de lumière.
+  - **Zone centrale** : 2 spots d'alarme rouge ambré 500 W (`#FF3311`) sur les caisses et fill central 120 W.
+  - **Rim lights** : 4 éclairages rasants sur les piliers pour détacher nettement les silhouettes en VR.
+  - **Color Management** : Configuration AgX Punchy (+0.2 EV d'exposition).
+- **Mise à jour des fichiers** :
+  - `Tools/blender/arena_1v1/arena_1v1_bunker.blend` et `arena_1v1_bunker.fbx` mis à jour et réexportés.
+  - Documentation de level design mise à jour dans `design/gdd/arena-1v1-map.md`.
+  - Checkpoint de session mis à jour dans `production/session-state/active.md`.
+
+---
+
+## 156 — Passe d'irrégularités réalistes et props industriels sur l'Arène 1v1 dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Graphismes / Modélisation
+
+> Améliore la map, un peu plus de props, plus de grouves, moins de carrés justes, un peu plus de realismes et d'irrégularités
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Casse des angles droits & chanfreins** :
+  - Biseautage (Bevel 8 cm) et adoucissement des normales sur les 8 piliers porteurs et le mur brise-vue central.
+  - Déformation par bruit organique sur les sommets supérieurs pour simuler des éclats de maçonnerie et du béton ébréché.
+- **Réseau de tuyauteries industrielles** :
+  - 4 conduites horizontales en acier et rouille (`Pipe_North_*`, `Pipe_South_*`) longeant les plafonds Nord et Sud.
+  - 4 colonnes d'alimentation verticales (`Pipe_Drop_*`) reliant le plafond au niveau intermédiaire.
+- **Désaxement organique des couvertures & props** :
+  - Barils métalliques renversés au sol avec rotation désaxée (`Barrel_Overturned_NW` et `_SE`).
+  - Caisses de munitions pivotées de quelques degrés et caisses secondaires empilées de travers (`Crate_Stack_*`).
+  - Barils supplémentaires placés dans les angles morts des zones de spawn.
+- **Débris & Flaques réfléchissantes** :
+  - 6 amas de blocs de béton brisés et décombres rocheux (`Rubble_*`) au pied des piliers.
+  - 4 flaques d'eau sombre déformées (`Mat_Water_Puddle`, IOR 1.333, roughness 0.08) sous les néons latéraux générant des reflets spéculaires au sol.
+- **Mise à jour des fichiers** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (154 Ko) et réexport de `arena_1v1_bunker.fbx` (216 Ko).
+  - Mise à jour de `design/gdd/arena-1v1-map.md`, `production/session-state/active.md` et `docs/PROMPTS.md`.
+
+---
+
+## 157 — Déconstruction des formes cubiques et enrichissement réaliste de l'Arène 1v1 dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D
+
+> C'est encore trop carrés, un peu plus d'irrégularité (capture Blender fournie)
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Suppression de l'aspect « cubes parfaits » et boîtes monolithiques** :
+  - **Piliers octogonaux et piliers fracturés** : Remplacement des 8 blocs de béton cubiques par des sections octogonales de bunker militaire. Deux piliers (`Pillar_Octo_2` et `_3`) ont été brisés net à 1.6 m avec sommet écroulé et profil déchiqueté.
+  - **Barrières d'approche brisées en diagonale** : Suppression des 4 cloisons métalliques plates ; remplacement par des murets orientés à 15° (`Broken_Barrier_*`) avec crête éboulée en dégradé diagonal et chanfreins biseautés.
+  - **Mur central à meurtrière** : Remplacement du rectangle plein par `Central_Breached_Wall`, présentant un affaissement central formant une fenêtre de tir protégée.
+- **Ajout de géométries non-orthogonales & props de guerre** :
+  - **Hérissons tchèques antichars** : 2 croisillons de profilés métalliques en acier croisé (`Czech_Hedgehog_NW` et `_SE`), apportant des angles vifs à 45° et 60°.
+  - **Tôles ondulées cintrées** : Plaques métalliques à profil sinusoïdal (`Corrugated_Sheet_*`) calées de biais contre les piliers écroulés.
+  - **Redoutes en sacs de sable arrondis** : 18 sacs de sable courbés (`Sandbag_*`) agencés en arc de cercle et superposés en quinconce devant les caisses de tir.
+- **Fichiers & Exports mis à jour** :
+  - `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (277 Ko) et export `arena_1v1_bunker.fbx` (428 Ko).
+  - Documentation de level design mise à jour dans `design/gdd/arena-1v1-map.md`.
+
+---
+
+## 158 — Élargissement de l'Arène 1v1, passerelles surélevées et escaliers d'accès dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D / Level Design
+
+> Fait la plus large, avec aussi des espaces en hauteur, des escaliers pour monter
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Élargissement spatial de l'Arène** :
+  - **Dimensions au sol** : Passage de 30 m x 16 m à **34.0 m x 26.0 m** (surface au sol de 884 m²).
+  - **Hauteur sous plafond** : Augmentation de 4.0 m à **5.2 m** pour accueillir le jeu sur deux niveaux verticaux.
+  - Recalage des murs d'enceinte et des réseaux de tuyauteries industrielles aux nouvelles cotes.
+- **Ajout de la verticalité (Niveau +2.4m)** :
+  - **Deux passerelles surélevées** (`Catwalk_North` et `Catwalk_South`) en béton armé de 12.0 m x 3.8 m x 0.35 m, portées par des fûts octogonaux (`Catwalk_Pillar_*`).
+  - **Garde-corps & rambardes métalliques** (`Rail_*`) avec main courante à 1.05 m et montants verticaux ajourés pour protéger les tirs et voir en contrebas.
+  - **Nids de tir / Armes de précision** : Deux caisses d'armement lourd (`High_Ground_Crate_*`) et points de ramassage sniper (`Pickup_HighGround_Sniper_*`) sur chaque passerelle.
+- **Escaliers d'accès industriels en béton** :
+  - `Stairs_West_North` : 11 marches (giron 35 cm, hauteur 20 cm, largeur 1.5 m) montant de la zone Ouest vers la passerelle Nord.
+  - `Stairs_East_South` : 11 marches montant de la zone Est vers la passerelle Sud en symétrie 180°.
+- **Éclairage & Caméra** :
+  - Ajout de 4 spots d'éclairage (`Spot_Catwalk_*` et `Spot_Stairs_*`) pour mettre en valeur les accès verticaux.
+  - Recul et rehaussement de `Tactical_Overview_Cam` (Z = 22 m, Y = -25 m) pour cadrer l'ensemble du volume élargi.
+- **Fichiers & Exports mis à jour** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (299 Ko) et export de `arena_1v1_bunker.fbx` (551 Ko).
+  - Documentation de level design mise à jour dans `design/gdd/arena-1v1-map.md`.
+  - Checkpoint de session mis à jour dans `production/session-state/active.md`.
+
+---
+
+## 155 — Multijoueur coop en réseau local (Netcode)
+
+**Date** : 2026-11-10 · **Domaine** : Gameplay / Réseau
+
+> fait l'option A
+>
+> Go pour netcode alors
+
+**Résultat** (code écrit par l'IA, Claude Code, sur la branche `feature/multijoueur` ; build rendu non touché)
+
+- **Netcode for GameObjects 2.13.3** + Multiplayer Play Mode 3.0.0. Le Meta XR SDK 205 contient un « building block » NGO qui ne compile pas sous Unity 6.6 dès que Netcode est installé : 2 lignes corrigées dans le cache des paquets par `Tools/multijoueur/patch_meta_ngo.sh` (avec l'accord de Rahim). Unity remet le fichier d'origine quand le dossier Library est recréé : relancer le script après un clone.
+- **Menu** : MULTIJOUEUR → HÉBERGER / REJOINDRE (parties trouvées sur le Wi-Fi par diffusion UDP, `LanDiscovery`) → LOBBY (joueurs, PRÊT, compte à rebours de 5 s quand tous sont prêts, puis Vagues infinies pour tous).
+- **Partie** : l'hôte fait tourner vagues et zombies ; les autres casques ont des zombies « marionnettes » (positions 15 fois par seconde, coups, morts) ; leurs tirs sont appliqués par l'hôte. Avatars des joueurs (tête, mains, couleur), vie par joueur (les zombies visent le joueur vivant le plus proche), joueur à terre relevé à la pause, fin quand tous sont tombés. Barricades partagées (pose, clou, retrait, arrachage).
+- **Scores** : 100 par zombie, +50 à la tête, +25 à la mêlée, 20 par planche posée ; équipe = somme + 500 par vague. Affichés sur l'écran du bunker et dans le bilan.
+- Android : permission Internet (profil Meta Quest) et verrou multicast (manifeste).
+- **Vérifié** : compilation sans erreur ; dans l'éditeur, hôte seul : lobby, découverte de la partie, chargement de la scène, avatar, vague, zombie tué et score (150 pour un tir à la tête), double d'un joueur distant qui transmet les coups. **Non testé** : un vrai client (deuxième instance), le Quest, deux casques.
+- Wiki : page `Multijoueur`.
+
+
+---
+
+## 159 — Éclairage cinématique EEVEE, biseautage des arêtes, contreforts d'enceinte et détails militaires
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D / Rendu Blender
+
+> L'éclairage est trop sombre, éclaire un peu plus
+> [Capture de la fenêtre Blender montrant un aspect encore trop cubique et un éclairage d'aperçu plat]
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Suppression du rendu cubique & biseautage (Beveling)** :
+  - Ajout systématique d'un modificateur `Bevel` (2 segments, limite angulaire 35°, largeur 3 à 6 cm) sur l'ensemble des éléments monolithiques : murs périmétriques, piliers octogonaux, murets brisés, mur central de brèche et passerelles métalliques. Les arêtes n'ont plus d'angle rasoir informatique et accrochent désormais des reflets spéculaires réalistes.
+- **Architecture de bunker militaire & dé-cubage des murs** :
+  - **22 contreforts en béton armé** (`Buttress_*`) placés tous les 4.5 m le long des murs Nord, Sud, Est et Ouest pour briser les grandes parois planes monolithiques.
+  - **Socles et plinthes biseautées** (`Skirting_*`) de 35 cm de haut sur 25 cm d'épaisseur au pied de chaque mur d'enceinte.
+  - **2 portes blindées de sas de décompression** (`BlastDoor_West` et `BlastDoor_East`) de 3.6 m x 2.8 m avec linteau renforcé, montants acier, nervures horizontales, volant de verrouillage étanche et bande de balisage jaune d'avertissement (`Mat_Hazard_Yellow`).
+- **Dégâts réels & gravats angulaires** :
+  - **12 fers à béton tordus et rouillés** (`Rebar_*`, matériau `Mat_Rust_Cover`) émergeant des sommets fracturés des piliers écroulés et de la brèche du mur central.
+  - **38 débris de béton et blocs de roche angulaires** (`Rubble_*`) dispersés autour des zones de destruction.
+  - **Remplacement des cubes de pickup par des caisses militaires** (`Pickup_*`) avec coffre biseauté, couvercle débordant, poignées et renforts d'acier.
+- **Refonte de l'éclairage et activation du rendu EEVEE Next** :
+  - Activation de l'illumination globale (`Global Illumination`, Raytracing EEVEE avec 4 rayons GI).
+  - Bascule des viewports 3D en mode `RENDERED` avec `Scene Lights` et `Scene World` cochés (évitant le mode plat de l'aperçu matériel studio).
+  - Création de **10 boîtiers d'éclairage néon industriels suspendus** (`Fixture_*`) avec double tube émissif (`Mat_Lamp_Emissive`) au-dessus des passerelles, voies centrales et escaliers, plus balises ambrées aux sas de réapparition.
+- **Fichiers & Exports mis à jour** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (361 Ko).
+  - Exportation complète de `arena_1v1_bunker.fbx` (1.15 Mo, 231 objets).
+  - Session active mise à jour dans `production/session-state/active.md`.
+
+
+---
+
+## 160 — Rapprochement des passerelles contre les murs périmétriques dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D / Level Design
+
+> Le gap est trop gros, rapproche un peu plus du mûr
+> [Capture d'écran montrant le vide d'environ 90 cm entre la bordure arrière de la passerelle et le mur de béton]
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Suppression du vide (gap) entre passerelles et murs** :
+  - **Passerelle Nord** (`Catwalk_North`) : Translation de **+0.92 m sur l'axe Y** (centre passé de Y = 10.20 m à Y = 11.12 m). La bordure arrière (à Y = 13.02 m) vient s'encastrer de 2 cm dans la face interne du mur Nord (`Wall_North`, Y = 13.00 m) et dans les contreforts en béton armé, éliminant totalement le vide de 90 cm et évitant tout effet de scintillement coplanaire (z-fighting).
+  - **Passerelle Sud** (`Catwalk_South`) : Translation symétrique de **-0.92 m sur l'axe Y** (centre passé de Y = -10.20 m à Y = -11.12 m), bordure arrière en butée parfaite contre le mur Sud (`Wall_South`, Y = -13.00 m).
+- **Recalage coordonné de l'ensemble des éléments solidaires** :
+  - **Escaliers d'accès** : Déplacement des 11 marches de `Stairs_West_North` (+0.90 m sur Y) et des 11 marches de `Stairs_East_South` (-0.90 m sur Y) pour conserver un alignement direct avec l'arrivée des passerelles.
+  - **Garde-corps & rambardes** : Les montants (`Rail_*_Post_*`) et mains courantes restent positionnés sur la face avant tournée vers l'arène (Y = 9.25 m pour le Nord, Y = -9.25 m pour le Sud).
+  - **Piliers de soutènement** : Fûts octogonaux (`Catwalk_Pillar_*`) translatés à Y = ±9.90 m sous la rive avant des plateformes.
+  - **Éclairages & caisses d'armes** : Recalage des spots (`Spot_Catwalk_*`, `Spot_Stairs_*`), des luminaires suspendus (`Fixture_*`) et des points d'apparition d'armes surélevées (`Pickup_HighGround_Sniper_*`).
+- **Fichiers & Exports mis à jour** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (362 Ko).
+  - Export FBX mis à jour : `arena_1v1_bunker.fbx` (1.15 Mo).
+  - Checkpoint de session mis à jour dans `production/session-state/active.md`.
+
+
+---
+
+## 161 — Sons de la PR #151 intégrés au portage PC et au multijoueur
+
+**Date** : 2026-11-10 · **Domaine** : Audio
+
+> Récupérer uniquement les sons (fichiers audio + le câblage nécessaire pour qu'ils jouent) de la PR #151 de LeCapet, pas les modifs UI. Les intégrer à la version actuelle de Rahim : le portage PC + le multijoueur.
+> (demande transmise par le coordinateur du projet)
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- **Repris de la PR #151** (« Modif UI et rajout son », branche `Nouveau-son` de LeCapet) : les 7 fichiers audio et le code qui les joue. La PR partait d'une base très ancienne (journal 097) : rien n'a été fusionné tel quel, le câblage a été réécrit sur la version actuelle (branche `feature/multijoueur`, qui contient le portage PC).
+- **Sons** : `Assets/Resources/Sounds/` : `wood_hit`, `wood_break`, `Wood_hammer_nail`, `axe_whoosh`, `flesh_zombie_hit`, `zombie_bite`, `zombie_impact_fall_body_die`. Import : mono, Vorbis 0,7, « Decompress On Load » (requis pour le découpage automatique). Placés dans `Resources` pour être trouvés sans reconstruire les prefabs ni la scène.
+- **`AudioSlices.cs`** (de la PR) : découpe toute seule une bande son en frappes séparées (d'après les silences) et coupe la fin silencieuse de `wood_break`. Retiré : la dépendance à une banque `GameSounds` qui n'existe pas dans le dépôt (la PR ne compilait pas sans elle).
+- **Câblage** : planche frappée par un zombie (`wood_hit`, une frappe au hasard) et arrachée (`wood_break`, joué aussi chez les autres joueurs) ; clou enfoncé (`Wood_hammer_nail`) ; souffle de la hache et du pied de biche (`axe_whoosh`, un par grand geste, à la place du souffle procédural) ; zombie touché (`flesh_zombie_hit`, à la place du bruit de chair ; la tête garde son craquement), morsure calée sur le coup (`zombie_bite`), chute du corps (`zombie_impact_fall_body_die`, à la place du bruit sourd). Sans le fichier, chaque script garde son ancien son procédural.
+- **Différence avec la PR pour le multijoueur** : la PR déclenchait les sons de zombie en surveillant ses PV et son état, ce qui ne marche pas sur les marionnettes d'un client. Ils sont appelés directement par `Zombie` (coup reçu, attaque, mort), y compris sur les marionnettes ; la morsure d'une marionnette ne se joue que si elle est contre le joueur de ce casque.
+- **Écarté** : les modifs d'interface (`GameOverUI`, `MainMenu`, `GameStats`, `WaveManager` : mode infini et écran de fin) et le doublon `Nail (1).cs` (deuxième classe `Nail`, erreur de compilation). Aucun son de vague touché (le début de vague reste `Vague_Debut`).
+- **Vérifié** : le code compile (compilateur d'Unity lancé hors de l'éditeur). **Non vérifié** : écoute en jeu, découpage réel des bandes son, réglage des volumes, multijoueur à deux, casque.
+
+
+
+---
+
+## 161 — Correction des aberrations géométriques, luminaires corrompus et artefacts de maillage dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D / Rendu Blender
+
+> Corrige les abérations comme celle ci
+> [Capture de la vue 3D montrant des luminaires en forme d'avions en papier déformés au plafond, un maillage pincé sur le mur central, et un amas de cubes jaunes et sacs de sable informes au sol]
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Correction des luminaires suspendus (`Fixture_*`)** :
+  - Suppression intégrale des anciens boîtiers de néon dont les indices de sommets bmesh avaient produit des polygones étirés en ailes d'avions en papier géantes.
+  - Reconstitution propre de 10 luminaires industriels aux cotes réelles (boîtier tôle d'acier 2.2 m x 0.35 m x 0.08 m, deux tubes néons cylindriques émissifs continus sous le boîtier et câbles verticaux reliés au plafond à Z = 5.2 m).
+- **Refonte intégrale du mur central (`Central_Breached_Wall`)** :
+  - Suppression de l'ancienne géométrie booléenne non-planaire qui générait des facettes et triangles disgracieux sur les pentes de la brèche.
+  - Modélisation propre en quads réguliers (profil en U avec hauteur 2.2 m sur les flancs et appui de tir propre à 1.25 m au centre), arêtes biseautées douces (`Bevel_SoftEdge`) et ombrage lissé sans pliure.
+  - Remplacement de la boucle de ferraille flottante par 4 fers à béton d'ancrage droits et scellés dans le béton (`Rebar_Breach_*`).
+- **Nettoyage de l'amas au pied du mur central** :
+  - Suppression des 2 gros blocs jaunes superflus (`Supply_Crate_Central_North` et `_South`) et des 18 sacs de sable informes (`Sandbag_C_*`, `Sandbag_S_*`) qui s'interpénétraient.
+  - Mise en valeur dégagée de la caisse d'armement central de duel (`Pickup_Special_Center`) posée au sol au niveau de la brèche.
+- **Atténuation de l'éclairage agressif** :
+  - Augmentation du fondu des cônes de spots (`spot_blend` porté à 0.75) et du rayon d'ombrage doux (`shadow_soft_size = 0.35`) pour supprimer les traînées angulaires dures au sol et les reflets brûlés sur la crête du mur.
+  - Baisse de la puissance du spot d'alarme central de 900 W à 450 W avec teinte ambrée chaleureuse.
+- **Fichiers & Exports mis à jour** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (331 Ko).
+  - Export FBX mis à jour : `arena_1v1_bunker.fbx` (1.00 Mo).
+  - Checkpoint de session mis à jour dans `production/session-state/active.md`.
+
+
+---
+
+## 162 — Ajout du toit en béton armé, poutres maîtresses en acier et gaine de ventilation dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D / Level Design
+
+> Rajoute un toit a la map
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Dalle de toit en béton armé (`Ceiling_Slab`)** :
+  - Dimensions de **34.8 m (X) x 26.8 m (Y) x 0.4 m (Z)**, posée directement au sommet des murs d'enceinte (face inférieure à Z = 5.20 m, sommet à Z = 5.60 m).
+  - Matériau béton armé biseauté (`Mat_Concrete_Wall`), scellant hermétiquement l'environnement indoor du bunker pour la VR et le calcul des ombres.
+- **Charpente industrielle & poutrelles en I sous plafond** :
+  - **5 poutres maîtresses en acier** (`Ceiling_Beam_X*`), profilés métalliques de 26.0 m de portée (traversant toute la largeur de l'arène du mur Sud au mur Nord) placés à X = -12, -6, 0, 6, 12 m.
+  - Section de 28 cm de largeur sur 35 cm de retombée sous dalle (`Mat_Steel_Dark`).
+- **Gaine de ventilation technique principale (HVAC)** :
+  - Gaine d'aération longitudinale en tôle d'acier galvanisé (`Ceiling_HVAC_Duct`) de 33.0 m de long sur 65 cm de large et 40 cm de haut, suspendue à Z = 4.95 m.
+  - 5 colliers métalliques de cerclage de maintien (`HVAC_Strap_*`) espacés tous les 5.5 m.
+- **Ancrage physique & organisation** :
+  - Les câbles de suspension des 10 luminaires néon (`Fixture_*`) viennent désormais s'ancrer directement dans la sous-face du toit et des poutrelles.
+  - Regroupement des 12 éléments de toiture dans une sous-collection dédiée `Arena_Ceiling` (permettant à l'utilisateur de masquer/afficher le toit en un clic dans l'Outliner de Blender s'il souhaite inspecter la vue tactique d'en haut).
+  - Ajout d'une caméra intérieure à hauteur d'yeux (`Arena_Interior_Cam` à Z = 1.7 m, focale grand angle 20 mm).
+- **Fichiers & Exports mis à jour** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (338 Ko).
+  - Export FBX mis à jour : `arena_1v1_bunker.fbx` (1.04 Mo, 217 objets).
+  - Checkpoint de session mis à jour dans `production/session-state/active.md`.
+
+
+---
+
+## 163 — Rehaussement de la hauteur sous plafond à 7.0 m, piliers et toiture dans Blender via MCP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Modélisation 3D / Level Design
+
+> Il faudrait le faire plus haut
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Rehaussement du plafond et volume global de l'Arène** :
+  - **Hauteur sous plafond** : Augmentation de 5.2 m à **7.0 m** (+1.80 m de dégagement vertical).
+  - Au niveau du sol (Z = 0.0 m) : hauteur sous plafond majestueuse de 7.0 m, conférant l'ampleur d'un hangar ou alvéole de bunker lourd.
+  - Au niveau des passerelles (Z = 2.4 m) : dégagement de **4.6 m sous plafond** (éliminant toute sensation d'écrasement ou de plafond bas en VR).
+- **Ajustement coordonné des éléments structuraux** :
+  - **Murs périmétriques & contreforts** : `Wall_North`, `South`, `East`, `West` et les 22 contreforts verticaux portés à 7.0 m de haut (centre à Z = 3.5 m).
+  - **Piliers octogonaux de soutien** : Les 6 piliers intacts (`Pillar_Octo_1`, `4`, `5`, `6`, `7`, `8`) s'étendent désormais du sol au plafond (hauteur 7.0 m) pour supporter la charpente, accentuant le contraste avec les piliers écroulés maintenus à 1.6 m.
+  - **Dalle de toiture & charpente** : `Ceiling_Slab` rehaussée à Z = 7.0 m (sous-face) / 7.4 m (sommet). Les 5 poutrelles d'acier (`Ceiling_Beam_X*`) sont calées à Z = 6.825 m et la gaine HVAC à Z = 6.75 m.
+- **Éclairages & caméras rééchelonnés** :
+  - Rehaussement des 4 lumières de plafond (`Area_Ceiling_*`) à Z = 6.6 m avec puissance ajustée (1200 W / 950 W) pour maintenir un éclairement franc et net au sol.
+  - Recalage des luminaires néons suspendus à Z = 5.6 - 5.8 m avec câbles d'ancrage allongés (1.2 m jusqu'au plafond).
+  - Caméra d'aperçu tactique (`Tactical_Overview_Cam`) rehaussée à Z = 27.0 m, Y = -28.0 m.
+- **Fichiers & Exports mis à jour** :
+  - Sauvegarde de `Tools/blender/arena_1v1/arena_1v1_bunker.blend` (343 Ko).
+  - Export FBX mis à jour : `arena_1v1_bunker.fbx` (1.05 Mo, 217 objets).
+  - Checkpoint de session mis à jour dans `production/session-state/active.md`.
+
+
+---
+
+## 164 — Import propre de l'arène 1v1 dans Unity ("Alvéole 17"), nouvelle scène et intégration menu multijoueur
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Unity 6 / Multijoueur Netcode / UI Menu
+
+> Ok, fait l'import porpre dans Unity de cette map avec une nouvelle scène comme le sysètme de la map solo, mais pour le coup là c'est une des maps multi joueur de 1v1, donne lui un nom de map et intègre le en accessible dans le menu multijoueur en 1V1 dans les maps
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Nom officiel de la carte** : **Alvéole 17** (`Arena1v1_Bunker`).
+- **Import propre des assets dans Unity (`Assets/Arena1v1/`)** :
+  - Modèle 3D complet importé dans `Assets/Arena1v1/arena_1v1_bunker.fbx` (1.05 Mo, 217 objets).
+  - Génération de 8 matériaux URP Lit dans `Assets/Arena1v1/Materials/` (`Mat_Concrete_Floor`, `Mat_Concrete_Wall`, `Mat_Steel_Dark`, `Mat_Rust_Cover`, `Mat_Hazard_Yellow`, `Mat_Water_Puddle`, plus néons et balises d'alarme émissifs `Mat_Lamp_Emissive` et `Mat_Warning_Emissive`).
+  - Remapping automatique des matériaux au niveau du `ModelImporter` du FBX.
+- **Création par script de la scène de jeu (`Assets/Editor/Arena1v1Builder.cs`)** :
+  - Menu Unity dédié : **SAE501 → Build Arena 1v1 Scene**.
+  - Génération de la scène autonome `Assets/Scenes/Arena1v1_Bunker.unity` (431 Ko).
+  - Colliders optimisés : `MeshCollider` (statique) sur le sol, murs, passerelles, marches d'escalier, piliers et `MeshCollider` convex sur les caisses, barricades et gravats.
+  - Éclairage temps réel URP : 4 lumières zénithales de plafond (60 W / 50 W), 2 spots d'alarme ambrés aux sas, spots sur passerelles et escaliers, ambiance de bunker sans fuite de lumière.
+  - Spawns opposés : `Spawn_Player_1` (Ouest, `(-13, 0.1, 0)`, regard vers l'Est) et `Spawn_Player_2` (Est, `(13, 0.1, 0)`, regard vers l'Ouest).
+  - Armes & chargeurs au sol (M1911 aux sas, fusils de précision sur passerelles hautes, arme spéciale au centre de la brèche).
+  - Configuration XR Origin rig complète (mains animées, DirectInteractor, CharacterController, PlayerFallGuard, Crouch, SmoothTurn).
+  - Enregistrement de la scène dans `EditorBuildSettings.scenes` (index 2).
+- **Intégration au Menu Multijoueur et Netcode** :
+  - **Lobby (`NetLobby.cs`)** : Ajout du mode duel 1v1 synchronisé par `NetworkVariable<int> ModeIndex` (0: Coop Vagues infinies, 1: Coop Évasion, 2: **Duel 1v1 — Alvéole 17**). En mode duel, la scène cible bascule automatiquement sur `Arena1v1_Bunker` et la limite de joueurs est fixée à 2.
+  - **Menu UI (`MainMenuMulti.cs`)** : Le bouton de mode dans le lobby permet de basculer instantanément entre le Coop Zombies et le Duel 1v1 sur Alvéole 17.
+  - **Découverte Wi-Fi (`LanDiscovery.cs`)** : La diffusion UDP annonce le nom du mode et de la carte (`DUEL 1V1 : ALVÉOLE 17`), visible dans la liste des parties trouvées.
+  - **Gestionnaire de match à mort (`NetDuel.cs`)** : Gère les rounds (premier à 3 victoires), le tableau des scores 3D flottant au centre de l'arène, les réapparitions aux sas opposés et le retour au terminal après victoire.
+  - **Hitbox PvP (`PlayerHitbox.cs` & `NetPlayer.cs`)** : Tête et torse des avatars distants munis de colliders et détection d'impact de balles (50 PV à la tête, 25 PV au corps).
+- **Point de contrôle** : Actualisé dans `production/session-state/active.md`.
+
+
+---
+
+## 165 — Élimination du flickering et du grésillement des lumières URP sur l'arène 1v1
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Rendu URP / Éclairage / Performance Quest 3
+
+> Les lumières n'arrêtent pas de flickers (grésiller) corrige ça
+> [Capture d'écran de l'éditeur Unity montrant la scène Arena1v1_Bunker avec les ampoules et artefacts de scintillement]
+
+**Résultat** (fait par l'IA, Antigravity)
+
+- **Diagnostic technique de la cause racine** :
+  - Dans le pipeline Universal Render Pipeline (URP) en mode Forward (profil mobile Meta Quest 3, `Quest_RPAsset.asset`), la limite stricte de lumières additionnelles par objet est de 8 (`m_AdditionalLightsPerObjectLimit: 8`).
+  - L'arène comportait 11 sources lumineuses temps réel avec portées étendues affectant simultanément le maillage unique du sol (`Arena_Floor`, 34m x 26m) et les murs.
+  - À chaque mouvement ou rotation de vue de la caméra, Unity trillait et permutait dynamiquement les 8 lumières retenues, provoquant l'allumage et l'extinction alternés brutaux de sources lumineuses à chaque frame (effet de « grésillement » ou « flickering » stroboscopique violent).
+  - De plus, les ombres douces (`LightShadows.Soft`) activées sur de multiples points lights surchargeaient l'atlas de shadow maps temps réel mobile.
+- **Restructuration de l'éclairage de la scène (`Arena1v1Builder.cs` & `Arena1v1_Bunker.unity`)** :
+  - **Lumière principale zénithale (`Light_Main_BunkerFill`)** : Création d'une `Directional Light` (orientation X = 70°, Y = -25°, intensité 1.3, couleur bleu acier froid) avec ombres douces. En URP, la Directional Light principale est traitée comme Main Light et ne consomme **aucun slot** des 8 Additional Lights autorisées par objet.
+  - **Limitation stricte des spots d'ambiance à 5 sources** (strictement inférieur au plafond de 8) :
+    1. `Spot_Spawn_West` : balise ambrée de départ J1 (portée 8.5 m, intensité 3.5).
+    2. `Spot_Spawn_East` : balise ambrée de départ J2 (portée 8.5 m, intensité 3.5).
+    3. `Spot_Catwalk_North` : néon d'éclairage tactique sur passerelle Nord (portée 9.5 m, intensité 3.2).
+    4. `Spot_Catwalk_South` : néon d'éclairage tactique sur passerelle Sud (portée 9.5 m, intensité 3.2).
+    5. `Spot_Center_Contested` : projecteur d'alerte sur la brèche centrale contestée (portée 8.0 m, intensité 2.8).
+  - **Suppression des ombres sur les lumières additionnelles** (`LightShadows.None`) : préserve le budget GPU du Meta Quest 3 (72 FPS constants) et élimine tout risque de conflit ou scintillement d'atlas d'ombres.
+  - **Suppression des point lights collées au plafond** : suppression des zones de surexposition blanche (« brûlures » lumineuses) sur la dalle de toiture.
+- **Mise à jour du script de génération et de la scène** :
+  - [`Assets/Editor/Arena1v1Builder.cs`](file:///Users/rahimtam/SAE501/Assets/Editor/Arena1v1Builder.cs) mis à jour et validé.
+  - Scène [`Assets/Scenes/Arena1v1_Bunker.unity`](file:///Users/rahimtam/SAE501/Assets/Scenes/Arena1v1_Bunker.unity) reconstruite proprement via **SAE501 → Build Arena 1v1 Scene**.
+  - Zéro flickering garanti, éclairage stable, fluide et parfaitement contrasté.
+
+## 166 — Paquets en erreur après l'import d'une arme et d'une map
+
+**Date** : 2026-11-10 · **Domaine** : Paquets Unity / Configuration du projet
+
+> Regarde la state du projet, j'ai importé une arme, une nouvelle map, mais j'ai une erreur
+> [Capture de la fenêtre Unity « Packages with Errors »]
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Cause trouvée dans `Logs/Packages-Update.log` et `Editor.log` : un paquet Asset Store de l'époque Unity 2019 importé avec ses dépendances a ajouté HDRP 17.6, Ads 4.19, Analytics 3.8.2 et Purchasing 4.15 au manifest. Analytics et Purchasing 4 sont déclarés obsolètes par Unity, d'où la fenêtre « Packages with Errors ». L'import a aussi enregistré HDRP dans `GraphicsSettings` et rempli `VFXManager`.
+- Aucun script du projet n'utilise ces paquets : `manifest.json`, `packages-lock.json`, `GraphicsSettings.asset` et `VFXManager.asset` restaurés depuis le dernier commit ; dossiers `HDRPDefaultResources` et `MobileDependencyResolver` mis à la Corbeille. Le patch Meta NGO et les commits de `feature/multijoueur` sont intacts.
+- Reste à faire : le matériau de `Protection_suite` utilise HDRP Lit (rose en URP) et doit passer en URP Lit. Recompilation à vérifier dans l'éditeur.
+
+## 167 — Textures des murs de l'arène 1v1 et combinaison en URP
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Matériaux URP
+
+> "le matériau de la combinaison utilise le shader HDRP Lit, donc il va s'afficher en rose. Il faudra le passer en URP Lit." règle moi ça
+> et aussi la scène a un petit soucis, il manque les textures sur les murs etc
+> [Capture de l'éditeur Unity sur la scène Arena1v1_Bunker, murs et sol en aplat]
+
+**Résultat** (fait par l'IA, Claude Code)
+
+- Correction d'une erreur de l'IA au prompt 166 : la combinaison n'utilisait pas HDRP Lit mais un shader « Standard(2sided) » du pipeline intégré, rose lui aussi en URP. `Mat_protective suit` passé en URP Lit double face avec découpe alpha (albedo, normal, métal/lissé, occlusion repris) ; `Mat_Scen` (opaque) et `Mat_glass` (transparent) passés en URP Lit.
+- Murs sans texture : `Arena1v1Builder` créait des matériaux en couleur unie, et 109 des 203 maillages du FBX n'avaient pas d'UV. Nouveau `Assets/Editor/Arena1v1UV.cs` : à l'import du FBX, UV0 recalculées par projection cubique en mètres (une répétition tous les 2 m), tangentes recalculées.
+- `Arena1v1Builder.AppliquerTextures()` (menu SAE501 → Arène 1v1 → Appliquer les textures, appelé aussi par la reconstruction) : béton sale au sol, béton fissuré aux murs, rouille sur les couvertures (Poly Haven CC0, 1k, copiées dans `Assets/Arena1v1/Textures`), acier sombre et peinture jaune avec les textures d'usure de la salle. ASTC 6x6 et mipmaps sur Android.
+- Vérifié par capture de la vue Scène dans l'éditeur. Non vérifié : le rendu de la combinaison (scène de démo non ouverte) et le rendu au casque.
+
+---
+
+## 168 — Personnages Survivalist et choix du skin en multijoueur
+
+**Date** : 2026-11-10 · **Domaine** : Gameplay / Réseau
+
+> J'ai importé un pack de design de personnages : Survivalist character by Slayver, config les proprement pour qu'il y ait des bonnes animations lorsqu'une arme est tenu ou lors des interractions, que ce soit en VR ou en mode PC
+> De plus dans le mode multi rajoute le fait que chacun peut choisir le skin qu'il veut (son personnage)
+
+**Résultat** (code écrit par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Pack** : il ne contient qu'un squelette humanoïde, 4 tenues et les clips attente / marche / course / saut (aucune animation d'arme). Ses scripts de démo (Starter Assets, qui demandaient Cinemachine et cassaient la compilation), ses matériaux HDRP, ses réglages de rendu et sa scène de démo ont été mis à la Corbeille (`Survivalist_retire_20261110`) ; `Packages/manifest.json` remis comme dans git. L'éditeur s'était fermé (crash) après l'import.
+- **`SurvivalistBuilder`** (menu SAE501 → Build Survivalist Skins) : textures à 1024 en ASTC 6x6 sur Quest, matériaux URP/Lit simples, contrôleur attente / marche / course, prefabs `Resources/Skins/Survivalist_1..4` (12 000 à 19 000 triangles).
+- **`PlayerAvatar`** : le corps est reconstruit à partir de la tête et des deux mains du joueur, de la même façon en VR et en version PC : jambes animées selon la vitesse, corps tourné vers le regard, bras par cinématique inverse à deux os, poignet orienté comme la manette, doigts refermés quand la main tient un objet, pieds jamais sous le sol, taille adaptée au joueur.
+- **Multijoueur** : `NetPlayer` affiche ce personnage à la place de l'avatar en cubes, avec une copie de l'objet tenu dans chaque main (nom de l'objet et pose envoyés par le casque du joueur) et des zones touchables sur la tête et le torse. Choix du personnage dans le lobby (boutons 1 à 4, aperçu en pied à côté du panneau, tenue affichée sur la ligne de chaque joueur), gardé d'une partie à l'autre.
+- **Vérifié** : compilation ; images de pose rendues en mode batch (4 tenues, pistolet tenu à deux mains) ; lobby en mode Play (aperçu, bouton, ligne du joueur). **Non testé** : à 2 joueurs (corps en mouvement, objet tenu), au casque. Le joueur ne voit pas son propre corps.
+- Non commités : le pack (214 Mo, décision de Rahim), les prefabs qui en dépendent, et `NetPlayer` / `NetLobby` / `MainMenuMulti` qui contiennent aussi le travail 1v1 en cours d'une autre session.
+
+---
+
+## 169 — Pack Survivalist allégé et bouton « forcer le lancement » du 1v1
+
+**Date** : 2026-11-10 · **Domaine** : Gameplay / Réseau
+
+> Il faudrait l'optimiser pour eviter qu'il prenne trop de place dans le git
+> (captures du quota GitHub) · Ok pour moi
+> Cependant je veux que tu ajoutes dans le jeu un bouton pour forcer le lancement du 1v1 même si il n'y a qu'un joueur actuellement présent
+
+**Résultat** (fait par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Quota** : GitHub Pro, Git LFS 10 Go de stockage et 10 Go de bande passante par mois (0,2 Go utilisés) ; l'estimation « 1 Go » annoncée d'abord était fausse.
+- **Pack** : 214 → 63 Mo (fichiers inutilisés retirés, textures de 2048 à 1024, identique à l'écran sur Quest) ; commit c0562cd (252 fichiers, 48 en LFS). Une erreur en cours de route (matériaux Quest retirés, personnages roses) a été corrigée.
+- **Bouton « FORCER LE LANCEMENT »** (`NetLobby.ForceStart` / `ToggleForceStart`, `MainMenuMulti`) : visible de l'hôte en mode Duel seulement ; lance le compte à rebours sans adversaire ni « prêt » ; un second appui annule ; le changement de mode l'annule.
+- **Vérifié dans l'éditeur** : bouton créé, appui → lancement forcé → la scène `Arena1v1_Bunker` se charge avec un seul joueur. **Non vu à l'écran** (affichage du bouton dans le lobby) ni au casque.
+- **Problème trouvé, pas corrigé** (travail 1v1 d'une autre session) : `NetDuel.EnsureSpawned` crée un objet réseau à l'exécution (erreur Netcode « GlobalObjectIdHash 0 ») et aucun joueur réseau n'est créé dans l'arène : le duel ne tourne pas encore.
+- Non commités : `NetLobby.cs`, `MainMenuMulti.cs` (mêlés au travail 1v1 non commité).
+
+---
+
+## 170 — Correctifs du mode 1v1
+
+**Date** : 2026-11-10 · **Domaine** : Gameplay / Réseau
+
+> Le mode 1v1 est bugué, patch moi ça, entre les armes qui marchent pas
+> (capture de l'arène : un objet blanc au centre, une planche en main)
+
+**Résultat** (code écrit par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Cause des armes** : la scène de l'arène avait le rig de base du Starter Assets (rayon « Near-Far ») au lieu des mains de `MainScene` (interacteur direct dans la paume). La version PC (`DesktopPlayer`) ne trouvait donc aucune main : impossible de prendre ou de tirer. Les pistolets n'avaient pas non plus les règles de prise de `MainScene` (`GrabGuard`, `ItemSafety`, `IgnorePlayer`).
+- **Corrigé** : `Arena1v1Builder.AddHand` utilise maintenant `SetupVRScene.UseDirectInteractor` (rendu public), `AddGrabRules` sur les pistolets, et un menu **SAE501 → Arène 1v1 → Réparer mains et armes** a réparé la scène existante sans la reconstruire.
+- **Pistolet de départ** (`DuelLoadout`) : chaque joueur commence chaque manche avec son pistolet (Ouest pour J1, Est pour J2) déjà dans la main droite ; `Pistol.InfiniteAmmo` : pas de chargeurs dans l'arène, le pistolet ne se vide jamais. L'arène lancée seule (mode Play direct) donne aussi le pistolet.
+- **Duel en réseau** : `NetDuel` est maintenant un prefab réseau (`Resources/Net/NetDuel`, ajouté à `NetPrefabsBuilder`) : avant, l'objet créé à la volée ne pouvait pas être « spawné » (erreur Netcode « GlobalObjectIdHash 0 ») et le duel ne démarrait pas. `NetDuel` crée aussi un `NetPlayer` par joueur (avatar, zones touchables, vie), comme en coop.
+- **Vérifié dans l'éditeur (un seul joueur)** : arène lancée seule, pistolet en main, 15 tirs sans que les munitions baissent ; menu → hôte → Duel → lancement forcé → arène, `NetDuel` et `NetPlayer` créés, pistolet en main, aucune erreur ; mort du joueur → manche 2, score 0-1, joueur relevé avec son pistolet. **Non testé** : à 2 joueurs (tirs touchant l'adversaire, avatar vu par l'autre), au casque.
+- **Pas fait** : choix du kit d'armes (pistolet / sniper / fusil) : aucun sniper ni fusil dans le projet, les « Sniper » de l'arène sont des pistolets. L'objet blanc au centre de la capture n'a pas été identifié (surbrillance de contour d'un pistolet posé, probablement).
+- Non commités (mêlés au travail 1v1 non commité) : `NetDuel.cs`, `DuelLoadout.cs`, `Pistol.cs`, `Arena1v1Builder.cs`, `SetupVRScene.cs`, `NetPrefabsBuilder.cs`, la scène de l'arène et `Resources/Net`.
+
+---
+
+## 171 — Systèmes et pistolet de MainScene dans l'arène 1v1
+
+**Date** : 2026-11-10 · **Domaine** : Gameplay
+
+> Regarde le mode zombi, comment fonctionne les mouvements, les actions, le tire, pause, etc, récupère tout de là bas
+> Et le style graphiques / animations ? Reprend aussi du mode solo, l'animation de tire du pistolet etc
+
+**Résultat** (code écrit par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Comparaison** des composants de `MainScene` et de l'arène. Déjà communs (même rig, `SetupVRScene.UseDirectInteractor` depuis le journal 170) : déplacement, saut, accroupi, mains, prise par clic, version PC.
+- **Ajouté à l'arène** (`RoomBuilder.AddPlayerSystems`, `Arena1v1Builder.AddMainSceneSystems`) : menu pause BUNKER-OS, vignette de dégâts rouge avec direction du tireur, écran de fin (arène lancée seule), musique, ceinture avec holster du pistolet. L'ancien `NetDuel` posé dans la scène (sans objet réseau) est retiré.
+- **Pistolet** : l'arène utilisait une version simplifiée. Elle prend maintenant le pistolet complet de `MainScene` (`RoomBuilder.CreatePistol`) : animation de tir du M1911, son du tir et du chargeur, douille éjectée, flash et lumière du canon, fumée, compteur de balles à l'inclinaison, emplacement du chargeur.
+- **Réparation** de la scène existante par le menu **SAE501 → Arène 1v1 → Réparer mains et armes** (sans la reconstruire).
+- **Vérifié dans l'éditeur (version PC, seul)** : pistolet en main avec son animation, 3 tirs sans erreur, dégâts (100 → 80, vignette rouge), menu pause ouvert (temps figé), reprise. **Non testé** : au casque, à 2 joueurs, ni la musique à l'oreille.
+- **Style graphique non modifié** : l'arène a sa propre ambiance (béton éclairé en temps réel) ; MainScene est presque noir avec un brouillard bleu nuit. Question posée à Rahim.
+- Non commités (mêlés au travail 1v1 non commité).
+
+---
+
+## 172 — Arbres et sol du jardin refaits, fluidité
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Rendu / Optimisation
+
+> Les arbres sont horrible, corrige ça, et aussi la texture du sol dans le jardin est horrible, corrige ça egalement , et aussi c'est pas vraiment smooth
+> (capture : troncs noirs en pointes étirées, sol bleu clair plat)
+
+**Résultat** (code et assets faits par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Causes trouvées** : (1) l'export de la carte (`export_map.py`, 6 000 triangles max par objet) avait écrasé les troncs des 8 arbres du jardin : pointes noires étirées ; (2) le terrain extérieur (`Exterior_World_Terrain`) passe sous le jardin et ressort par plaques, avec une texture noire à cet endroit et un reflet de ciel : le « bleu clair » ; (3) les deux terrains n'avaient qu'une image Blender floue étalée sur 20 m et 98 m, avec des facettes d'ombrage ; (4) la forêt autour était le blockout Blender : 36 sapins en cônes et arbres « sucette » sans texture.
+- **Arbres** : `Tools/blender/arbre_quest.py` refait l'arbre Poly Haven `island_tree_02` (CC0, 1 million de triangles à l'origine) : tronc simplifié à part, normales vers l'extérieur, une feuille = un quad. LOD0 18 855 triangles, LOD1 6 658, puis imposteur (3 panneaux croisés, 12 triangles) rendu une fois ; `Assets/Nature/Arbres/Arbre_Quest.fbx`. Utilisé pour les 8 arbres du jardin (mêmes places) et pour 36 arbres de forêt à la place des cônes (`Assets/Editor/JardinNature.cs`, appelé par `RoomBuilder`).
+- **Sol** : textures Poly Haven 1k (CC0, Rob Tuytel) `forrest_ground_01` (jardin) et `forest_leaves_02` (forêt), UV en mètres (2,5 m et 3,5 m par répétition), normales lissées, ASTC 6x6 sur Quest, anisotrope 4. Terrain extérieur descendu de 15 cm sous le jardin.
+- **« Pas smooth »** : lu comme ombrage lisse (facettes) et fluidité. Facettes supprimées ; arbres sans ombre portée, avec LOD et imposteurs, sols sans reflets d'environnement. **Fluidité non mesurée** : pas de casque, et la fréquence d'images de l'éditeur ne dit rien du Quest. À mesurer au casque (72 FPS).
+- **Vérifié** : captures dans l'éditeur (MainScene reconstruite par SAE501 → Build VR Scene) : arbres lisibles, sol texturé, plus de plaques bleues. Les pixels magenta vus au début étaient une compilation de shader en cours, disparus ensuite. **Non testé** : au casque, ni les collisions des troncs de forêt en jeu, ni le NavMesh après reconstruction.
+- Éclairage précalculé non refait : les nouveaux arbres prennent la lumière des sondes. Wiki : page `Jardin-arbres-et-sol` écrite en local, pas poussée.
+- **Complément (même séance)** : Rahim envoie une capture de la vue Scène : vitre de fenêtre et flaques au sol en aplats bleu clair. Cause : vitre (`Mat_Window_Glass_VR`) et flaques (`Flaque_Eau`) sont transparentes et lisses (0,93 et 0,95) ; sans sonde de réflexion, la vue Scène leur fait refléter son ciel par défaut. En jeu (fond noir, réflexions à 0) rien ne se voyait. `JardinNature.NoSkyReflections` coupe les réflexions de l'environnement sur les matériaux transparents lisses à chaque construction de la scène. Vérifié : matériaux modifiés, capture de la fenêtre sans bleu ; la vue Scène elle-même n'a pas pu être capturée par l'outil, à confirmer par Rahim.
+
+---
+
+## 173 — Trous du toit bouchés, lianes retirées, mur du couloir ajouté
+
+**Date** : 2026-11-10 · **Domaine** : Carte
+
+> Manque un mur, et retire le trou et les éléments qui tombent du toit
+> (capture de la vue Scène) puis, aux deux questions de l'IA : « (a) boucher les 2 trous et retirer les gravats, en gardant zombies et caisse par une autre entrée » ; « Mur manquant : dans le couloir à droite de la porte de la cuisine »
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Trous du toit** : les deux trous (lits, établi) sont bouchés par une dalle de même épaisseur et même matériau (`TrousToit.cs`, `Bouchons_Toit`) ; bord cassé, auréole noircie et gravats ne sont plus créés (code gardé, inutilisé). Les lianes sombres qui pendaient du plafond sont retirées dans toute la carte (avant : seulement sous les trous) et `GenRoom_CeilingVines` supprimé : ce sont ces tiges noires dans le couloir que j'ai comprises comme « les éléments qui tombent du toit ».
+- **Gameplay adapté** : plus d'ouvertures `Toit_Lits` ni `Toit_Etabli` (4 ouvertures restent : 2 portes, 2 fenêtres) ; plus de point d'apparition sur le toit : les apparitions « Toit » des niveaux 3+ tombent sur le point extérieur (`ZombieSpawner` le gère déjà). La caisse de la radio apparaît sous le plafond, au-dessus de l'établi, et tombe de 1,5 m (`SupplyDrop` à y = 2,45 m). Le GDD et l'équilibrage des vagues ne sont pas revus : plus d'effet « zombie du toit » (avertissement, pas sur le toit).
+- **Mur manquant** : la paroi ouest du couloir (x = 13 m) avait un trou de 2,3 m (z 0,65 à 2,95) entre la salle du générateur et le mur de la cuisine (mesuré par rayons). Mur ajouté (`MurCouloir.cs`) : même épaisseur, hauteur et matériau, UV en continuité, collision, lumière des sondes.
+- **Vérifié** (captures dans l'éditeur, scène reconstruite) : trous bouchés (plafond continu), plus de tiges, mur en place, rayon z = 1,8 m touche le nouveau mur, 0 ouverture « Toit ». **Non testé** : une partie jouée (zombies des niveaux 3+, caisse de la radio, NavMesh), au casque ; éclairage précalculé non refait (les bouchons prennent la lumière des sondes, ils peuvent être un peu plus clairs ou sombres que le plafond autour).
+
+---
+
+## 174 — Liste durable des objets retirés à la main
+
+**Date** : 2026-11-10 · **Domaine** : Outils
+
+> Y a beaucoups d'éléments de la map que je retire à la main et que tu replaces, arrête de replacer mes éléments de que je retire
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Cause** : `MainScene` est générée par script ; mes 4 reconstructions de la séance (journaux 172 et 173) ont recréé tous les objets du FBX, y compris ceux que Rahim avait supprimés à la main dans la scène. Ces suppressions-là ne sont pas récupérables par l'IA (scène non commitée avant la reconstruction) : il faut les refaire une fois.
+- **Correctif** : `Assets/Editor/objets_retires.txt` (un nom d'objet par ligne, versionné), lu par `ObjetsRetires.Appliquer` appelé par `RoomBuilder` juste après les retraits codés en dur. Menu **SAE501 > Scène > Retirer la sélection (durable)** : supprime la sélection et note les noms ; **Ouvrir la liste des objets retirés** pour les relire.
+- **Engagement** : plus de reconstruction de la scène sans demande explicite de Rahim. Non testé : le menu et l'application de la liste en reconstruction (compilé seulement).
+
+---
+
+## 175 — Arbre du jardin remplacé par un jacaranda, sans rebuild
+
+**Date** : 2026-11-10 · **Domaine** : Carte / Rendu
+
+> J'ai supprimé des objets, ne les remet pas je l'ai fait directement dans ma scène MainScene, parcontre là l'arbre que tu m'as mis c'est toujours pas bon corrige ça
+> puis, à la question de l'IA : « Un arbre plus classique : un seul tronc droit avec une couronne de feuilles (par exemple le jacaranda Poly Haven), mis à la place sans rebuild. »
+
+**Résultat** (code et assets faits par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- **Aucune reconstruction** de la scène : les objets que Rahim retire à la main dans MainScene ne sont pas touchés. Le remplacement passe par les fichiers que la scène référence déjà : `Assets/Nature/Arbres/Arbre_Quest.fbx` (mêmes noms de maillages LOD0 et LOD1, donc mêmes références) et les textures des trois matériaux `island_tree_02*` (feuilles, rameaux, tronc).
+- **Arbre** : `Tools/blender/arbre_jacaranda.py` part du jacaranda Poly Haven (CC0, 3,9 millions de triangles, 24 m) : tronc et rameaux simplifiés à part, une fronde = un quad, 4,2 m de haut. LOD0 32 323 triangles, LOD1 13 083, puis l'imposteur (refait). Faces triées par matériau (feuilles, rameaux, tronc) : Unity numérote les sous-maillages dans l'ordre d'apparition des faces, et c'est l'ordre des matériaux déjà posés dans la scène. Textures 1k dans `Assets/Nature/Arbres/Jacaranda` (feuilles : couleur + alpha fusionnés en RGBA).
+- **Code** : `JardinNature.LoadTree` retrouve les matériaux par nom (plus par position) et `Retexture` pose les textures du jacaranda ; menu **SAE501 > Jardin > Mettre à jour l'arbre sans reconstruire** (marche aussi sans MainScene ouverte). Les futurs Build VR Scene garderont ce nouvel arbre.
+- **Bleu clair par terre** : c'étaient les flaques d'eau (`Flaque_Eau`), plans transparents très lisses qui renvoient la lune bleue ; reflet spéculaire coupé sur les matériaux transparents lisses (`NoSkyReflections`), sans rebuild.
+- **Vérifié** : rendu Unity de l'arbre seul (tronc et feuilles aux bonnes textures, couronne dense) et rendu Blender ; **non vérifié** : dans MainScene (non ouverte pendant ce travail), ni au casque, ni la fluidité (32 k triangles en LOD0, à mesurer).
+
+---
+
+## 176 — Évasion : portail du jardin, puis cinématique avec de vrais sons
+
+**Date** : 2026-11-11 · **Domaine** : Gameplay / Son
+
+> Actuellement la condition de victoire du mode evasion c'est juste activer le générateur alors que ça doit être activer le générateur et s'enfuir par le portail dans le jardin, en gros le portail se débloque quand on fini d'activer le générateur, et ensuite se joue l'animation que tu avais réaliser pour démontrer au joueur qu'il s'est enfui et qu'il a gagné
+>
+> D'ailleurs il faut que tu revois l'animation en reprennant les sons qu'il y a dans le jeu, prce que les sons actuels qui sont dans l'animations sont absolument horrible, et quand le zombi tappe sur le portail en métal ça fait un bruit absolument pas réaliste, prend un sont enligne pour ça, de grille frappé ou quelque chose comme ça
+
+**Résultat** (code, montage audio et choix des sons faits par l'IA, Claude Code, branche `feature/multijoueur`, sans reconstruire la scène)
+
+- **Nouvelle condition de victoire** : `WaveManager` a une phase `Escape`. Le générateur activé n'est plus la victoire : annonce « GÉNÉRATEUR ACTIVÉ — Le PORTAIL DU JARDIN s'ouvre : FUYEZ PAR LÀ ! », statut « fuyez par le portail du jardin », les renforts du niveau 4 continuent et les zombies traquent toujours le joueur. La victoire (`PlayerEscaped`) tombe quand la tête du joueur passe 0,9 m au-delà de la grille, côté route. Mode survie inchangé (générateur hors service, pas de portail).
+- **Portail** (`EscapeGate`, ajouté tout seul au chargement de la scène) : le cadenas tombe au pied de la grille avec un cliquetis, les battants pivotent de 95° vers le jardin (comme dans la vidéo) et cognent leurs butées, la lampe au-dessus passe au vert et pulse. Les battants et le cadenas n'étaient pas déplaçables (« Batching Static ») : drapeau retiré à la main dans `MainScene` (3 lignes) et par `PortailFer` pour les futurs Build VR Scene.
+- **Multijoueur** : l'hôte ouvre le portail pour tous (`NetGame.EscapeOpenRpc`) ; un client qui franchit le portail le signale à l'hôte (`EscapeRpc`), qui déclare la victoire pour l'équipe.
+- **Cinématique** : reprise de la branche `feature/cinematiques` uniquement pour la fin (`EscapeVideo.cs`, la vidéo `CinematiqueFin.mp4`) ; `PlayerDeathFall` (code PC) n'est pas repris. Adaptée au portage actuel : même écran fixe dans le noir en VR et au PC, HUD du PC masqué, musique du jeu coupée en fondu, clic / espace / gâchette pour passer. `GameOverUI` : fondu au noir complet, vidéo, puis le bilan existant (sous-titre « Vous avez franchi le portail du jardin. »).
+- **Bande-son refaite** (`Tools/blender/cinematique_son.py`, image de la vidéo inchangée) : plus aucun son synthétisé. Râles = `Zombie_Voix_1` et `_2` du jeu (hauteur et place variées, étouffés de loin au plan A), musique = `Musique_Menu` du jeu en fond, coups sourds = `flesh_zombie_hit` très bas, grille secouée et grille qui claque = deux enregistrements CC0 de Freesound (« Rattling at an iron gate » de launemax, « Gate Close and rattle » d'Alex_hears_things), crédits dans `Tools/sons_cc0/CREDITS.md` et `docs/ASSETS.md`. Niveau réglé à -16 LUFS, fondus calés sur l'image. Mêmes sons de grille en jeu pour l'ouverture du portail.
+- **Vérifié** dans l'éditeur Unity (mode Play, version PC, test automatique temporaire non commité) : compilation sans erreur, générateur → portail qui s'ouvre → traversée → victoire → vidéo jouée sur l'écran → bilan. **Non vérifié** : au casque (lecture de la vidéo par le Quest, confort), en multijoueur réseau, et **la bande-son n'a pas été écoutée par l'IA** (vérifiée seulement par ses niveaux) : à écouter par Rahim.
+
+---
+
+## 177 — Bilan de victoire par-dessus la vidéo de fin
+
+**Date** : 2026-11-11 · **Domaine** : UI / Cinématique
+
+> Pour le menu de quand tu t'es échappé, fait le apparaitre par dessus l'animation de fin à la moitié de l'animation (exemple de quand le faire apparaitre dans l'image )
+
+(capture jointe : `evasion_demo.mp4` à 00:17, plan des zombies de dos contre la grille fermée, vers la moitié de la vidéo de fin)
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, sans reconstruire la scène)
+
+- `EscapeVideo.Play` accepte un rappel `onMenu` appelé à **50 %** de la vidéo (10 s, le plan des zombies contre la grille) ou dès que le joueur passe (clic, espace, gâchette) : le bilan « VOUS AVEZ ÉCHAPPÉ » apparaît alors devant l'écran de cinéma, avec un petit grossissement de 0,3 s. La vidéo et son son continuent derrière ; 1,8 s avant la fin (avant son fondu au noir), l'image se fige et le son s'éteint en fondu. L'écran reste jusqu'au choix d'un bouton.
+- `GameOverUI` : le panneau et les rayons de pointage passent sur le calque de l'écran de cinéma (la caméra ne dessine que lui pendant la vidéo), fond du panneau un peu transparent, pas de voile noir à 78 % par-dessus la vidéo. Boutons inchangés (verrou de 1 s anti-clic réflexe). `MusicPlayer` : la musique coupée par la cinématique revient à la partie suivante.
+- **Vérifié** dans l'éditeur Unity (mode Play, version PC, test automatique temporaire non commité) : bilan apparu à 10,4 s de vidéo, vidéo visible autour, image figée ensuite. **Non vérifié** : au casque (lisibilité du panneau devant l'écran, rayons des manettes), clic réel sur les boutons pendant la vidéo.
+
+---
+
+## 178 — Bilan de victoire : « VICTOIRE » et panneau élargi
+
+**Date** : 2026-11-11 · **Domaine** : UI
+
+> Le menu est pas assez large, et "Vous avez échappé" ce n'est même pas français, juste "victoire"
+> Retire : Signal transmit
+> Remplace : "Vous avez franchi le portail du jardin" par : "Vous avez réussi à vous enfuir"
+
+(capture jointe : le titre « VOUS AVEZ ÉCHAPPÉ » débordait des bords du panneau)
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`)
+
+- `GameOverUI` : titre de victoire « **VICTOIRE** » (un peu plus grand et plus haut), sur-titre « SIGNAL TRANSMIS » retiré (la défaite garde « SYSTÈME DÉFAILLANT »), sous-titre « Vous avez réussi à vous enfuir. ». Panneau élargi de 1,52 à **1,84 m** (avant l'échelle 0,8) pour tous les bilans ; bandeau, encadré du bilan, colonnes des statistiques et boutons (1,20 -> 1,50 m) suivent la largeur.
+- Annonce de l'écran du bunker à la victoire : « VICTOIRE — Vous avez réussi à vous enfuir. » (au lieu de « VOUS VOUS ÊTES ÉCHAPPÉ ! ») ; plus aucun « échappé » dans le code ni dans le wiki (Fin de partie, Cinématiques, Niveaux et vagues), hormis l'accroche du menu « S'ÉCHAPPER », non touchée.
+- **Vérifié** dans l'éditeur Unity (mode Play, version PC, test temporaire non commité) : rien ne déborde (capture `docs/captures/evasion/8_bilan_victoire.jpg`). **Non vérifié** : au casque (le panneau fait 1,47 m de large à 1,3 m : environ 59° de champ), écrans de défaite après l'élargissement (même mise en page, non capturés).
+
+---
+
+## 179 — À quoi sert la clé du cabanon ?
+
+**Date** : 2026-11-11 · **Domaine** : Question
+
+> Ok, à l'heure actuelle à quoi sert la clé qui est dans le cabanon ?
+
+**Résultat** (réponse de l'IA, Claude Code, sans modification du jeu)
+
+- À rien en jeu : `Cle_Jardin` (objet `Garden_Hidden_Key` de la carte) est rendue prenable par `RoomBuilder.FixGardenCabin` (`Assets/Editor/RoomBuilder.cs`, l. 408-428 : modèle de clé en fer, Rigidbody, prise en main), mais aucun script du jeu ne la lit ; la page wiki Carte le dit déjà (« n'ouvre rien pour l'instant »).
+- Pas nécessaire pour gagner, et sans lien avec le portail du jardin, qui s'ouvre seul quand le générateur démarre (`EscapeGate`, journal 176).
+
+---
+
+## 180 — Fichier temporaire introuvable et « Licensing connection lost »
+
+**Date** : 2026-11-11 · **Domaine** : Outils / Éditeur
+
+> Patch ceci, et corrige aussi l'erreur de : Licensing connection lost
+
+(capture jointe : boîte macOS « Opening file failed: /Users/rahimtam/SAE501/Temp/UnityTempFile-08bef9a1bd-d1741ecb95fb036529c00a: No such file or directory », boutons Try Again / Force Quit / Cancel, Unity 6000.6.0f1)
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, branche `feature/multijoueur`, sans toucher à la scène)
+
+- **Cause trouvée** (journal système macOS, logs Unity et Hub) : après le redémarrage du Mac de 13 h 35, à **13:38:15–17**, Figma, le client de licence Unity (`Unity.Licensing.Client`), `unity serve`, le relay de l'assistant IA et les **deux workers d'import Unity** ont tous quitté proprement en 2 secondes, juste après une activité de l'utilitaire **Vorssaint**, dont l'option **« Quit on close »** (`autoQuitEnabled = 1`, aucune exception) quitte les applis qui n'ont plus de fenêtre. Les workers d'import sont des instances de `Unity.app` sans fenêtre : en quittant normalement, ils suppriment le dossier `Temp` du projet, d'où l'erreur `UnityTempFile` dans l'éditeur encore ouvert. Aucun script du dépôt, crontab, hook git ou session d'agent ne supprime `Temp`.
+- **« Licensing connection lost »** : même cause (le client de licence a été quitté). Le Hub l'a relancé à 13:38:17 et l'éditeur s'est reconnecté seul à 13:38:31 (« The re-connection attempt was successful ») ; la licence est valide, rien à faire dans le Hub. Les erreurs « Code 404 … 0 entitlement groups » sont normales (droits optionnels).
+- `Temp` recréé (`mkdir -p`, rien supprimé) ; garde-fou **`Assets/Editor/TempDirGuard.cs`** ([InitializeOnLoad]) : recrée `Temp` toutes les 3 s s'il disparaît. Compilé sans erreur dans l'éditeur ouvert.
+- **À faire par Rahim** : dans Vorssaint, Réglages → *Quit on close* → *Exceptions*, ajouter Unity, Unity Hub (et si proposés Unity Licensing Client et relay_mac_arm64), ou désactiver *Quit on close* pendant le travail sur Unity. Dans une boîte « Opening file failed » encore ouverte : cliquer **Try Again** (Temp existe de nouveau).
+- **Non vérifié** : que l'exception Vorssaint suffit (réglage de l'appli, non modifié par l'IA) ; le garde-fou ne peut pas empêcher les workers d'être quittés, il évite seulement que `Temp` reste absent.
+
+---
+
+## 181 — Arènes du duel : Alvéole 17 corrigée, 2 nouvelles cartes et choix de la carte
+
+**Date** : 2026-11-11 · **Domaine** : Carte / Multijoueur
+
+> Prend le role de level designer / game designer
+> Analyse la map 1V1 et corrige ses incohérences, problèmes de textures, problèmes de collisition de props, et propose 2 autres maps (pour chacune des maps fait une capture d'écran et rajoute dans le menu de lancement de la partie une preview de la map et un moyen de selectionner la map qui sera joué en 1V1)
+
+**Résultat** (analyse, code et scènes faits par l'IA, Claude Code, branche `feature/multijoueur`, **non commité** en attendant que Rahim voie les captures ; MainScene non touchée)
+
+- **Alvéole 17** (`Assets/Editor/Arena1v1Fixes.cs`, appliqué sans reconstruire et à chaque *Build Arena 1v1 Scene*) : escaliers des passerelles qui finissaient 0,40 m sous la passerelle (on ne montait qu'en sautant) → 11 marches de 0,217 m ; caisse 0,95 m + caisse empilée 1,45 m contre le mur central = escalier vers le haut du mur avec le saut de 0,75 m → caisse portée à 1,20 m ; gravats avec collider (marchepieds, accrochages) → sans collider ; 5 socles « Pickup » vides retirés ; flaque NW cassée (maillage vide, matériau « Lit » par défaut) remplacée par le miroir de la flaque SE ; reflets blancs des flaques coupés ; ombres « de soleil » dans le hall fermé coupées ; ligne de vue spawn-à-spawn par la brèche (1,25 m) coupée par un écran de sas de 2,4 m devant chaque spawn.
+- **Bloc C** (hôpital, 30 × 20 m, combat rapproché) et **Quai 9** (cour de conteneurs de nuit, 42 × 28 m, longues vues) : `ArenaMapsBuilder.cs` + `ArenaKit.cs` (UV en mètres, fusion par matériau, ≤ 8 lumières, sans ombres), symétrie centrale, couverts bas 1,2 m / hauts ≥ 2,2 m. Scènes `Arena1v1_Hopital` et `Arena1v1_Quai` ajoutées au build ; `SetupVRScene` garde toutes les arènes dans la liste.
+- **Lobby** : `ArenaMaps.cs` (registre des cartes et apparitions), `NetLobby.DuelMap` (choix de l'hôte synchronisé), panneau « CARTE DU DUEL » avec aperçu (`MainMenuArenas.cs`) ; NetPlayer, NetDuel, DuelLoadout, NetSession, DesktopPlayer reconnaissent les 3 arènes.
+- **Vérifié** dans l'éditeur : compilation, simulation du CharacterController (escaliers montés sans saut jusqu'à 2,60 m, caisses et brèche non escaladables), captures `docs/images/arenes/`. **Non vérifié** : en mode Play réseau (lancement réel d'une partie sur Bloc C / Quai 9), au casque (72 fps, lisibilité de nuit).
+
+---
+
+## 182 — Arènes du duel : vraies textures sur les blocs
+
+**Date** : 2026-11-11 · **Domaine** : Carte / Textures
+
+> Les maps de 1v1 manquent de textures, c'est à dire qu'il y a beaucoup de blocks avec aucune textures comme ceci :
+
+(capture jointe : Quai 9, conteneurs, sacs de sable et barils en blocs presque unis)
+
+**Résultat** (textures et code faits par l'IA, Claude Code, branche `feature/multijoueur`, **non commité**)
+
+- Inventaire automatique des matériaux sans albedo ou sans relief dans les 3 arènes (hors lumières, néons, écrans).
+- Textures générées par `Tools/textures/generer_arenes.py` (1024 px, raccordables, albedo + normal map, ASTC 6x6 sur Quest) dans `Assets/Arenas/Textures` : **Conteneur** (tôle ondulée, rouille), **Conteneur_Porte** (2 battants, 4 barres de fermeture, poignées), **Sacs** (sacs de sable en quinconce), **Baril** (cerclages), **Casier** (fentes d'aération, poignée), **Carrelage** (sol d'hôpital, carreaux de 25 cm), **Danger** (bandes jaunes et noires).
+- Quai 9 : conteneurs en tôle ondulée de 3 couleurs avec portes, longerons et montants d'acier ; sacs de sable, barils, bandes de danger (portails, groupe électrogène, conteneurs des spawns) ; tente et cabane éclaircies, relief ajouté à la toile. Bloc C : sol en carrelage, casiers, distributeur, appareil d'anesthésie et chariots en métal peint, soubassement et rideaux texturés, relief sur plafond et comptoirs. Alvéole 17 : bandes des portes blindées et des écrans de sas en bandes de danger (elles étaient jaune uni).
+- Tiling : UV en mètres (rien d'étiré), une répétition par taille réelle (tôle 2 m, porte 2,6 m, sacs 1,2 m, carrelage 1 m).
+- **Vérifié** dans l'éditeur : captures refaites. **Non vérifié** : au casque (rendu ASTC, 72 fps).
+
+---
+
+## 183 — Arènes du duel : optimisation Quest (barils low-poly, fusion, colliders)
+
+**Date** : 2026-11-11 · **Domaine** : Optimisation
+
+> C'est pas très optimisé ça
+
+(capture jointe : un baril d'Alvéole 17 en fil de fer, cylindre très dense aux couvercles en longs triangles fins)
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, **non commité**)
+
+- Audit des 3 arènes. Alvéole 17 (modèle Blender) : 216 objets dessinés un par un, 26 198 triangles, 142 MeshCollider ; barils et tuyaux à 32 faces (124 triangles) avec des couvercles triangulés depuis un seul sommet. Bloc C (6 126 triangles) et Quai 9 (6 842) étaient déjà fusionnées ; Quai 9 avait 14 MeshCollider convexes (barils, poteaux).
+- `Arena1v1Fixes` : barils et tuyaux refaits en cylindres partagés de 12 faces (48 triangles, couvercles en éventail depuis le centre ; 8 faces pour les tuyaux fins), cerclages en normal map ; MeshCollider convexes des props (caisses, barils, hérissons) → BoxCollider ; décor fusionné par matériau (plafond à part) : **216 → 25 rendus**, 24 854 triangles.
+- `ArenaKit` : un seul maillage de cylindre par dimensions, BoxCollider (barils) ou CapsuleCollider (poteaux, mâts) au lieu de MeshCollider ; fusion des objets à plusieurs matériaux. Quai 9 : **14 → 0 MeshCollider**.
+- Restent : les 4 barrières cassées (6 858 triangles) et les 8 piliers octogonaux (3 392) du modèle Blender, et 128 MeshCollider statiques non convexes des murs et sols (sans coût notable à l'exécution).
+- **Vérifié** dans l'éditeur : captures et gros plans en fil de fer (`docs/images/arenes/Baril_filfer_*.png`). **Non vérifié** : au casque (fps réels).
+
+---
+
+## 184 — Arènes du duel : barils et barrières refaits, Bloc C supprimé
+
+**Date** : 2026-11-11 · **Domaine** : Carte / Optimisation
+
+> Corrige tout ça,
+> et retire simplement la map 1V1 hopital, supprime la
+
+(2 captures jointes d'Alvéole 17 : barils qui se traversent et qui rentrent dans un pilier, un baril couché à travers un autre ; barrières cassées du modèle Blender avec des plaques qui se croisent, des faces vues de l'intérieur et une texture étirée)
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, **non commité**)
+
+- Cause des barils : mon remplacement low-poly (journal 183) devinait l'axe du cylindre d'après la boîte englobante du maillage Blender, fausse pour les barils couchés et tournés ; et les barils d'origine se chevauchaient déjà.
+- `Arena1v1Fixes` : barils Blender masqués, remplacés par des barils propres de 16 faces (64 triangles, flancs lissés, texture à cerclages) posés au sol sans contact : 2 debout + 1 couché par groupe, 1 dans chaque coin des spawns. Les 4 barrières cassées (6 858 triangles) sont remplacées par des murs de béton fermés en 3 tronçons (2,2 / 1,76 / 1,32 m : on ne monte sur aucun avec le saut de 0,75 m), même emprise, UV en mètres, collider en boîtes. Gravats et hérissons tchèques reposés au sol (les hérissons flottaient de 15 cm). Quai 9 : groupe électrogène posé sur son socle (il rentrait dedans).
+- Contrôle automatique (`Physics.ComputePenetration` entre tous les props et le décor, appui sous chaque prop) : **0 interpénétration, 0 objet flottant** sur Alvéole 17 et Quai 9 (seuls les pistolets sont en l'air, ils sont donnés en main au début de la manche). Alvéole 17 : 27 rendus, 18 236 triangles.
+- **Bloc C supprimé** : scène `Arena1v1_Hopital`, liste du build, entrée de `ArenaMaps` (le lobby ne propose plus qu'Alvéole 17 et Quai 9, la carte du mode affiche « 2 cartes »), code de construction, 13 matériaux `Hop_*`, maillages, textures Carrelage et Casier, aperçu du lobby, captures et section du wiki. Tout compile.
+- **Vérifié** dans l'éditeur : contrôle automatique, captures (`docs/images/arenes/Barils_Alveole17*.png`, `Barrieres_Alveole17*.png`). **Non vérifié** : au casque.
+
+---
+
+## 185 — Paramètres : VSync et limite d'images par seconde
+
+**Date** : 2026-11-11 · **Domaine** : Menus / Performance
+
+> Rajoute dans les paramètres le VSync (si c'est pris en compte ou sinon juste un FPS cappter a 60, 72, 90, 144, 244), regarde ce qui est le plus simple par rapport au moteur Unity / ce qui est aussi proposé de base
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, commit `fa5c328`, non poussé ; ce journal non commité)
+
+- Choix : les deux réglages de base de Unity, sans module en plus. `GameSettings` : `VSync` (`QualitySettings.vSyncCount` 1/0, défaut oui) et `FrameRateCap` (`Application.targetFrameRate` ; sans limite, 60, 72, 90, 144, 240), enregistrés dans `PlayerPrefs` et appliqués à chaque scène chargée (`ApplyFrameRate`). **240 au lieu de 244** : 240 Hz est la vraie fréquence des écrans rapides.
+- Unity ignore `targetFrameRate` quand le VSync est actif : dans la page PARAMÈTRES (section SOURIS ET AFFICHAGE, version PC), la ligne « Limite FPS » est grisée tant que VSync = OUI. Lignes de la page un peu resserrées en version PC pour garder RETOUR en bas (`AmberMenu`).
+- **Au casque** (Quest ou PC VR) : rien n'est appliqué et les lignes n'apparaissent pas ; c'est le runtime XR qui impose la cadence (72 Hz sur le Quest). Choix 72 / 90 / 120 Hz au casque non ajouté (risque de ne plus tenir la cadence au Quest 3).
+- Wiki : pages [Version PC](https://github.com/withRen/SAE501/wiki/Version-PC) et [Menus](https://github.com/withRen/SAE501/wiki/Menus) mises à jour (commit wiki `17f2669`, non poussé).
+- **Vérifié** : compilation sans erreur ; capture de la page PARAMÈTRES en version PC rendue dans une scène d'aperçu de l'éditeur (hors mode Play). **Non vérifié** : effet réel sur les fps dans un build Windows, et rien au casque.
+
+---
+
+## 186 — Duel : avatar distant qui tient son arme à la 3e personne
+
+**Date** : 2026-11-11 · **Domaine** : Multijoueur / Animation
+
+> (capture du duel Arena1v1_Bunker en version PC : le personnage du joueur J2 tient mal son pistolet, bras levé et plié, arme qui flotte loin de la main) Corrige le rig et la tenue de l'arme du personnage distant, comme un personnage de Counter-Strike vu à la 3e personne : les deux mains sur l'arme, qui vise devant, et le haut du corps qui suit la visée vers le haut et vers le bas.
+
+(demande transmise par l'assistant du projet, d'après le message et la capture de Rahim)
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, commit `c0ff733` pour `PlayerAvatar.cs`, non poussé ; `NetPlayer.cs` et ce journal non commités)
+
+- Cause : en version PC, `DesktopPlayer` place l'arme comme une arme « vue FPS », collée à la caméra (15 cm à droite, 16 cm sous les yeux, 36 cm devant pour le pistolet). Le casque envoie cette main aux autres joueurs, et `PlayerAvatar` tendait le bras droit du personnage vers ce point : bras replié vers le visage, poignet tordu, arme loin de la main. La main gauche, cachée sous l'écran, pendait.
+- `PlayerAvatar.HoldGun` : quand le joueur distant est en version PC et tient une arme à feu dans la main droite, ses mains suivies sont ignorées. L'arme est posée devant l'épaule droite, canon dans l'axe du regard (le fusil est épaulé, le pistolet tenu bras tendus). La main droite va sur la poignée, la main gauche sur le garde-main (fusil) ou autour de la main droite (pistolet). Le corps se tourne vite vers la visée, la colonne prend 60 % du tangage du regard (haut / bas), la tête le reste. Le chargeur tenu pendant le rechargement est posé sur la main gauche. Tous les réglages sont dans l'Inspector du personnage (`rifleGrip`, `pistolGrip`, `leftRifleOffset`, `spineShare`…).
+- `NetPlayer` : la pose envoyée porte un drapeau `desktop` (`DesktopMode.On`) ; pour l'objet tenu, on retient s'il s'agit d'une arme à feu (`Pistol`), sa poignée (accroche XRI) et l'axe de son canon. Au casque VR, rien ne change : le personnage suit les vraies manettes.
+- Wiki : page [Personnages](https://github.com/withRen/SAE501/wiki/Personnages), section « Arme à feu tenue à la 3e personne » (commit wiki `c5fc731`, non poussé).
+- **Vérifié** dans l'éditeur, hors mode Play : compilation sans erreur, console vide ; captures du personnage dans Alvéole 17 avec la pose réellement reçue d'un joueur PC (AK74 et pistolet, avant / après, visée droite, vers le haut et vers le bas). Les 4 tenues ont été rechargées dans l'éditeur (il gardait les anciennes valeurs en mémoire), les fichiers des prefabs ne changent pas.
+- **Non vérifié** : en vraie partie à deux machines (le drapeau `desktop` change la taille de la pose réseau : les deux joueurs doivent avoir la même version), recul et animation de rechargement non reproduits sur l'avatar, et rien au casque. Marteau, lampe et armes de mêlée gardent l'ancienne tenue.
+
+---
+
+## 187 — Duel : postures d'armes façon Counter-Strike
+
+**Date** : 2026-11-11 · **Domaine** : Multijoueur / Animation
+
+> Corrige moie les postules de tenus des armes en t'inspirant de comment sont tenus celes dans Counter Strike :
+
+(3 captures de Counter-Strike 2 jointes : pistolet tenu haut, près du visage, coudes pliés ; AK tenu bas contre le torse, corps de trois quarts ; sniper épaulé, l'œil dans la lunette, buste penché)
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, commit `6489101`, non poussé ; `NetPlayer.cs` et ce journal non commités)
+
+- La tenue unique du journal 186 (arme devant l'épaule) est remplacée par **une posture par type d'arme** dans `PlayerAvatar` (`GunHold` : `pistolHold`, `rifleHold`, `sniperHold`), choisie d'après la longueur poignée → bouche du canon (fusil à partir de 40 cm, sniper à partir de 85 cm) :
+  - pistolet : haut, à 25 cm devant le visage, deux mains, coudes pliés ;
+  - fusil d'assaut : bas contre le torse (38 cm sous les yeux), crosse sous l'épaule droite, main gauche sous le garde-main, paume vers le haut ;
+  - sniper : épaulé, lunette à hauteur de l'œil, buste penché de 14°.
+- Le corps se met de trois quarts, épaule gauche en avant (18° / 32° / 42°), la tête reste dans l'axe du regard. L'arme est placée par rapport aux yeux : elle monte et descend avec la visée, et recule vers l'épaule si le bras ne peut pas l'atteindre. La main de soutien n'est qu'à demi fermée (35° par phalange au lieu de 62°).
+- Nouvel outil `Assets/Editor/AvatarPoseCaptures.cs`, menu **SAE501 → Arène 1v1 → Captures tenue d'arme** : rend le personnage dans Alvéole 17 avec la pose envoyée par un joueur PC, pour les 3 armes, visée droite, vers le haut et vers le bas, sans mode Play.
+- Wiki : page [Personnages](https://github.com/withRen/SAE501/wiki/Personnages) mise à jour (non poussé).
+- **Vérifié** dans l'éditeur, hors mode Play : compilation sans erreur, console vide, captures avant / après des 3 armes (`docs/images/avatar/tenue_*.jpg`). Réglé à l'œil sur les captures de référence, sans animation de Counter-Strike (les poses sont calculées, pas des animations importées).
+- **Non vérifié** : en vraie partie à deux machines, personnage en marche avec l'arme, et rien au casque. Recul et rechargement toujours non animés sur l'avatar.
+
+---
+
+## 188 — Sons des zombies : impact de balle et pas
+
+**Date** : 2026-11-11 · **Domaine** : Audio
+
+> Sur le jeu actuellement il y a des problèmes de logique de sons, donc je veux que tu trouves des sont réalistes et que tu rectifies donc le sons de hit quand on tire avec le pistolet sur un zombi, également il faut résoudre le bruit de pats des zombis
+
+**Résultat** (code fait par l'IA, Claude Code, branche `feature/multijoueur`, non commité au moment de l'écriture : en attente de l'écoute de Rahim)
+
+- Sons trouvés sur Freesound, tous **CC0** : « VisceralBulletImpacts » (u1769092) et « Meaty Damage Impact » (modusmogulus) pour la balle ; « pas zombie route » (indieground) et « Heavy Footsteps | Crunchy Thuds » (GammaGool) pour les pas. Découpés avec ffmpeg en variantes (6 impacts, 5 + 5 pas) dans `Assets/Resources/Sounds/Impact_Balle`, `Pas_Zombie`, `Pas_Lourd`. Originaux et crédits : `Tools/sons_cc0/zombies/CREDITS.md`, `docs/ASSETS.md`. Choisis sur leur description et l'analyse du signal : l'IA ne peut pas les écouter, Rahim les valide à l'oreille.
+- **Impact** : une balle de pistolet (`ZombieHitbox` → `Zombie.HitFeedback(bullet: true)` → `ZombieVoice.PlayBulletHit`) joue une des 6 variantes, jamais deux fois la même de suite, hauteur ±6 %. Le craquement d'os de la tête reste par-dessus. Hache et pied de biche gardent `flesh_zombie_hit`.
+- **Bug des pas trouvé** : `Zombie.GroundSteps` jouait un pas synthétique sur un minuteur fixe (0,62 s Rôdeur, 0,78 s Cogneur, 0,29 s Coureur), sans lien avec l'animation. Le clip de marche du Rôdeur ne fait que 2 pas en 4 s (joué à la vitesse réelle du zombie) : on entendait ~3 pas par pas visible. Les marionnettes du multijoueur n'avaient aucun pas.
+- **Correction** : instants d'appui de chaque pied mesurés dans les 3 clips de marche (hauteur et avancée des pieds échantillonnées dans l'éditeur) ; le pas est joué quand la phase de l'état `Walk` de l'Animator passe par ces instants. La cadence suit donc la vitesse de l'animation. Aussi sur les marionnettes. Au plus 4 pas dans la même fenêtre de 0,15 s pour tous les zombies, pas ignorés au-delà de la portée, priorité audio sous les voix et les impacts. Rôdeur : pas traînants ; Cogneur : pas lourds plus graves ; Coureur : pas lourds plus aigus. Repli sur l'ancien minuteur si pas d'Animator.
+- **Vérifié** dans l'éditeur, hors mode Play : compilation sans erreur, console vide, sons trouvés par `Resources.LoadAll` ; simulation de l'Animator des 3 prefabs (8 s à 72 images/s) : chaque pas tombe quand le bon pied est au plus bas (Rôdeur 0,6 m/s : 1 pas toutes les ~1,85 s ; Cogneur : 1,04 s / 0,75 s, démarche boiteuse du clip ; Coureur 1,6 m/s : toutes les 0,50 s).
+- **Non vérifié** : en partie (mode Play), volumes réels dans la scène, en multijoueur, et rien au casque.
+
+---
+
+## 189 — Mur manquant du couloir près de la salle du générateur
+
+**Date** : 2026-11-11 · **Domaine** : Carte / Outils éditeur
+
+> Il manque actuellement tout un mur, juste à gauche de la salle du générateur
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, branche `feature/multijoueur`, commit `d599725`, non poussé ; `MainScene`, ses lightmaps et ce journal non commités car mêlés au travail d'autres fils)
+
+- **Mur concerné** : le mur ouest du couloir (`Wall_Corridor_West`, x = 13 m), sur le pan de z = -1,6 à 3,1 m entre le renfoncement de la salle du générateur et la porte de la cuisine. Depuis le couloir, au-dessus du lambris, on voyait à travers : le renfoncement, le mur de brique de la salle du générateur et le jardin.
+- **Cause** : ce n'était ni un objet supprimé à la main ni la liste `objets_retires.txt` (vide). La face côté couloir de ce pan avait été retirée par `MursSuperposes` (journal 148), l'outil qui enlève les faces de murs superposées. Il jugeait une face « cachée » quand ses **trois sommets** tombaient dans des faces d'autres objets du même plan : les coins de ce grand pan touchaient les petits bouts des murs voisins (cuisine, salle du générateur), il a donc été retiré alors que rien ne le cachait au milieu. La face extérieure restait, invisible depuis le couloir. Le mur de rustine `MurCouloir` (journal 173) ne bouchait que 2,3 m du trou.
+- **Correction** : `MursSuperposes` vérifie maintenant toute la surface (sommets + grille de 45 points à l'intérieur du triangle) avant de retirer une face. `MurCouloir.cs` et son appel dans `RoomBuilder` sont retirés (il ferait du z-fighting avec la face remise).
+- **Dans la scène, sans la reconstruire** : les 2 triangles de la face côté couloir remis dans `Assets/Generated/Recouvrements/Wall_Corridor_West.asset` (collision comprise), objet `Wall_Corridor_West_Ajout` et son maillage supprimés, éclairage recuit (menu **SAE501 → Cuire l'éclairage**), ce qui a aussi légèrement changé l'éclairage général (1 lightmap au lieu de 2).
+- **Vérifié** dans l'éditeur, hors mode Play : rayons depuis le couloir tous les 50 cm, de z = -1,5 à 3 m : tous touchent `Wall_Corridor_West` (avant : le mur de la salle du générateur à 14,5 m) ; captures avant / après.
+- **Remarque** : un contrôle des autres faces retirées par l'ancien test signale d'autres cas incomplets (surtout des chants et dessus de murs, invisibles, et un pan de 3 m du mur est du bunker à vérifier). Ils resteront tels quels jusqu'au prochain *Build VR Scene*, qui appliquera le nouveau test. Ce prochain build pourra aussi faire réapparaître un peu de z-fighting là où deux faces ne se recouvrent qu'en partie.
+- **Non vérifié** : en mode Play et au casque.
+
+**Suite** (même jour)
+
+> Y a une sorte d'overide des objets là, les deux mures se coupent l'un dans l'autre au lieu de couper net avant la jonction pour éviter les problèmes d'affichage
+
+- Cause : les bouts des deux petits murs qui encadrent le pan remis (`Wall_GeneratorStub_South` côté salle du générateur, `Wall_KitchenStub_North` côté cuisine) avaient leur face d'extrémité exactement dans le plan du mur du couloir (x = 12,90 m) : deux faces superposées à la même profondeur (z-fighting).
+- Correction sans reconstruire la scène : ces faces d'extrémité (2 triangles par mur, entièrement derrière le pan du couloir) sont retirées dans des copies `Assets/Generated/Recouvrements/Wall_GeneratorStub_South.asset` et `Wall_KitchenStub_North.asset` (collisions comprises), éclairage recuit. Le nouveau test de `MursSuperposes` retire exactement ces faces au prochain *Build VR Scene* : rien à changer dans le code.
+- Non vérifié en mode Play ni au casque.
+
+## 190 — Fusion de tout le travail dans main
+
+**Date** : 2026-11-12 · **Domaine** : Git / Documentation
+
+> Faisont un push de tout ça, proprement dans le main avec une explication que c'est du marging de tout ce qui a été fait jusqu'ici
+
+**Résultat** (tri, commits et fusion faits par l'IA, Claude Code, sur le Mac de Rahim)
+
+- **Avant** : `main` sur GitHub (`4d6d4d3`, journal 131) ne contenait ni le portage PC (`develop`, poussée mais pas fusionnée) ni la branche `feature/multijoueur` (40 commits locaux non poussés), et environ 185 fichiers restaient non commités, mêlés entre plusieurs fils de travail.
+- **Travail non commité rangé en 4 commits** sur `feature/multijoueur` : duel 1v1 (arènes, armes, NetDuel, lobby, journal 154 à 171 et 181 à 187), évasion par le portail du jardin et cinématique de fin (176 à 178), sons des zombies (188), `MainScene` avec ses matériaux générés, son NavMesh et son éclairage déjà recuits (172 à 175 et 189). Le découpage est fait par fichier : un fichier touché par deux sujets (ex. `NetPlayer.cs`, `Pistol.cs`) est rangé avec le sujet principal.
+- **Nommage** (suite : « Go, veille juste bien à ce que les nommages features/ etc respectent bien les conventions ») : la convention du dépôt est `feature/<id>-nom` (README, PLANNING). La branche locale `feature/multijoueur` est renommée et poussée en `feature/147-multijoueur` (issue #147, serveur multijoueur). Les branches distantes hors convention (`features/confort-rapide`, `features/escalade-zombies`, `features/radio-ravitaillement`, `features_exterieur`, `refactor/difficult-vagues`, `chore/nouveau-son`) appartiennent à d'autres membres du groupe : signalées, pas renommées.
+- **Fusion** : un commit de fusion `--no-ff` de `feature/147-multijoueur` (qui contient déjà `develop`) dans `main`, dont le message liste tout ce qui entre. `main` passe de la version du 22 octobre à l'état complet du projet au 12 novembre 2026. Page wiki [Historique des versions](https://github.com/withRen/SAE501/wiki/Historique-des-versions).
+- **Laissés hors du dépôt** (fichiers locaux de Rahim ou résidus d'import) : réglages URP (`Quest_RPAsset.asset`, `UniversalRenderPipelineGlobalSettings.asset`), profil de build Meta Quest (identifiant du casque branché), `DevAgentSettings.asset` (adresse IP), suppression de `RuntimeActionBindings.json`, `Assets/Protection_suite/`, `scripts/`, `rules.md`, `ProjectSettings/VirtualProjectsConfig.json` (Multiplayer Play Mode), `Assets/Resources/BillingMode.json` (résidu du paquet Purchasing), `vsync_fps_capture.png`, et du pack VCR01 la variante Olive et la scène de démo (seules les variantes Black et Sand servent au sniper).
+- **Vérifié** : le projet compile dans l'éditeur ouvert (aucune erreur), `MainScene` et ses lightmaps ont été enregistrés ensemble après la dernière cuisson. Non vérifié : un build Quest ou PC complet depuis `main`, ni au casque.

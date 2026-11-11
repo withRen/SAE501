@@ -11,7 +11,7 @@ using UnityEngine;
 //   - matériau propre au portail (Portail_Fer) : fer forgé peint en noir, peinture écaillée, rouille, coulures, terre et
 //     mousse au pied. Textures 1024 générées par Tools/textures/generer_portail.py (ASTC 6x6 sur Quest, comme les
 //     textures d'usure). Même nombre de triangles, un matériau de plus.
-// Appelé par RoomBuilder (avant les LOD).
+// Appelé par RoomBuilder (avant les LOD). Retire aussi le batching statique des battants et du cadenas (ils bougent en jeu : EscapeGate).
 public static class PortailFer
 {
     const string Dir = "Assets/Generated/Portail";
@@ -57,6 +57,18 @@ public static class PortailFer
             done++;
         }
         Debug.Log($"[PortailFer] {done} battants : UV refaites, matériau Portail_Fer");
+        Movable(root);
+    }
+
+    // [Évasion] le portail s'ouvre en jeu (EscapeGate) : battants et cadenas ne doivent pas être fusionnés par le batching statique
+    static readonly string[] Moving = { "Garden_ExitGate_Left", "Garden_ExitGate_Right", "Garden_ExitGate_Padlock" };
+    public static void Movable(Transform root)
+    {
+        foreach (var t in root.GetComponentsInChildren<Transform>(true).Where(t => Moving.Contains(t.name)))
+        {
+            var f = GameObjectUtility.GetStaticEditorFlags(t.gameObject);
+            GameObjectUtility.SetStaticEditorFlags(t.gameObject, f & ~StaticEditorFlags.BatchingStatic);
+        }
     }
 
     // une copie par sommet de triangle (le maillage est petit : ~150 triangles) ; projection selon la normale du triangle

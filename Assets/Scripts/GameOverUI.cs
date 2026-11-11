@@ -6,7 +6,10 @@ using UnityEngine.SceneManagement;
 
 // Écran de fin de partie (terminal BUNKER-OS en World Space, construit en code via UiKit) :
 //   - Défaite (PlayerHealth.Died) : thème Rouge/Ambre, « BUNKER-OS // ALERTE CRITIQUE », « VOUS ÊTES MORT »
-//   - Victoire (WaveManager.GeneratorActivated -> ShowVictory) : thème Vert/Or, « BUNKER-OS // EXTRACTION », « VOUS AVEZ ÉCHAPPÉ »
+//   - Victoire (portail du jardin franchi : WaveManager.PlayerEscaped -> ShowVictory) : thème Vert/Or, « BUNKER-OS // EXTRACTION »,
+//     « VICTOIRE », « Vous avez réussi à vous enfuir. ». Avant le bilan, après un fondu au noir complet, la cinématique de fin (EscapeVideo : le survivant
+//     s'enfuit par le portail, les zombies secouent la grille) est jouée sur un écran dans le noir ; le bilan apparaît
+//     PAR-DESSUS la vidéo à la moitié (ou dès que le joueur la passe), la vidéo continue derrière (journal 177).
 // Sous le titre, l'encadré « BILAN DE MISSION » affiche en 2 colonnes les compteurs de GameStats (zombies éliminés,
 // précision des tirs à la tête, planches posées, niveau ou vague atteinte, temps et éventuel nouveau record en Survie).
 // Le joueur choisit explicitement la suite via les boutons pointés au rayon (MenuPointer) ou à la souris (DesktopMode) :
@@ -17,19 +20,20 @@ public class GameOverUI : MonoBehaviour
     public static GameOverUI Instance { get; private set; }
     public static bool PanelOpen { get; private set; }
 
-    static readonly Vector2 PanelSize = new Vector2(1.52f, 1.44f);
+    static readonly Vector2 PanelSize = new Vector2(1.84f, 1.44f);   // journal 178 : 1,52 -> 1,84 m (le titre débordait)
     static readonly Color Ink = new Color(0.06f, 0.04f, 0.015f);
-    const float StatX = 0.64f;
+    const float StatX = 0.78f;
 
     public Transform head;
     public TextMesh gameOverText;       // conservé pour la scène existante (RoomBuilder.BuildHealthUI) : désactivé au profit du panneau World Space
     public float fadeDuration = 1.2f;
     public float restartDelay = 15f;    // conservé pour la compatibilité de sérialisation (plus de rechargement automatique par timeout)
     public float minReadTime = 1f;      // verrou de sécurité après le fondu : les boutons sont grisés pendant 1 s pour éviter un tir réflexe
-    public float victoryDelay = 4f;     // victoire : le joueur voit la salle se rallumer avant l'écran de fin
+    public float victoryDelay = 4f;     // conservé pour la sérialisation ; victoire : escapeDelay (le joueur vient de franchir le portail)
+    public float escapeDelay = 1.2f;    // victoire : quelques pas sur la route avant le fondu et la cinématique
     public float restartHold = 1f;      // conservé pour la compatibilité de sérialisation
     public string message = "VOUS ÊTES MORT\nLe signal n'a pas été envoyé...";
-    public string victoryMessage = "VOUS AVEZ ÉCHAPPÉ\nLe générateur est en marche.";
+    public string victoryMessage = "VICTOIRE\nVous avez réussi à vous enfuir.";
     public Color deathColor = new Color(0.8f, 0.1f, 0.1f);
     public Color victoryColor = new Color(1f, 0.8f, 0.35f);
     public Color summaryColor = new Color(0.85f, 0.85f, 0.8f);
@@ -112,7 +116,7 @@ public class GameOverUI : MonoBehaviour
     public void ShowVictory()
     {
         if (!running)
-            StartCoroutine(Run(true, victoryDelay, 0));
+            StartCoroutine(Run(true, escapeDelay, 0));
     }
 
     IEnumerator Run(bool victory, float delay, int resumeLevel)
@@ -128,15 +132,35 @@ public class GameOverUI : MonoBehaviour
 
         if (!head && Camera.main) head = Camera.main.transform;
 
-        // Fondu d'assombrissement jusqu'à 78 % d'opacité pour isoler le terminal tout en gardant la perception de l'espace
-        const float targetFadeAlpha = 0.78f;
-        if (black)
+        // Victoire : fondu au noir complet, cinématique de fin (si la vidéo est là), puis le bilan sur fond assombri
+        if (victory && black && EscapeVideo.Available)
         {
             black.enabled = true;
             float dur = Mathf.Max(0.01f, fadeDuration);
             for (float t = 0f; t < dur; t += Time.unscaledDeltaTime)
             {
-                black.material.color = new Color(0f, 0f, 0f, Mathf.Lerp(0f, targetFadeAlpha, t / dur));
+                black.material.color = new Color(0f, 0f, 0f, Mathf.Clamp01(t / dur));
+                yield return null;
+            }
+            black.material.color = Color.black;
+            // la vidéo continue ; le bilan apparaît par-dessus à la moitié (ou tout de suite si le joueur passe)
+            bool menu = false, done = false;
+            StartCoroutine(PlayVideo(() => menu = true, () => done = true));
+            while (!menu && !done) yield return null;
+            overVideo = menu && EscapeVideo.Playing;
+        }
+
+        // Fondu d'assombrissement jusqu'à 78 % d'opacité pour isoler le terminal tout en gardant la perception de l'espace
+        // (pas par-dessus la vidéo : l'écran de cinéma reste visible autour du panneau)
+        const float targetFadeAlpha = 0.78f;
+        if (black && !overVideo)
+        {
+            float a0 = black.enabled ? black.material.color.a : 0f;     // après la cinématique : on part du noir complet
+            black.enabled = true;
+            float dur = Mathf.Max(0.01f, fadeDuration);
+            for (float t = 0f; t < dur; t += Time.unscaledDeltaTime)
+            {
+                black.material.color = new Color(0f, 0f, 0f, Mathf.Lerp(a0, targetFadeAlpha, t / dur));
                 yield return null;
             }
             black.material.color = new Color(0f, 0f, 0f, targetFadeAlpha);
@@ -144,6 +168,7 @@ public class GameOverUI : MonoBehaviour
 
         BuildPanel(victory, resumeLevel);
         PlacePanelInFrontOfHead();
+        if (overVideo) StartCoroutine(ShowOverVideo());
 
         // Verrou de sécurité anti-missclick : boutons grisés pendant 1 s (absorbe les tirs résiduels du combat)
         SetButtonsInteractable(false);
@@ -158,6 +183,36 @@ public class GameOverUI : MonoBehaviour
 
         if (!leaving)
             SetButtonsInteractable(true);
+    }
+
+    bool overVideo;
+
+    IEnumerator PlayVideo(Action onMenu, Action onDone)
+    {
+        yield return EscapeVideo.Play(head, onMenu);
+        onDone();
+    }
+
+    // Par-dessus la vidéo : la caméra ne dessine que le calque de l'écran de cinéma ; le panneau et les rayons de pointage
+    // y passent aussi (les rayons sont créés par MenuPointer.Start, d'où la 2e passe une image plus tard). Fond un peu
+    // transparent : on devine la vidéo derrière le bilan. Le panneau grandit en 0,3 s.
+    IEnumerator ShowOverVideo()
+    {
+        var bg = panel.Find("Fond_Opaque");
+        if (bg && bg.GetComponent<Renderer>()) bg.GetComponent<Renderer>().material.color = new Color(0f, 0f, 0f, 0.82f);
+        Vector3 full = panel.localScale;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            foreach (var t in panel.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = EscapeVideo.Layer;
+            if (pass == 0) yield return null;
+        }
+        for (float t = 0f; t < 0.3f; t += Time.unscaledDeltaTime)
+        {
+            if (!panel) yield break;
+            panel.localScale = full * Mathf.Lerp(0.85f, 1f, 1f - Mathf.Pow(1f - t / 0.3f, 2f));
+            yield return null;
+        }
+        if (panel) panel.localScale = full;
     }
 
     void PlacePanelInFrontOfHead()
@@ -199,34 +254,35 @@ public class GameOverUI : MonoBehaviour
         // Zone 1 — Bandeau système supérieur (y = +0.678)
         UiKit.Quad(panel, "Bande_Haut", new Vector2(0f, 0.678f), new Vector2(PanelSize.x, 0.084f),
                    new Color(frameCol.r, frameCol.g, frameCol.b, 0.92f), 4500, 0.006f);
-        UiKit.Text(panel, "Bande_G", new Vector2(-0.73f, 0.678f), 0.0085f, Ink,
+        UiKit.Text(panel, "Bande_G", new Vector2(-PanelSize.x / 2f + 0.03f, 0.678f), 0.0085f, Ink,
                    victory ? "BUNKER-OS  //  EXTRACTION" : "BUNKER-OS  //  ALERTE CRITIQUE",
                    TextAnchor.MiddleLeft, true, 4600);
-        UiKit.Text(panel, "Bande_D", new Vector2(0.73f, 0.678f), 0.0085f, Ink,
+        UiKit.Text(panel, "Bande_D", new Vector2(PanelSize.x / 2f - 0.03f, 0.678f), 0.0085f, Ink,
                    endless ? "MODE SURVIE" : "MODE ÉVASION",
                    TextAnchor.MiddleRight, true, 4600);
 
         // Zone 2 — Bloc Titre & Statut (espacement vertical élargi : +0.575 / +0.448 / +0.335)
-        UiKit.Text(panel, "Sur_Titre", new Vector2(0f, 0.575f), 0.0095f, surTitleCol,
-                   UiKit.Spaced(victory ? "SIGNAL TRANSMIS" : "SYSTÈME DÉFAILLANT"),
+        // victoire : pas de sur-titre, « VICTOIRE » un peu plus haut (journal 178)
+        if (!victory)
+            UiKit.Text(panel, "Sur_Titre", new Vector2(0f, 0.575f), 0.0095f, surTitleCol,
+                       UiKit.Spaced("SYSTÈME DÉFAILLANT"), TextAnchor.MiddleCenter, true, 4600);
+        UiKit.Text(panel, "Titre_Principal", new Vector2(0f, victory ? 0.50f : 0.448f), victory ? 0.0275f : 0.0235f, mainTitleCol,
+                   victory ? "VICTOIRE" : NetSession.Active ? "L'ÉQUIPE EST TOMBÉE" : "VOUS ÊTES MORT",
                    TextAnchor.MiddleCenter, true, 4600);
-        UiKit.Text(panel, "Titre_Principal", new Vector2(0f, 0.448f), 0.0235f, mainTitleCol,
-                   victory ? "VOUS AVEZ ÉCHAPPÉ" : NetSession.Active ? "L'ÉQUIPE EST TOMBÉE" : "VOUS ÊTES MORT",
-                   TextAnchor.MiddleCenter, true, 4600);
-        string subTitle = victory ? "Le générateur est en marche."
+        string subTitle = victory ? "Vous avez réussi à vous enfuir."
                         : endless ? "Vous avez succombé à la horde."
                                   : "Le signal n'a pas été envoyé...";
         UiKit.Text(panel, "Sous_Titre", new Vector2(0f, 0.335f), 0.0085f, UiKit.White,
                    subTitle, TextAnchor.MiddleCenter, false, 4600);
 
         // Zone 3 — Encadré BILAN DE MISSION (centre y = +0.025, taille 1.36m x 0.480m : de -0.215 à +0.265)
-        UiKit.Quad(panel, "Fond_Bilan", new Vector2(0f, 0.025f), new Vector2(1.36f, 0.480f),
+        UiKit.Quad(panel, "Fond_Bilan", new Vector2(0f, 0.025f), new Vector2(PanelSize.x - 0.16f, 0.480f),
                    new Color(0f, 0f, 0f, 0.35f), 4500, 0.009f);
-        UiKit.Frame(panel, new Vector2(0f, 0.025f), new Vector2(1.36f, 0.480f), 0.003f,
+        UiKit.Frame(panel, new Vector2(0f, 0.025f), new Vector2(PanelSize.x - 0.16f, 0.480f), 0.003f,
                     new Color(frameCol.r, frameCol.g, frameCol.b, 0.45f), 4505, 0.004f);
         UiKit.Text(panel, "Titre_Bilan", new Vector2(-StatX, 0.222f), 0.0075f, sectionCol,
                    "BILAN DE MISSION", TextAnchor.MiddleLeft, true, 4600);
-        UiKit.Quad(panel, "Trait_Bilan", new Vector2(0f, 0.186f), new Vector2(1.28f, 0.002f),
+        UiKit.Quad(panel, "Trait_Bilan", new Vector2(0f, 0.186f), new Vector2(PanelSize.x - 0.24f, 0.002f),
                    new Color(frameCol.r, frameCol.g, frameCol.b, 0.40f), 4505, 0.004f);
 
         PopulateStats(endless);
@@ -236,23 +292,23 @@ public class GameOverUI : MonoBehaviour
         if (NetSession.Active)
         {
             // [Multijoueur] pas de « rejouer » : on repasse par le lobby (l'hôte qui quitte ferme la partie de tous)
-            MakeActionButton(new Vector2(0f, -0.380f), new Vector2(1.20f, 0.110f), 0.0113f, "QUITTER LA PARTIE", ReturnToMainMenu);
+            MakeActionButton(new Vector2(0f, -0.380f), new Vector2(1.50f, 0.110f), 0.0113f, "QUITTER LA PARTIE", ReturnToMainMenu);
         }
         else if (hasResume)
         {
-            MakeActionButton(new Vector2(0f, -0.290f), new Vector2(1.20f, 0.094f), 0.0105f,
+            MakeActionButton(new Vector2(0f, -0.290f), new Vector2(1.50f, 0.094f), 0.0105f,
                              "REPRENDRE AU NIVEAU " + resumeLevel, ResumeAtLevel);
-            MakeActionButton(new Vector2(0f, -0.410f), new Vector2(1.20f, 0.094f), 0.0105f,
+            MakeActionButton(new Vector2(0f, -0.410f), new Vector2(1.50f, 0.094f), 0.0105f,
                              "RECOMMENCER (NIVEAU 1)", RestartFromBeginning);
-            MakeActionButton(new Vector2(0f, -0.530f), new Vector2(1.20f, 0.094f), 0.0105f,
+            MakeActionButton(new Vector2(0f, -0.530f), new Vector2(1.50f, 0.094f), 0.0105f,
                              "MENU PRINCIPAL", ReturnToMainMenu);
         }
         else
         {
             string primaryLabel = victory ? "NOUVELLE PARTIE" : "REJOUER";
-            MakeActionButton(new Vector2(0f, -0.320f), new Vector2(1.20f, 0.110f), 0.0113f,
+            MakeActionButton(new Vector2(0f, -0.320f), new Vector2(1.50f, 0.110f), 0.0113f,
                              primaryLabel, RestartFromBeginning);
-            MakeActionButton(new Vector2(0f, -0.470f), new Vector2(1.20f, 0.110f), 0.0113f,
+            MakeActionButton(new Vector2(0f, -0.470f), new Vector2(1.50f, 0.110f), 0.0113f,
                              "MENU PRINCIPAL", ReturnToMainMenu);
         }
 
@@ -344,7 +400,7 @@ public class GameOverUI : MonoBehaviour
         b.background = UiKit.Quad(g.transform, "Fond", Vector2.zero, size, new Color(accent.r, accent.g, accent.b, 0.10f), 4500, 0.008f);
         UiKit.Frame(g.transform, Vector2.zero, size, 0.004f, new Color(accent.r, accent.g, accent.b, 0.60f), 4505, 0.004f);
         b.label = UiKit.Text(g.transform, "Texte", new Vector2(-size.x / 2f + 0.052f, 0f), charSize, UiKit.White, text, TextAnchor.MiddleLeft, true, 4600);
-        b.arrow = UiKit.Text(g.transform, "Fleche", new Vector2(-0.64f, 0f), 0.009f, accent, "▶", TextAnchor.MiddleCenter, true, 4600);
+        b.arrow = UiKit.Text(g.transform, "Fleche", new Vector2(-size.x / 2f - 0.04f, 0f), 0.009f, accent, "▶", TextAnchor.MiddleCenter, true, 4600);
         b.arrow.gameObject.SetActive(false);
         b.onClick = click;
         buttons.Add(b);

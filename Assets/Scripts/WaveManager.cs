@@ -28,6 +28,9 @@ using UnityEngine.SceneManagement;
 //   Les 4 vagues définies dans `levels` servent de base (mêmes zombies, même rythme) ; au-delà, BuildEndlessWave() prolonge chaque
 //   réglage par une formule (suite arithmétique pour le nombre de zombies, approche d'un plafond pour la vitesse, le nombre de zombies
 //   vivants en même temps et le délai entre deux apparitions). Aucun tableau de vagues à remplir à la main.
+// [Évasion] Activer le générateur ne suffit plus : il ouvre le PORTAIL DU JARDIN (EscapeGate) et la partie passe en phase Escape
+//   (les renforts du niveau 4 continuent, les zombies traquent toujours le joueur). La victoire tombe quand un joueur franchit
+//   le portail (PlayerEscaped) : bilan précédé de la cinématique de fin (GameOverUI -> EscapeVideo). Le mode survie ne change pas.
 // [Portes] Les portes d'une zone (ZoneGate.unlockLevel = N) se déverrouillent dès la fin de la vague N-1, au début de la pause,
 //   et pas au début de la vague N : le joueur a toute la pause pour aller y chercher des planches. Un son (doorClip) l'annonce.
 public class WaveManager : MonoBehaviour
@@ -104,7 +107,7 @@ public class WaveManager : MonoBehaviour
     [Range(0f, 1f)] public float alarmVolume = 0.45f;     // alarme « générateur prêt » (niveau 4) ; plus jouée au début des vagues
     [Range(0f, 1f)] public float doorVolume = 0.9f;       // portes déverrouillées en fin de vague (Resources/Audio/Porte_Deverrouillee)
 
-    enum Phase { Waiting, Wave, Break, Victory }
+    enum Phase { Waiting, Wave, Break, Escape, Victory }
     Phase phase = Phase.Waiting;
     LevelDef cur;                              // vague en cours (celle de `levels`, ou celle calculée en mode survie)
     float timer, spawnTimer, reinforceTimer;
@@ -126,6 +129,8 @@ public class WaveManager : MonoBehaviour
         return false;
     }
     public bool Victory => phase == Phase.Victory;
+    /// <summary>[Évasion] le générateur tourne, le portail du jardin est ouvert : il reste à le franchir.</summary>
+    public bool Escaping => phase == Phase.Escape;
 
     // [#120] progression du niveau en cours (remise à zéro à chaque niveau)
     public int LevelKills { get; private set; }
@@ -227,7 +232,8 @@ public class WaveManager : MonoBehaviour
                 if (timer <= 0f) StartLevel(startLevel);
                 break;
 
-            case Phase.Wave: UpdateWave(); break;
+            case Phase.Wave:
+            case Phase.Escape: UpdateWave(); break;      // [Évasion] portail ouvert : les renforts continuent jusqu'à la fuite
 
             case Phase.Break:
                 timer -= Time.deltaTime;
@@ -330,7 +336,11 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        if (last && !GeneratorReady)
+        if (phase == Phase.Escape)
+        {
+            if (StatusChanged(4000, 0)) SetStatus("Générateur en marche · FUYEZ PAR LE PORTAIL DU JARDIN");
+        }
+        else if (last && !GeneratorReady)
         {
             // [#120] tant que le générateur est bloqué : ce qu'il reste à faire
             int left = Mathf.Max(0, generatorKills - LevelKills), secs = Mathf.CeilToInt(Mathf.Max(0f, generatorDelay - LevelTime));
@@ -455,20 +465,38 @@ public class WaveManager : MonoBehaviour
         spawned++;
     }
 
-    // le joueur a activé le générateur
+    // le joueur a activé le générateur : le portail du jardin s'ouvre (EscapeGate), il reste à fuir par là
     public void GeneratorActivated()
     {
-        if (Endless || phase == Phase.Victory) return;      // mode survie : pas de victoire, le générateur est hors service
-        // [Multijoueur] un client a abaissé le levier : c'est l'hôte qui déclare la victoire (NetGame), pour tout le monde
-        if (NetSession.IsClientOnly) { if (!remoteVictory) GeneratorRequested?.Invoke(); return; }
+        if (Endless || phase == Phase.Escape || phase == Phase.Victory) return;   // mode survie : pas d'évasion, le générateur est hors service
+        // [Multijoueur] un client a abaissé le levier : c'est l'hôte qui ouvre le portail (NetGame), pour tout le monde
+        if (NetSession.IsClientOnly) { if (!remoteEscape) GeneratorRequested?.Invoke(); return; }
+        OpenEscape();
+    }
+
+    void OpenEscape()
+    {
+        phase = Phase.Escape;
+        Zombie.HuntPlayer = true;
+        Debug.Log(GameStats.LogLine("générateur activé", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
+        if (sfx && doorClip) sfx.PlayOneShot(doorClip, doorVolume);
+        Announce("GÉNÉRATEUR ACTIVÉ\nLe PORTAIL DU JARDIN s'ouvre :\nFUYEZ PAR LÀ !", 9f);
+        EscapeOpened?.Invoke();
+    }
+
+    /// <summary>[Évasion] un joueur a franchi le portail du jardin (EscapeGate) : victoire.</summary>
+    public void PlayerEscaped()
+    {
+        if (phase != Phase.Escape) return;
+        if (NetSession.IsClientOnly) { if (!remoteVictory) EscapeRequested?.Invoke(); return; }
         phase = Phase.Victory;
         Zombie.HuntPlayer = false;
         Debug.Log(GameStats.LogLine("victoire", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));
         foreach (var z in alive) if (z != null && !z.Dead) z.Die();
         SetStatus("");
-        Announce("GÉNÉRATEUR ACTIVÉ\nVous avez échappé !", victoryRestartDelay);
+        Announce("VICTOIRE\nVous avez réussi à vous enfuir.", victoryRestartDelay);
         VictoryReached?.Invoke();
-        // [#122] bilan de fin (GameOverUI relance la partie) ; sans lui, relance simple
+        // [#122] bilan de fin, précédé de la cinématique (GameOverUI relance la partie) ; sans lui, relance simple
         if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();
         else StartCoroutine(RestartAfter(victoryRestartDelay));
     }
@@ -524,16 +552,28 @@ public class WaveManager : MonoBehaviour
     public static event Action<int> WaveStarted;             // début de vague (numéro)
     public static event Action<int, float> BreakStarted;     // vague terminée (numéro, PV rendus)
     public static event Action GeneratorRequested;           // client : levier du générateur abaissé
-    public static event Action VictoryReached;               // hôte : générateur activé, victoire
-    bool remoteVictory;
+    public static event Action VictoryReached;               // hôte : un joueur a franchi le portail, victoire
+    public static event Action EscapeOpened;                 // générateur activé : le portail du jardin s'ouvre (EscapeGate ; hôte : relayé aux clients)
+    public static event Action EscapeRequested;              // client : son joueur a franchi le portail
+    bool remoteVictory, remoteEscape;
+
+    /// <summary>[Multijoueur] casque client : l'hôte a activé le générateur, le portail s'ouvre.</summary>
+    public void RemoteEscapeOpen()
+    {
+        if (remoteEscape || phase == Phase.Victory) return;
+        remoteEscape = true;
+        var gen = FindFirstObjectByType<Generator>();
+        if (gen && !gen.IsOn) gen.Activate();                // lumière, son ; ne renvoie rien à l'hôte (remoteEscape)
+        phase = Phase.Escape;
+        EscapeOpened?.Invoke();
+    }
 
     /// <summary>[Multijoueur] casque client : l'hôte a activé le générateur.</summary>
     public void RemoteVictory()
     {
         if (remoteVictory) return;
         remoteVictory = true;
-        var gen = FindFirstObjectByType<Generator>();
-        if (gen) gen.Activate();                             // lumière, son ; ne renvoie rien à l'hôte (remoteVictory)
+        if (!remoteEscape) RemoteEscapeOpen();               // générateur et portail, si le message d'ouverture n'est pas arrivé
         phase = Phase.Victory;
         SetStatus("");
         if (GameOverUI.Instance) GameOverUI.Instance.ShowVictory();

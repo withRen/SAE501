@@ -13,6 +13,9 @@ public class MusicPlayer : MonoBehaviour
     static float duckTarget = 1f;
     static float duckUntil = -1f;
     static float currentDuck = 1f;
+    /// <summary>Coupe la musique en fondu (cinématique de fin : EscapeVideo a sa propre bande-son).</summary>
+    public static bool Silenced;
+    float silence = 1f;
 
     AudioSource src;
     int next;
@@ -27,6 +30,7 @@ public class MusicPlayer : MonoBehaviour
         duckTarget = 1f;
         duckUntil = -1f;
         currentDuck = 1f;
+        Silenced = false;
     }
 
     /// <summary>Atténue momentanément la musique sous une alerte critique P0/P1 (tir, dégât, bris de planche).</summary>
@@ -38,6 +42,7 @@ public class MusicPlayer : MonoBehaviour
 
     void Start()
     {
+        Silenced = false;                   // nouvelle partie : la cinématique de fin a pu la laisser coupée
         if (tracks == null || tracks.Length == 0) { enabled = false; return; }
         src = gameObject.AddComponent<AudioSource>();
         src.playOnAwake = false;
@@ -55,7 +60,8 @@ public class MusicPlayer : MonoBehaviour
         UpdateCombatState();
         if (Time.unscaledTime >= duckUntil) duckTarget = 1f;
         currentDuck = Mathf.MoveTowards(currentDuck, duckTarget, Time.unscaledDeltaTime * (currentDuck > duckTarget ? 8f : 1.8f));
-        src.volume = volume * combatIntensity * currentDuck;
+        silence = Mathf.MoveTowards(silence, Silenced ? 0f : 1f, Time.unscaledDeltaTime / 1.2f);
+        src.volume = volume * combatIntensity * currentDuck * silence;
         src.pitch = Mathf.MoveTowards(src.pitch, targetPitch, Time.unscaledDeltaTime * 0.5f);
         if (AudioListener.pause || Time.unscaledTime < startAt) return;     // menu pause : la musique attend
         if (src.isPlaying) return;

@@ -28,6 +28,8 @@ public static class NetSession
     public static string LastError;
 
     static string Version => Application.version;
+    /// <summary>Vérification de version à la connexion : désactivée pour l'instant (en attendant l'auto-updateur).</summary>
+    public const bool CheckVersion = false;
 
     static NetworkManager Ensure()
     {
@@ -43,24 +45,33 @@ public static class NetSession
         return nm;
     }
 
-    // l'hôte n'accepte que la même version du jeu, pas plus de MaxPlayers joueurs, et personne une fois la partie lancée
+    // l'hôte n'accepte que la même version du jeu, pas plus de MaxPlayers joueurs (2 en 1v1), et personne une fois la partie lancée
     static void Approve(NetworkManager.ConnectionApprovalRequest req, NetworkManager.ConnectionApprovalResponse res)
     {
         string v = req.Payload != null ? Encoding.UTF8.GetString(req.Payload) : "";
         res.CreatePlayerObject = false;
         if (req.ClientNetworkId == Net.LocalClientId) { res.Approved = true; return; }
-        if (v != Version) { res.Approved = false; res.Reason = "Version différente (hôte " + Version + ", vous " + v + ")"; return; }
+        if (CheckVersion && v != Version) { res.Approved = false; res.Reason = "Version différente (hôte " + Version + ", vous " + v + ")"; return; }
         if (InGame) { res.Approved = false; res.Reason = "La partie a déjà commencé"; return; }
-        if (Net.ConnectedClientsIds.Count >= MaxPlayers) { res.Approved = false; res.Reason = "Partie complète"; return; }
+        int max = (NetLobby.Instance && NetLobby.Instance.IsDuel1v1) ? 2 : MaxPlayers;
+        if (Net.ConnectedClientsIds.Count >= max) { res.Approved = false; res.Reason = "Partie complète"; return; }
         res.Approved = true;
     }
 
     static void OnSceneLoaded(string scene, UnityEngine.SceneManagement.LoadSceneMode mode, System.Collections.Generic.List<ulong> done, System.Collections.Generic.List<ulong> timedOut)
     {
-        if (!Net || !Net.IsServer || scene == MenuScene || NetGame.Instance) return;
+        if (!Net || !Net.IsServer || scene == MenuScene) return;
         // un casque trop lent à charger est déconnecté (il reviendra au menu avec un message)
         foreach (var id in timedOut) Net.DisconnectClient(id, "Chargement trop long");
-        Object.Instantiate(Resources.Load<GameObject>("Net/NetGame")).GetComponent<NetworkObject>().Spawn(true);
+
+        if (ArenaMaps.IsArena(scene))      // toutes les cartes du duel (ArenaMaps)
+        {
+            NetDuel.EnsureSpawned();
+        }
+        else if (!NetGame.Instance)
+        {
+            Object.Instantiate(Resources.Load<GameObject>("Net/NetGame")).GetComponent<NetworkObject>().Spawn(true);
+        }
     }
 
     static void OnDisconnect(ulong id)

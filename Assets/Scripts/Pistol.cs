@@ -7,6 +7,31 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class Pistol : MonoBehaviour
 {
+    /// <summary>Duel 1v1 : chargeurs infinis. Le chargeur a un nombre limité de balles (12 pistolet, 25 AK74, 10 sniper) ; vide, ou avec R sur PC,
+    /// l'arme recharge toute seule (reloadTime) sans chargeur à ramasser (posé par NetDuel).</summary>
+    public static bool InfiniteAmmo;
+    public float reloadTime = 1.4f;                  // durée du rechargement du duel
+    float reloadingUntil;
+    public bool Reloading => Time.time < reloadingUntil;
+
+    /// <summary>Duel : recharge le chargeur (plein au bout de reloadTime) ; pas de tir pendant ce temps.</summary>
+    public void ReloadInfinite()
+    {
+        if (!InfiniteAmmo || Reloading || ammo >= maxAmmo) return;
+        reloadingUntil = Time.time + reloadTime;
+        src.PlayOneShot(reloadClip ? reloadClip : click);
+        UpdateHud();
+        StartCoroutine(FinishReload());
+    }
+
+    IEnumerator FinishReload()
+    {
+        yield return new WaitForSeconds(reloadTime);
+        ammo = maxAmmo;
+        reloadingUntil = 0f;
+        UpdateHud();
+    }
+
     public int ammo = 12;
     public int maxAmmo = 12;
     public Transform muzzle;
@@ -25,6 +50,17 @@ public class Pistol : MonoBehaviour
     [Tooltip("[#113] Tir à la tête : vibration forte et plus longue, pour sentir le coup mortel.")]
     [Range(0f, 1f)] public float headshotHapticAmplitude = 1f;
     public float headshotHapticDuration = 0.2f;
+
+    [Header("Autres armes (duel 1v1 : fusil d'assaut, sniper)")]
+    [Tooltip("Délai minimal entre deux tirs (s). 0 : pas de limite (pistolet). Fusil : 0,11 ; sniper : 1,4 (action de culasse).")]
+    public float fireInterval = 0f;
+    [Tooltip("Rafale : tant que la gâchette est tenue, l'arme tire toute seule (fusil d'assaut).")]
+    public bool automatic = false;
+    [Tooltip("Dégâts contre un joueur (PvP, vie sur 100) : tir à la tête, tir au corps.")]
+    public float pvpHeadDamage = 50f, pvpBodyDamage = 20f, pvpLegDamage = -1f;      // duel (PV 100) : pistolet 2 têtes / 5 corps ; jambes < 0 : comme le corps
+    public float shotPitch = 1f, shotVolume = 0.9f;
+    public string fireState = "Fire";               // état d'animation du tir dans l'Animator de l'arme
+    bool triggerHeld;
 
     ParticleSystem smoke;
 
@@ -63,6 +99,7 @@ public class Pistol : MonoBehaviour
     {
         grab = GetComponent<XRGrabInteractable>();
         grab.activated.AddListener(OnActivate);
+        grab.deactivated.AddListener(_ => triggerHeld = false);
         src = gameObject.AddComponent<AudioSource>();
         src.spatialBlend = DesktopMode.On ? 0.20f : 0.65f;
         src.priority = 32;
@@ -78,6 +115,13 @@ public class Pistol : MonoBehaviour
     // Ancien compteur sur la culasse (hud) : n'est plus créé, remplacé par InspectHud (affiché quand on penche l'arme près du visage).
     void Update()
     {
+        // rafale au casque : tant que la gâchette est tenue (en version PC, DesktopPlayer rappelle Fire tant que le clic est tenu)
+        if (automatic && triggerHeld)
+        {
+            if (!BeltItem.InHand(grab) || PauseMenu.Paused) triggerHeld = false;
+            else Fire(grab.firstInteractorSelecting as IXRActivateInteractor);
+        }
+        if (InfiniteAmmo && ammo <= 0 && !Reloading && BeltItem.InHand(grab)) ReloadInfinite();      // vide en main : recharge automatique
         if (!hud) return;
         bool held = BeltItem.InHand(grab);
         if (hudRenderer) hudRenderer.enabled = held;
@@ -90,12 +134,19 @@ public class Pistol : MonoBehaviour
     void OnActivate(ActivateEventArgs a)
     {
         if (!BeltItem.InHand(grab) || PauseMenu.Paused) return;
+        triggerHeld = true;
         Fire(a.interactorObject);
     }
 
     // un tir complet (son, flash, fumée, animation du pack, douille, haptique, rayon) ; public pour pouvoir être testé sans casque
+    /// <summary>Vrai si un tir partirait maintenant (cadence, rechargement, munitions) ; le recul à l'écran ne se joue que dans ce cas.</summary>
+    public bool CanFire => !Reloading && Time.time - lastShot >= fireInterval && (ammo > 0 || InfiniteAmmo);
+
     public void Fire(IXRActivateInteractor interactor = null)
     {
+        if (Time.time - lastShot < fireInterval) return;          // cadence (fusil, culasse du sniper)
+        if (Reloading) return;
+        if (ammo <= 0 && InfiniteAmmo) { ReloadInfinite(); return; }
         src.spatialBlend = DesktopMode.On ? 0.20f : 0.65f;
         if (ammo <= 0)
         {
@@ -109,13 +160,13 @@ public class Pistol : MonoBehaviour
         ammo--;
         GameStats.Shot();
         UpdateHud();
-        src.pitch = Random.Range(0.97f, 1.03f);
-        src.PlayOneShot(shotClip ? shotClip : shot, 0.90f);
+        src.pitch = shotPitch * Random.Range(0.97f, 1.03f);
+        src.PlayOneShot(shotClip ? shotClip : shot, shotVolume);
         MusicPlayer.Duck(0.63f, 0.30f);
         StartCoroutine(Flash());
         if (smoke) smoke.Emit(14);
         lastShot = Time.time;
-        if (animator) animator.Play("Fire", 0, fireStartNormalized);
+        if (animator) animator.Play(fireState, 0, fireStartNormalized);
         // Unity ne livre pas les événements d'animation situés après un départ décalé : la douille est donc déclenchée par un minuteur
         CancelInvoke(nameof(EjectCasing));
         Invoke(nameof(EjectCasing), casingDelay);
@@ -134,7 +185,9 @@ public class Pistol : MonoBehaviour
             if (hit.rigidbody) hit.rigidbody.AddForceAtPosition(ray.direction * 6f, hit.point, ForceMode.Impulse);
             var hb = hit.collider.GetComponent<ZombieHitbox>();
             bool head = hb && hb.zone == HitZone.Head && hb.zombie && !hb.zombie.Dead;
-            hit.collider.SendMessage("OnShot", hit, SendMessageOptions.DontRequireReceiver);
+            var pvp = hit.collider.GetComponent<PlayerHitbox>();         // un autre joueur : dégâts propres à l'arme
+            if (pvp) pvp.Hit(pvpHeadDamage, pvpBodyDamage, hit.point, pvpLegDamage);
+            else hit.collider.SendMessage("OnShot", hit, SendMessageOptions.DontRequireReceiver);
             // [#113] tête touchée : un deuxième retour, fort, juste après celui du recul de l'arme
             if (head) StartCoroutine(HeadshotHaptic(interactor));
         }
@@ -304,7 +357,7 @@ public class Pistol : MonoBehaviour
     void UpdateHud()
     {
         if (!hud) return;
-        hud.text = ammo.ToString("00") + "/" + maxAmmo.ToString("00");
+        hud.text = Reloading ? "RECHARGE" : ammo.ToString("00") + "/" + maxAmmo.ToString("00");
         hud.color = ammo <= 0 ? hudEmpty : (ammo <= lowThreshold ? hudLow : hudNormal);
     }
 }

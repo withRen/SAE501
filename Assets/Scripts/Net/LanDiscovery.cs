@@ -16,7 +16,7 @@ public class LanDiscovery : MonoBehaviour
     public const int Port = 47777;
     const string Tag = "ESCAPOR";
 
-    public struct Game { public string ip, name, version; public int players; public float seen; }
+    public struct Game { public string ip, name, version, mode; public int players; public float seen; }
 
     static LanDiscovery instance;
     UdpClient sender, listener;
@@ -116,7 +116,8 @@ public class LanDiscovery : MonoBehaviour
     {
         if (sender == null) { sender = new UdpClient(); sender.EnableBroadcast = true; }
         int n = NetSession.Net ? NetSession.Net.ConnectedClientsIds.Count : 1;
-        var msg = Encoding.UTF8.GetBytes(Tag + "|" + Application.version + "|" + HostName() + "|" + n);
+        string mode = NetLobby.Instance ? NetLobby.ModeName(NetLobby.Instance.ModeIndex.Value) : "COOP";
+        var msg = Encoding.UTF8.GetBytes(Tag + "|" + Application.version + "|" + HostName() + "|" + n + "|" + mode);
         if (targets == null || Time.unscaledTime > targetsAt + 10f) { targets = BroadcastTargets(); targetsAt = Time.unscaledTime; }
         int sent = 0;
         foreach (var t in targets)
@@ -169,7 +170,8 @@ public class LanDiscovery : MonoBehaviour
         var parts = msg.Split('|');
         if (parts.Length < 4 || parts[0] != Tag) return;
         int.TryParse(parts[3], out int n);
-        games[ip] = new Game { ip = ip, version = parts[1], name = parts[2], players = n, seen = Time.unscaledTime };
+        string mode = parts.Length >= 5 ? parts[4] : "COOP";
+        games[ip] = new Game { ip = ip, version = parts[1], name = parts[2], players = n, mode = mode, seen = Time.unscaledTime };
     }
 
     static string HostName()

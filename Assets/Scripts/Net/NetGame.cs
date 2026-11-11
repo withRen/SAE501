@@ -81,6 +81,7 @@ public class NetGame : NetworkBehaviour
         Plank.LocalFreed += OnLocalFreed;
         Zombie.PuppetHit += OnPuppetHit;
         WaveManager.GeneratorRequested += OnGeneratorRequested;
+        WaveManager.EscapeRequested += OnEscapeRequested;
         GeneratorReady.OnValueChanged += (_, v) => WaveManager.RemoteGeneratorReady = v;
         WaveManager.RemoteGeneratorReady = GeneratorReady.Value;
         BuildScoreText();
@@ -98,6 +99,7 @@ public class NetGame : NetworkBehaviour
         WaveManager.WaveStarted += OnWaveStarted;
         WaveManager.BreakStarted += OnBreakStarted;
         WaveManager.VictoryReached += OnVictory;
+        WaveManager.EscapeOpened += OnEscapeOpened;
 
         foreach (var id in NetworkManager.ConnectedClientsIds)
         {
@@ -128,6 +130,8 @@ public class NetGame : NetworkBehaviour
         WaveManager.BreakStarted -= OnBreakStarted;
         WaveManager.VictoryReached -= OnVictory;
         WaveManager.GeneratorRequested -= OnGeneratorRequested;
+        WaveManager.EscapeRequested -= OnEscapeRequested;
+        WaveManager.EscapeOpened -= OnEscapeOpened;
     }
 
     static List<T> StableOrder<T>(IEnumerable<T> items) where T : Component =>
@@ -345,6 +349,15 @@ public class NetGame : NetworkBehaviour
         var g = FindFirstObjectByType<Generator>();
         if (g) g.Activate(); else wm.GeneratorActivated();
     }
+
+    // [Évasion] générateur activé chez l'hôte : le portail du jardin s'ouvre sur tous les casques
+    void OnEscapeOpened() { if (IsServer) EscapeOpenRpc(); }
+    [Rpc(SendTo.NotServer)] void EscapeOpenRpc() { if (WaveManager.Instance) WaveManager.Instance.RemoteEscapeOpen(); }
+
+    // un client a franchi le portail : l'hôte déclare la victoire (pour tout le monde)
+    void OnEscapeRequested() => EscapeRpc();
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void EscapeRpc() { if (WaveManager.Instance) WaveManager.Instance.PlayerEscaped(); }
 
     void OnVictory() => VictoryRpc();
     [Rpc(SendTo.NotServer)] void VictoryRpc() { if (WaveManager.Instance) WaveManager.Instance.RemoteVictory(); }

@@ -11,6 +11,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: 0545a9bdf12c74ffdbf553418fac818d
+  - enabled: 1
+    path: Assets/Scenes/Arena1v1_Bunker.unity
+    guid: 663d13eae9f254fa0822c03b425b660b
+  - enabled: 1
+    path: Assets/Scenes/Arena1v1_Quai.unity
+    guid: 7594a80e8c6ba41b09125c189f3321a4
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 5e1ebd9c1d931427da2a060089938b55, type: 2}

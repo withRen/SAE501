@@ -19,11 +19,12 @@ public static class NetPrefabsBuilder
         var lobby = Prefab<NetLobby>("NetLobby");
         var game = Prefab<NetGame>("NetGame");
         var player = Prefab<NetPlayer>("NetPlayer");
+        var duel = Prefab<NetDuel>("NetDuel");
 
         var listPath = Dir + "/NetPrefabs.asset";
         var list = AssetDatabase.LoadAssetAtPath<NetworkPrefabsList>(listPath);
         if (!list) { list = ScriptableObject.CreateInstance<NetworkPrefabsList>(); AssetDatabase.CreateAsset(list, listPath); }
-        foreach (var go in new[] { lobby, game, player })
+        foreach (var go in new[] { lobby, game, player, duel })
             if (!list.Contains(go)) list.Add(new NetworkPrefab { Prefab = go });
         EditorUtility.SetDirty(list);
 

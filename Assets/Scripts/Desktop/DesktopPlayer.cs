@@ -152,8 +152,22 @@ public class DesktopPlayer : MonoBehaviour
         return h;
     }
 
+    // saut : un seul, pas de saut en l'air (sinon Q/D + Espace en rafale enchaînent les sauts à l'infini) ; plus haut dans l'arène du duel (0,75 m)
+    void TuneJump()
+    {
+        bool arena = ArenaMaps.InArena;      // toutes les cartes du duel
+        foreach (var jump in FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Locomotion.Jump.JumpProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            jump.unlimitedInAirJumps = false;
+            jump.inAirJumpCount = 0;
+            jump.jumpForgivenessWindow = 0.05f;
+            if (arena) jump.jumpHeight = 0.75f;
+        }
+    }
+
     void Start()
     {
+        TuneJump();
         sockets = FindObjectsByType<BeltSocket>(FindObjectsSortMode.None);
         LockCursor(!menuScene);
     }
@@ -228,6 +242,7 @@ public class DesktopPlayer : MonoBehaviour
         {
             if (kb.eKey.wasPressedThisFrame) Interact();
             if (!clickConsumed && mouse.leftButton.wasPressedThisFrame) Primary();
+            else if (!clickConsumed && mouse.leftButton.isPressed && HeldPistol && HeldPistol.automatic) Primary();      // rafale : clic tenu
             if (kb.rKey.wasPressedThisFrame) Reload();
             if (kb.fKey.wasPressedThisFrame) ToggleLamp();
             if (kb.gKey.wasPressedThisFrame) Drop(rightH);
@@ -406,9 +421,9 @@ public class DesktopPlayer : MonoBehaviour
         var pistol = rightH.Item<Pistol>();
         if (pistol)
         {
+            bool shoots = pistol.CanFire;          // sniper : pas d'animation de recul tant que la culasse n'est pas réarmée
             pistol.Fire(rightH.it);
-            if (pistol.ammo >= 0) recoil = 1f;
-            rightH.trigger = 1f;
+            if (shoots) { recoil = 1f; rightH.trigger = 1f; }
             return;
         }
         if (rightH.Item<Hammer>() || rightH.Item<MeleeWeapon>()) { StartSwing(); return; }
@@ -422,6 +437,7 @@ public class DesktopPlayer : MonoBehaviour
         if (rightH.Item<Battery>() || leftH.Item<Battery>()) { RechargeLamp(); return; }
         var pistol = rightH.Item<Pistol>();
         if (!pistol || reload >= 0f) return;
+        if (Pistol.InfiniteAmmo) { if (pistol.ammo >= pistol.maxAmmo) DesktopHud.Message("Chargeur déjà plein"); else pistol.ReloadInfinite(); return; }      // duel : chargeurs infinis
         if (pistol.ammo >= pistol.maxAmmo) { DesktopHud.Message("Chargeur déjà plein"); return; }
         reloadWell = pistol.GetComponentInChildren<MagWell>();
         // chargeur : main gauche, ceinture, ou posé à portée
@@ -886,7 +902,11 @@ public class DesktopPlayer : MonoBehaviour
         {
             case Kind.Pistol:
             {
-                local = Vector3.Lerp(new Vector3(0.15f, -0.16f, 0.36f), new Vector3(0f, -0.118f, 0.34f), Smooth(aimBlend));
+                // armes longues du duel (AK74, sniper) : plus bas et plus près de la caméra que le pistolet, la poignée est à l'arrière d'un long fût
+                bool longGun = g.name == "AK74" || g.name == "Sniper";
+                local = longGun
+                    ? Vector3.Lerp(new Vector3(0.14f, -0.25f, 0.2f), new Vector3(0f, -0.15f, 0.17f), Smooth(aimBlend))
+                    : Vector3.Lerp(new Vector3(0.15f, -0.16f, 0.36f), new Vector3(0f, -0.118f, 0.34f), Smooth(aimBlend));
                 local += (bobOff + swayOff) * (1f - aimBlend * 0.8f);
                 local += new Vector3(0f, 0.012f, -0.045f) * recoil;
                 if (reload >= 0f) local += new Vector3(-0.05f, 0.02f, -0.03f) * Mathf.Sin(Mathf.Clamp01(reload) * Mathf.PI);

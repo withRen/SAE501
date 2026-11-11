@@ -48,6 +48,7 @@ public class Zombie : MonoBehaviour
     {
         HuntPlayer = false;
         roofStep = flesh = headCrack = stepWalker = stepBruiser = stepRunner = windupClip = deathClip = bodyThudClip = null;
+        stepsShuffle = stepsHeavy = null; stepWindowStart = 0f; stepsInWindow = 0;
     }
 
     [Header("Toit : avertissement avant la chute [#104]")]
@@ -93,6 +94,10 @@ public class Zombie : MonoBehaviour
     AudioSource roofSrc, hitSrc, stepSrc;
     ZombieVoice voice;                     // [SONS] bruitages enregistrés (touché, morsure, chute)
     static AudioClip roofStep, flesh, headCrack, stepWalker, stepBruiser, stepRunner, windupClip, deathClip, bodyThudClip;
+    static AudioClip[] stepsShuffle, stepsHeavy;          // [SONS] pas enregistrés (Resources/Sounds/Pas_Zombie, Pas_Lourd)
+    static float stepWindowStart; static int stepsInWindow;
+    float lastWalkPhase = -1f; int lastStepVariant = -1;
+    static readonly int WalkStateHash = Animator.StringToHash("Walk");
     Vector3 flinchDir; float flinchSpeed;
     static readonly RaycastHit[] sightHits = new RaycastHit[8];
 
@@ -195,7 +200,7 @@ public class Zombie : MonoBehaviour
             case State.Lurking: UpdateLurking(); break;
         }
         RoofSteps();
-        GroundSteps();
+        GroundSteps(agent.isStopped ? 0f : agent.velocity.magnitude);
         Flinch();
         if (!Dead) CheckStuck();
     }
@@ -267,40 +272,77 @@ public class Zombie : MonoBehaviour
         MusicPlayer.Duck(0.70f, 0.35f);
     }
 
-    // pas au sol différenciés par archétype (Rôdeur traînant, Cogneur sourd et lent, Coureur rapide et nerveux)
-    void GroundSteps()
+    // [SONS] Pas au sol, calés sur l'animation de marche : un pas quand le pied touche le sol dans le clip.
+    // Avant, un minuteur fixe (0,62 s pour le Rôdeur) jouait ~3 pas pour 1 pas visible : le clip de marche du Rôdeur
+    // ne fait que 2 pas en 4 s (joué à la vitesse réelle du zombie). Instants d'appui mesurés dans les clips
+    // (fraction du cycle, pied gauche puis droit) : Rôdeur « Zombie Walk », Cogneur « Walking », Coureur « Zombie Running ».
+    Vector2 FootPlantPhases => IsRunner ? new Vector2(0.36f, 0.86f) : (IsBruiser ? new Vector2(0.02f, 0.60f) : new Vector2(0.09f, 0.58f));
+    public const int MaxStepsAtOnce = 4;        // au plus 4 pas dans la même fenêtre de 0,15 s, tous zombies confondus
+    const float StepWindow = 0.15f;
+
+    void GroundSteps(float speed)
     {
-        if (Dead || !agent.enabled || transform.position.y >= roofHeight || Time.time < nextGroundStep) return;
-        if (agent.isStopped || agent.velocity.sqrMagnitude < 0.05f) return;
+        if (Dead || transform.position.y >= roofHeight || speed < 0.08f) { lastWalkPhase = -1f; return; }
+        var an = anim ? anim.animator : null;
+        if (an && an.isActiveAndEnabled && an.runtimeAnimatorController)
+        {
+            var st = an.GetCurrentAnimatorStateInfo(0);
+            if (st.shortNameHash != WalkStateHash) { lastWalkPhase = -1f; return; }
+            float ph = st.normalizedTime - Mathf.Floor(st.normalizedTime);
+            var fp = FootPlantPhases;
+            if (lastWalkPhase >= 0f && (Crossed(lastWalkPhase, ph, fp.x) || Crossed(lastWalkPhase, ph, fp.y))) PlayGroundStep();
+            lastWalkPhase = ph;
+            return;
+        }
+        // repli sans Animator (zombie provisoire) : minuteur, comme avant
+        if (Time.time < nextGroundStep) return;
+        float baseInterval = IsRunner ? 0.29f : (IsBruiser ? 0.78f : 0.62f);
+        nextGroundStep = Time.time + baseInterval * (Time.time < slowUntil ? 1.35f : 1f) * Random.Range(0.88f, 1.12f);
+        PlayGroundStep();
+    }
 
-        bool runner = IsRunner;
-        bool bruiser = IsBruiser;
-        float baseInterval = runner ? 0.29f : (bruiser ? 0.78f : 0.62f);
-        float slowScale = Time.time < slowUntil ? 1.35f : 1f;
-        nextGroundStep = Time.time + baseInterval * slowScale * Random.Range(0.88f, 1.12f);
+    // la phase est passée par p entre deux images (en tenant compte du retour à 0 en fin de cycle)
+    static bool Crossed(float a, float b, float p) => a <= b ? (p > a && p <= b) : (p > a || p <= b);
 
+    void PlayGroundStep()
+    {
+        // trop de zombies : on ne joue pas tous les pas en même temps (bouillie sonore, voix audio du Quest)
+        if (Time.time - stepWindowStart > StepWindow) { stepWindowStart = Time.time; stepsInWindow = 0; }
+        if (stepsInWindow >= MaxStepsAtOnce) return;
+
+        bool runner = IsRunner, bruiser = IsBruiser;
         if (!stepSrc)
         {
             stepSrc = gameObject.AddComponent<AudioSource>();
             stepSrc.spatialBlend = 1f;
             stepSrc.rolloffMode = AudioRolloffMode.Linear;
             stepSrc.minDistance = 1.5f;
-            stepSrc.maxDistance = runner ? 20f : (bruiser ? 18f : 14f);
+            stepSrc.maxDistance = runner ? 16f : (bruiser ? 15f : 12f);
+            stepSrc.dopplerLevel = 0f;
             stepSrc.playOnAwake = false;
-            stepSrc.priority = runner ? 64 : (bruiser ? 72 : 84);
+            stepSrc.priority = runner ? 96 : (bruiser ? 104 : 120);    // moins prioritaires que les voix et les impacts
         }
-        if (!stepWalker)
+        var listener = Camera.main;
+        if (listener && (listener.transform.position - transform.position).sqrMagnitude > stepSrc.maxDistance * stepSrc.maxDistance) return;
+        stepsInWindow++;
+
+        if (stepsShuffle == null)
         {
-            stepWalker = ProcAudio.ZombieStep_Walker();
-            stepBruiser = ProcAudio.ZombieStep_Bruiser();
-            stepRunner = ProcAudio.ZombieStep_Runner();
+            stepsShuffle = Resources.LoadAll<AudioClip>("Sounds/Pas_Zombie");
+            stepsHeavy = Resources.LoadAll<AudioClip>("Sounds/Pas_Lourd");
         }
-        float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.2f, 1.6f);
-        stepSrc.pitch = runner ? Random.Range(1.06f, 1.22f)
-                      : bruiser ? Random.Range(0.78f, 0.90f)
-                      : Random.Range(0.90f, 1.08f);
-        float vol = (runner ? 0.78f : (bruiser ? 0.82f : 0.65f)) * zGain;
-        stepSrc.PlayOneShot(runner ? stepRunner : (bruiser ? stepBruiser : stepWalker), Mathf.Clamp01(vol));
+        // Rôdeur : pas traînants ; Cogneur : pas lourds plus graves ; Coureur : pas lourds plus aigus et plus secs
+        var set = runner || bruiser ? stepsHeavy : stepsShuffle;
+        AudioClip clip = set.Length > 0 ? set[AudioSlices.Pick(set.Length, ref lastStepVariant)] : null;
+        if (!clip)
+        {
+            if (!stepWalker) { stepWalker = ProcAudio.ZombieStep_Walker(); stepBruiser = ProcAudio.ZombieStep_Bruiser(); stepRunner = ProcAudio.ZombieStep_Runner(); }
+            clip = runner ? stepRunner : (bruiser ? stepBruiser : stepWalker);
+        }
+        float zGain = Mathf.Clamp(GameSettings.Zombies / 0.6f, 0.2f, 1.5f);
+        stepSrc.pitch = runner ? Random.Range(1.08f, 1.2f) : bruiser ? Random.Range(0.82f, 0.92f) : Random.Range(0.94f, 1.06f);
+        float vol = (runner ? 0.55f : (bruiser ? 0.7f : 0.5f)) * zGain;
+        stepSrc.PlayOneShot(clip, Mathf.Clamp01(vol));
     }
 
     // télégraphe d'attaque (~0,25 s avant l'impact) + alerte ambre / pré-haptique si hors du champ de vision (Accessibilité GAP 2)
@@ -548,14 +590,15 @@ public class Zombie : MonoBehaviour
 
     // [#113] retour d'impact (balle ou arme) : particules au point touché, son de chair, petit recul dans le sens du coup.
     // Appelé avant OnHit / OnMeleeHit : le zombie qui meurt du coup a lui aussi sa gerbe et son son.
-    public void HitFeedback(Vector3 point, Vector3 direction, bool head)
+    public void HitFeedback(Vector3 point, Vector3 direction, bool head, bool bullet = false)
     {
         if (Dead) return;
         Fx.Blood(point, -direction, head);
         EnsureHitSource();
         if (!flesh) { flesh = ProcAudio.Flesh(); headCrack = ProcAudio.HeadCrack(); }
         // [SONS] le son enregistré flesh_zombie_hit (ZombieVoice) remplace le bruit de chair ; la tête garde son craquement en plus
-        bool recorded = voice && voice.PlayHit();
+        // [SONS] balle de pistolet : impact de chair enregistré (variantes) au lieu de flesh_zombie_hit
+        bool recorded = voice && (bullet ? voice.PlayBulletHit() : voice.PlayHit());
         hitSrc.pitch = Random.Range(0.85f, 1.1f);
         if (head || !recorded) hitSrc.PlayOneShot(head ? headCrack : flesh, fleshVolume);
         direction.y = 0f;
@@ -669,6 +712,7 @@ public class Zombie : MonoBehaviour
         else transform.position = Vector3.Lerp(transform.position, netPos, 1f - Mathf.Exp(-Time.deltaTime * 12f));
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, netYaw, 0f), 1f - Mathf.Exp(-Time.deltaTime * 10f));
         anim?.SetMoveSpeed(netSpeed);
+        GroundSteps(netSpeed);                      // pas aussi sur les casques des autres joueurs, calés sur la même animation
     }
 
     /// <summary>Allure actuelle (pour l'envoi aux marionnettes).</summary>

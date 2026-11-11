@@ -9,6 +9,8 @@ using UnityEngine;
 //   - touché (balle, hache, pied de biche)  -> flesh_zombie_hit (remplace le bruit de chair procédural) ;
 //   - il frappe le joueur                   -> zombie_bite, calé sur le moment du coup ;
 //   - il meurt                              -> zombie_impact_fall_body_die (remplace le bruit sourd procédural de la chute).
+// [SONS] Balle de pistolet : variantes d'impact de chair enregistrées (Resources/Sounds/Impact_Balle, Freesound CC0, voir ASSETS.md),
+//   une différente à chaque balle ; flesh_zombie_hit reste pour les coups de hache et de pied de biche.
 // Sons réglables ici, sinon pris dans Assets/Resources/Sounds/<nom du fichier>. Le réglage « Zombies » des paramètres les règle aussi.
 [RequireComponent(typeof(Zombie))]
 public class ZombieVoice : MonoBehaviour
@@ -25,12 +27,15 @@ public class ZombieVoice : MonoBehaviour
     public AudioClip biteSound;       // zombie_bite
     public AudioClip deathSound;      // zombie_impact_fall_body_die
     [Range(0f, 1f)] public float hitVolume = 0.9f;
+    [Range(0f, 1f)] public float bulletHitVolume = 0.85f;
     [Range(0f, 1f)] public float biteVolume = 1f;
     [Range(0f, 1f)] public float deathVolume = 1f;
     public float biteLead = 0.2f;     // le pic du son de morsure arrive ~0,2 s après son début : on le lance un peu avant le coup
 
     AudioSource sfx;
     AudioClip hitClip, biteClip, deathClip;
+    static AudioClip[] bulletHits;
+    static int lastBulletHit = -1;
 
     static readonly List<ZombieVoice> activeVoices = new List<ZombieVoice>();
     AudioSource src;
@@ -73,6 +78,17 @@ public class ZombieVoice : MonoBehaviour
         return true;
     }
 
+    /// <summary>Zombie touché par une balle : une variante d'impact de chair, jamais deux fois la même de suite.
+    /// Renvoie faux si les sons manquent (on retombe alors sur PlayHit).</summary>
+    public bool PlayBulletHit()
+    {
+        if (bulletHits == null) bulletHits = Resources.LoadAll<AudioClip>("Sounds/Impact_Balle");
+        if (bulletHits.Length == 0 || !sfx) return PlayHit();
+        sfx.pitch = Random.Range(0.94f, 1.06f);
+        sfx.PlayOneShot(bulletHits[AudioSlices.Pick(bulletHits.Length, ref lastBulletHit)], Mathf.Clamp01(bulletHitVolume * Gain));
+        return true;
+    }
+
     /// <summary>Le zombie lance un coup sur le joueur : la morsure part un peu avant l'impact (hitDelay = délai du coup).</summary>
     public void ScheduleBite(float hitDelay)
     {
@@ -99,7 +115,7 @@ public class ZombieVoice : MonoBehaviour
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() => activeVoices.Clear();
+    static void ResetStatics() { activeVoices.Clear(); bulletHits = null; lastBulletHit = -1; }
 
     void ConfigureArchetype()
     {

@@ -1146,6 +1146,8 @@ MonoBehaviour:
   spawnWeight: 0.35
   level: 1
   openingSpread: 6
+  NetId: 0
+  LastHitBy: 0
 --- !u!54 &5118025010019254672
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1192,7 +1194,14 @@ MonoBehaviour:
   firstCryDelay: {x: 0.5, y: 2.5}
   pauseBetweenCries: {x: 5, y: 12}
   maxDistance: 25
-  maxVoicesAtOnce: 3
+  maxVoicesAtOnce: 4
+  hitSound: {fileID: 0}
+  biteSound: {fileID: 0}
+  deathSound: {fileID: 0}
+  hitVolume: 0.9
+  biteVolume: 1
+  deathVolume: 1
+  biteLead: 0.2
 --- !u!114 &4041167486313366841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1231,6 +1240,9 @@ MonoBehaviour:
   leanDegrees: 55
   hipHeight: 1
   defaultSill: 0.9
+  climbTimeAnimated: 1.9
+  standUpTime: 2.6
+  dropTimeAnimated: 0.9
 --- !u!1 &2036570443757481583
 GameObject:
   m_ObjectHideFlags: 0

@@ -95,3 +95,16 @@ Les packs utilisés sont **commités dans le dépôt** pour que tout le groupe o
 | Free Shirtless Zombie (NewPunch) | `Assets/NewPunch` | 92 Mo | Modèle des zombies |
 
 ⚠️ Ce sont des assets de l'Asset Store : le dépôt doit rester **privé**, et ils ne sont à publier nulle part en clair (README, release, démo en ligne).
+
+## Sons téléchargés (CC0)
+
+Détail, liens et extraits utilisés : `Tools/sons_cc0/CREDITS.md`.
+
+| Son | Auteur | Source | Licence | Utilisé pour |
+|---|---|---|---|---|
+| Rattling at an iron gate | launemax | [Freesound 274766](https://freesound.org/people/launemax/sounds/274766/) | CC0 1.0 | Zombies qui secouent la grille (cinématique de fin), cadenas qui tombe (portail du jardin) |
+| Gate Close and rattle | Alex_hears_things | [Freesound 494823](https://freesound.org/people/Alex_hears_things/sounds/494823/) | CC0 1.0 | Grille qui claque (cinématique), battants contre leurs butées (portail du jardin) |
+| VisceralBulletImpacts | u1769092 | [Freesound 423301](https://freesound.org/people/u1769092/sounds/423301/) | CC0 1.0 | Balle de pistolet dans un zombie (5 variantes) — `Tools/sons_cc0/zombies/CREDITS.md` |
+| Meaty Damage Impact | modusmogulus | [Freesound 779805](https://freesound.org/people/modusmogulus/sounds/779805/) | CC0 1.0 | Balle de pistolet dans un zombie (6e variante) |
+| pas zombie route | indieground | [Freesound 223815](https://freesound.org/people/indieground/sounds/223815/) | CC0 1.0 | Pas traînants du Rôdeur |
+| Heavy Footsteps \| Crunchy Thuds | GammaGool | [Freesound 854190](https://freesound.org/people/GammaGool/sounds/854190/) | CC0 1.0 | Pas du Cogneur et du Coureur |

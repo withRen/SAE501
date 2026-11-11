@@ -11,6 +11,10 @@ using UnityEngine;
 //   - mains  : poignet orienté comme la manette, doigts refermés quand la main tient un objet (arme, marteau, planche, levier…) ;
 //   - taille : le personnage est mis à l'échelle de la taille debout du joueur (plus grande hauteur de tête observée, 85 à 112 %) ;
 //   - pieds  : jamais sous le sol (joueur accroupi : les genoux plient).
+//   - arme à la 3e personne (joueur en version PC) : sa main droite est placée comme une arme « vue FPS », collée à sa caméra ;
+//     vue de l'extérieur, ça donnait un bras replié vers le visage et une arme qui flotte. Quand il tient une arme à feu, on ignore
+//     donc ses mains : l'arme est posée devant l'épaule droite dans l'axe du regard (fusil épaulé, pistolet bras tendus),
+//     les deux mains vont dessus (poignée et garde-main) et le buste se penche avec le regard (HoldGun, appelé par NetPlayer).
 // Sans cible (aperçu du menu), le personnage joue simplement son animation d'attente.
 // Tout est fait dans LateUpdate, après l'Animator : pas besoin de la passe IK de Mecanim.
 [DefaultExecutionOrder(200)]
@@ -26,6 +30,24 @@ public class PlayerAvatar : MonoBehaviour
     public float wristBack = 0.10f;                              // du centre de la manette au poignet, vers l'arrière
     public float turnSpeed = 5f;
     public float curlRelaxed = 18f, curlHolding = 62f;          // degrés par phalange
+
+    [Header("Arme tenue à la 3e personne (joueur en version PC)")]
+    [Tooltip("Poignée du fusil depuis l'épaule droite, dans le repère de la visée (x droite, y haut, z avant), à l'échelle 1.")]
+    public Vector3 rifleGrip = new Vector3(-0.04f, -0.06f, 0.15f);
+    [Tooltip("Poignée du pistolet depuis l'épaule droite (bras tendus, tenue à deux mains).")]
+    public Vector3 pistolGrip = new Vector3(-0.16f, -0.06f, 0.46f);
+    [Tooltip("Part du tangage du regard prise par la colonne (le reste par la tête).")]
+    public float spineShare = 0.6f;
+    public float aimTurnSpeed = 18f;
+    [Tooltip("Orientation des « manettes » virtuelles sur l'arme (degrés, repère de la visée) : main droite, main gauche au fusil (posée sur le garde-main), main gauche au pistolet (enveloppe la droite).")]
+    public Vector3 rightGripRot = new Vector3(12f, 0f, 0f), leftRifleRot = new Vector3(-10f, 0f, -15f), leftPistolRot = new Vector3(20f, 15f, -25f);
+    [Tooltip("Main gauche : au fusil, depuis la poignée (z = distance au garde-main, réduite à 50 % du canon) ; au pistolet, depuis la poignée.")]
+    public Vector3 leftRifleOffset = new Vector3(0.01f, 0.10f, 0.40f), leftPistolOffset = new Vector3(-0.045f, -0.015f, 0.02f);
+
+    Transform gunProp, sideProp, aimR, aimL;
+    Vector3 gunGrip; Quaternion gunMuzzle = Quaternion.identity; float gunBarrel;
+    Transform[] spineBones;
+    Transform shoulderR;
 
     Animator anim;
     Transform hips, headBone, neck;
@@ -65,6 +87,12 @@ public class PlayerAvatar : MonoBehaviour
         right = MakeArm(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, false);
         legL = MakeLeg(HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot);
         legR = MakeLeg(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot);
+        var sp = new List<Transform>();
+        foreach (var b in new[] { HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest }) { var t = anim.GetBoneTransform(b); if (t) sp.Add(t); }
+        spineBones = sp.ToArray();
+        shoulderR = right.upper;
+        aimR = new GameObject("Visee_MainD").transform; aimR.SetParent(transform, false);
+        aimL = new GameObject("Visee_MainG").transform; aimL.SetParent(transform, false);
         yaw = transform.eulerAngles.y;
         baseScale = transform.localScale.x;
         modelEye = (headBone.position.y - transform.position.y) / Mathf.Max(0.01f, transform.lossyScale.y) + eyeOffset.y;
@@ -142,15 +170,25 @@ public class PlayerAvatar : MonoBehaviour
             transform.localScale = Vector3.one * (baseScale * k);
         }
 
-        // le corps se tourne vers le regard (lentement à l'arrêt, plus vite en marche)
+        // le corps se tourne vers le regard (lentement à l'arrêt, plus vite en marche) ; arme en main (3e personne) : il suit la visée
+        bool gun = gunProp;
         var f = headTarget.forward; f.y = 0f;
         if (f.sqrMagnitude > 0.01f)
         {
             float target = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg;
             float delta = Mathf.DeltaAngle(yaw, target);
-            if (Mathf.Abs(delta) > 25f || speed > 0.3f) yaw = Mathf.LerpAngle(yaw, target, 1f - Mathf.Exp(-dt * turnSpeed));
+            if (gun) yaw = Mathf.LerpAngle(yaw, target, 1f - Mathf.Exp(-dt * aimTurnSpeed));
+            else if (Mathf.Abs(delta) > 25f || speed > 0.3f) yaw = Mathf.LerpAngle(yaw, target, 1f - Mathf.Exp(-dt * turnSpeed));
         }
         transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+
+        // arme en main : le buste se penche avec le regard (haut / bas), réparti sur les os de la colonne
+        if (gun && spineBones.Length > 0)
+        {
+            float pitch = -Mathf.Asin(Mathf.Clamp(headTarget.forward.y, -1f, 1f)) * Mathf.Rad2Deg;     // + : regard vers le bas
+            float each = Mathf.Clamp(pitch, -70f, 70f) * spineShare / spineBones.Length;
+            foreach (var b in spineBones) b.rotation = Quaternion.AngleAxis(each, transform.right) * b.rotation;
+        }
 
         // le corps se place pour que l'os de la tête soit là où est la vraie tête
         var wantHeadBone = hp - headTarget.TransformVector(eyeOffset);
@@ -162,8 +200,59 @@ public class PlayerAvatar : MonoBehaviour
             KeepFootOnFloor(legL);
             KeepFootOnFloor(legR);
         }
+        if (gun) { PoseGun(); SolveArm(left, aimL, true, true, dt); SolveArm(right, aimR, false, true, dt); return; }
         SolveArm(left, leftTarget, true, leftHolding, dt);
         SolveArm(right, rightTarget, false, rightHolding, dt);
+    }
+
+    /// <summary>
+    /// Arme à feu tenue à la 3e personne (joueur en version PC) : <paramref name="prop"/> est la copie visuelle de l'arme,
+    /// <paramref name="gripLocal"/> l'accroche de la main (poignée) et <paramref name="muzzleLocal"/> l'orientation du canon, dans le repère de l'arme.
+    /// null : on revient aux mains suivies. <paramref name="side"/> : objet de la main gauche (chargeur pendant le rechargement), posé sur la main gauche.
+    /// </summary>
+    public void HoldGun(Transform prop, Vector3 gripLocal, Quaternion muzzleLocal, Transform side = null)
+    {
+        gunProp = prop; sideProp = prop ? side : null;
+        if (!prop) return;
+        gunGrip = gripLocal; gunMuzzle = muzzleLocal;
+        // longueur poignée → bouche du canon (le fusil se tient au garde-main, le pistolet à deux mains sur la poignée)
+        var muzzle = Vector3.zero; float best = 0f;
+        foreach (var mf in prop.GetComponentsInChildren<MeshFilter>())
+        {
+            if (!mf.sharedMesh) continue;
+            var b = mf.sharedMesh.bounds;
+            for (int i = 0; i < 8; i++)
+            {
+                var c = new Vector3((i & 1) == 0 ? b.min.x : b.max.x, (i & 2) == 0 ? b.min.y : b.max.y, (i & 4) == 0 ? b.min.z : b.max.z);
+                var local = Quaternion.Inverse(muzzleLocal) * (prop.InverseTransformPoint(mf.transform.TransformPoint(c)) - gripLocal);
+                if (local.z > best) best = local.z;
+            }
+        }
+        gunBarrel = best * prop.lossyScale.z;
+    }
+
+    // l'arme devant l'épaule droite, canon dans l'axe du regard ; repères des deux mains sur la poignée et le garde-main
+    void PoseGun()
+    {
+        float s = transform.lossyScale.y;
+        var aim = Quaternion.LookRotation(headTarget.forward, transform.up);
+        bool rifle = gunBarrel > 0.4f;
+        var grip = shoulderR.position + aim * ((rifle ? rifleGrip : pistolGrip) * s);
+        // rotation de l'arme : son canon (muzzle.forward) suit la visée ; sa poignée sur `grip`
+        var rot = aim * Quaternion.Inverse(gunMuzzle);
+        gunProp.rotation = rot;
+        gunProp.position += grip - gunProp.TransformPoint(gunGrip);
+
+        // main droite : « manette » sur la poignée, pointée comme le canon (comme une manette VR tenue en pistolet)
+        aimR.SetPositionAndRotation(grip + aim * new Vector3(0f, 0.01f, 0.03f), aim * Quaternion.Euler(rightGripRot));
+        // main gauche : fusil → sur le garde-main ; pistolet → enveloppe la main droite par la gauche
+        if (rifle)
+        {
+            var o = leftRifleOffset; o.z = Mathf.Min(o.z, gunBarrel * 0.6f);
+            aimL.SetPositionAndRotation(grip + aim * o, aim * Quaternion.Euler(leftRifleRot));
+        }
+        else aimL.SetPositionAndRotation(grip + aim * leftPistolOffset, aim * Quaternion.Euler(leftPistolRot));
+        if (sideProp) sideProp.SetPositionAndRotation(aimL.position - aim * Vector3.up * 0.04f, aim);
     }
 
     void SolveArm(Arm a, Transform target, bool isLeft, bool holding, float dt)

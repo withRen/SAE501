@@ -216,6 +216,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [207](#207--duel--hud-des-scores-et-états-de-manche) | 2026-11-12 | 1v1 : HUD des scores façon CS:GO ; un joueur mort peut encore tirer et marquer | Multijoueur | États du duel synchronisés (gel 3-2-1, manche active, fin de manche, fin de match), un point par manche, tirs et coups refusés hors manche active ; bandeau des scores en haut de la vue. Testé en mode Play (hôte + adversaire simulé), pas à deux casques (issue #160) |
 | [208](#208--coop-évasion--tous-les-vivants-doivent-passer-le-portail) | 2026-11-12 | Coop Évasion : victoire quand tous les joueurs en vie ont passé le portail | Gameplay / Multijoueur | L'hôte retient les joueurs sortis (plus visés par les zombies) ; victoire quand tous les vivants sont sortis ; compteur « PORTAIL x/y » ; solo inchangé. Règle testée par simulation, chemin hôte et solo testés en mode Play, pas à deux casques (issue #161) |
 | [209](#209--vr--la-tête-ne-traverse-plus-les-murs) | 2026-11-12 | En VR on sort de la carte / traverse les portes en avançant la tête | Gameplay / VR | HeadWallGuard : si la tête traverse du décor solide, le joueur est ramené à la dernière position valide (fondu noir court). Testé dans l'éditeur (tête simulée), pas au casque (issue #162) |
+| [210](#210--hotfix-160-161-162-fusionnés-dans-main) | 2026-11-12 | Tout fusionner dans main | Git | Branches hotfix/160, 161 et 162 poussées et fusionnées dans main (--no-ff) ; seul conflit : le journal (entrées 207 à 209 gardées) ; compilation vérifiée ; issues laissées ouvertes jusqu'au test au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4001,3 +4002,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Correction** (`Assets/Scripts/HeadWallGuard.cs`, ajouté par code au rig de chaque scène, aucune scène modifiée) : à chaque image, une petite sphère (0,08 m) est tracée de la dernière position valide de la tête à sa position actuelle. Si elle traverse du décor solide (collisionneur immobile, pas un déclencheur), le XR Origin est décalé à plat pour que la tête revienne à la dernière position valide, du bon côté du mur, avec un fondu noir de 0,2 s. Si le joueur continue d'avancer, il est retenu à chaque image.
 - **Ignoré** (pas de faux positif) : objets tenus (calque 29), objets que le joueur pousse (`IgnorePlayer` : planches, ceinture, caisses), zombies, joueurs, le joueur lui-même ; se pencher contre un mur (contact au départ) ; un saut de plus de 0,6 m en une image (téléportation, réapparition, placement en début de manche). Une porte ouverte ne gêne pas, une porte fermée bloque. Inactif en version PC, quand le joueur est mort (spectateur) et pendant la cinématique de fin.
 - **Testé** dans l'éditeur (Alvéole 17, tête déplacée par script) : 1 m de mouvement normal → aucune correction ; tête poussée 1 m au-delà de la porte blindée fermée → 19 corrections, la tête reste devant la porte ; téléportation de plusieurs mètres → aucune correction. **Non testé** : au casque (sensation du fondu, murs fins, escaliers, porte ouverte de MainScene).
+
+---
+
+## 210 — Hotfix 160, 161, 162 fusionnés dans main
+
+**Date** : 2026-11-12 · **Domaine** : Git
+
+> Oui tu peux tout fusionner dans le main
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- Branches poussées : `hotfix/160-duel-hud-etats`, `hotfix/161-evasion-coop-portail`, `hotfix/162-anti-traversee-murs`.
+- Fusionnées dans `main` (`--no-ff`, dans cet ordre) : `b8e071a` (160), `521563f` (161), `4905c50` (162), puis cette entrée du journal. Fusions faites sans copie de travail (`git merge-tree`), pour ne pas toucher aux fichiers locaux de Rahim.
+- **Seul conflit : `docs/PROMPTS.md`** (chaque branche ajoutait son entrée) ; résolu en gardant les entrées 207, 208 et 209 dans l'ordre. Le code s'est fusionné sans conflit (`NetPlayer`, `NetKillFx` : changements de 160 et 161 gardés tous les deux).
+- `~/SAE501` est maintenant sur `main`. Compilation vérifiée dans l'éditeur, sans erreur. Fichiers locaux non commités de Rahim intacts (correctif du délai de 12 s, URP, manifeste, profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
+- Wiki poussé. Issues #160, #161, #162 commentées, laissées ouvertes jusqu'au test au casque.
+

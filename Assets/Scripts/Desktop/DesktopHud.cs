@@ -7,7 +7,7 @@ using UnityEngine.UI;
 //   - en bas à droite : munitions du pistolet en main (et chargeur à la ceinture), charge de la lampe ;
 //   - messages courts (« Aucun chargeur à la ceinture ») ; « Cliquez pour reprendre » quand la souris n'est pas capturée ;
 //   - F1 : liste des touches (rappel discret « F1 · commandes » en haut à gauche).
-// Caché en pause, à la fin de la partie et pendant l'image plein écran des caméras.
+// Caché en pause et à la fin de la partie.
 public class DesktopHud : MonoBehaviour
 {
     static readonly Color Amber = new Color(1f, 0.75f, 0.27f);
@@ -149,7 +149,6 @@ public class DesktopHud : MonoBehaviour
         var kb = UnityEngine.InputSystem.Keyboard.current;
         if (kb != null && kb.f1Key.wasPressedThisFrame) help = !help;
 
-        bool overlay = DesktopModeOverlayOpen();
         bool hidden = PauseMenu.Paused || DesktopPlayer.GameOver || !player.isActiveAndEnabled;
         group.alpha = Mathf.MoveTowards(group.alpha, hidden ? 0f : 1f, Time.unscaledDeltaTime * 6f);
 
@@ -165,7 +164,7 @@ public class DesktopHud : MonoBehaviour
         ticks[3].rectTransform.anchoredPosition = new Vector2(gap + 4.5f, 0f);
         foreach (var t in ticks) t.color = col;
         dotImg.color = col;
-        cross.gameObject.SetActive(!overlay && player.MouseCaptured);
+        cross.gameObject.SetActive(player.MouseCaptured);
 
         // aide sous le réticule
         string key = null, text = null;
@@ -225,13 +224,6 @@ public class DesktopHud : MonoBehaviour
         clickText.gameObject.SetActive(!player.MouseCaptured && !hidden);
         helpPanel.SetActive(help && !hidden);
         helpTip.gameObject.SetActive(!help && !hidden);
-    }
-
-    static bool DesktopModeOverlayOpen()
-    {
-        foreach (var st in FindObjectsByType<MonitorStation>(FindObjectsSortMode.None))
-            if (st.overlay && st.overlay.gameObject.activeSelf) return true;
-        return false;
     }
 
     // ───────────────────────── briques uGUI ─────────────────────────

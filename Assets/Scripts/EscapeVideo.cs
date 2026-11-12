@@ -17,7 +17,7 @@ using UnityEngine.Video;
 public static class EscapeVideo
 {
     public const string ClipPath = "Cinematique/CinematiqueFin";   // Assets/Resources/Cinematique/CinematiqueFin.mp4
-    public const int Layer = 30;            // calque réservé à l'écran (31 : incrustations de vidéosurveillance)
+    public const int Layer = 30;            // calque réservé à l'écran
     const float Distance = 3.2f;            // m devant la tête
     const float Width = 4.2f;               // m : ≈ 66° de large, comme une place au milieu d'une salle de cinéma
     const float SkipAfter = 2f;

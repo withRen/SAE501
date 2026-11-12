@@ -4,7 +4,7 @@
 
 Logo et icônes du jeu (desktop, mobile, Quest) : [docs/images/branding/](docs/images/branding/)
 
-> Seul dans un bunker sombre, tu barricades les ouvertures à coups de marteau et tu tires sur les zombies qui arrivent par les couloirs, en surveillant les caméras.
+> Seul dans un bunker sombre, tu barricades les ouvertures à coups de marteau et tu tires sur les zombies qui arrivent par les couloirs.
 
 Jeu vidéo en **réalité virtuelle** (Meta Quest 3) développé avec **Unity 6** pour la SAÉ 5.D.01 « Dispositifs interactifs » du BUT MMI 3e année. Rendu le **vendredi 13 novembre 2026**.
 
@@ -17,9 +17,9 @@ Jeu vidéo en **réalité virtuelle** (Meta Quest 3) développé avec **Unity 6*
 Le joueur est enfermé dans un bunker avec **4 ouvertures** (2 portes, 2 fenêtres). Des zombies arrivent par deux longs couloirs. Il doit faire deux choses à la fois :
 
 - **réparer** les barricades en clouant des planches avec un vrai marteau (un geste, pas un bouton) ;
-- **se défendre** au pistolet, avec un rechargement manuel, tout en surveillant les **caméras** du pupitre pour voir arriver les zombies.
+- **se défendre** au pistolet, avec un rechargement manuel.
 
-Références : *Call of Duty Zombies* (réparer les fenêtres avec des planches), *Job Simulator* (les objets se prennent vraiment avec les mains), *Five Nights at Freddy's* (surveiller des caméras sous pression).
+Références : *Call of Duty Zombies* (réparer les fenêtres avec des planches), *Job Simulator* (les objets se prennent vraiment avec les mains).
 
 **Pourquoi la VR ?** Il faut tourner la tête pour voir quelle barricade cède derrière soi, les mains font tout le jeu (saisir une planche, tenir, viser le clou, frapper) et l'échelle 1:1 donne la tension d'un zombie à 50 cm du visage.
 
@@ -32,7 +32,7 @@ Références : *Call of Duty Zombies* (réparer les fenêtres avec des planches)
 | Marteau : les clous apparaissent, chaque coup les **enfonce** (3 coups) | ✅ |
 | Une planche lâchée sans clou tombe ; avec 1 clou elle pend ; avec 2 clous elle est fixée | ✅ |
 | Ceinture : pistolet (12 balles), 1 chargeur, marteau, lampe torche à piles | ✅ |
-| Pupitre avec 3 écrans de caméras (sélection = plein écran) | ✅ |
+| Caméras de surveillance et écrans du pupitre | ❌ Retirés le 12 novembre 2026 (ils ne servaient pas au jeu, journal 191) |
 | Lampe grésillante, ambiance sombre | ✅ |
 | Zombies, vagues, score, santé, pièges | ⬜ |
 | Rechargement complet (éjecter, insérer, armer), sons réels, tutoriel intégré | ⬜ |

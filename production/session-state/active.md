@@ -10,6 +10,10 @@
 
 ## 1. Dernières réalisations intégrées
 
+- **Retrait des caméras de surveillance (journal 191, issue #154, branche `feature/154-retrait-cameras`, commit local non poussé)** :
+  - Caméras des couloirs, écrans du pupitre et leurs flux, vue plein écran, disjoncteur, étapes 9-10 du tutoriel et textes de la version PC retirés ; `MainScene` modifiée sans reconstruction et éclairage recuit ; `RoomBuilder` et `objets_retires.txt` à jour pour qu'ils ne reviennent pas.
+  - À décider par Rahim : garder ou retirer l'étagère vide du bureau ; pousser la branche et la fusionner dans `main`.
+
 - **Import Unity de l'Arène 1v1 ("Alvéole 17") & Scène Dédiée** :
   - **Fichiers source & Matériaux URP** : [`Assets/Arena1v1/arena_1v1_bunker.fbx`](file:///Users/rahimtam/SAE501/Assets/Arena1v1/arena_1v1_bunker.fbx) (1.05 Mo) avec 8 matériaux URP Lit dans [`Assets/Arena1v1/Materials/`](file:///Users/rahimtam/SAE501/Assets/Arena1v1/Materials/).
   - **Constructeur de scène par script** : [`Assets/Editor/Arena1v1Builder.cs`](file:///Users/rahimtam/SAE501/Assets/Editor/Arena1v1Builder.cs) accessible via le menu **SAE501 → Build Arena 1v1 Scene**.

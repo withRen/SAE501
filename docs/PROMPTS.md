@@ -197,6 +197,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [188](#188--sons-des-zombies--impact-de-balle-et-pas) | 2026-11-11 | Rendre réalistes le son de balle sur un zombie et les pas des zombies | Audio | Sons CC0 Freesound (6 impacts, pas traînants et lourds) ; pas calés sur les appuis de pied des animations au lieu d'un minuteur, 4 pas max à la fois ; en attente d'écoute |
 | [189](#189--mur-manquant-du-couloir-près-de-la-salle-du-générateur) | 2026-11-11 | Remettre le mur manquant à gauche de la salle du générateur | Carte / Outils éditeur | Face du mur ouest du couloir retirée à tort par MursSuperposes (test sur les seuls sommets) ; test refait sur toute la surface, face remise sans reconstruire la scène, rustine MurCouloir retirée, éclairage recuit |
 | [190](#190--fusion-de-tout-le-travail-dans-main) | 2026-11-12 | Pousser proprement tout le travail dans main | Git / Documentation | Travail non commité rangé en 4 commits, feature/multijoueur (avec develop) fusionnée dans main, fichiers locaux laissés hors du dépôt, page wiki Historique des versions |
+| [191](#191--retrait-des-caméras-de-surveillance) | 2026-11-12 | Supprimer les caméras des couloirs et les écrans | Gameplay / Carte | Caméras, écrans du pupitre, vue plein écran et disjoncteur retirés (scène, générateur de scène, scripts, tutoriel, version PC, docs), éclairage recuit, issue #154 |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3658,3 +3659,22 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Fusion** : un commit de fusion `--no-ff` de `feature/147-multijoueur` (qui contient déjà `develop`) dans `main`, dont le message liste tout ce qui entre. `main` passe de la version du 22 octobre à l'état complet du projet au 12 novembre 2026. Page wiki [Historique des versions](https://github.com/withRen/SAE501/wiki/Historique-des-versions).
 - **Laissés hors du dépôt** (fichiers locaux de Rahim ou résidus d'import) : réglages URP (`Quest_RPAsset.asset`, `UniversalRenderPipelineGlobalSettings.asset`), profil de build Meta Quest (identifiant du casque branché), `DevAgentSettings.asset` (adresse IP), suppression de `RuntimeActionBindings.json`, `Assets/Protection_suite/`, `scripts/`, `rules.md`, `ProjectSettings/VirtualProjectsConfig.json` (Multiplayer Play Mode), `Assets/Resources/BillingMode.json` (résidu du paquet Purchasing), `vsync_fps_capture.png`, et du pack VCR01 la variante Olive et la scène de démo (seules les variantes Black et Sand servent au sniper).
 - **Vérifié** : le projet compile dans l'éditeur ouvert (aucune erreur), `MainScene` et ses lightmaps ont été enregistrés ensemble après la dernière cuisson. Non vérifié : un build Quest ou PC complet depuis `main`, ni au casque.
+
+---
+
+## 191 — Retrait des caméras de surveillance
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Carte
+
+> il faut ducoup supprimer le concept des caméras dans les couloirs et au niveau des écrans, au final ça sert à rien
+
+**Résultat** (code et modifications de la scène faits par l'IA, Claude Code, branche `feature/154-retrait-cameras`, issue #154, commit local non poussé en attente de l'accord de Rahim)
+
+- **Dans `MainScene`, sans la reconstruire** (script temporaire lancé en ligne de commande, puis supprimé) : 38 objets retirés : les 5 caméras (`CCTV_Camera_01` à `05`, avec l'incrustation « ● REC »), les 4 boîtiers de caméra et leurs supports dans les couloirs, la cuisine et le stockage (`CCTV_CameraMesh_*`, `CCTV_Mount_*`), leurs 4 lumières infrarouges et la lueur des écrans (`Light_CCTV_IR_*`, `Light_Bunker_CCTV_Glow`), les 4 moniteurs du pupitre avec cadres, dalles et voyants (`Bunker_CCTV_Monitor_*`, `Bezel_*`, `CCTV_Screen_*`, `TallyLED_*`), le 5e écran et la vue plein écran (`MonitorStation`, `MonitorOverlay`), le levier et le voyant du disjoncteur (`Levier_Disjoncteur`, `Voyant`) et le composant `Breaker` du boîtier électrique. Le boîtier électrique, le bureau, le tabouret, l'horloge, l'étagère, l'enregistreur à LEDs, le clavier et la radio restent comme décor.
+- **Générateur de scène** : `RoomBuilder` ne crée plus les caméras, les écrans ni le disjoncteur (`BuildCameras`, `BuildMonitors`, `BuildExtraScreen`, `BuildBreaker` retirés) et ignore les lumières `CCTV` de la carte ; les objets du FBX sont ajoutés à `objets_retires.txt` pour ne pas revenir au prochain *Build VR Scene*.
+- **Supprimés** : scripts `CctvOverlay`, `CctvRoundRobin`, `MonitorStation`, `MonitorScreen`, `MonitorOverlayClose`, `Breaker` ; shader `SAE501/CCTV` ; `Assets/Generated/Feed_0..4.renderTexture` et `Screen_0..4.mat` ; modèle `Poste_Moniteur.fbx` (et `PosteSurveillance.Moniteur`).
+- **Tutoriel** : 8 étapes au lieu de 10 (« Allumez les caméras » et « Les caméras montrent l'extérieur » retirées). **Version PC** : plus de « Regarder la caméra » ni de « Fermer l'écran », le réticule n'est plus caché par la vue plein écran.
+- **Éclairage recuit** (réglages de `LightBaker`) : la lueur bleue des écrans ne tombe plus sur le bureau.
+- **Docs** : README, `BARRICADE_Scripts.md`, GDD (`game-concept.md`, `systems-index.md`), `docs/PLANNING.md` (O7 marqué retiré), `docs/MAP.md`, `docs/ASSETS.md` ; wiki : page `Cameras-et-disjoncteur` remplacée par une note de retrait, pages liées mises à jour.
+- **Vérifié** en ligne de commande (éditeur en mode batch) : compilation sans erreur, aucun « Missing script » dans les 4 scènes et les prefabs, captures du pupitre et du boîtier avant / après / après cuisson.
+- **Non vérifié** : en mode Play, le tutoriel complet, et rien au casque. L'étagère du pupitre reste vide (choix à confirmer par Rahim : la garder ou la retirer).

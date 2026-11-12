@@ -1,2 +1,27 @@
 # Objets de la carte retirés (un nom par ligne). Lu par RoomBuilder via ObjetsRetires.cs à chaque Build VR Scene.
 # Ajouter : sélectionner l'objet dans la scène puis menu SAE501 > Scène > Retirer la sélection (durable).
+# Caméras de surveillance et écrans du pupitre (journal 191 : « supprimer le concept des caméras dans les couloirs et au niveau des écrans »)
+CCTV_CameraMesh_01_Corridor_Left
+CCTV_CameraMesh_02_Corridor_Right
+CCTV_CameraMesh_03_Cuisine
+CCTV_CameraMesh_04_Stockage
+CCTV_Mount_01_Corridor_Left
+CCTV_Mount_02_Corridor_Right
+CCTV_Mount_03_Cuisine
+CCTV_Mount_04_Stockage
+Bunker_CCTV_Monitor_01_Corridor_Left
+Bunker_CCTV_Monitor_02_Corridor_Right
+Bunker_CCTV_Monitor_03_Cuisine
+Bunker_CCTV_Monitor_04_Stockage
+Bunker_CCTV_Bezel_01_Corridor_Left
+Bunker_CCTV_Bezel_02_Corridor_Right
+Bunker_CCTV_Bezel_03_Cuisine
+Bunker_CCTV_Bezel_04_Stockage
+CCTV_Screen_01_Corridor_Left
+CCTV_Screen_02_Corridor_Right
+CCTV_Screen_03_Cuisine
+CCTV_Screen_04_Stockage
+Bunker_CCTV_TallyLED_01_Corridor_Left
+Bunker_CCTV_TallyLED_02_Corridor_Right
+Bunker_CCTV_TallyLED_03_Cuisine
+Bunker_CCTV_TallyLED_04_Stockage

@@ -4,7 +4,8 @@ using UnityEditor;
 using UnityEngine;
 
 // Modèles détaillés du poste de surveillance (Tools/blender/poste_surveillance.py -> Assets/Decor/Surveillance) :
-// remplacent les boîtes de la carte (étagère à écrans + enregistreur + clavier, radio de secours) et du 5e écran.
+// remplacent les boîtes de la carte (étagère + enregistreur + clavier, radio de secours).
+// Les écrans et les caméras de surveillance ont été retirés du jeu (journal 191) : Poste_Moniteur n'est plus utilisé.
 // Les modèles sont exportés à la place exacte des boîtes d'origine (repère de l'objet remplacé) : seul le maillage change.
 // Matériaux : ceux de la carte, texturés par TexturesUsure (peinture usée, plastique, acier, chrome, caoutchouc).
 public static class PosteSurveillance
@@ -24,7 +25,6 @@ public static class PosteSurveillance
     static string Peinture(string modele) => modele switch
     {
         "Poste_Radio" => "Assets/Room/Materials/RadioBody.mat",
-        "Poste_Moniteur" => "Assets/Generated/Dark.mat",
         _ => "Assets/Room/Materials/MetalDark.mat",
     };
 
@@ -70,18 +70,6 @@ public static class PosteSurveillance
         var radio = Trouver(carte, "Bunker_Emergency_Radio");
         if (radio && Remplacer(radio.gameObject, "Poste_Radio")) n++;
         Debug.Log($"[PosteSurveillance] {n} modèles détaillés en place");
-    }
-
-    // 5e écran (RoomBuilder.BuildExtraScreen) : boîtier + pied en un seul modèle. Renvoie false si le modèle manque.
-    public static bool Moniteur(Transform mon)
-    {
-        var (mesh, mats) = Modele("Poste_Moniteur");
-        if (mesh == null) return false;
-        var g = new GameObject("Boitier");
-        g.transform.SetParent(mon, false);
-        g.AddComponent<MeshFilter>().sharedMesh = mesh;
-        g.AddComponent<MeshRenderer>().sharedMaterials = mats;
-        return true;
     }
 
     static bool Remplacer(GameObject g, string nom)

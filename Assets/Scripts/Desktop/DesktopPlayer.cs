@@ -353,9 +353,6 @@ public class DesktopPlayer : MonoBehaviour
         hover = null; hoverText = null; aimedSlot = null;
         if (PauseMenu.Paused || GameOver) { InteractableOutline.PointerHover = null; return; }
 
-        var station = OpenStation();
-        if (station) { hoverText = "Fermer l'écran"; InteractableOutline.PointerHover = null; return; }
-
         if (Plank.Held && rightH.Item<Plank>() == Plank.Held)
         {
             aimedSlot = SlotAt(ray);
@@ -389,8 +386,6 @@ public class DesktopPlayer : MonoBehaviour
     /// <summary>E : interagir avec ce que vise le réticule.</summary>
     public void Interact()
     {
-        var station = OpenStation();
-        if (station) { station.Hide(); return; }
         if (door) { door = null; ReleaseRight(); return; }                       // 2e appui : on lâche la porte
 
         // planche en main : la poser sur l'emplacement visé (ou celui où elle est déjà calée)
@@ -1093,7 +1088,6 @@ public class DesktopPlayer : MonoBehaviour
         if (!manager.TryGetInteractableForCollider(c, out var i) || !(i is IXRSelectInteractable sel) || !(sel is Behaviour b) || !b.isActiveAndEnabled) return false;
         if (sel.isSelected && !(sel.firstInteractorSelecting is XRSocketInteractor)) return false;     // déjà dans une main
         if (sel.isSelected && sel.firstInteractorSelecting is XRSocketInteractor sock && !(sock is BeltSocket)) return false;   // chargeur dans le pistolet
-        if (b.GetComponent<MonitorOverlayClose>()) return false;
         s = sel;
         return true;
     }
@@ -1150,13 +1144,6 @@ public class DesktopPlayer : MonoBehaviour
         return col ? col.bounds.center : g.transform.position;
     }
 
-    static MonitorStation OpenStation()
-    {
-        foreach (var st in FindObjectsByType<MonitorStation>(FindObjectsSortMode.None))
-            if (st.overlay && st.overlay.gameObject.activeSelf) return st;
-        return null;
-    }
-
     public static Kind KindOf(XRGrabInteractable g)
     {
         if (!g) return Kind.None;
@@ -1178,7 +1165,6 @@ public class DesktopPlayer : MonoBehaviour
         var hd = t.GetComponentInParent<HingedDoor>();
         if (hd) return hd.locked ? "Porte verrouillée" : hd.Closed ? "Ouvrir la porte" : "Fermer la porte";
         if (t.GetComponentInParent<SupplyRadio>()) return "Appeler un ravitaillement";
-        if (t.GetComponent<MonitorScreen>()) return "Regarder la caméra";
         if (t.GetComponent<Pistol>()) return "Prendre le pistolet";
         if (t.GetComponent<Hammer>()) return "Prendre le marteau";
         if (t.GetComponent<Plank>()) return "Prendre la planche";

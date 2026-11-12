@@ -10,7 +10,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Construit la scène de jeu à partir de la carte Blender (Assets/Room, exportée par Tools/blender/export_map.py)
-// + tout le gameplay (planches, marteau, écrans de surveillance, ceinture, portes de niveau, générateur, zombies).
+// + tout le gameplay (planches, marteau, ceinture, portes de niveau, générateur, zombies).
 // Repère : Blender (x, y, z haut) -> Unity (-x, z, -y). Les positions viennent des objets et repères du fichier.
 public static class RoomBuilder
 {
@@ -111,8 +111,6 @@ public static class RoomBuilder
         BuildMelee(axeNode, "Hache", 1f, 0.5f, 1f / 3f);
         BuildMelee(bunkerAxeNode, "Hache_Bunker", 1f, 0.5f, 1f / 3f);
         BuildMelee(genCrowbarNode, "PiedDeBiche_Generateur", 0.5f, 0.25f, 0.15f);
-        BuildMonitors(rig, cam, BuildCameras());
-        BuildBreaker();
         BuildBatteries();
         BuildMagazines();
         BuildSupplyRadio();
@@ -125,7 +123,7 @@ public static class RoomBuilder
 
         new GameObject("Menu_Pause").AddComponent<PauseMenu>();          // bouton menu de la manette gauche
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
-        NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("MonitorStation"), GameObject.Find("Belt"), gatesRoot);
+        NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("Belt"), gatesRoot);
         LodBuilder.Build(roomRoot.transform);          // [#118] après le NavMesh : les LOD1 n'y entrent pas
         BuildLightProbes();
         UnbatchInteractables();
@@ -134,7 +132,7 @@ public static class RoomBuilder
     }
 
     // sondes de lumière : les objets qui bougent (zombies, armes, mains) prennent l'éclairage précalculé de l'endroit où ils sont
-    // Objets de la carte devenus interactifs (écrans CCTV, disjoncteur…) : pas de regroupement statique. Sinon, en jeu, leur
+    // Objets de la carte devenus interactifs (leviers, portes…) : pas de regroupement statique. Sinon, en jeu, leur
     // MeshFilter renvoie le maillage fusionné de toute la carte et le contour (InteractableOutline) l'entoure en entier
     // (grande forme jaune devant les écrans). L'éclairage précalculé (ContributeGI) est conservé.
     static void UnbatchInteractables()
@@ -520,6 +518,7 @@ public static class RoomBuilder
         root.SetParent(env, false);
         foreach (var li in meta.lights)
         {
+            if (li.name.Contains("CCTV")) continue;     // infrarouges des caméras et lueur des écrans : caméras de surveillance retirées (journal 191)
             var g = new GameObject(li.name);
             g.transform.SetParent(root, false);
             g.transform.position = B(li.loc);
@@ -627,29 +626,6 @@ public static class RoomBuilder
             }
             Object.DestroyImmediate(portes.gameObject);
         }
-    }
-
-    // ---------- disjoncteur des caméras de surveillance : boîtier électrique du mur est du bunker ----------
-    // Au départ les caméras sont coupées (écrans noirs) ; on actionne le disjoncteur (grip) pour les allumer (Breaker, CctvPower).
-    static void BuildBreaker()
-    {
-        var box = Find(roomRoot.transform, "Bunker_PowerBox_East");
-        if (box == null) { Debug.LogWarning("Boîtier électrique introuvable : Bunker_PowerBox_East"); return; }
-        var r = box.GetComponent<Renderer>();
-        var b = r.bounds;
-        // face avant : côté le plus fin du boîtier, tournée vers l'intérieur du bunker
-        int thin = b.size.x <= b.size.z ? 0 : 2;
-        var toCenter = B(-1.85f, -10.1f, 0f) - b.center;
-        var front = Vector3.zero; front[thin] = Mathf.Sign(toCenter[thin]);
-        // [#111] levier physique : pivot sur la face avant, poignée vers le joueur ; on l'abaisse pour enclencher (Lever, Breaker)
-        var lever = MakeLever("Levier_Disjoncteur", box, b.center + front * (b.extents[thin] + 0.02f) + Vector3.down * 0.02f, front, 0.16f, false);
-        var led = Box("Voyant", box, Vector3.zero, Vector3.one * 0.025f, lightM, false);
-        led.transform.SetParent(null, true);
-        led.transform.position = b.center + front * (b.extents[thin] + 0.015f) + Vector3.up * 0.15f;
-        led.transform.localScale = Vector3.one * 0.025f;
-        led.transform.SetParent(box, true);
-        var br = box.gameObject.AddComponent<Breaker>();
-        br.lever = lever; br.led = led.GetComponent<Renderer>();
     }
 
     // [#111] Levier physique : pivot (Lever, tourne autour de son x local) + tige + boule qu'on attrape (XRSimpleInteractable).
@@ -824,36 +800,6 @@ public static class RoomBuilder
         }
     }
 
-    // ---------- caméras de surveillance : celles du fichier (couloir gauche, couloir droit, cuisine, stockage) ----------
-    // [#103] + une caméra ajoutée ici sur l'extérieur sud (zone d'arrivée du niveau 1 : les deux fenêtres et le point d'apparition)
-    public const string SouthCamName = "CCTV_Camera_05_Exterieur_Sud";
-    static readonly Vector3 SouthCamPos = new Vector3(7.3f, 2.6f, 15.6f);           // au-delà de l'angle sud-ouest du bunker (Blender (-7,3, -15,6)), à 1,5 m du mur
-    static readonly Vector3 SouthCamLook = new Vector3(0.5f, 0.4f, 15.6f);          // le long du mur sud : les deux fenêtres à gauche, le point d'apparition (1,85, 17,6) au centre
-
-    static Camera[] BuildCameras()
-    {
-        var list = new List<Camera>();
-        var infos = meta.cameras.OrderBy(x => x.name).Select(c => (c.name, pos: B(c.loc), rot: Quaternion.LookRotation(B(c.dir), B(c.up)), c.fov)).ToList();
-        infos.Add((SouthCamName, SouthCamPos, Quaternion.LookRotation(SouthCamLook - SouthCamPos, Vector3.up), 90f * Mathf.Deg2Rad));
-        foreach (var c in infos)
-        {
-            var g = new GameObject(c.name);
-            g.transform.SetParent(mapRoot, false);
-            g.transform.SetPositionAndRotation(c.pos, c.rot);
-            var cam = g.AddComponent<Camera>();
-            // angle horizontal de Blender (90°) -> angle vertical Unity pour une image 16:9
-            cam.fieldOfView = 2f * Mathf.Atan(Mathf.Tan(c.fov / 2f) * 9f / 16f) * Mathf.Rad2Deg;
-            cam.nearClipPlane = 0.05f;
-            cam.farClipPlane = 25f;
-            var ucd = g.AddComponent<UniversalAdditionalCameraData>();
-            ucd.renderShadows = false;
-            ucd.renderPostProcessing = false;
-            g.AddComponent<CctvOverlay>().label = CctvOverlay.LabelFor(c.name);   // [7.2] « ● REC », nom de la caméra, heure
-            list.Add(cam);
-        }
-        return list.ToArray();
-    }
-
     static void BuildBatteries()
     {
         MakeBattery(B(1.45f, -7.0f, 0.81f));      // sur le bureau de commandement
@@ -1017,89 +963,6 @@ public static class RoomBuilder
         g2.lever = genLever; g2.buttonRenderer = genLever.handle.GetComponent<Renderer>(); g2.label = label; g2.lamp = lamp ? lamp.GetComponent<Light>() : null;
         g2.roomLights = generatorLights.ToArray(); g2.roomLightLevels = generatorLightLevels.ToArray();
         if (genNode) GameObjectUtility.SetStaticEditorFlags(genNode.gameObject, StaticEditorFlags.BatchingStatic);
-    }
-
-    // Pupitre de surveillance du fichier : les 4 écrans (CCTV_Screen_01..04) affichent les 4 caméras ; sélectionner un écran = plein écran.
-    static void BuildMonitors(GameObject rig, Camera head, Camera[] feeds)
-    {
-        var stationGo = new GameObject("MonitorStation");
-        stationGo.transform.SetParent(bunkerRoot, false);
-        var station = stationGo.AddComponent<MonitorStation>();
-        station.feeds = new Material[feeds.Length];
-        var rr = stationGo.AddComponent<CctvRoundRobin>();
-        rr.cameras = feeds;
-        rr.screens = new Renderer[feeds.Length];
-
-        for (int i = 0; i < feeds.Length; i++)
-        {
-            var rt = new RenderTexture(320, 180, 16) { name = $"Feed_{i}" };
-            AssetDatabase.CreateAsset(rt, $"{Dir}/Feed_{i}.renderTexture");
-            feeds[i].targetTexture = rt;
-            feeds[i].clearFlags = CameraClearFlags.SolidColor;
-            feeds[i].backgroundColor = Color.black;
-            feeds[i].depth = -10;
-
-            var sm = Mat($"Screen_{i}", Color.white, 0f, "SAE501/CCTV");          // [7.2] effet caméra de surveillance (vert, grain, lignes)
-            sm.SetFloat("_Gain", 5f);                                             // vision nocturne : la carte est très sombre
-            sm.SetTexture("_BaseMap", rt);
-            station.feeds[i] = sm;
-
-            // écran du fichier dont le nom finit comme la caméra (ex. CCTV_Camera_01_Corridor_Left -> CCTV_Screen_01_Corridor_Left)
-            var suffix = feeds[i].name.Replace("CCTV_Camera_", "");
-            var scr = Find(roomRoot.transform, "CCTV_Screen_" + suffix);
-            if (!scr && feeds[i].name == SouthCamName) scr = BuildExtraScreen(stationGo.transform, "CCTV_Screen_" + suffix);   // [#103] pas d'écran dans le fichier
-            if (!scr) { Debug.LogWarning("Écran introuvable pour " + feeds[i].name); continue; }
-            scr.GetComponent<Renderer>().sharedMaterial = sm;
-            rr.screens[i] = scr.GetComponent<Renderer>();
-            var col = scr.GetComponent<Collider>();
-            if (col) Object.DestroyImmediate(col);
-            var bc = scr.gameObject.AddComponent<BoxCollider>();
-            bc.size = Vector3.Max(bc.size, new Vector3(0.02f, 0.02f, 0.02f)) + new Vector3(0.02f, 0.02f, 0.02f);
-            scr.gameObject.AddComponent<XRSimpleInteractable>();
-            var ms = scr.gameObject.AddComponent<MonitorScreen>();
-            ms.station = station;
-            ms.index = i;
-        }
-
-        // overlay plein écran, accroché à la caméra du joueur
-        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        q.name = "MonitorOverlay";
-        q.transform.SetParent(head.transform, false);
-        q.transform.localPosition = new Vector3(0, 0, 0.5f);        // à portée de main pour le toucher et le fermer
-        q.transform.localScale = new Vector3(1.07f, 0.6f, 1f);     // même taille apparente qu'avant (1,6 x 0,9 à 0,75 m)
-        Object.DestroyImmediate(q.GetComponent<MeshCollider>());
-        var obc = q.AddComponent<BoxCollider>();
-        obc.size = new Vector3(1f, 1f, 0.05f);
-        q.AddComponent<XRSimpleInteractable>();
-        q.AddComponent<MonitorOverlayClose>().station = station;
-        station.overlay = q.transform;
-        station.overlayRenderer = q.GetComponent<Renderer>();
-        q.SetActive(false);
-        rr.overlay = q;
-    }
-
-    // [#103] 5e écran du pupitre (caméra extérieure sud) : moniteur posé sur le bureau de surveillance, à droite de l'écran 01,
-    // même hauteur et même orientation que lui (le joueur assis sur le tabouret le voit avec les autres).
-    static Transform BuildExtraScreen(Transform parent, string name)
-    {
-        var refScr = Find(roomRoot.transform, "CCTV_Screen_01_Corridor_Left");
-        var face = Quaternion.LookRotation(Vector3.back);                                      // face visible du Quad vers +z (le tabouret)
-        var pos = refScr ? refScr.GetComponent<Renderer>().bounds.center + Vector3.right * 0.52f : new Vector3(1.07f, 1.17f, 7.27f);
-        var mon = new GameObject("CCTV_Monitor_05").transform;
-        mon.SetParent(parent, false);
-        mon.SetPositionAndRotation(pos, face);
-        if (!PosteSurveillance.Moniteur(mon))       // moniteur détaillé (coque, cadre, pied et socle) ; sinon les boîtes d'origine
-        {
-            Box("Boitier", mon, new Vector3(0f, 0f, 0.035f), new Vector3(0.47f, 0.36f, 0.06f), darkM, false);
-            Box("Pied", mon, new Vector3(0f, -(pos.y - 0.79f) / 2f - 0.09f, 0.05f), new Vector3(0.05f, pos.y - 0.79f - 0.18f, 0.05f), metalM, false);
-        }
-        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        q.name = name;
-        q.transform.SetParent(mon, false);
-        q.transform.localPosition = Vector3.zero;
-        q.transform.localScale = new Vector3(0.42f, 0.2363f, 1f);                            // 16:9
-        Object.DestroyImmediate(q.GetComponent<MeshCollider>());
-        return q.transform;
     }
 
     // ---------- matériaux ----------

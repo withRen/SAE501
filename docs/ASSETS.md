@@ -15,7 +15,7 @@ Réimport : exporter depuis Blender en FBX (axes Y haut / -Z avant), puis menu *
 Textures issues de Poly Haven (CC0) et modèles Poly Haven (CC0).
 Clé de la cabane : modèle « Key » de Quaternius ([Poly Pizza](https://poly.pizza/m/y3bSVdIjTh), CC0) et texture rusty_metal_04 de Poly Haven ([lien](https://polyhaven.com/a/rusty_metal_04), CC0), dans `Assets/Cle/`. Liste complète des sources : page wiki [Textures et modèles](https://github.com/withRen/SAE501/wiki/Textures-et-modeles).
 Textures d'usure (`Assets/Room/Textures/Usure/`, métal peint, acier, plastique, papier) : générées par `Tools/textures/generer_usure.py` à partir de rust_coarse_01 et dirty_concrete de Poly Haven (CC0) ; albedo des pierres du jardin : stone_01 de Poly Haven (CC0). Appliquées par **SAE501 → Salle → Appliquer les textures d'usure (PBR)** (aussi à l'import de la carte et à la reconstruction de la scène).
-Poste de surveillance (`Assets/Decor/Surveillance/`) : étagère à écrans, enregistreur, clavier, radio et 5e écran modélisés par `Tools/blender/poste_surveillance.py` (fait par l'IA), placés par `Assets/Editor/PosteSurveillance.cs` (appelé par RoomBuilder).
+Poste de surveillance (`Assets/Decor/Surveillance/`) : étagère, enregistreur, clavier et radio modélisés par `Tools/blender/poste_surveillance.py` (fait par l'IA), placés par `Assets/Editor/PosteSurveillance.cs` (appelé par RoomBuilder).
 
 ## 1. Armes et outils (le kit du joueur)
 

@@ -95,7 +95,7 @@ public static class GameSettings
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (t.name.Contains("TunnelingVignette")) t.gameObject.SetActive(ComfortVignette && !DesktopMode.On);
 
-        // version PC : champ de vision de la caméra du joueur (pas celle des caméras de surveillance)
+        // version PC : champ de vision de la caméra du joueur
         if (DesktopMode.On && DesktopPlayer.Instance) DesktopPlayer.Instance.ApplySettings();
         ApplyFrameRate();
     }

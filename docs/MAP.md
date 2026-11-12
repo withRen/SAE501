@@ -23,7 +23,7 @@ La carte vient du fichier Blender de l'équipe **`Finalefinale.blend`** (21 octo
 
 | Zone | Contenu | Étendue Blender |
 |---|---|---|
-| **Bunker** | Pupitre de surveillance (4 écrans), établi avec marteau, poêle-baril, lits, étagères, caisses. 2 portes (ouest, est) et 2 fenêtres au sud | x −7,5..3,8 · y −14,1..−6,1 |
+| **Bunker** | Bureau (ancien poste de surveillance : étagère vide, enregistreur, clavier ; caméras et écrans retirés le 12/11/2026), établi avec marteau, poêle-baril, lits, étagères, caisses. 2 portes (ouest, est) et 2 fenêtres au sud | x −7,5..3,8 · y −14,1..−6,1 |
 | **Couloir gauche** | En L : part de la porte ouest du bunker, puis monte vers le nord ; s'ouvre sur la cuisine et sur le générateur | x −14,5..−7,35 · y −11,2..4,2 |
 | **Cuisine** | La salle d'origine (établi, cuisinière, frigo, planches) | x −22..−16,65 · y −8..−1,65 |
 | **Générateur** | Générateur à démarrer (objectif), bidons, établi | x −19,7..−14,5 · y 0,35..4,65 |
@@ -80,4 +80,4 @@ Les emplacements des fenêtres viennent des repères du fichier (`Bunker_PlankSl
    (FBX, matériaux, textures en JPG, lumières et caméras ; les objets de décor de plus de 6 000 triangles sont simplifiés à l'export).
 2. Dans Unity : **SAE501 → Salle → 1 - Importer la carte**, puis **SAE501 → Build VR Scene**.
 
-Les noms des objets comptent : le jeu cherche notamment `Bunker_PlankSlot_*`, `Plank_*`, `Stockage_Plank_*`, `Bunker_Hammer_Workbench`, `CCTV_Screen_0X_*`, `CCTV_Camera_0X_*`, `Generator_Switch`, `Light_GeneratorBulb`, `Light_Bunker_Workbench`.
+Les noms des objets comptent : le jeu cherche notamment `Bunker_PlankSlot_*`, `Plank_*`, `Stockage_Plank_*`, `Bunker_Hammer_Workbench`, `Generator_Switch`, `Light_GeneratorBulb`, `Light_Bunker_Workbench`.

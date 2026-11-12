@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-// [#111] Levier physique (générateur, disjoncteur) : sur l'objet pivot, la poignée en enfant.
+// [#111] Levier physique (générateur) : sur l'objet pivot, la poignée en enfant.
 // On attrape la boule (grip, prise par clic : ClickGrab la laisse tenue) et on ABAISSE la main : le levier suit la main
 // autour de son axe (x local du pivot). Haut = upAngle, bas = downAngle ; la poignée part vers l'avant (z local, côté joueur).
 // - springBack : levier à ressort (générateur) : lâché, il remonte tout seul ; il faut le tenir en bas.
-// - sinon (disjoncteur) : lâché, il bascule vers la butée la plus proche et y reste.
+// - sinon : lâché, il bascule vers la butée la plus proche et y reste.
 // La main trop loin de la boule (> releaseDistance) lâche le levier, comme la poignée des portes (HingedDoor).
 public class Lever : MonoBehaviour
 {

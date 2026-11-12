@@ -208,6 +208,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [199](#199--nom-du-joueur--compte-meta-ou-casque) | 2026-11-12 | Nom du joueur : nom du compte / du profil du casque | Multijoueur | Meta Platform SDK (si App ID), sinon nom du casque, sinon « Joueur N » ; synchronisé (lobby, étiquette, éliminations, spectateur). Pas d'App ID dans le projet : nom du compte inactif pour l'instant (issue #155) |
 | [200](#200--saut-au-casque--plus-de-vol-en-rafale) | 2026-11-12 | Au casque on peut presque voler en spammant le saut (corrigé sur PC) | Gameplay / VR | JumpGuard pour casque et PC : un saut seulement après 0,15 s au sol sans interruption, pas de saut en l'air, tolérance 0,05 s ; testé en mode Play PC (rafale : un seul saut), pas au casque (issue #156) |
 | [201](#201--impossible-douvrir-le-port-7777) | 2026-11-12 | « Impossible d'ouvrir le port 7777 » au casque | Multijoueur | Cause : session réseau restée ouverte après la fin d'un duel (menu rechargé par Netcode sans fermer la session). Fin de match = chacun ferme puis revient au menu ; HÉBERGER/REJOINDRE ferment une session restée ouverte et réessaient. Testé en mode Play (PC), pas au casque (issue #157) |
+| [202](#202--saut-infini-en-visant-au-sniper) | 2026-11-12 | Saut infini toujours là au casque en visant au sniper | Gameplay / VR | Cause : la détection du sol (sphère depuis la tête) touchait l'arme épaulée. Objets tenus sur un calque ignoré par cette détection, plus de collision avec le joueur ; 0,9 s entre deux sauts et redescente obligatoire. Vérifié dans l'éditeur, pas au casque (issue #156) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3862,4 +3863,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
   - `NetSession` : `Busy` (session ouverte ou en fermeture) ; HÉBERGER / REJOINDRE refusent proprement dans ce cas ; plus de « connexion perdue » quand on part volontairement.
   - `MainMenuMulti` : HÉBERGER / REJOINDRE pendant une session ouverte la ferment, attendent (3 s et 30 images au plus) et relancent tout seuls ; au retour au menu, une session restée ouverte sans lobby est fermée.
 - **Testé** en mode Play (menu, PC) : héberger, puis HÉBERGER pendant la session → elle se ferme et l'hôte repart avec son lobby ; fin de match → session fermée, retour au menu ; héberger de nouveau → OK. **Non testé** : au casque, et avec un vrai second joueur à la fin d'un duel. « Crash » : si l'appli s'est vraiment fermée, la cause n'est pas connue sans les logs du casque.
+
+---
+
+## 202 — Saut infini en visant au sniper
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> Et le bug de saut infini n'est toujours pas patch, en gros quand je tiens le sniper et que je commence à scope je peux sauter à l'infini jusqu'à ce que je rabaisse bien l'arme, pour patch ça, il faut limiter le temps entre chaque jump et bien faire en sorte que le joueur retombe après son jump
+
+(prompt de Rahim transmis par l'assistant du projet)
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #156 rouverte, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause** (lue dans le code de XRI) : le `GravityProvider` décide « au sol » en lançant une petite sphère depuis la **tête** jusqu'aux pieds, sur les calques Default, TransparentFX, Water et UI. En épaulant le sniper, le long canon est juste sous le visage : la sphère touche l'arme. Le joueur est alors « au sol » en l'air : chaque saut se recharge et la gravité ne s'applique plus, jusqu'à ce qu'il baisse l'arme. La correction 200 (délai au sol) ne suffisait pas, puisque le joueur était toujours « au sol ».
+- **Correction à la source** (`Assets/Scripts/HeldItemLayer.cs`) : tout objet pris en main (armes, marteau, planches…) passe sur le calque 29 tant qu'il est tenu ; ce calque n'est pas dans la détection du sol (caméras et lumières le voient). Ses collisions avec la capsule du joueur sont coupées (on ne peut plus marcher sur son arme). Calques et collisions sont rétablis quand on le lâche ou le range dans un holster. Branché sur les mains de chaque scène : vaut aussi pour les armes données en jeu.
+- **En plus, comme demandé** (`JumpGuard`) : 0,9 s au moins entre deux sauts, et pas de nouveau saut tant que le joueur n'est pas redescendu (à 0,15 m du point de départ du saut, ou posé depuis 0,6 s sur une caisse).
+- **Vérifié** dans l'éditeur (Alvéole 17) : un pistolet pris par la main droite passe sur le calque 29 et ne touche plus le joueur ; la même détection du sol que XRI, joueur en l'air avec une arme sous le visage : « au sol » sur Default (le bug), plus « au sol » sur le calque 29. **Non vérifié** : le saut lui-même dans l'éditeur (les touches simulées n'ont pas été prises en compte), et tout au casque.
 

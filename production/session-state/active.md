@@ -18,6 +18,7 @@
   - Nom du joueur : `Net/PlayerName.cs` (compte Meta si App ID — absent pour l'instant —, sinon nom du casque, sinon « Joueur N »).
   - Saut au casque (journal 200, issue #156) : `JumpGuard.cs` (un saut après 0,15 s au sol, pas de saut en l'air).
   - Port 7777 (journal 201, issue #157) : session fermée en fin de duel (`NetSession.LeaveToMenu`), HÉBERGER/REJOINDRE ferment une session restée ouverte et réessaient.
+  - Saut infini au sniper (journal 202, issue #156) : `HeldItemLayer.cs` (objets tenus sur le calque 29, ignoré par la détection du sol) + `JumpGuard` (0,9 s entre deux sauts, redescente obligatoire).
   - À faire : tester au casque avec 2 joueurs ; App ID Meta à configurer pour le nom du compte ; pousser après accord de Rahim.
 
 - **Retrait des caméras de surveillance (journal 191, issue #154, branche `feature/154-retrait-cameras`, commit local non poussé)** :

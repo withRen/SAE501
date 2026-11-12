@@ -289,6 +289,10 @@ public class WaveManager : MonoBehaviour
         foreach (var g in ZoneGate.All)
             if (g.unlockLevel == lvl)
                 sb.Append("\nOUVERT : ").Append(g.zoneName).Append(string.IsNullOrEmpty(g.contents) ? "" : "\n· " + g.contents + " ·");
+        // [Clé du générateur] zone ouverte mais porte à serrure : le dire dans l'annonce
+        foreach (var g in ZoneGate.All)
+            if (g.unlockLevel == lvl && g.GetComponent<KeyLock>() is KeyLock k && !k.Unlocked)
+                sb.Append("\n(il faut la clé de la salle du générateur)");
         return sb.ToString();
     }
 

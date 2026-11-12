@@ -5133,6 +5133,7 @@ MonoBehaviour:
   maxAngle: 100
   hitsToBreak: 3
   locked: 1
+  keyLock: {fileID: 0}
 --- !u!1 &121816709
 GameObject:
   m_ObjectHideFlags: 0
@@ -10898,6 +10899,7 @@ MonoBehaviour:
   maxAngle: 100
   hitsToBreak: 3
   locked: 1
+  keyLock: {fileID: 0}
 --- !u!1 &271574475
 GameObject:
   m_ObjectHideFlags: 0
@@ -41759,6 +41761,7 @@ GameObject:
   m_Component:
   - component: {fileID: 964099089}
   - component: {fileID: 964099090}
+  - component: {fileID: 964099091}
   m_Layer: 0
   m_Name: Porte_Generateur
   m_TagString: Untagged
@@ -41804,6 +41807,24 @@ MonoBehaviour:
   openHeight: 2.3
   openSpeed: 1.8
   hinged: {fileID: 2138611998}
+--- !u!114 &964099091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964099088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08113e632d0854d1a9389eb148d086ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeyLock
+  door: {fileID: 2138611998}
+  gate: {fileID: 964099090}
+  key: {fileID: 968448454}
+  lockedText: "VERROUILL\xC9E\nIl faut la cl\xE9 de la salle\ndu g\xE9n\xE9rateur"
+  unlockDistance: 0.25
+  messageSeconds: 3
 --- !u!1 &966607914
 GameObject:
   m_ObjectHideFlags: 0
@@ -41947,6 +41968,7 @@ GameObject:
   - component: {fileID: 968448448}
   - component: {fileID: 968448447}
   - component: {fileID: 968448446}
+  - component: {fileID: 968448454}
   m_Layer: 0
   m_Name: Cle_Jardin
   m_TagString: Untagged
@@ -42243,6 +42265,20 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 968448444}
   m_Mesh: {fileID: -9140146426178939119, guid: ec782968e1e914761b2865c9654d4069, type: 3}
+--- !u!114 &968448454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968448444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5491b715cdc0a43a690d9667d6130af2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeyItem
+  displayName: "Cl\xE9 de la salle du g\xE9n\xE9rateur"
+  above: 0.07
 --- !u!1 &969268389
 GameObject:
   m_ObjectHideFlags: 0
@@ -85134,6 +85170,7 @@ MonoBehaviour:
   maxAngle: 100
   hitsToBreak: 3
   locked: 1
+  keyLock: {fileID: 0}
 --- !u!1 &1832219168
 GameObject:
   m_ObjectHideFlags: 0
@@ -97471,6 +97508,7 @@ MonoBehaviour:
   maxAngle: 100
   hitsToBreak: 3
   locked: 1
+  keyLock: {fileID: 0}
 --- !u!1 &2140088822
 GameObject:
   m_ObjectHideFlags: 0

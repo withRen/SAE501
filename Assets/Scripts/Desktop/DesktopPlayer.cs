@@ -775,6 +775,7 @@ public class DesktopPlayer : MonoBehaviour
     void GrabDoor(HingedDoor hd, IXRSelectInteractable handle)
     {
         if (hd.locked) { DesktopHud.Message("Verrouillée"); return; }
+        if (hd.keyLock && !hd.keyLock.TryOpen()) return;          // [Clé du générateur] sans la clé en main : message de KeyLock
         if (rightH.Held != null) Stow(rightH);
         if (rightH.Held != null) return;
         Reach(rightH, handle.transform.position);
@@ -1189,6 +1190,8 @@ public class DesktopPlayer : MonoBehaviour
         var lv = t.GetComponentInParent<Lever>();
         if (lv) return lv.locked ? "Levier (bloqué)" : (lv.GetComponentInParent<Generator>() || lv.springBack ? "Maintenir : abaisser le levier" : lv.Down01 < 0.5f ? "Maintenir : abaisser le levier" : "Maintenir : remonter le levier");
         var hd = t.GetComponentInParent<HingedDoor>();
+        if (hd && hd.keyLock && !hd.locked && !hd.keyLock.Unlocked)
+            return hd.keyLock.KeyInHand ? "Déverrouiller avec la clé" : "Porte verrouillée (il faut la clé)";
         if (hd) return hd.locked ? "Porte verrouillée" : hd.Closed ? "Ouvrir la porte" : "Fermer la porte";
         if (t.GetComponentInParent<SupplyRadio>()) return "Appeler un ravitaillement";
         if (t.GetComponent<Pistol>()) return "Prendre le pistolet";
@@ -1198,6 +1201,8 @@ public class DesktopPlayer : MonoBehaviour
         if (t.GetComponent<Flashlight>()) return "Prendre la lampe";
         if (t.GetComponent<Battery>()) return "Prendre la pile";
         if (t.GetComponent<MeleeWeapon>()) return "Prendre " + (t.name.ToLowerInvariant().Contains("hache") || t.name.ToLowerInvariant().Contains("axe") ? "la hache" : "l'arme");
+        var key = t.GetComponent<KeyItem>();
+        if (key) return "Prendre : " + key.displayName;
         if (t.name.StartsWith("Cle")) return "Prendre la clé";
         return s is XRGrabInteractable ? "Prendre" : "Utiliser";
     }

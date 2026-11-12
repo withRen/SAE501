@@ -6,6 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // - verrouillée (ZoneGate, niveau pas encore atteint) : la poignée ne répond pas ;
 // - déverrouillée : on attrape la poignée (grip, prise par clic) et on TIRE : la porte suit la main autour de la charnière ;
 //   on la lâche (grip à nouveau, ou main trop loin) et elle reste où elle est ;
+// - [Clé du générateur] avec une serrure (KeyLock) : la poignée se saisit mais se relâche tant qu'on n'a pas la clé en main ;
 // - barricadable (portes ouest / est du bunker) : tant qu'une planche est posée sur son ouverture, elle ne s'ouvre plus ;
 // - un zombie devant la porte fermée la frappe : au bout de hitsToBreak coups elle cède (Zombie, Opening.door).
 // Le battant découpe le NavMesh (NavMeshObstacle) : fermée, les zombies ne passent pas à travers.
@@ -18,6 +19,10 @@ public class HingedDoor : MonoBehaviour
     public float maxAngle = 100f;
     public int hitsToBreak = 3;
     public bool locked = true;
+    public KeyLock keyLock;                // [Clé du générateur] serrure : poignée saisissable, mais la porte ne bouge pas sans la clé
+
+    bool KeyLocked => keyLock && !keyLock.Unlocked;
+    bool wasSelected;
 
     public float Angle { get; private set; }
     public bool Closed => Angle < 20f;
@@ -44,7 +49,15 @@ public class HingedDoor : MonoBehaviour
     void Update()
     {
         if (handle) handle.enabled = !locked;
-        if (handle && handle.isSelected && !locked && forced < 0f)
+        // serrure : la poignée saisie sans la clé en main est relâchée (KeyLock : message et bruit de serrure)
+        bool sel = handle && handle.isSelected && !locked;
+        if (sel && !wasSelected && KeyLocked && !keyLock.TryOpen())
+        {
+            handle.interactionManager.SelectExit(handle.firstInteractorSelecting, handle);
+            sel = false;
+        }
+        wasSelected = sel;
+        if (sel && !KeyLocked && forced < 0f)
         {
             var hand = handle.firstInteractorSelecting.GetAttachTransform(handle).position;
             // main trop loin de la poignée : on lâche

@@ -222,6 +222,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [213](#213--hotfix-163-fusionné-et-audit-du-reste-du-jeu) | 2026-11-12 | Fusionner, puis chercher d'autres bugs importants | Git / Analyse | hotfix/163 fusionné dans main (aca05d2) ; audit du reste du jeu : 0 bloquant (depuis ~/SAE501), 2 majeurs (bouton de la radio au casque, réglages de build non commités), 4 mineurs ; rapport docs/analyses/Audit_jeu_complet_2026-11-12.md |
 | [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
 | [215](#215--hotfix-164-fusionné-dans-main) | 2026-11-12 | Pousser et fusionner le hotfix 164 | Git | hotfix/164-radio-build poussée et fusionnée dans main (--no-ff), wiki poussé, issue #164 laissée ouverte jusqu'au test au casque |
+| [216](#216--clé-de-la-salle-du-générateur) | 2026-11-12 | Porte du générateur verrouillée sans la clé, message, libellé de la clé | Gameplay / Multijoueur | KeyLock (clé en main pour déverrouiller), message panneau + HUD PC, étiquette « Clé de la salle du générateur », déverrouillage synchronisé en coop ; testé sur PC en mode Play, pas au casque (issue #165) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4106,3 +4107,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `hotfix/164-radio-build` poussée (avec le rapport `docs/analyses/Audit_jeu_complet_2026-11-12.md`) et fusionnée dans `main` (`--no-ff`, sans conflit), puis cette entrée du journal. Fusion sans toucher aux fichiers locaux de Rahim (réglages URP, reste du profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
 - Wiki poussé (page Radio de ravitaillement). Issue #164 commentée, laissée ouverte jusqu'au test au casque.
 
+
+---
+
+## 216 — Clé de la salle du générateur
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Multijoueur
+
+> La clé actuellement n'a aucune utilité pour ça faisons en sorte que si le joueur n'a pas la clé il n'a pas accès à la salle du générateur (donc il faut rajouter un message si le joueur tente d'ouvrir la porte du générateur sans avoir la clé) et rajouter une specification sur la clé genre "Clé de la salle du générateur"
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #165, branche `feature/165-cle-generateur` partie de `main`, commit local non poussé)
+
+- **Serrure** (`KeyLock.cs`, sur `Porte_Generateur`) : en plus du verrou de niveau (salle ouverte après la vague 3, inchangé), la porte reste fermée tant qu'on n'a pas la clé de la cabane du jardin (`Cle_Jardin`). Modèle choisi : la clé doit être **tenue en main** (comme tous les objets du jeu, pas d'inventaire) : au casque, saisir la poignée avec la clé dans l'autre main, ou approcher la clé de la poignée (25 cm) ; sur PC, viser la porte avec la clé en main et appuyer sur E. Une fois déverrouillée, elle le reste (la clé n'est plus nécessaire).
+- **Sans la clé** : la poignée se saisit mais se relâche (`HingedDoor`), bruit de serrure, le panneau de la porte affiche « VERROUILLÉE — Il faut la clé de la salle du générateur » (il clignote après un essai ; texte dans le monde, donc visible au casque) ; sur PC, message en bas de l'écran et réticule « Porte verrouillée (il faut la clé) » / « Déverrouiller avec la clé ». L'annonce de fin de vague 3 ajoute « (il faut la clé de la salle du générateur) ». Déverrouillage : son `Porte_Deverrouillee` existant.
+- **Libellé de la clé** (`KeyItem.cs`) : « Clé de la salle du générateur » flotte au-dessus de la clé quand on la vise ou qu'on la tient (VR) ; réticule PC « Prendre : Clé de la salle du générateur ».
+- **Coop** (`NetGame.cs`) : un joueur qui déverrouille prévient l'hôte (RPC), qui passe `GeneratorDoorUnlocked` (NetworkVariable) à vrai : la porte est déverrouillée sur tous les casques. Chaque casque garde sa propre clé et ses propres portes (comme avant) ; le message « verrouillée » reste local. Duel : non concerné (arènes sans cette porte, `NetDuel` n'utilise pas `NetGame`).
+- **Durable** : `RoomBuilder` ajoute `KeyItem` et `KeyLock` à la construction ; la scène n'a **pas** été reconstruite : les deux composants ont été ajoutés directement à `MainScene` (seul changement de la scène). Sans clé dans la scène, la porte n'a pas de serrure (jamais de porte impossible à ouvrir).
+- **Testé** en mode Play (PC, MainScene, niveau 4 forcé) : sans clé, E sur la porte → refus, message PC et panneau (captures) ; clé prise → étiquette visible, E sur la porte → déverrouillée, panneau caché. Compilation sans erreur. **Non testé** : au casque (poignée, geste de la clé), en coop réel sur deux machines. Dans ce test scripté (joueur téléporté), la poignée saisie ne fait pas pivoter le battant, ni sur cette porte ni sur la porte du stockage non modifiée : limite du test, pas du changement, mais l'ouverture complète n'a pas été vue.

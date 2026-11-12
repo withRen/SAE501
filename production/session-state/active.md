@@ -10,6 +10,10 @@
 
 ## 1. Dernières réalisations intégrées
 
+- **Clé de la salle du générateur (12/11, journal 216, issue #165, branche `feature/165-cle-generateur`, commit local NON poussé ; wiki f82ea9a local NON poussé)** :
+  - `KeyLock.cs` (porte du générateur : clé tenue en main pour déverrouiller, message panneau + HUD PC, son) ; `KeyItem.cs` (étiquette « Clé de la salle du générateur ») ; coop : `NetGame.GeneratorDoorUnlocked`.
+  - Testé sur PC en mode Play ; pas au casque, pas en coop réel.
+
 - **Hotfix multijoueur (12/11, journal 198-199, issue #155, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local NON poussé)** :
   - Kill / mort : `Net/NetKillFx.cs` (croix, son, « ÉLIMINÉ », fil, écran « TU ES MORT »), chute du personnage `PlayerAvatar.SetFallen`, tueur suivi par `NetPlayer` (HitRpc + DiedRpc).
   - Coop : spectateur `Net/NetSpectator.cs` (écran flottant au casque, plein écran PC), réapparition vie pleine en fin de vague (`NetGame.ReviveLocal`, `NetPlayer.RespawnAtStart`).

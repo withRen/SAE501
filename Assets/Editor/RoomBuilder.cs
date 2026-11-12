@@ -423,6 +423,7 @@ public static class RoomBuilder
         rb.mass = 0.05f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         MakeGrab(key.gameObject);
+        key.gameObject.AddComponent<KeyItem>();       // [Clé du générateur] étiquette « Clé de la salle du générateur », ouvre KeyLock
     }
 
     // La clé du fichier (48 triangles, un bloc doré lumineux) est remplacée par une vieille clé en fer : la clé simple « Key »
@@ -939,6 +940,16 @@ public static class RoomBuilder
         Gate("Couloir_Droit", "Couloir droit", "Passage vers le stockage", 2, B(3.72f, -10.1f, 0f), 1.8f, Vector3.right);
         Gate("Stockage", "Stockage", "Planches, chargeurs, hache", 3, B(10.58f, 6.5f, 0f), 1.85f, Vector3.right);
         Gate("Generateur", "Générateur", "Le générateur : votre sortie", 4, B(-14.58f, 2.5f, 0f), 1.25f, Vector3.left);
+        // [Clé du générateur] la salle du générateur ne s'ouvre qu'avec la clé de la cabane du jardin (Cle_Jardin, FixGardenCabin)
+        var genGate = gatesRoot.transform.Find("Porte_Generateur");
+        var cabinKey = items ? items.Find("Cle_Jardin") : null;
+        if (genGate)
+        {
+            var kl = genGate.gameObject.AddComponent<KeyLock>();
+            kl.gate = genGate.GetComponent<ZoneGate>(); kl.door = genGate.GetComponentInChildren<HingedDoor>();
+            kl.key = cabinKey ? cabinKey.GetComponent<KeyItem>() : null;
+            if (!kl.key) Debug.LogWarning("[RoomBuilder] clé de la cabane introuvable : la porte du générateur n'aura pas de clé");
+        }
         // portes ouest / est du bunker : barricadables (planches de l'ouverture) et enfoncées par les zombies avant les planches
         foreach (var (gate, op) in new[] { ("Porte_Couloir_Gauche", "Ouverture_Ouest"), ("Porte_Couloir_Droit", "Ouverture_Est") })
         {

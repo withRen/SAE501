@@ -5,6 +5,68 @@
 
 ---
 
+## Version finale : ce qui est dans le jeu (12 novembre 2026)
+
+État de `main` pour la release v1.0.0. Les sections 0 à 7 plus bas sont la **liste de départ** (octobre) : beaucoup d'assets prévus n'ont finalement pas été importés (planches, établi, marteau, textures de l'Asset Store), remplacés par des modèles de l'équipe, de Poly Haven ou faits par script.
+
+### Packs et modèles extérieurs
+
+| Asset | Auteur / source | Licence | Dossier | Taille | Utilisé pour |
+|---|---|---|---|---|---|
+| Modern Guns : Handgun | Nokobot, Asset Store | Asset Store (EULA) | `Assets/Nokobot` | 9 Mo | Pistolet M1911, chargeur, douille, flash |
+| Free Shirtless Zombie | NewPunch, Asset Store | Asset Store (EULA) | `Assets/NewPunch` | 92 Mo | Modèle de base des zombies |
+| Zombie Male (AAB) | Asset Store (importé par l'équipe) | Asset Store (EULA), à confirmer | `Assets/ZombieMale_AAB` | 107 Mo | Deuxième modèle de zombie (prefab utilisé par `ZombieBuilder`) |
+| Pack « Zombie » (FBX, matériaux, prefabs) | importé par l'équipe | à confirmer | `Assets/Zombie` | 31 Mo | Troisième modèle de zombie (types Cogneur / Coureur) |
+| Animations Mixamo | Adobe Mixamo | licence Mixamo (usage dans un jeu permis) | `Assets/Animations` | 20 Mo | Marche, attaque, mort, escalade des fenêtres, chute (zombies) |
+| Survivalist (allégé : 4 tenues, textures 1024) | Slayver, Asset Store | Asset Store (EULA) | `Assets/Survivalist` | 55 Mo | Personnages des joueurs en multijoueur |
+| Cold War Weapons : AK74M | Asset Store | Asset Store (EULA), à confirmer | `Assets/Cold War Weapons` | 4 Mo | AK74 du duel 1v1 |
+| VCR AWM (sniper) | VCR, importé par l'équipe | à confirmer | `Assets/VCR01` | 155 Mo | Sniper AWM et lunette du duel 1v1 |
+| Mains animées | exemples du cours / XR Interaction Toolkit | Unity | `Assets/Animated Hands` | 1,5 Mo | Mains du joueur en VR |
+| Décor extérieur et ciel | Alban (équipe) | créé par l'équipe | `Assets/Environment` | 2 Mo | Sphère de ciel et décor autour de la carte |
+
+Les packs de l'Asset Store sont commités dans le dépôt (Git LFS) pour que tout le groupe ouvre le même projet. **Le dépôt reste privé** : ils ne sont publiés nulle part en clair (la release ne contient que les exécutables).
+
+### Modèles et textures libres (CC0)
+
+| Asset | Auteur / source | Dossier | Utilisé pour |
+|---|---|---|---|
+| Textures et modèles de la carte (`dark_wooden_planks`, `distressed_painted_planks`, `decrepit_wallpaper`, `grey_plaster`, `old_wood_floor`, `metal_plate`, `wine_barrel_01`, `wooden_crate_01`, `vintage_oil_lamp`…) | [Poly Haven](https://polyhaven.com) | `Assets/Room/Textures` | Murs, sols, portes, décor |
+| Small Plastic Torch | Abiyyu Panggalih, Poly Haven | `Assets/Lampe` | Lampe torche (allégée à 6 000 triangles) |
+| Bleach Bottle, Multi Cleaner Bottle | James Ray Cock, Poly Haven | `Assets/Decor` | Bouteilles du décor |
+| Key + rusty_metal_04 | Quaternius (Poly Pizza) + Poly Haven | `Assets/Cle` | Clé de la cabane et clé du générateur |
+| Arbre et sols du jardin | Poly Haven, refaits dans Blender (`arbre_quest.py`) | `Assets/Nature` | Arbres (LOD + imposteurs) et sols du jardin |
+| Textures des arènes du duel | Poly Haven | `Assets/Arenas/Textures` | Alvéole 17 et Quai 9 |
+
+Liste détaillée (auteur, lien, poids, fichiers) : page wiki [Textures et modèles](https://github.com/withRen/SAE501/wiki/Textures-et-modeles).
+
+### Fait pour le projet (équipe ou script)
+
+| Asset | Comment | Dossier |
+|---|---|---|
+| Carte (bunker, couloirs, cuisine, jardin, cabane) | Fichier Blender de l'équipe, importé par `RoomImport` | `Assets/Room` |
+| Pile BA-30, poste de surveillance, textures d'usure | Scripts Python / Blender (faits par l'IA) | `Assets/Pile`, `Assets/Decor/Surveillance`, `Assets/Room/Textures/Usure` |
+| Planches, clous, marteau, matériaux et maillages générés | Construits par les scripts de l'éditeur | `Assets/Generated` |
+| Icône et logo du jeu | Équipe (`docs/images/branding`) | `Assets/Branding` |
+
+### Sons et musiques
+
+| Son | Source | Licence | Dossier |
+|---|---|---|---|
+| Musiques (menu, partie 1 et 2), tir et rechargement du pistolet, lancement de partie, voix des zombies | fournis par l'équipe | source et licence à préciser | `Assets/Audio` |
+| Sons de LeCapet (marteau et clou, souffle de la hache, bois touché et cassé, coup sur un zombie, morsure, chute du corps) | équipe (PR #151) | équipe, source à préciser | `Assets/Resources/Sounds` |
+| Son de début de vague | SOUND BAG (YouTube) | usage non commercial autorisé par l'auteur | `Assets/Resources/Audio` |
+| Impacts de balle, pas des zombies, grille et cadenas du portail | Freesound (voir tableau en bas de page) | CC0 1.0 | `Assets/Resources/Sounds`, `Assets/Resources/Audio` |
+
+### Police
+
+| Police | Auteur | Licence | Dossier |
+|---|---|---|---|
+| Nosifer (titre de vague) | Typomondo, Google Fonts | SIL OFL 1.1 | `Assets/Resources/Fonts` |
+
+---
+
+## Liste de départ (octobre 2026)
+
 ## 0. Pièce principale (fournie par l'équipe)
 
 | Asset | Usage | Statut | Fichier |

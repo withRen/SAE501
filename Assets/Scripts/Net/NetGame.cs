@@ -367,7 +367,13 @@ public class NetGame : NetworkBehaviour
     void OnKeyUnlocked() => KeyDoorRpc();
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    void KeyDoorRpc() { if (!GeneratorDoorUnlocked.Value) GeneratorDoorUnlocked.Value = true; }
+    void KeyDoorRpc()
+    {
+        // l'hôte décide : refusé tant que la salle du générateur n'est pas ouverte chez lui (niveau 4), quel que soit l'envoyeur
+        var kl = KeyLock.Instance;
+        if (kl && kl.gate && !kl.gate.IsOpen) { Debug.Log("[Net] déverrouillage de la porte du générateur refusé : zone pas encore ouverte"); return; }
+        if (!GeneratorDoorUnlocked.Value) GeneratorDoorUnlocked.Value = true;
+    }
 
     void OnDoorUnlockedChanged(bool _, bool unlocked)
     {

@@ -41823,7 +41823,11 @@ MonoBehaviour:
   gate: {fileID: 964099090}
   key: {fileID: 968448454}
   lockedText: "VERROUILL\xC9E\nIl faut la cl\xE9 de la salle\ndu g\xE9n\xE9rateur"
+  keyHeldText: "CL\xC9 EN MAIN\nApprochez-la de la serrure\n(sous la poign\xE9e)"
+  keyHeldTextPC: "CL\xC9 EN MAIN\nVisez la porte\net appuyez sur E"
   unlockDistance: 0.25
+  hintDistance: 4
+  idleGlow: 0.6
   messageSeconds: 3
 --- !u!1 &966607914
 GameObject:
@@ -42278,6 +42282,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeyItem
   displayName: "Cl\xE9 de la salle du g\xE9n\xE9rateur"
+  hintText: "\u2192 approchez-la de la serrure"
   above: 0.07
 --- !u!1 &969268389
 GameObject:

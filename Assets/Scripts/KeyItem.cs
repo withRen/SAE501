@@ -54,7 +54,9 @@ public class KeyItem : MonoBehaviour
 
     void LateUpdate()
     {
-        bool show = grab && (grab.isHovered || HeldByHand);
+        // PC : la clé tenue est dessinée près de la caméra, loin de sa vraie position : étiquette au survol seulement (le réticule
+        // et le panneau de la porte prennent le relais)
+        bool show = grab && (grab.isHovered || (HeldByHand && !DesktopMode.On));
         if (label.gameObject.activeSelf != show) label.gameObject.SetActive(show);
         if (!show) return;
         // tenue près de la porte encore verrouillée : la serrure luit (KeyLock) et l'étiquette dit quoi faire

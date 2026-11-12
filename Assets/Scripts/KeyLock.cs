@@ -8,7 +8,7 @@ using UnityEngine;
 //   - sans la clé : la poignée se lâche, petit bruit de serrure, message « Verrouillée — il faut la clé de la salle du
 //     générateur » sur le panneau de la porte (texte dans le monde, lisible au casque) et en bas de l'écran sur PC ;
 //   - une fois déverrouillée, elle le reste (la clé n'est plus nécessaire, la porte s'ouvre ensuite normalement).
-// [Indication au casque] une serrure (plaque et trou) sous la poignée, côté joueur ; quand le joueur tient la clé à moins de
+// [Indication au casque] une serrure (plaque et trou) sous la poignée, côté joueur, avec une faible lueur fixe ; quand le joueur tient la clé à moins de
 //   hintDistance de la porte encore verrouillée : la serrure luit en ambre et pulse (plus fort en approchant), le panneau dit
 //   « CLÉ EN MAIN — Approchez-la de la serrure » et l'étiquette de la clé ajoute « → approchez-la de la serrure ».
 // Multijoueur coop : le déverrouillage passe par NetGame (LocalUnlocked → l'hôte → NetworkVariable GeneratorDoorUnlocked) : la
@@ -20,8 +20,10 @@ public class KeyLock : MonoBehaviour
     public KeyItem key;                         // la clé de CE casque (chaque casque a sa propre scène)
     public string lockedText = "VERROUILLÉE\nIl faut la clé de la salle\ndu générateur";
     public string keyHeldText = "CLÉ EN MAIN\nApprochez-la de la serrure\n(sous la poignée)";
+    public string keyHeldTextPC = "CLÉ EN MAIN\nVisez la porte\net appuyez sur E";
     public float unlockDistance = 0.25f;        // clé → serrure ou poignée
     public float hintDistance = 4f;             // clé tenue à cette distance de la porte : indication visible
+    public float idleGlow = 0.6f;               // lueur fixe de la serrure sans la clé (salle ouverte, porte verrouillée)
     public float messageSeconds = 3f;
 
     public static KeyLock Instance { get; private set; }
@@ -153,18 +155,24 @@ public class KeyLock : MonoBehaviour
     void UpdateGlow()
     {
         if (!glow) return;
-        bool on = Guiding;
+        // salle ouverte et porte encore verrouillée : faible lueur fixe (on voit qu'il y a une serrure, même dans le noir) ;
+        // clé en main près de la porte : elle pulse et grossit
+        bool on = !Unlocked && gate && gate.IsOpen;
         if (glow.enabled != on) glow.enabled = on;
         if (!on) return;
-        float d = Vector3.Distance(key.transform.position, LockPoint);
-        float near = 1f - Mathf.InverseLerp(unlockDistance, hintDistance, d);         // 0 loin → 1 contre la serrure
-        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * Mathf.Lerp(3f, 9f, near));
-        float a = Mathf.Lerp(0.35f, 1f, near) * Mathf.Lerp(0.55f, 1f, pulse);
+        float near = 0f, pulse = 0f, a = idleGlow;
+        if (Guiding)
+        {
+            float d = Vector3.Distance(key.transform.position, LockPoint);
+            near = 1f - Mathf.InverseLerp(unlockDistance, hintDistance, d);           // 0 loin → 1 contre la serrure
+            pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * Mathf.Lerp(3f, 9f, near));
+            a = Mathf.Lerp(0.35f, 1f, near) * Mathf.Lerp(0.55f, 1f, pulse);
+        }
         mpb.SetColor(BaseColor, Amber * a);
         glow.SetPropertyBlock(mpb);
         var cam = Camera.main;
         if (cam) glow.transform.rotation = Quaternion.LookRotation(glow.transform.position - cam.transform.position, Vector3.up);
-        glow.transform.localScale = Vector3.one * Mathf.Lerp(0.12f, 0.2f, near) * Mathf.Lerp(0.9f, 1.1f, pulse);
+        glow.transform.localScale = Vector3.one * (Guiding ? Mathf.Lerp(0.16f, 0.26f, near) * Mathf.Lerp(0.9f, 1.1f, pulse) : 0.08f);
     }
 
     void LateUpdate()
@@ -175,7 +183,7 @@ public class KeyLock : MonoBehaviour
         {
             if (!gate.sign.gameObject.activeSelf) gate.sign.gameObject.SetActive(true);
             bool guiding = Guiding;
-            gate.sign.text = guiding ? keyHeldText : lockedText;
+            gate.sign.text = guiding ? (DesktopMode.On ? keyHeldTextPC : keyHeldText) : lockedText;
             bool flash = Time.time < messageUntil;
             gate.sign.color = guiding ? Amber : flash && Mathf.Repeat(Time.time * 3f, 1f) < 0.5f ? Color.white : signColor;
         }

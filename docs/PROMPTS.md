@@ -213,6 +213,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
 | [205](#205--étiquette-de-nom-masquée-en-duel) | 2026-11-12 | En 1v1 on voit le nametag | Multijoueur | Étiquette au-dessus de l'avatar masquée dans les arènes du duel, gardée en coop ; vérifié en mode Play (arène), pas au casque (issue #159) |
 | [206](#206--hotfix-poussé-et-fusionné-dans-main) | 2026-11-12 | Pousser en hotfix puis dans main | Git | Branche hotfix/155-multijoueur-kills-spectateur-tp poussée, fusionnée dans main (1be77bd, --no-ff), wiki poussé ; issues #155 à #159 laissées ouvertes jusqu'au test au casque |
+| [209](#209--vr--la-tête-ne-traverse-plus-les-murs) | 2026-11-12 | En VR on sort de la carte / traverse les portes en avançant la tête | Gameplay / VR | HeadWallGuard : si la tête traverse du décor solide, le joueur est ramené à la dernière position valide (fondu noir court). Testé dans l'éditeur (tête simulée), pas au casque (issue #162) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3943,4 +3944,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Fusion `--no-ff` dans `main` : commit `1be77bd`, poussé. `main` n'avait pas bougé depuis `c445983` : aucun conflit, le contenu est celui de la branche hotfix (compilé sans erreur dans l'éditeur). La fusion a été faite sans changer de branche dans `~/SAE501`, pour ne pas toucher aux fichiers locaux de Rahim (correctif du délai de 12 s dans `MainMenuMulti.cs`, réglages URP, manifeste, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`), toujours non commités.
 - Wiki poussé (pages Kills, mort et spectateur ; Déplacement ; Multijoueur).
 - Issues #155 à #159 commentées, laissées ouvertes jusqu'au test au casque.
+
+---
+
+## 209 — VR : la tête ne traverse plus les murs
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> il est possible en vr de sortir de la map / passer à travers les portes en avançant beaucoup sa caméra il faut que si un joueur travers un mur de cette façon il soit retéléporté derrière le mur à son emplacement d'origine
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #162, branche `hotfix/162-anti-traversee-murs` depuis `main`, commit local non poussé)
+
+- **Cause** : au casque, la tête (caméra) suit les mouvements réels du joueur dans sa pièce ; rien ne l'arrête, elle passait donc à travers les murs et les portes fermées.
+- **Correction** (`Assets/Scripts/HeadWallGuard.cs`, ajouté par code au rig de chaque scène, aucune scène modifiée) : à chaque image, une petite sphère (0,08 m) est tracée de la dernière position valide de la tête à sa position actuelle. Si elle traverse du décor solide (collisionneur immobile, pas un déclencheur), le XR Origin est décalé à plat pour que la tête revienne à la dernière position valide, du bon côté du mur, avec un fondu noir de 0,2 s. Si le joueur continue d'avancer, il est retenu à chaque image.
+- **Ignoré** (pas de faux positif) : objets tenus (calque 29), objets que le joueur pousse (`IgnorePlayer` : planches, ceinture, caisses), zombies, joueurs, le joueur lui-même ; se pencher contre un mur (contact au départ) ; un saut de plus de 0,6 m en une image (téléportation, réapparition, placement en début de manche). Une porte ouverte ne gêne pas, une porte fermée bloque. Inactif en version PC, quand le joueur est mort (spectateur) et pendant la cinématique de fin.
+- **Testé** dans l'éditeur (Alvéole 17, tête déplacée par script) : 1 m de mouvement normal → aucune correction ; tête poussée 1 m au-delà de la porte blindée fermée → 19 corrections, la tête reste devant la porte ; téléportation de plusieurs mètres → aucune correction. **Non testé** : au casque (sensation du fondu, murs fins, escaliers, porte ouverte de MainScene).
 

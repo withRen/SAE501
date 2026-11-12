@@ -17,7 +17,7 @@ public class NetKillFx : MonoBehaviour
     Renderer markA, markB;
     float markStart = -10f, markLife;
     Color markColor;
-    TextMesh banner, sub, feed;
+    TextMesh banner, sub, feed, status;
     float bannerUntil;
     readonly List<(string line, float until)> feedLines = new List<(string, float)>();
     Renderer redScreen;
@@ -78,6 +78,14 @@ public class NetKillFx : MonoBehaviour
         f.Banner("TU ES MORT", detail, new Color(1f, 0.25f, 0.2f), 999f);
     }
 
+    /// <summary>[hotfix #161] Ligne d'état persistante en haut de la vue (vide = masquée) : compteur du portail en coop Évasion.</summary>
+    public static void Status(string text)
+    {
+        var f = string.IsNullOrEmpty(text) ? instance : Get();
+        if (!f) return;
+        f.status.text = text ?? "";
+    }
+
     /// <summary>Retour à la vie (manche suivante, fin de vague) : on efface l'écran de mort.</summary>
     public static void Alive()
     {
@@ -109,6 +117,8 @@ public class NetKillFx : MonoBehaviour
         sub = Text("Sous_titre", new Vector3(0f, -0.15f, 1.1f), 0.0045f, 64);
         feed = Text("Fil", new Vector3(0f, 0.27f, 1.2f), 0.0042f, 60);
         feed.color = new Color(1f, 1f, 1f, 0.9f);
+        status = Text("Etat", new Vector3(0f, 0.19f, 1.2f), 0.0042f, 60);
+        status.color = new Color(0.55f, 1f, 0.6f);
 
         audioSrc = gameObject.AddComponent<AudioSource>();
         audioSrc.spatialBlend = 0f; audioSrc.playOnAwake = false; audioSrc.ignoreListenerPause = true;

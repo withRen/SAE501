@@ -76,18 +76,24 @@ public class PlayerHealth : MonoBehaviour
         if (!wasDead && IsDead) Died?.Invoke();
     }
 
-    /// <summary>Joueur vivant le plus proche d'un point (à plat) ; null si tous sont morts.</summary>
+    /// <summary>[Hotfix #161] Coop Évasion : ce joueur a franchi le portail ; les zombies ne le visent plus (il attend son équipe).</summary>
+    public bool Escaped { get; set; }
+
+    /// <summary>Joueur vivant (et pas encore sorti par le portail) le plus proche d'un point (à plat) ; null s'il n'y en a pas.</summary>
     public static PlayerHealth NearestAlive(Vector3 from)
     {
         PlayerHealth best = null; float bd = float.MaxValue;
         foreach (var p in All)
         {
-            if (p == null || p.IsDead) continue;
+            if (p == null || p.IsDead || p.Escaped) continue;
             var d = p.HeadPosition - from; d.y = 0f;
             if (d.sqrMagnitude < bd) { bd = d.sqrMagnitude; best = p; }
         }
         return best;
     }
+
+    /// <summary>Au moins un joueur vivant (sorti par le portail ou non).</summary>
+    public static bool AnyAlive() { foreach (var p in All) if (p != null && !p.IsDead) return true; return false; }
 
     void Start() => Changed?.Invoke(Health, maxHealth);
 

@@ -65,7 +65,10 @@ public class NetGame : NetworkBehaviour
     string lastScoreLine;
     readonly List<ZState> buffer = new List<ZState>();
 
-    void Awake() => Scores = new NetworkList<Score>();
+    /// <summary>[Hotfix #161] Joueurs (ClientId) sortis par le portail du jardin, tenu par l'hôte. Victoire quand tous les vivants y sont.</summary>
+    public NetworkList<ulong> Escaped;
+
+    void Awake() { Scores = new NetworkList<Score>(); Escaped = new NetworkList<ulong>(); }
 
     public override void OnNetworkSpawn()
     {
@@ -148,6 +151,7 @@ public class NetGame : NetworkBehaviour
     {
         if (!IsSpawned) return;
         UpdateScoreText();
+        UpdateEscapeStatus();
         if (!IsServer) return;
 
         var wm = WaveManager.Instance;
@@ -160,8 +164,18 @@ public class NetGame : NetworkBehaviour
             SendStates();
         }
 
+        // [hotfix #161] évasion : victoire quand TOUS les joueurs vivants ont franchi le portail. Un joueur mort (spectateur : pas de
+        // réapparition pendant l'évasion, il n'y a plus de pause) ou déconnecté n'est plus attendu ; si le dernier joueur encore
+        // dedans meurt, ceux déjà sortis gagnent.
+        if (!gameOver && wm && wm.Escaping && Escaped.Count > 0 && AllAliveEscaped())
+        {
+            gameOver = true;
+            Debug.Log("[Net] tous les joueurs vivants ont franchi le portail : victoire (" + Escaped.Count + " sortis)");
+            wm.TeamVictory();                   // VictoryReached → VictoryRpc : cinématique et bilan chez tous
+        }
+
         // tous les joueurs à terre en même temps : fin de partie pour tout le monde
-        if (!gameOver && PlayerHealth.All.Count > 0 && PlayerHealth.NearestAlive(Vector3.zero) == null)
+        if (!gameOver && PlayerHealth.All.Count > 0 && !PlayerHealth.AnyAlive())
         {
             gameOver = true;
             Debug.Log("[Net] tous les joueurs sont à terre : fin de partie (vague " + WaveManager.Level + ", équipe " + TeamScore + ")");
@@ -357,10 +371,65 @@ public class NetGame : NetworkBehaviour
     void OnEscapeOpened() { if (IsServer) EscapeOpenRpc(); }
     [Rpc(SendTo.NotServer)] void EscapeOpenRpc() { if (WaveManager.Instance) WaveManager.Instance.RemoteEscapeOpen(); }
 
-    // un client a franchi le portail : l'hôte déclare la victoire (pour tout le monde)
+    // [hotfix #161] un joueur (hôte compris) a franchi le portail : l'hôte le note « sorti » (plus visé par les zombies) ;
+    // la victoire tombe quand tous les vivants sont sortis (Update)
     void OnEscapeRequested() => EscapeRpc();
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    void EscapeRpc() { if (WaveManager.Instance) WaveManager.Instance.PlayerEscaped(); }
+    void EscapeRpc(RpcParams p = default)
+    {
+        var wm = WaveManager.Instance;
+        ulong id = p.Receive.SenderClientId;
+        if (!wm || !wm.Escaping || Escaped.Contains(id)) return;
+        Escaped.Add(id);
+        foreach (var np in NetPlayer.All) if (np && np.OwnerClientId == id) np.MarkEscaped();
+        Debug.Log("[Net] joueur " + id + " sorti par le portail (" + Escaped.Count + ")");
+    }
+
+    /// <summary>Tous les joueurs vivants sont sortis (au moins un).</summary>
+    public bool AllAliveEscaped()
+    {
+        var players = new List<(ulong id, bool dead)>();
+        foreach (var np in NetPlayer.All) if (np && np.IsSpawned) players.Add((np.OwnerClientId, np.Dead));
+        return AllOut(players, id => Escaped.Contains(id));
+    }
+
+    /// <summary>Règle de victoire de l'évasion en coop : au moins un joueur vivant, et tous les vivants sont sortis.
+    /// Les morts (et les déconnectés, absents de la liste) ne sont pas attendus.</summary>
+    public static bool AllOut(IEnumerable<(ulong id, bool dead)> players, Func<ulong, bool> escaped)
+    {
+        int alive = 0;
+        foreach (var (id, dead) in players)
+        {
+            if (dead) continue;
+            alive++;
+            if (!escaped(id)) return false;
+        }
+        return alive > 0;
+    }
+
+    // compteur pour tous : « PORTAIL : 1/2 joueurs sortis » ; pour celui qui est sorti : « attends ton équipe »
+    string lastEscapeStatus;
+    void UpdateEscapeStatus()
+    {
+        var wm = WaveManager.Instance;
+        string text = "";
+        if (wm && wm.Escaping && Escaped.Count > 0)
+        {
+            int alive = 0, out_ = 0;
+            foreach (var np in NetPlayer.All)
+            {
+                if (!np || !np.IsSpawned || np.Dead) continue;
+                alive++;
+                if (Escaped.Contains(np.OwnerClientId)) out_++;
+            }
+            text = "PORTAIL : " + out_ + "/" + alive + " joueur" + (alive > 1 ? "s" : "") + " sorti" + (out_ > 1 ? "s" : "");
+            if (Escaped.Contains(NetworkManager.LocalClientId)) text = "TU ES SORTI · ATTENDS TON ÉQUIPE\n" + text;
+            else text += "\nRejoins-les : passe le portail du jardin";
+        }
+        if (text == lastEscapeStatus) return;
+        lastEscapeStatus = text;
+        NetKillFx.Status(text);
+    }
 
     void OnVictory() => VictoryRpc();
     [Rpc(SendTo.NotServer)] void VictoryRpc() { if (WaveManager.Instance) WaveManager.Instance.RemoteVictory(); }

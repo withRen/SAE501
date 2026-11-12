@@ -307,7 +307,7 @@ public class NetGame : NetworkBehaviour
     void OnWaveStarted(int lvl) { Wave.Value = lvl; WaveRpc(lvl); }
     [Rpc(SendTo.NotServer)] void WaveRpc(int lvl) { if (WaveManager.Instance) WaveManager.Instance.RemoteWaveStart(lvl); }
 
-    // vague terminée : soin pour tous, et les joueurs à terre se relèvent avec ces PV
+    // vague terminée : soin pour tous, et les joueurs à terre réapparaissent (vie pleine, ReviveLocal)
     void OnBreakStarted(int lvl, float heal)
     {
         ReviveLocal(heal);
@@ -321,10 +321,13 @@ public class NetGame : NetworkBehaviour
         ReviveLocal(heal);
     }
 
+    // [hotfix #155] le joueur mort (spectateur) réapparaît vie pleine à son point de départ (sûr : la pause commence, plus de zombie)
     static void ReviveLocal(float heal)
     {
         var h = PlayerHealth.Instance;
-        if (h && h.IsDead) h.Revive(Mathf.Max(heal, 25f));
+        if (!h || !h.IsDead) return;
+        if (NetPlayer.Local) NetPlayer.Local.RespawnAtStart();
+        h.Revive(h.maxHealth);
     }
 
     void OnWarned(Opening o, float seconds) { int i = openings.IndexOf(o); if (i >= 0) WarnRpc((short)i, seconds); }
@@ -365,6 +368,7 @@ public class NetGame : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     void GameOverRpc()
     {
+        NetSpectator.End();
         if (GameOverUI.Instance) GameOverUI.Instance.ShowTeamDefeat();
     }
 

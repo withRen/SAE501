@@ -202,6 +202,16 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [193](#193--lunette--test-au-casque-sur-une-version-sans-lunette) | 2026-11-12 | Le scope ne fonctionne pas au casque | Diagnostic / Build | L'APK testé (09 h 21) venait de ~/SAE501 (branche feature/154-retrait-cameras), sans SniperScope : la lunette n'était pas dans le build. Code inchangé ; comment builder la bonne copie |
 | [194](#194--fusion-de-la-lunette-dans-la-branche-du-retrait-des-caméras) | 2026-11-12 | Fusionner la lunette dans la branche de ~/SAE501 pour builder l'APK | Git / Build | feature/153-lunette-sniper fusionnée dans feature/154-retrait-cameras (conflits DesktopHud, journal, état de session résolus en gardant les deux) ; compilation vérifiée |
 | [195](#195--fusion-dans-main-et-branche-de-secours) | 2026-11-12 | Pousser tout dans main proprement, avec un hotfix au cas où | Git | Branche de secours hotfix/avant-lunette-cameras sur l'ancien main (93ca474), feature/154-retrait-cameras (avec la lunette) fusionnée dans main, branches et wiki poussés |
+| [196](#196--temps-de-build--retrait-dopengles3) | 2026-11-12 | Réduire le temps de build (30-40 min) | Build / Optimisation | Diagnostic : 20,5 min sur 25,6 en compilation des shaders URP Lit/Simple Lit, GLES3 ≈ 70 % du temps CPU shaders ; OpenGLES3 retiré (profil Meta Quest et Player Settings), non testé au casque |
+| [197](#197--launch-app-grisé-dans-mqdh--permission-micro-retirée) | 2026-11-12 | Appli lançable en ligne de commande mais pas depuis MQDH (triangle orange) | Build / Android | Cause : permission micro RECORD_AUDIO non accordée (MQDH grise « Launch app »). Retirée du manifeste (le jeu n'utilise pas le micro), APK reconstruit et testé sur le 2e casque |
+| [198](#198--hotfix-multijoueur--kills-mort-spectateur-téléportation) | 2026-11-12 | Hotfix : animation de kill et de mort en 1v1 / multi, spectateur en coop zombie, TP au joystick gauche, NavMesh des arènes 1v1 | Gameplay / Multijoueur / VR | Croix rouge + son + « ÉLIMINÉ » + fil des éliminations, écran « TU ES MORT », chute du personnage ; spectateur d'un coéquipier et réapparition en fin de vague ; joystick droit = rotation seule ; NavMesh d'Alvéole 17 et Quai 9. Testé en mode Play (PC, sans réseau), pas au casque (issue #155) |
+| [199](#199--nom-du-joueur--compte-meta-ou-casque) | 2026-11-12 | Nom du joueur : nom du compte / du profil du casque | Multijoueur | Meta Platform SDK (si App ID), sinon nom du casque, sinon « Joueur N » ; synchronisé (lobby, étiquette, éliminations, spectateur). Pas d'App ID dans le projet : nom du compte inactif pour l'instant (issue #155) |
+| [200](#200--saut-au-casque--plus-de-vol-en-rafale) | 2026-11-12 | Au casque on peut presque voler en spammant le saut (corrigé sur PC) | Gameplay / VR | JumpGuard pour casque et PC : un saut seulement après 0,15 s au sol sans interruption, pas de saut en l'air, tolérance 0,05 s ; testé en mode Play PC (rafale : un seul saut), pas au casque (issue #156) |
+| [201](#201--impossible-douvrir-le-port-7777) | 2026-11-12 | « Impossible d'ouvrir le port 7777 » au casque | Multijoueur | Cause : session réseau restée ouverte après la fin d'un duel (menu rechargé par Netcode sans fermer la session). Fin de match = chacun ferme puis revient au menu ; HÉBERGER/REJOINDRE ferment une session restée ouverte et réessaient. Testé en mode Play (PC), pas au casque (issue #157) |
+| [202](#202--saut-infini-en-visant-au-sniper) | 2026-11-12 | Saut infini toujours là au casque en visant au sniper | Gameplay / VR | Cause : la détection du sol (sphère depuis la tête) touchait l'arme épaulée. Objets tenus sur un calque ignoré par cette détection, plus de collision avec le joueur ; 0,9 s entre deux sauts et redescente obligatoire. Vérifié dans l'éditeur, pas au casque (issue #156) |
+| [203](#203--pistolet-en-main--on-ne-peut-plus-avancer) | 2026-11-12 | Avec le pistolet pris, on ne peut plus avancer | Gameplay / VR | Régression du correctif 202 : au lâcher, la collision arme/joueur était rétablie alors qu'IgnorePlayer la coupait ; l'arme rangée à la ceinture bloquait le joueur. Seules les collisions existant avant la prise sont rétablies. Vérifié (pistolet, AK, sniper) dans l'éditeur, pas au casque (issue #156) |
+| [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
+| [205](#205--étiquette-de-nom-masquée-en-duel) | 2026-11-12 | En 1v1 on voit le nametag | Multijoueur | Étiquette au-dessus de l'avatar masquée dans les arènes du duel, gardée en coop ; vérifié en mode Play (arène), pas au casque (issue #159) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3748,3 +3758,173 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Fusion** (`--no-ff`) de `feature/154-retrait-cameras` dans `main` : retrait des caméras de surveillance (journal 191, issue #154) et lunette du sniper (journal 192 à 194, issue #153). Fichiers locaux de Rahim laissés hors du dépôt (réglages URP, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`).
 - **Poussés** : `main`, `feature/153-lunette-sniper`, `feature/154-retrait-cameras`, `hotfix/avant-lunette-cameras`, et le wiki (pages Lunette du sniper et Caméras et disjoncteur).
 - Vérifié : compilation sans erreur dans l'éditeur. Non vérifié : un APK construit depuis `main`, et la lunette au casque.
+
+---
+
+## 196 — Temps de build : retrait d'OpenGLES3
+
+**Date** : 2026-11-12 · **Domaine** : Build / Optimisation
+
+> Le build prend genre 30 / 40 minutes sur le casque, une idée de comment réduire ce temps ?
+
+**Résultat** (diagnostic et réglage faits par l'IA, Claude Code, sur le Mac de Rahim ; rien n'est commité)
+
+- **Diagnostic** (fait par l'IA d'après les journaux de build) : 20,5 min sur 25,6 passent dans la compilation des shaders URP Lit / Simple Lit, et OpenGLES3 représente environ 70 % du temps CPU de compilation des shaders. Le Quest 3 tourne en Vulkan : les variantes GLES3 ne servent pas.
+- **Changement** (avec l'accord de Rahim) : OpenGLES3 retiré des Graphics APIs Android, Vulkan seul. Fait dans l'éditeur Unity ouvert (`PlayerSettings.SetGraphicsAPIs` avec le profil « Meta Quest » actif, puis la même liste dans les Player Settings globaux pour rester cohérent). Seule la ligne `m_APIs` change dans `Assets/Settings/Build Profiles/Meta Quest.asset` et `ProjectSettings/ProjectSettings.asset` (`150000000b000000i` → `15000000i`).
+- **Non vérifié** : le gain réel de temps (aucun build lancé) et l'APK au casque.
+
+---
+
+## 197 — « Launch app » grisé dans MQDH : permission micro retirée
+
+**Date** : 2026-11-12 · **Domaine** : Build / Android
+
+> Même sur mon dueixème casque le build me fait une erreur en plus, patch moi ça, genre il peut être lancé en ligne de commandes mais depuis le fichier / Meta XR Developper Hub on ne peut pas le lancer
+
+**Résultat** (diagnostic, correction et build faits par l'IA, Claude Code, sur le Mac de Rahim ; rien n'est commité)
+
+- **Cause** (trouvée dans le code de Meta Quest Developer Hub et vérifiée avec adb) : MQDH affiche le triangle orange et grise « Launch app » dès qu'une permission d'exécution de l'appli n'est pas accordée. Ici, `android.permission.RECORD_AUDIO` (micro), jamais accordée. Le jeu n'utilise pas le micro : Unity ajoute cette permission parce que du code des SDK Meta (Voice SDK, DevAgent) fait référence au micro. L'appli elle-même démarrait bien (lancement par adb).
+- **Correction** : `Assets/Plugins/Android/AndroidManifest.xml` retire la permission avec `tools:node="remove"`. Le nouvel APK ne contient plus RECORD_AUDIO (vérifié avec aapt2).
+- **Test** : un build Android (profil Meta Quest, 22 s grâce au cache), installé sur le 2e casque. Plus aucune permission d'exécution manquante. L'appli démarre avec l'activité du launcher, au premier plan, à 72 i/s.
+- **Non vérifié par l'IA** : le clic sur « Launch app » dans MQDH et le lancement depuis la bibliothèque du casque (à confirmer par Rahim). Le 1er casque garde l'ancien APK tant qu'il n'est pas réinstallé.
+- À savoir : si l'outil de Meta « Update AndroidManifest.xml » (Project Setup Tool) régénère ce fichier, la ligne pourrait disparaître.
+
+---
+
+## 198 — Hotfix multijoueur : kills, mort, spectateur, téléportation
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Multijoueur / VR
+
+> Patch à faire : Hotfix
+>
+> En 1V1 / multijoueur
+> On a du mal à savoir quand on tue l'adversaire, il faudrait une animation de kill et une animation quand on meurt
+>
+> Si c'est le mode zombi multi, quand on meurt on spectate l'autre joueur en vie, et on se fait res à la fin de la vague
+>
+> La téléportation est sur le mauvais joystick, le joystick droit est pour la visée strictement et gauche pour le déplacement alors le tp devait être sur le gauche, d'ailleurs dans les map 1V1 il n'y a pas de navmesh pour le tp, met le en place
+
+(prompt de Rahim transmis par l'assistant du projet)
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #155, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Kill / mort** (`Net/NetKillFx.cs`, `NetPlayer`, `PlayerAvatar`) : chaque coup sur un joueur retient le tireur ; à la mort, un message à tous les casques. Tireur : croix blanche à chaque touche, croix rouge + son + « ÉLIMINÉ » + vibration au kill. Tout le monde : fil des éliminations (« Joueur 1 a éliminé Joueur 2 »). Victime : écran rouge, « TU ES MORT » et le nom du tueur ; en version PC la vue tombe sur le côté, au casque non (pas de mouvement de caméra imposé). Les autres voient le personnage s'effondrer en arrière (0,7 s) et lâcher son arme ; il se relève à la manche suivante ou à la réapparition.
+- **Spectateur en coop zombie** (`Net/NetSpectator.cs`, `NetGame`) : 2,5 s après sa mort, le joueur regarde un coéquipier vivant (caméra derrière son épaule, sans traverser les murs). Au casque : image sur un écran flottant qui suit le regard (la vue du joueur ne bouge pas) ; PC : plein écran. A / X ou clic / Espace : joueur suivant. Déplacement coupé pendant ce temps. À la fin de la vague : réapparition vie pleine au point d'arrivée du joueur. Fin de partie seulement si tous sont morts (inchangé). Solo et duel inchangés (pas de spectateur).
+- **Joysticks** (`GameSettings`, `AmberMenuControls`) : gauche = marche, ou téléportation si l'option est choisie ; droit = rotation seulement. Les actions « tourner » de la main gauche et « téléportation » de la main droite sont coupées, le rayon de téléportation droit éteint. `RuntimeActionBindings.json` ne joue aucun rôle (fichier vide des SDK Meta, non lu par le jeu).
+- **Arènes 1v1** (`Editor/ArenaNavMesh.cs`, menu SAE501 → Arènes 1v1 → NavMesh de téléportation, appelé aussi par les constructeurs) : NavMesh cuit dans `Arena1v1_Bunker` et `Arena1v1_Quai` (scènes modifiées sans reconstruction, éclairage non touché), données dans `Assets/Generated/`. La zone de téléportation existante (`NavTeleportArea`) les utilise.
+- **Vérifié** : compilation sans erreur ; en mode Play sur PC sans réseau : croix + « ÉLIMINÉ », écran de mort, chute du personnage, caméra et écran du spectateur (coéquipier simulé), joysticks (actions actives/coupées). NavMesh : points hors de l'arène, dessus des murs et des conteneurs refusés. Captures dans `~/SAE501_captures_155/`.
+- **Non vérifié** : une vraie partie hôte + client (réseau), et tout au casque. Limite : dans Alvéole 17, les passerelles et leurs escaliers sont trop raides pour l'agent du NavMesh, donc pas de téléportation là-haut.
+
+---
+
+## 199 — Nom du joueur : compte Meta ou casque
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> Pour le nom du joueur utilise le nom du compte du casque / du profil dans le casque
+
+(ajout de Rahim au hotfix 198, transmis par l'assistant du projet)
+
+**Résultat** (code écrit par l'IA, Claude Code ; même branche et même commit que 198)
+
+- `Net/PlayerName.cs` : au casque, nom du compte Meta par le Meta Platform SDK (`com.meta.xr.sdk.platform`, déjà dans le projet) : `Core.AsyncInitialize`, `Entitlements.IsUserEntitledToApplication`, `Users.GetLoggedInUser` (DisplayName, sinon OculusID). Repli : nom donné au casque (réglage Android `device_name`) s'il n'est pas juste « Quest 3 », sinon « Joueur N ». Version PC : « Joueur N ».
+- Synchronisé : `NetLobby.Entry.name` (lobby) et `NetPlayer.Name` (étiquette au-dessus de l'avatar, fil des éliminations, « Éliminé par … », spectateur).
+- **Important** : le projet n'a pas d'App ID Meta (pas de `OculusPlatformSettings`). Tant qu'il n'y en a pas, le nom du compte n'est pas demandé : c'est le nom du casque ou « Joueur N ». Pour l'activer : créer l'appli sur le tableau de bord développeur Meta, coller son App ID dans Meta → Platform → Edit Settings, et installer l'APK depuis une chaîne de diffusion (sinon la vérification d'achat échoue et on retombe sur le repli).
+- Vérifié : compilation (le code Android a été compilé à part dans l'éditeur). Non vérifié : au casque.
+
+---
+
+## 200 — Saut au casque : plus de vol en rafale
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> Y a un petit soucis en mode VR qu'on avait patch en mode PC, en gros on peut limite voler en spammant la touche de jump
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #156, même branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause** (lue dans le code de XRI) : le `JumpProvider` permet un saut si le `GravityProvider` dit « au sol » ou pendant la fenêtre de tolérance (0,25 s). La détection du sol (petite sphère sous les pieds) peut clignoter contre un mur, une caisse ou un objet : chaque clignotement remet le saut à zéro, et A en rafale enchaîne les sauts. La correction PC (`DesktopPlayer.TuneJump`, tolérance 0,05 s) ne touchait pas la version casque.
+- **Correction** : `Assets/Scripts/JumpGuard.cs`, ajouté par code au rig de chaque scène (aucune scène modifiée), casque et PC : pas de saut en l'air, tolérance 0,05 s, et un saut n'est permis qu'après 0,15 s au sol sans interruption (et jamais pendant un saut). Le blocage passe par le « bypass » de l'entrée du saut : le bouton est lu comme relâché, la gravité ne change pas.
+- **Testé** en mode Play sur PC (arène Alvéole 17) : Espace en rafale pendant 4 s → un seul saut (0,66 m, la hauteur normale de l'arène), retour au sol. **Non reproduit** dans l'éditeur sans la garde (le clignotement vient du casque), et **pas testé au casque**.
+
+---
+
+## 201 — « Impossible d'ouvrir le port 7777 »
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> Ma game vient de crash en me disant "Impossible d'ouvrir le port 7777" sur le casque
+
+> Reprend la patching
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #157, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Logs du casque** : non lus, aucun casque n'était branché au Mac.
+- **Permissions** : pas en cause. Le dernier APK (11 h 31) a bien `INTERNET` et `ACCESS_NETWORK_STATE` (vérifié avec aapt2).
+- **Cause** (trouvée dans le code) : ce message s'affiche quand `NetworkManager.StartHost` refuse de démarrer. Netcode refuse tant qu'une session « écoute » encore. Or, à la fin d'un duel 1v1, l'hôte rechargeait le menu par Netcode **sans fermer la session** : le lobby disparaît, mais la session reste ouverte en arrière-plan, et le HÉBERGER suivant échoue. Même chose en cliquant HÉBERGER juste après QUITTER (Netcode ne ferme qu'à l'image suivante).
+- **Correction** :
+  - `NetDuel.EndMatch` : l'hôte demande à tous de fermer la session (`NetSession.LeaveToMenu`), puis la ferme lui-même ; le menu est chargé une fois la session fermée.
+  - `NetSession` : `Busy` (session ouverte ou en fermeture) ; HÉBERGER / REJOINDRE refusent proprement dans ce cas ; plus de « connexion perdue » quand on part volontairement.
+  - `MainMenuMulti` : HÉBERGER / REJOINDRE pendant une session ouverte la ferment, attendent (3 s et 30 images au plus) et relancent tout seuls ; au retour au menu, une session restée ouverte sans lobby est fermée.
+- **Testé** en mode Play (menu, PC) : héberger, puis HÉBERGER pendant la session → elle se ferme et l'hôte repart avec son lobby ; fin de match → session fermée, retour au menu ; héberger de nouveau → OK. **Non testé** : au casque, et avec un vrai second joueur à la fin d'un duel. « Crash » : si l'appli s'est vraiment fermée, la cause n'est pas connue sans les logs du casque.
+
+---
+
+## 202 — Saut infini en visant au sniper
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> Et le bug de saut infini n'est toujours pas patch, en gros quand je tiens le sniper et que je commence à scope je peux sauter à l'infini jusqu'à ce que je rabaisse bien l'arme, pour patch ça, il faut limiter le temps entre chaque jump et bien faire en sorte que le joueur retombe après son jump
+
+(prompt de Rahim transmis par l'assistant du projet)
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #156 rouverte, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause** (lue dans le code de XRI) : le `GravityProvider` décide « au sol » en lançant une petite sphère depuis la **tête** jusqu'aux pieds, sur les calques Default, TransparentFX, Water et UI. En épaulant le sniper, le long canon est juste sous le visage : la sphère touche l'arme. Le joueur est alors « au sol » en l'air : chaque saut se recharge et la gravité ne s'applique plus, jusqu'à ce qu'il baisse l'arme. La correction 200 (délai au sol) ne suffisait pas, puisque le joueur était toujours « au sol ».
+- **Correction à la source** (`Assets/Scripts/HeldItemLayer.cs`) : tout objet pris en main (armes, marteau, planches…) passe sur le calque 29 tant qu'il est tenu ; ce calque n'est pas dans la détection du sol (caméras et lumières le voient). Ses collisions avec la capsule du joueur sont coupées (on ne peut plus marcher sur son arme). Calques et collisions sont rétablis quand on le lâche ou le range dans un holster. Branché sur les mains de chaque scène : vaut aussi pour les armes données en jeu.
+- **En plus, comme demandé** (`JumpGuard`) : 0,9 s au moins entre deux sauts, et pas de nouveau saut tant que le joueur n'est pas redescendu (à 0,15 m du point de départ du saut, ou posé depuis 0,6 s sur une caisse).
+- **Vérifié** dans l'éditeur (Alvéole 17) : un pistolet pris par la main droite passe sur le calque 29 et ne touche plus le joueur ; la même détection du sol que XRI, joueur en l'air avec une arme sous le visage : « au sol » sur Default (le bug), plus « au sol » sur le calque 29. **Non vérifié** : le saut lui-même dans l'éditeur (les touches simulées n'ont pas été prises en compte), et tout au casque.
+
+---
+
+## 203 — Pistolet en main : on ne peut plus avancer
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> bug : Si on se prend le pistolet et qu'on teste de se déplacer on ne peut pas avancer
+
+**Résultat** (diagnostic et correction faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #156, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause : régression du correctif 202** (`HeldItemLayer`, écrit par l'IA). Les armes, la ceinture et les planches ignorent déjà la capsule du joueur (`IgnorePlayer`). En lâchant un objet (rangé au holster, lâché, passé d'une main à l'autre), `HeldItemLayer` remettait la collision avec le joueur à « active » au lieu de la laisser coupée. Le pistolet rangé à la ceinture, collé au corps, bloquait alors la capsule : on ne pouvait plus avancer.
+- **Correction** : à la prise, seuls les collisionneurs qui touchaient encore le joueur sont coupés et retenus ; au lâcher, seuls ceux-là sont rétablis. Ce qu'`IgnorePlayer` a coupé reste coupé.
+- **Vérifié** dans l'éditeur (Alvéole 17) avec le pistolet, l'AK74 et le sniper : pris → calque 29, collision avec le joueur ignorée ; lâché → calque d'origine, collision **toujours ignorée**. **Non vérifié** : la marche elle-même dans l'éditeur (le clavier simulé n'a pas été pris en compte) et au casque.
+
+---
+
+## 204 — « Joueur 3 », « Joueur 4 » et apparitions du duel
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> En gros : le jeu detecte par moment plus de 2 joueur ducoup ça devient : Joueur 3 et joueur 4 etc etc, et ducoup le spawn en 1V1 est cassé, les deux joueurs spawnent l'un à côté de l'autre au lieu de spawn des deux côtés de la map
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #158, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause** (trouvée dans le code) : `NetLobby.Numbers` (numéro de chaque connexion) est une liste statique **jamais vidée** entre deux sessions. Un nouveau joueur prenait « le premier numéro absent de cette liste », où restaient les connexions des sessions précédentes (hôte refermé, nouvelle connexion, fin de duel…) : Joueur 3, Joueur 4 avec deux casques. Le duel plaçait « J1 d'un côté, tous les autres de l'autre » : J3 et J4 apparaissaient du même côté, côte à côte, et le score (qui attend 1 et 2) était faussé.
+- **Correction** :
+  - `NetLobby.Add` : premier numéro libre parmi les joueurs **présents dans le lobby** ; la liste est vidée à l'ouverture du lobby, au lancement de la partie (`StartGameRpc`) et à chaque HÉBERGER / REJOINDRE (`NetSession`).
+  - `NetLobby.Side` : côté du duel (1 ou 2) selon le rang du joueur parmi les deux joueurs, jamais le même. Utilisé pour l'apparition (`NetPlayer`, `NetDuel` à chaque manche), le pistolet de départ (`DuelLoadout`) et le score (`NetDuel`).
+- **Testé** en mode Play (menu, PC) : avec des numéros périmés d'une « ancienne session », HÉBERGER redonne Joueur 1 à l'hôte ; numéros 3 et 4 → côtés 1 et 2 ; numéros 1 et 2 → côtés 1 et 2. **Non testé** : une vraie partie à deux casques (connexion d'un second joueur, apparitions dans l'arène).
+
+---
+
+## 205 — Étiquette de nom masquée en duel
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> En 1V1 on voit le nametag (il faudrait qu'il ne soit pas visible)
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #159, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- `NetPlayer.BuildAvatar` : l'étiquette (nom au-dessus de la tête de l'avatar) est désactivée dans les arènes du duel (Alvéole 17, Quai 9). On ne repère plus l'adversaire par son nom à travers le décor. Elle reste en coop zombie.
+- Le nom reste dans le fil des éliminations et sur les écrans « ÉLIMINÉ » / « Éliminé par … » ; le tableau du duel affiche « J1 / J2 » (pas de nom).
+- Vérifié en mode Play (Alvéole 17) : l'étiquette d'un joueur distant simulé est créée mais invisible. Non vérifié au casque.
+

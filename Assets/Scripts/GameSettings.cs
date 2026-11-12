@@ -70,16 +70,20 @@ public static class GameSettings
 
         // ControllerInputActionManager (Starter Assets XRI) : propriétés smoothTurnEnabled et smoothMotionEnabled, lues par réflexion.
         // Les manettes sont éteintes tant qu'elles ne sont pas suivies (XRInputModalityManager) : on les règle aussi éteintes.
-        // smoothMotionEnabled de la manette gauche : vrai = le joystick fait marcher ; faux = vers l'avant il vise un point de
-        // téléportation (et sur les côtés il tourne). La manette droite est déjà ainsi (tourner + viser) : on n'y touche pas.
+        // [hotfix #155] Répartition des joysticks : GAUCHE = se déplacer (marche continue, ou téléportation si l'option est choisie),
+        // DROIT = tourner, et rien d'autre. smoothMotionEnabled de la manette gauche : vrai = le joystick fait marcher ; faux = vers
+        // l'avant il vise un point de téléportation. Les actions « tourner » de la main gauche et « viser la téléportation » de la
+        // main droite sont coupées et retirées du gestionnaire (sinon il les rallume à chaque changement d'état) : StickRoles.
         bool teleport = Teleport && !DesktopMode.On;                // version PC : jamais de téléportation
         foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (mb.GetType().Name != "ControllerInputActionManager") continue;
             var p = mb.GetType().GetProperty("smoothTurnEnabled", BindingFlags.Public | BindingFlags.Instance);
             if (p != null && p.CanWrite) p.SetValue(mb, SmoothTurn);
+            bool left = mb.name.Contains("Left");
+            StickRoles(mb, left);
             var m = mb.GetType().GetProperty("smoothMotionEnabled", BindingFlags.Public | BindingFlags.Instance);
-            if (m != null && m.CanWrite && mb.name.Contains("Left")) m.SetValue(mb, !teleport);
+            if (m != null && m.CanWrite && left) m.SetValue(mb, !teleport);
         }
         // fournisseur de téléportation du rig (éteint par SetupVRScene) et zone de téléportation sur le sol
         foreach (var tp in Object.FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -98,6 +102,27 @@ public static class GameSettings
         // version PC : champ de vision de la caméra du joueur
         if (DesktopMode.On && DesktopPlayer.Instance) DesktopPlayer.Instance.ApplySettings();
         ApplyFrameRate();
+    }
+
+    // [hotfix #155] main gauche : plus de rotation (champs m_Turn, m_SnapTurn) ; main droite : plus de téléportation (m_TeleportMode,
+    // m_TeleportModeCancel, et son rayon de téléportation éteint). L'action est désactivée puis la référence retirée du gestionnaire.
+    static void StickRoles(MonoBehaviour cim, bool left)
+    {
+        var names = left ? new[] { "m_Turn", "m_SnapTurn" } : new[] { "m_TeleportMode", "m_TeleportModeCancel" };
+        foreach (var n in names)
+        {
+            var f = cim.GetType().GetField(n, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (f == null) continue;
+            if (f.GetValue(cim) is UnityEngine.InputSystem.InputActionReference r && r && r.action != null) r.action.Disable();
+            f.SetValue(cim, null);
+        }
+        if (left) return;
+        var tf = cim.GetType().GetField("m_TeleportInteractor", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (tf != null && tf.GetValue(cim) is Component ti && ti)
+        {
+            ti.gameObject.SetActive(false);
+            tf.SetValue(cim, null);
+        }
     }
 
     /// <summary>Version PC : VSync ou limite d'images par seconde. Au casque, rien (la cadence est celle du runtime XR).</summary>

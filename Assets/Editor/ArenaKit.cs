@@ -357,6 +357,7 @@ public static class ArenaKit
         var rig = Arena1v1Builder.BuildXRRig(map.spawn1, Quaternion.Euler(0f, map.yaw1, 0f));
         Arena1v1Builder.AddMainSceneSystems(rig);
 
+        ArenaNavMesh.Bake(scene);                                   // [hotfix #155] NavMesh pour la téléportation
         string path = "Assets/Scenes/" + map.scene + ".unity";
         EditorSceneManager.SaveScene(scene, path);
         Arena1v1Builder.UpdateBuildSettings(path);

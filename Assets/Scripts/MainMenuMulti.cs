@@ -209,6 +209,7 @@ public partial class MainMenu
 
         // retour au menu après une partie en réseau ou une déconnexion : page multijoueur avec la raison
         if (NetSession.Active && !NetSession.InGame && NetLobby.Instance) ShowMulti(MultiPage.Lobby);
+        else if (NetSession.Active && !NetLobby.Instance) NetSession.Leave();     // [hotfix #157] session restée ouverte sans lobby : on la ferme
         else if (!string.IsNullOrEmpty(NetSession.LastError)) ShowMulti(MultiPage.Choice);
     }
 
@@ -233,6 +234,7 @@ public partial class MainMenu
 
     void Host()
     {
+        if (NetSession.Busy) { StartCoroutine(WhenFree(Host, multiInfo)); return; }      // [hotfix #157] session précédente encore ouverte
         if (!NetSession.Host()) { multiInfo.text = NetSession.LastError ?? "Échec"; return; }
         ShowMulti(MultiPage.Lobby);
     }
@@ -240,8 +242,21 @@ public partial class MainMenu
     void Join(int i)
     {
         if (i >= gameIps.Count || string.IsNullOrEmpty(gameIps[i])) return;
+        if (NetSession.Busy) { StartCoroutine(WhenFree(() => Join(i), joinInfo)); return; }
         if (!NetSession.Join(gameIps[i])) { joinInfo.text = NetSession.LastError ?? "Échec"; return; }
         ShowMulti(MultiPage.Lobby);
+    }
+
+    // [hotfix #157] une session réseau est encore ouverte ou se ferme (Netcode ferme à l'image suivante) : on la ferme, on attend
+    // qu'elle le soit (3 s au plus) puis on relance HÉBERGER / REJOINDRE, au lieu d'afficher « Impossible d'ouvrir le port 7777 »
+    System.Collections.IEnumerator WhenFree(System.Action retry, TextMesh info)
+    {
+        if (info) info.text = "Fermeture de la partie précédente…";
+        NetSession.Leave();
+        float until = Time.unscaledTime + 3f; int frames = 0;            // 3 s et 30 images au moins (une image peut être longue)
+        while (NetSession.Busy && (Time.unscaledTime < until || frames++ < 30)) yield return null;
+        if (NetSession.Busy) { if (info) info.text = "Le réseau est encore occupé, réessaie dans un instant"; yield break; }
+        retry();
     }
 
     void ToggleReady()
@@ -340,7 +355,7 @@ public partial class MainMenu
             bool isHost = e.clientId == Unity.Netcode.NetworkManager.ServerClientId;
             var col = NetPlayer.Colors[Mathf.Clamp(e.number, 1, NetPlayer.Colors.Length) - 1];
             string tag = isHost && me ? "HÔTE · VOUS" : isHost ? "HÔTE" : me ? "VOUS" : "";
-            SetRow(r, col, true, "JOUEUR " + e.number, tag, e.ready ? UiKit.Green : UiKit.Dim, UiKit.White);
+            SetRow(r, col, true, lobby.NameOf(e).ToUpperInvariant(), tag, e.ready ? UiKit.Green : UiKit.Dim, UiKit.White);     // [hotfix #155] nom du compte / du casque
             r.state.text = e.ready ? "✓ PRÊT" : "EN ATTENTE";
             r.skin.text = PlayerSkin.Name(e.skin);
         }

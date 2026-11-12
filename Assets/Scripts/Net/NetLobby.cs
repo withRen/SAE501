@@ -25,12 +25,14 @@ public class NetLobby : NetworkBehaviour
         public bool ready;
         public int skin;            // tenue choisie (PlayerSkin), affichée dans le lobby
         public FixedString32Bytes device;
+        public FixedString64Bytes name;     // [hotfix #155] nom du compte Meta / du casque (PlayerName), vide = « Joueur N »
 
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref clientId); s.SerializeValue(ref number); s.SerializeValue(ref ready); s.SerializeValue(ref skin); s.SerializeValue(ref device);
+            s.SerializeValue(ref name);
         }
-        public bool Equals(Entry o) => clientId == o.clientId && number == o.number && ready == o.ready && skin == o.skin && device.Equals(o.device);
+        public bool Equals(Entry o) => clientId == o.clientId && number == o.number && ready == o.ready && skin == o.skin && device.Equals(o.device) && name.Equals(o.name);
     }
 
     public NetworkList<Entry> Players;
@@ -119,6 +121,16 @@ public class NetLobby : NetworkBehaviour
     /// <summary>Numéro (1..4) attribué à un joueur dans le lobby, gardé pour la partie (avatar, scores).</summary>
     public static readonly System.Collections.Generic.Dictionary<ulong, int> Numbers = new System.Collections.Generic.Dictionary<ulong, int>();
 
+    /// <summary>[Hotfix #158] Côté du duel (1 ou 2) d'un joueur : son rang parmi les joueurs de la partie (plus petit numéro = côté 1).
+    /// Jamais le même côté pour deux joueurs, même si les numéros ne sont pas 1 et 2.</summary>
+    public static int Side(ulong clientId)
+    {
+        if (!Numbers.TryGetValue(clientId, out var mine)) return 1;
+        int rank = 0;
+        foreach (var kv in Numbers) if (kv.Key != clientId && (kv.Value < mine || kv.Value == mine && kv.Key < clientId)) rank++;
+        return rank == 0 ? 1 : 2;
+    }
+
     /// <summary>Test : un seul joueur suffit pour lancer (éditeur, mode Play sans second casque).</summary>
     public static bool SoloTest;
 
@@ -130,8 +142,10 @@ public class NetLobby : NetworkBehaviour
     {
         Instance = this;
         StartCoroutine(SendSkinWhenListed());
+        PlayerName.Changed += SendName;
         if (!IsServer) return;
         if (Array.IndexOf(Environment.GetCommandLineArgs(), "-netsolo") >= 0 || SoloTest) minPlayers = 1;     // test seul
+        Numbers.Clear();                    // [hotfix #158] les numéros d'une session précédente ne comptent plus
         foreach (var id in NetworkManager.ConnectedClientsIds) Add(id, "");
         NetworkManager.OnClientConnectedCallback += OnConnected;
         NetworkManager.OnClientDisconnectCallback += OnDisconnected;
@@ -140,6 +154,7 @@ public class NetLobby : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         if (Instance == this) Instance = null;
+        PlayerName.Changed -= SendName;
         if (NetworkManager)
         {
             NetworkManager.OnClientConnectedCallback -= OnConnected;
@@ -159,8 +174,11 @@ public class NetLobby : NetworkBehaviour
     void Add(ulong id, string device)
     {
         foreach (var e in Players) if (e.clientId == id) return;
+        // [hotfix #158] premier numéro libre parmi les joueurs VRAIMENT présents dans le lobby (avant : parmi une liste jamais
+        // vidée entre deux sessions, d'où « Joueur 3 », « Joueur 4 » avec seulement deux casques)
         int n = 1;
-        while (Numbers.ContainsValue(n)) n++;
+        bool Taken(int k) { foreach (var e in Players) if (e.number == k) return true; return false; }
+        while (Taken(n)) n++;
         Numbers[id] = n;
         Players.Add(new Entry { clientId = id, number = n, ready = false, device = device });
     }
@@ -201,10 +219,26 @@ public class NetLobby : NetworkBehaviour
         float until = Time.unscaledTime + 10f;
         while (Time.unscaledTime < until)
         {
-            foreach (var e in Players) if (e.clientId == NetworkManager.LocalClientId) { SetSkinRpc(PlayerSkin.Selected); yield break; }
+            foreach (var e in Players) if (e.clientId == NetworkManager.LocalClientId) { SetSkinRpc(PlayerSkin.Selected); SendName(); yield break; }
             yield return null;
         }
     }
+
+    // [hotfix #155] nom du joueur (compte Meta / casque), envoyé à l'arrivée et s'il arrive plus tard (réponse du compte Meta)
+    void SendName() => SetNameRpc(new FixedString64Bytes(PlayerName.Local));
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void SetNameRpc(FixedString64Bytes n, RpcParams p = default)
+    {
+        for (int i = 0; i < Players.Count; i++)
+        {
+            if (Players[i].clientId != p.Receive.SenderClientId) continue;
+            var e = Players[i]; e.name = n; Players[i] = e;
+        }
+    }
+
+    /// <summary>Nom d'un joueur du lobby (« Joueur N » s'il n'en a pas).</summary>
+    public string NameOf(Entry e) => PlayerName.Display(e.name.ToString(), e.number);
 
     public bool IsReady(ulong id) { foreach (var e in Players) if (e.clientId == id) return e.ready; return false; }
 
@@ -244,6 +278,7 @@ public class NetLobby : NetworkBehaviour
         NetSession.InGame = true;
         WaveManager.Endless = endless;
         WaveManager.ResumeLevel = 0;
+        Numbers.Clear();                    // [hotfix #158] seulement les joueurs de cette partie
         foreach (var e in Players) Numbers[e.clientId] = e.number;
     }
 }

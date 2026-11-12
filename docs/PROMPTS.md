@@ -229,6 +229,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [220](#220--cabane-du-jardin--feuillage-qui-traverse-la-fenêtre) | 2026-11-12 | Tenue de la clé, fenêtre qui « glitche », porte qui range l'arme sur PC (partie fenêtre) | Carte | Feuillage de deux arbres et de la haie retiré de l'intérieur de la cabane (FeuillageCabane, durable via RoomBuilder) ; captures avant / après ; pas testé au casque (issue #167) |
 | [221](#221--tenue-de-la-clé--sur-pc-la-porte-ne-range-plus-larme) | 2026-11-12 | Tenue de la clé, porte qui range l'arme sur PC (même prompt que 220) | Gameplay / Version PC | Point de prise sur l'anneau de la clé (VR et PC) ; porte tirée par la main libre, ou ouverte seule si les deux mains sont prises : l'arme et la clé restent en main ; testé sur PC, pas au casque (issue #168) |
 | [222](#222--branches-165-166-et-167-fusionnées-dans-main) | 2026-11-12 | Pousser proprement le tout | Git | Branches 165, 166, 167 poussées et fusionnées dans main (--no-ff), conflit du journal résolu en gardant tout, main et wiki poussés, issues #165 à #168 laissées ouvertes jusqu'au test au casque |
+| [223](#223--armes-de-mêlée--le-souffle-seulement-à-lattaque) | 2026-11-12 | Le son des armes de mêlée se joue quand on bouge, seulement à l'attaque | Audio / Armes | Vitesse du geste par rapport au rig (casque), souffle et coup seulement pendant la frappe (PC) ; marche + rotation : 0 souffle, 5 coups : 5 souffles ; pas testé au casque (issue #169) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4218,3 +4219,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Branches `feature/165-cle-generateur`, `feature/166-chute-fenetre-aleatoire` et `feature/167-feuillage-cabane` poussées, puis fusionnées une par une dans `main` (`--no-ff`). Seul conflit : `docs/PROMPTS.md` (entrées ajoutées en fin de fichier par chaque branche), résolu en gardant toutes les entrées, dans l'ordre 216 à 221 (index et journal). `MainScene` fusionnée sans conflit (composants de la clé + maillages du feuillage).
 - Vérifié après fusion : compilation sans erreur, la scène a la serrure et la clé, les zombies ont la chute aléatoire, les arbres et la haie utilisent les maillages sans la cabane.
 - `main` et le wiki poussés. Issues #165 à #168 commentées, laissées ouvertes jusqu'au test au casque. Fichiers locaux de Rahim non touchés (réglages URP, profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
+
+---
+
+## 223 — Armes de mêlée : le souffle seulement à l'attaque
+
+**Date** : 2026-11-12 · **Domaine** : Audio / Armes
+
+> Actuellement le son des objets de mélé se joue même quand on bouge simplement, il faut que ça se joue que quand on attaque
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #169, branche `feature/169-son-melee-attaque` partie de `main`, commit local non poussé)
+
+- **Cause** : `MeleeWeapon` mesurait la vitesse de l'extrémité de l'arme (hache, pied de biche) **dans le monde**. Marcher, se téléporter, la rotation par crans ou tourner la souris (PC) suffisaient à dépasser le seuil du souffle (2,8 m/s), voire celui du coup (1,6 m/s). Mesuré dans l'éditeur : jusqu'à 75 m/s « monde » en marchant et tournant, alors que le joueur ne frappe pas.
+- **Correction** :
+  - **Casque** : la vitesse est celle du geste **par rapport au rig** : la position de l'extrémité est recalculée depuis la manette qui tient l'arme, dans le repère du XR Origin (même hiérarchie, pas de décalage d'une image) : ni la marche, ni la rotation, ni la téléportation ne comptent, seul le geste du bras.
+  - **PC** : souffle et coup seulement pendant l'animation de frappe (clic gauche, `DesktopPlayer.Swinging`) : marcher ou tourner la souris ne fait plus siffler l'arme (un premier essai par rapport à la caméra laissait encore passer quelques souffles : l'arme est replacée dans la même image que la caméra).
+  - Les sons d'impact sur un zombie ne changent pas. Le marteau n'avait pas de souffle. Coop : les autres joueurs ne voient qu'une copie visuelle de l'arme (sans script), donc aucun son de leur côté au déplacement.
+- **Testé** en mode Play (PC, hache du bunker en main) : marche 3 m/s + rotation 200°/s pendant 5 s → **0 souffle** (avant : 1 à 2 souffles, et la vitesse « monde » montait à 75 m/s) ; 5 coups (clic gauche) → **5 souffles**. Pas d'erreur venant de ce changement (erreurs connues à l'arrêt du mode Play : XRI « routine is null », `JumpGuard`). **Non testé** : au casque (geste réel, marche continue, rotation par crans, téléportation).

@@ -201,6 +201,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [192](#192--lunette-du-sniper-duel-1v1) | 2026-11-12 | Lunette grossissante pour le sniper des duels 1v1 | Gameplay / Duel / Rendu | Composant SniperScope sur le prefab : au casque caméra ×5 sur la lunette, active seulement l'œil près de l'oculaire ; au PC zoom clic droit + lunette plein écran, sensibilité réduite ; captures et test en mode Play (issue #153) |
 | [193](#193--lunette--test-au-casque-sur-une-version-sans-lunette) | 2026-11-12 | Le scope ne fonctionne pas au casque | Diagnostic / Build | L'APK testé (09 h 21) venait de ~/SAE501 (branche feature/154-retrait-cameras), sans SniperScope : la lunette n'était pas dans le build. Code inchangé ; comment builder la bonne copie |
 | [194](#194--fusion-de-la-lunette-dans-la-branche-du-retrait-des-caméras) | 2026-11-12 | Fusionner la lunette dans la branche de ~/SAE501 pour builder l'APK | Git / Build | feature/153-lunette-sniper fusionnée dans feature/154-retrait-cameras (conflits DesktopHud, journal, état de session résolus en gardant les deux) ; compilation vérifiée |
+| [195](#195--fusion-dans-main-et-branche-de-secours) | 2026-11-12 | Pousser tout dans main proprement, avec un hotfix au cas où | Git | Branche de secours hotfix/avant-lunette-cameras sur l'ancien main (93ca474), feature/154-retrait-cameras (avec la lunette) fusionnée dans main, branches et wiki poussés |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3732,3 +3733,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `feature/153-lunette-sniper` fusionnée (`--no-ff`) dans `feature/154-retrait-cameras`, la branche ouverte dans `~/SAE501`. Fichiers locaux de Rahim non touchés.
 - **Conflits résolus en gardant les deux changements** : `DesktopHud.cs` (lunette plein écran ajoutée, l'ancienne vue plein écran des caméras reste retirée), `docs/PROMPTS.md` (entrées 191, 192, 193 et index dans l'ordre), `production/session-state/active.md`.
 - Vérifié : compilation sans erreur, `SniperScope` présent sur `Resources/Weapons/Sniper.prefab`, shader `ScopeLens` dans un dossier `Resources` (inclus dans le build). Non vérifié : l'APK et la lunette au casque.
+
+---
+
+## 195 — Fusion dans main et branche de secours
+
+**Date** : 2026-11-12 · **Domaine** : Git
+
+> fait un push de tout ça dans le main proprement avec une hotfix au cas-où aussi
+
+**Résultat** (fusion et push faits par l'IA, Claude Code, sur le Mac de Rahim)
+
+- **Branche de secours** `hotfix/avant-lunette-cameras` : pointe sur l'ancien `main` (`93ca474`, état du 12 novembre avant le retrait des caméras et la lunette), poussée sur GitHub. Point de retour si la nouvelle version pose problème au casque.
+- **Fusion** (`--no-ff`) de `feature/154-retrait-cameras` dans `main` : retrait des caméras de surveillance (journal 191, issue #154) et lunette du sniper (journal 192 à 194, issue #153). Fichiers locaux de Rahim laissés hors du dépôt (réglages URP, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`).
+- **Poussés** : `main`, `feature/153-lunette-sniper`, `feature/154-retrait-cameras`, `hotfix/avant-lunette-cameras`, et le wiki (pages Lunette du sniper et Caméras et disjoncteur).
+- Vérifié : compilation sans erreur dans l'éditeur. Non vérifié : un APK construit depuis `main`, et la lunette au casque.

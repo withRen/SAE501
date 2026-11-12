@@ -18,7 +18,7 @@
 | Planche qui pend avec un seul clou | ✅ | Bonus par rapport au GDD |
 | Pistolet 12 balles, raycast, chargeur de 12 | 🟡 | Rechargement simplifié, pas d'éjection ni de culasse, pas de dégâts tête/corps |
 | Ceinture VR avec holsters | ✅ | |
-| Pupitre + 3 écrans caméras (Render Textures) | 🟡 | GDD : **2 couloirs**, boutons rouges, écran de score |
+| ~~Pupitre + 3 écrans caméras (Render Textures)~~ | ❌ | Retiré le 12/11/2026 : les caméras ne servaient pas au jeu (journal 191) |
 | Lampe torche + piles | 🟡 | **Hors GDD** : à garder ou retirer (voir §8) |
 | Zombies, vagues, score, santé, pièges | ⬜ | Rien |
 | Sons | ⬜ | Seulement des sons générés par code (provisoires) |
@@ -36,7 +36,7 @@
 | O4 | Barricades et marteau | DOIT | 4 ouvertures × 3 planches ; planche arrachable par un zombie ; réparation avec 3 vrais coups |
 | O5 | Zombies (IA) | DOIT | 4 états (Spawn, Marche, Casse, Attaque) avec NavMesh |
 | O6 | Vagues et score | DOIT (base) / DEVRAIT (5 vagues, points) | Une partie jouable de la vague 1 à la vague 5 avec points |
-| O7 | Caméras et pupitre | DEVRAIT | 2 couloirs filmés, score sur écran digital |
+| O7 | ~~Caméras et pupitre~~ | Retiré | Abandonné le 12/11/2026 (journal 191) |
 | O8 | Santé et interface diégétique | DEVRAIT | Vignettage rouge qui augmente avec les dégâts, game over |
 | O9 | Audio | DEVRAIT | Sons 3D : pas, grognements, bois qui se fend, armes |
 | O10 | Pièges et bonus | POURRAIT | Boutons rouges + piège électrique, boîte magique |
@@ -112,7 +112,9 @@
 | 6.4 | Points | +10 par zombie tué ; bonus de fin de vague | 2 h | 6.2 | ⬜ DEVRAIT |
 | 6.5 | Écran de fin | Victoire après la vague 5 ; défaite à la mort ; rejouer | 3 h | 6.2, 8.1 | ⬜ |
 
-### O7 — Caméras et pupitre (DEVRAIT)
+### O7 — Caméras et pupitre (DEVRAIT) — retiré
+
+> 12 novembre 2026 : caméras, écrans du pupitre, vue plein écran et disjoncteur retirés du jeu (« au final ça sert à rien », journal 191). Le tableau ci-dessous est gardé pour l'historique.
 
 | ID | Tâche | Sous-tâches | Estim. | Dépend de | Statut |
 |---|---|---|---|---|---|

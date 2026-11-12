@@ -14,7 +14,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 //   - Pendant le tutoriel, le WaveManager est désactivé : pas de compte à rebours, pas de zombies.
 //     À la fin, il est réactivé et la partie commence normalement (compte à rebours de 15 s).
 //   - Un panneau suit doucement le regard ; une flèche montre l'objet à utiliser.
-//   - Étapes : planche → poser → marteau → clouer → 2 fenêtres → pistolet → cible → recharger → disjoncteur → caméras.
+//   - Étapes : planche → poser → marteau → clouer → 2 fenêtres → pistolet → cible → recharger.
 //   - Passer tout le tutoriel : la croix en haut à droite du panneau (visée avec une main vide + gâchette, TutorialSkipCross)
 //     ou maintenir A + X pendant 2 s. (Éditeur : N = étape suivante, K = tout passer.)
 //   - Version PC (DesktopMode) : mêmes étapes, textes avec les touches du clavier et de la souris ; croix = réticule + clic, K = tout passer.
@@ -115,11 +115,9 @@ public class Tutorial : MonoBehaviour
         var pistol = FindFirstObjectByType<Pistol>();
         var pistolGrab = pistol ? pistol.GetComponent<XRGrabInteractable>() : null;
         var hammer = FindFirstObjectByType<Hammer>();
-        var station = FindFirstObjectByType<MonitorStation>();
         var sw = FindOpening("SW");
         var se = FindOpening("SE");
-        var breaker = FindFirstObjectByType<Breaker>();
-        const int total = 10;
+        const int total = 8;
 
         yield return Info("BIENVENUE DANS LE BUNKER",
             "Les zombies vont attaquer par les fenêtres.\nApprenons d'abord à les barricader\net à nous défendre.", 5f);
@@ -177,27 +175,6 @@ public class Tutorial : MonoBehaviour
                 () => pistol == null || pistol.ammo > ammoBefore,
                 () => MagazinePosition(), "CHARGEUR");
             RestoreMagazine();
-        }
-
-        // les écrans restent noirs tant que le disjoncteur est coupé (Breaker)
-        if (breaker && !Breaker.On)
-            yield return Step(9, total, DesktopMode.Text("Allumez les caméras :\nattrapez le levier du disjoncteur (grip)\net abaissez-le jusqu'en bas.",
-                "Allumez les caméras : visez le levier\ndu disjoncteur et MAINTENEZ E\njusqu'à ce qu'il soit en bas."),
-                () => Breaker.On, () => breaker.transform.position + Vector3.up * 0.3f, "DISJONCTEUR");
-
-        if (station)
-        {
-            yield return Step(10, total, DesktopMode.Text("Les caméras montrent l'extérieur.\nApprochez la main d'un écran\net appuyez sur le grip.",
-                "Les caméras montrent l'extérieur.\nVisez un écran et appuyez sur E."),
-                () => station.overlay && station.overlay.gameObject.activeSelf,
-                () => NearestScreen(station), "CAMÉRAS");
-            if (!skipAll && station.overlay && station.overlay.gameObject.activeSelf)
-            {
-                if (panel) panel.gameObject.SetActive(true);
-                SetPanel("CAMÉRAS", DesktopMode.Text("Appuyez à nouveau sur le grip\npour fermer l'image.", "Appuyez à nouveau sur E\npour fermer l'image."), false);
-                float t0 = Time.time;
-                while (station.overlay.gameObject.activeSelf && Time.time - t0 < 8f && !skipAll) yield return null;
-            }
         }
 
         skipAll = false;
@@ -409,17 +386,6 @@ public class Tutorial : MonoBehaviour
         if (best) return best.transform.position + Vector3.up * 0.3f;
         var any = a ? a : b;
         return any ? any.transform.position + Vector3.up * 0.5f : (Vector3?)null;
-    }
-
-    Vector3? NearestScreen(MonitorStation st)
-    {
-        MonitorScreen best = null; float bd = float.MaxValue;
-        foreach (var s in FindObjectsByType<MonitorScreen>(FindObjectsSortMode.None))
-        {
-            float d = (s.transform.position - head.position).sqrMagnitude;
-            if (d < bd) { bd = d; best = s; }
-        }
-        return (best ? best.transform.position : st.transform.position) + Vector3.up * 0.4f;
     }
 
     // ───────────────────────── chargeur de rechange ─────────────────────────

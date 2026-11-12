@@ -8,7 +8,7 @@ Projet VR (Unity + XR Interaction Toolkit, Meta Quest 3). Ce document décrit le
 2. [Équipement : ceinture, holsters, pistolet, chargeurs](#2-équipement)
 3. [Barricade : marteau, clous, planches](#3-barricade)
 4. [Lampe torche et batteries](#4-lampe-torche-et-batteries)
-5. [Ambiance et surveillance](#5-ambiance-et-surveillance)
+5. [Ambiance](#5-ambiance)
 6. [Utilitaires](#6-utilitaires)
 7. [Reste à brancher](#7-reste-à-brancher)
 
@@ -161,14 +161,13 @@ La lampe a un trigger `BatteryPort` à l'arrière : une pile qui y entre **recha
 
 ---
 
-## 5. Ambiance et surveillance
+## 5. Ambiance
 
 | Script | Rôle |
 |---|---|
 | `FlickerLamp.cs` | Lampe défaillante façon horreur : léger souffle continu (bruit de Perlin) et, rarement, une **baisse de tension douce** (pas de coupure franche). Fait aussi varier l'émission de l'ampoule |
-| `MonitorStation.cs` | Table de surveillance : afficher le flux d'une caméra en plein écran devant les yeux |
-| `MonitorScreen.cs` | Un écran de la table. Quand on le sélectionne, il affiche son flux via `station.Show(index)` |
-| `MonitorOverlayClose.cs` | Fermer l'overlay des flux |
+
+Les caméras de surveillance (`MonitorStation`, `MonitorScreen`, `MonitorOverlayClose`, `CctvRoundRobin`, `CctvOverlay`, `Breaker`) ont été retirées le 12 novembre 2026 (journal 191).
 
 ---
 

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Panneau du tutoriel posé DANS la carte (Canvas uGUI en espace monde) : il apparaît à côté de l'objet de l'étape
-// (planches, fenêtre, disjoncteur, écrans, cible…), tourné vers le joueur, relié à l'objet par un trait.
+// (planches, fenêtre, cible…), tourné vers le joueur, relié à l'objet par un trait.
 // Pour les objets de la ceinture (qui bougent avec le joueur), il est posé devant lui au début de l'étape.
 public class TutorialBoard : MonoBehaviour
 {

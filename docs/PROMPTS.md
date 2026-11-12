@@ -197,6 +197,11 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [188](#188--sons-des-zombies--impact-de-balle-et-pas) | 2026-11-11 | Rendre réalistes le son de balle sur un zombie et les pas des zombies | Audio | Sons CC0 Freesound (6 impacts, pas traînants et lourds) ; pas calés sur les appuis de pied des animations au lieu d'un minuteur, 4 pas max à la fois ; en attente d'écoute |
 | [189](#189--mur-manquant-du-couloir-près-de-la-salle-du-générateur) | 2026-11-11 | Remettre le mur manquant à gauche de la salle du générateur | Carte / Outils éditeur | Face du mur ouest du couloir retirée à tort par MursSuperposes (test sur les seuls sommets) ; test refait sur toute la surface, face remise sans reconstruire la scène, rustine MurCouloir retirée, éclairage recuit |
 | [190](#190--fusion-de-tout-le-travail-dans-main) | 2026-11-12 | Pousser proprement tout le travail dans main | Git / Documentation | Travail non commité rangé en 4 commits, feature/multijoueur (avec develop) fusionnée dans main, fichiers locaux laissés hors du dépôt, page wiki Historique des versions |
+| [191](#191--retrait-des-caméras-de-surveillance) | 2026-11-12 | Supprimer les caméras des couloirs et les écrans | Gameplay / Carte | Caméras, écrans du pupitre, vue plein écran et disjoncteur retirés (scène, générateur de scène, scripts, tutoriel, version PC, docs), éclairage recuit, issue #154 |
+| [192](#192--lunette-du-sniper-duel-1v1) | 2026-11-12 | Lunette grossissante pour le sniper des duels 1v1 | Gameplay / Duel / Rendu | Composant SniperScope sur le prefab : au casque caméra ×5 sur la lunette, active seulement l'œil près de l'oculaire ; au PC zoom clic droit + lunette plein écran, sensibilité réduite ; captures et test en mode Play (issue #153) |
+| [193](#193--lunette--test-au-casque-sur-une-version-sans-lunette) | 2026-11-12 | Le scope ne fonctionne pas au casque | Diagnostic / Build | L'APK testé (09 h 21) venait de ~/SAE501 (branche feature/154-retrait-cameras), sans SniperScope : la lunette n'était pas dans le build. Code inchangé ; comment builder la bonne copie |
+| [194](#194--fusion-de-la-lunette-dans-la-branche-du-retrait-des-caméras) | 2026-11-12 | Fusionner la lunette dans la branche de ~/SAE501 pour builder l'APK | Git / Build | feature/153-lunette-sniper fusionnée dans feature/154-retrait-cameras (conflits DesktopHud, journal, état de session résolus en gardant les deux) ; compilation vérifiée |
+| [195](#195--fusion-dans-main-et-branche-de-secours) | 2026-11-12 | Pousser tout dans main proprement, avec un hotfix au cas où | Git | Branche de secours hotfix/avant-lunette-cameras sur l'ancien main (93ca474), feature/154-retrait-cameras (avec la lunette) fusionnée dans main, branches et wiki poussés |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3658,3 +3663,88 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Fusion** : un commit de fusion `--no-ff` de `feature/147-multijoueur` (qui contient déjà `develop`) dans `main`, dont le message liste tout ce qui entre. `main` passe de la version du 22 octobre à l'état complet du projet au 12 novembre 2026. Page wiki [Historique des versions](https://github.com/withRen/SAE501/wiki/Historique-des-versions).
 - **Laissés hors du dépôt** (fichiers locaux de Rahim ou résidus d'import) : réglages URP (`Quest_RPAsset.asset`, `UniversalRenderPipelineGlobalSettings.asset`), profil de build Meta Quest (identifiant du casque branché), `DevAgentSettings.asset` (adresse IP), suppression de `RuntimeActionBindings.json`, `Assets/Protection_suite/`, `scripts/`, `rules.md`, `ProjectSettings/VirtualProjectsConfig.json` (Multiplayer Play Mode), `Assets/Resources/BillingMode.json` (résidu du paquet Purchasing), `vsync_fps_capture.png`, et du pack VCR01 la variante Olive et la scène de démo (seules les variantes Black et Sand servent au sniper).
 - **Vérifié** : le projet compile dans l'éditeur ouvert (aucune erreur), `MainScene` et ses lightmaps ont été enregistrés ensemble après la dernière cuisson. Non vérifié : un build Quest ou PC complet depuis `main`, ni au casque.
+
+---
+
+## 191 — Retrait des caméras de surveillance
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Carte
+
+> il faut ducoup supprimer le concept des caméras dans les couloirs et au niveau des écrans, au final ça sert à rien
+
+**Résultat** (code et modifications de la scène faits par l'IA, Claude Code, branche `feature/154-retrait-cameras`, issue #154, commit local non poussé en attente de l'accord de Rahim)
+
+- **Dans `MainScene`, sans la reconstruire** (script temporaire lancé en ligne de commande, puis supprimé) : 38 objets retirés : les 5 caméras (`CCTV_Camera_01` à `05`, avec l'incrustation « ● REC »), les 4 boîtiers de caméra et leurs supports dans les couloirs, la cuisine et le stockage (`CCTV_CameraMesh_*`, `CCTV_Mount_*`), leurs 4 lumières infrarouges et la lueur des écrans (`Light_CCTV_IR_*`, `Light_Bunker_CCTV_Glow`), les 4 moniteurs du pupitre avec cadres, dalles et voyants (`Bunker_CCTV_Monitor_*`, `Bezel_*`, `CCTV_Screen_*`, `TallyLED_*`), le 5e écran et la vue plein écran (`MonitorStation`, `MonitorOverlay`), le levier et le voyant du disjoncteur (`Levier_Disjoncteur`, `Voyant`) et le composant `Breaker` du boîtier électrique. Le boîtier électrique, le bureau, le tabouret, l'horloge, l'étagère, l'enregistreur à LEDs, le clavier et la radio restent comme décor.
+- **Générateur de scène** : `RoomBuilder` ne crée plus les caméras, les écrans ni le disjoncteur (`BuildCameras`, `BuildMonitors`, `BuildExtraScreen`, `BuildBreaker` retirés) et ignore les lumières `CCTV` de la carte ; les objets du FBX sont ajoutés à `objets_retires.txt` pour ne pas revenir au prochain *Build VR Scene*.
+- **Supprimés** : scripts `CctvOverlay`, `CctvRoundRobin`, `MonitorStation`, `MonitorScreen`, `MonitorOverlayClose`, `Breaker` ; shader `SAE501/CCTV` ; `Assets/Generated/Feed_0..4.renderTexture` et `Screen_0..4.mat` ; modèle `Poste_Moniteur.fbx` (et `PosteSurveillance.Moniteur`).
+- **Tutoriel** : 8 étapes au lieu de 10 (« Allumez les caméras » et « Les caméras montrent l'extérieur » retirées). **Version PC** : plus de « Regarder la caméra » ni de « Fermer l'écran », le réticule n'est plus caché par la vue plein écran.
+- **Éclairage recuit** (réglages de `LightBaker`) : la lueur bleue des écrans ne tombe plus sur le bureau.
+- **Docs** : README, `BARRICADE_Scripts.md`, GDD (`game-concept.md`, `systems-index.md`), `docs/PLANNING.md` (O7 marqué retiré), `docs/MAP.md`, `docs/ASSETS.md` ; wiki : page `Cameras-et-disjoncteur` remplacée par une note de retrait, pages liées mises à jour.
+- **Vérifié** en ligne de commande (éditeur en mode batch) : compilation sans erreur, aucun « Missing script » dans les 4 scènes et les prefabs, captures du pupitre et du boîtier avant / après / après cuisson.
+- **Non vérifié** : en mode Play, le tutoriel complet, et rien au casque. L'étagère du pupitre reste vide (choix à confirmer par Rahim : la garder ou la retirer).
+
+---
+
+## 192 — Lunette du sniper (duel 1v1)
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Duel / Rendu
+
+> Pour les 1v1 au sniper il faut créer un système de lunette de scope (genre quand le joueur approche le scope proche de l'oeil ça fait un effet de scope comme un vrai sniper)
+
+**Résultat** (code, shader, outil de captures et mesures faits par l'IA, Claude Code, sur le Mac de Rahim ; branche `feature/153-lunette-sniper`, issue #153, commit local non poussé en attente de l'accord de Rahim. Le n° 191 est le retrait des caméras, sur la branche `feature/154-retrait-cameras`)
+
+- **Nouveau composant `SniperScope`** (`Assets/Scripts/SniperScope.cs`), posé sur `Assets/Resources/Weapons/Sniper.prefab` (l'AWM du duel) par le nouveau menu **SAE501 → Arène 1v1 → Ajouter la lunette au sniper** (sans reconstruire les armes ; `DuelWeaponBuilder` l'ajoute aussi à la prochaine construction). Aucune scène modifiée.
+- **Au casque** : une caméra fixée devant l'objectif de la lunette (même direction que le tir, `muzzle.forward`) rend dans une RenderTexture 512 × 512 affichée sur un disque posé sur l'oculaire. Nouveau shader `SAE501/ScopeLens` (`Assets/Resources/Weapons/ScopeLens.shader`) : réticule duplex mil-dot, point rouge éclairé, vignettage du tube, et ombre de la « pupille de sortie » (si l'œil n'est pas dans l'axe ou à la bonne distance, un bord noir mange l'image, comme dans une vraie lunette). Grossissement × 5 (champ de la caméra 6,3°).
+- **Activation** : la caméra ne tourne que si l'œil le plus proche de l'axe est à moins de 14 cm de l'oculaire, derrière lui, et que la tête regarde à moins de 30° de l'axe (un peu de marge pour l'éteindre : pas de clignotement). Sinon elle est éteinte et la lentille montre un verre sombre avec un reflet : aucun rendu en plus hors visée. Pas de post-traitement, pas d'ombres, pas d'anticrénelage dans la lunette (Quest 3).
+- **Joueur local seulement** : chaque casque a son propre sniper (`DuelLoadout`) ; l'avatar de l'adversaire n'en montre qu'une copie visuelle, qui ignore maintenant la lentille (`NetPlayer.VisualCopy`) : aucune caméra de lunette chez lui.
+- **Version PC** : clic droit avec le sniper = l'arme s'épaule puis la lunette passe en plein écran (`DesktopHud` : cercle, bords noirs, même réticule), champ de vision divisé par 5 (70° → 15,9°), sensibilité de la souris × 0,3, arme et mains cachées, petit saut de la vue au tir. Le zoom se coupe pendant le rechargement. Aide F1 mise à jour.
+- **Réglages** (inspecteur du prefab) : `magnification`, `resolution`, `activationDistance`, `activationAngle`, `eyeRelief`, `eyeTolerance`, `shadows`, `pcSensitivity` ; géométrie de la lunette (`eyepiece`, `objective`, `lensRadius`) mesurée sur la pièce « Scope » du modèle AWM.
+- **Outil** `Assets/Editor/ScopeCaptures.cs`, menu **SAE501 → Arène 1v1 → Captures lunette** : captures dans `docs/images/lunette/` (vue de l'œil droit au casque, gros plan, œil décalé, lunette au repos, vue PC normale et zoomée) dans Alvéole 17 et Quai 9.
+- **Vérifié** dans Unity en ligne de commande (copie de travail séparée, l'éditeur ouvert de Rahim n'a pas été utilisé) : compilation sans erreur ; captures (silhouette à 13 m environ 4,5 à 5 fois plus grande dans la lunette qu'à l'œil nu) ; **test en mode Play temporaire (non commité)** : version PC, sniper en main, visée forcée (le curseur ne peut pas être capturé en mode batch) → champ 60° → 13,2°, arme cachée, sensibilité × 0,30, tout revient au relâchement ; version casque sans casque, tête placée à la main → lunette éteinte à 30 cm (caméra pas même créée), allumée à 7,5 cm, éteinte la tête tournée de 60°.
+- **Non vérifié** : rien au casque (confort, lisibilité du réticule, 72 fps avec la caméra de lunette sur Quest 3, réglage des 14 cm et de l'ombre de pupille avec un vrai œil), ni en partie réseau à deux joueurs, ni le vrai clic droit à la souris (simulé). L'image de la lunette est la même pour les deux yeux (on vise d'un œil).
+
+---
+
+## 193 — Lunette : test au casque sur une version sans lunette
+
+**Date** : 2026-11-12 · **Domaine** : Diagnostic / Build
+
+> J'ai beau le rapprocher, le scope ne fonctionne pas
+
+**Résultat** (diagnostic fait par l'IA, Claude Code, sur le Mac de Rahim ; aucun code changé)
+
+- **Cause** : l'APK installé sur le casque (`~/SAE501/The Last Escapor.apk`, construit à 09 h 21) vient du dossier `~/SAE501`, sur la branche `feature/154-retrait-cameras`, qui **ne contient pas la lunette** : la lunette est sur la branche `feature/153-lunette-sniper`, dans la copie de travail séparée `~/SAE501-lunette`. Vérifié dans l'APK lui-même : aucune classe `SniperScope` ni shader `ScopeLens` dans ses métadonnées (alors que `NetDuel` et `PlayerHitbox` y sont), et `Sniper.prefab` de `~/SAE501` n'a pas le composant. Le « verre sombre » vu au casque est donc la texture d'origine de l'oculaire du modèle AWM, pas la lentille de `SniperScope`.
+- **Pour tester la lunette** : construire l'APK depuis `~/SAE501-lunette` (l'ouvrir comme projet à part dans Unity Hub ; son dossier `Library` est déjà prêt), ou fusionner `feature/153-lunette-sniper` dans la branche de `~/SAE501` (conflits à résoudre dans `DesktopHud.cs`, `docs/PROMPTS.md` et l'état de session, à cause du retrait des caméras).
+- Le code de la lunette n'a pas été modifié : rien ne montre pour l'instant que ses seuils (14 cm, 30°) posent problème au casque. Ils restent réglables dans l'inspecteur du prefab (`activationDistance`, `activationAngle`).
+- **Non vérifié** : le petit texte jaune vu sur la lentille (la capture n'a pas été vue par l'IA) ; la lunette elle-même au casque.
+
+---
+
+## 194 — Fusion de la lunette dans la branche du retrait des caméras
+
+**Date** : 2026-11-12 · **Domaine** : Git / Build
+
+> Option B : fusionner feature/153-lunette-sniper dans la branche de ~/SAE501, pour rebuilder l'APK comme d'habitude depuis ~/SAE501
+
+(choix de Rahim transmis par l'assistant du projet, après l'entrée 193)
+
+**Résultat** (fusion et résolution des conflits faites par l'IA, Claude Code, sur le Mac de Rahim ; rien n'est poussé)
+
+- `feature/153-lunette-sniper` fusionnée (`--no-ff`) dans `feature/154-retrait-cameras`, la branche ouverte dans `~/SAE501`. Fichiers locaux de Rahim non touchés.
+- **Conflits résolus en gardant les deux changements** : `DesktopHud.cs` (lunette plein écran ajoutée, l'ancienne vue plein écran des caméras reste retirée), `docs/PROMPTS.md` (entrées 191, 192, 193 et index dans l'ordre), `production/session-state/active.md`.
+- Vérifié : compilation sans erreur, `SniperScope` présent sur `Resources/Weapons/Sniper.prefab`, shader `ScopeLens` dans un dossier `Resources` (inclus dans le build). Non vérifié : l'APK et la lunette au casque.
+
+---
+
+## 195 — Fusion dans main et branche de secours
+
+**Date** : 2026-11-12 · **Domaine** : Git
+
+> fait un push de tout ça dans le main proprement avec une hotfix au cas-où aussi
+
+**Résultat** (fusion et push faits par l'IA, Claude Code, sur le Mac de Rahim)
+
+- **Branche de secours** `hotfix/avant-lunette-cameras` : pointe sur l'ancien `main` (`93ca474`, état du 12 novembre avant le retrait des caméras et la lunette), poussée sur GitHub. Point de retour si la nouvelle version pose problème au casque.
+- **Fusion** (`--no-ff`) de `feature/154-retrait-cameras` dans `main` : retrait des caméras de surveillance (journal 191, issue #154) et lunette du sniper (journal 192 à 194, issue #153). Fichiers locaux de Rahim laissés hors du dépôt (réglages URP, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`).
+- **Poussés** : `main`, `feature/153-lunette-sniper`, `feature/154-retrait-cameras`, `hotfix/avant-lunette-cameras`, et le wiki (pages Lunette du sniper et Caméras et disjoncteur).
+- Vérifié : compilation sans erreur dans l'éditeur. Non vérifié : un APK construit depuis `main`, et la lunette au casque.

@@ -68,6 +68,8 @@ public class DesktopPlayer : MonoBehaviour
     BarricadeSlot aimedSlot;                // planche en main : emplacement visé
     bool aiming;                            // clic droit (pistolet)
     float aimBlend;
+    float scopeBlend;                       // sniper : zoom de la lunette (0..1), après la mise en joue
+    SniperScope hiddenScope;                // sniper dont l'arme est cachée pendant le zoom
     bool inspecting;
 
     // actions en cours
@@ -95,6 +97,14 @@ public class DesktopPlayer : MonoBehaviour
     public Pistol HeldPistol => rightH != null ? rightH.Item<Pistol>() : null;
     public Flashlight HeldLamp { get { var l = leftH?.Item<Flashlight>(); return l ? l : rightH?.Item<Flashlight>(); } }
     public bool Aiming => aiming && HeldPistol;
+    /// <summary>Lunette du sniper tenu (null pour les autres armes).</summary>
+    public SniperScope HeldScope { get { var p = HeldPistol; return p ? p.GetComponent<SniperScope>() : null; } }
+    /// <summary>Zoom de la lunette du sniper (0 = sans, 1 = plein écran) : DesktopHud dessine la lunette.</summary>
+    public float ScopeBlend => scopeBlend;
+    /// <summary>Facteur de sensibilité de la souris (lunette du sniper : réduit pendant le zoom).</summary>
+    public float LookScale { get { var s = HeldScope; return s ? Mathf.Lerp(1f, s.pcSensitivity, scopeBlend) : 1f; } }
+    /// <summary>Tests en mode Play sans souris : visée forcée, comme le clic droit tenu.</summary>
+    public bool ForceAim { get; set; }
     public bool Inspecting => inspecting;
 
     void Awake()
@@ -256,6 +266,7 @@ public class DesktopPlayer : MonoBehaviour
             inspecting = kb.vKey.isPressed;
         }
         else { aiming = false; inspecting = false; }
+        if (ForceAim && !paused && !GameOver) aiming = true;
         if (!kb.eKey.isPressed || !control) { if (lever) ReleaseLever(); }
 
         if (rightH.activating && Time.frameCount > rightH.useFrame + 1) StopUse(rightH);
@@ -267,7 +278,20 @@ public class DesktopPlayer : MonoBehaviour
         UpdatePocket();
         // champ de vision : un peu resserré quand on vise au pistolet (clic droit)
         aimBlend = Mathf.MoveTowards(aimBlend, Aiming ? 1f : 0f, Time.deltaTime * 6f);
-        cam.fieldOfView = Mathf.Lerp(baseFov, baseFov * 0.8f, Smooth(aimBlend));
+        float fov = Mathf.Lerp(baseFov, baseFov * 0.8f, Smooth(aimBlend));
+        // sniper : une fois l'arme épaulée, la lunette passe en plein écran et le champ est divisé par le grossissement
+        var scope = HeldScope;
+        bool scoped = scope && Aiming && aimBlend > 0.85f && reload < 0f && !HeldPistol.Reloading && !inspecting;
+        scopeBlend = Mathf.MoveTowards(scopeBlend, scoped ? 1f : 0f, Time.deltaTime * (scoped ? 7f : 10f));
+        if (scope && scopeBlend > 0f)
+        {
+            float zoom = 2f * Mathf.Atan(Mathf.Tan(baseFov * 0.5f * Mathf.Deg2Rad) / Mathf.Max(scope.magnification, 1f)) * Mathf.Rad2Deg;
+            fov = Mathf.Lerp(fov, zoom, Smooth(scopeBlend));
+        }
+        cam.fieldOfView = fov;
+        // l'arme et les mains disparaissent derrière la lunette plein écran
+        var hide = scopeBlend > 0.5f ? scope : null;
+        if (hiddenScope != hide) { if (hiddenScope) hiddenScope.SetPcHidden(false); hiddenScope = hide; if (hide) hide.SetPcHidden(true); }
     }
 
     void OnApplicationFocus(bool focus)
@@ -307,6 +331,7 @@ public class DesktopPlayer : MonoBehaviour
     void Look(Mouse mouse)
     {
         var d = mouse.delta.ReadValue() * (0.06f * GameSettings.MouseSensitivity);
+        d *= LookScale;                         // lunette du sniper : visée plus fine
         if (GameSettings.InvertMouseY) d.y = -d.y;
         yaw += d.x;
         pitch = Mathf.Clamp(pitch - d.y, -85f, 85f);
@@ -353,9 +378,6 @@ public class DesktopPlayer : MonoBehaviour
         hover = null; hoverText = null; aimedSlot = null;
         if (PauseMenu.Paused || GameOver) { InteractableOutline.PointerHover = null; return; }
 
-        var station = OpenStation();
-        if (station) { hoverText = "Fermer l'écran"; InteractableOutline.PointerHover = null; return; }
-
         if (Plank.Held && rightH.Item<Plank>() == Plank.Held)
         {
             aimedSlot = SlotAt(ray);
@@ -389,8 +411,6 @@ public class DesktopPlayer : MonoBehaviour
     /// <summary>E : interagir avec ce que vise le réticule.</summary>
     public void Interact()
     {
-        var station = OpenStation();
-        if (station) { station.Hide(); return; }
         if (door) { door = null; ReleaseRight(); return; }                       // 2e appui : on lâche la porte
 
         // planche en main : la poser sur l'emplacement visé (ou celui où elle est déjà calée)
@@ -423,7 +443,7 @@ public class DesktopPlayer : MonoBehaviour
         {
             bool shoots = pistol.CanFire;          // sniper : pas d'animation de recul tant que la culasse n'est pas réarmée
             pistol.Fire(rightH.it);
-            if (shoots) { recoil = 1f; rightH.trigger = 1f; }
+            if (shoots) { recoil = 1f; rightH.trigger = 1f; if (scopeBlend > 0.5f) pitch = Mathf.Clamp(pitch - 1.6f, -85f, 85f); }      // lunette : la vue saute un peu au tir
             return;
         }
         if (rightH.Item<Hammer>() || rightH.Item<MeleeWeapon>()) { StartSwing(); return; }
@@ -851,6 +871,7 @@ public class DesktopPlayer : MonoBehaviour
         var g = h.Grab;
         bool visible = g != null || (h.right && (h.target.HasValue || pressT >= 0f && (rightH.Held == null || rightH.Held is XRSimpleInteractable)))
                        || (!h.right && pressT >= 0f && rightH.Held != null && !(rightH.Held is XRSimpleInteractable));
+        if (hiddenScope) visible = false;          // lunette plein écran (sniper) : mains cachées
         foreach (var r in h.renderers) if (r) r.enabled = visible;
 
         // poing fermé quand la main tient quelque chose, index sur la détente pour le pistolet
@@ -1093,7 +1114,6 @@ public class DesktopPlayer : MonoBehaviour
         if (!manager.TryGetInteractableForCollider(c, out var i) || !(i is IXRSelectInteractable sel) || !(sel is Behaviour b) || !b.isActiveAndEnabled) return false;
         if (sel.isSelected && !(sel.firstInteractorSelecting is XRSocketInteractor)) return false;     // déjà dans une main
         if (sel.isSelected && sel.firstInteractorSelecting is XRSocketInteractor sock && !(sock is BeltSocket)) return false;   // chargeur dans le pistolet
-        if (b.GetComponent<MonitorOverlayClose>()) return false;
         s = sel;
         return true;
     }
@@ -1150,13 +1170,6 @@ public class DesktopPlayer : MonoBehaviour
         return col ? col.bounds.center : g.transform.position;
     }
 
-    static MonitorStation OpenStation()
-    {
-        foreach (var st in FindObjectsByType<MonitorStation>(FindObjectsSortMode.None))
-            if (st.overlay && st.overlay.gameObject.activeSelf) return st;
-        return null;
-    }
-
     public static Kind KindOf(XRGrabInteractable g)
     {
         if (!g) return Kind.None;
@@ -1178,7 +1191,6 @@ public class DesktopPlayer : MonoBehaviour
         var hd = t.GetComponentInParent<HingedDoor>();
         if (hd) return hd.locked ? "Porte verrouillée" : hd.Closed ? "Ouvrir la porte" : "Fermer la porte";
         if (t.GetComponentInParent<SupplyRadio>()) return "Appeler un ravitaillement";
-        if (t.GetComponent<MonitorScreen>()) return "Regarder la caméra";
         if (t.GetComponent<Pistol>()) return "Prendre le pistolet";
         if (t.GetComponent<Hammer>()) return "Prendre le marteau";
         if (t.GetComponent<Plank>()) return "Prendre la planche";

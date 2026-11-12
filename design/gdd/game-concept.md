@@ -81,7 +81,6 @@ Proposer une expérience nerveuse avec une forte tension dramatique, exigeant co
 ### 2.4 Menace sonore 3D & Ambiance
 - Sons 3D spatialisés : grognements, bruits de pas, planches qui craquent permettant d'identifier la direction de l'assaut (fenêtres, couloir gauche, couloir droit, toit).
 - Éclairage oppressant : obscurité dominante, lampes à pétrole vacillantes, faisceau de la lampe torche perçant la brume.
-- Caméras de surveillance : vision nocturne verte activable via le disjoncteur électrique (bruit mécanique de bascule, bourdonnement électrique, voyant passant au vert).
 
 ---
 
@@ -93,7 +92,7 @@ Proposer une expérience nerveuse avec une forte tension dramatique, exigeant co
   - **Main gauche** : Gâchette (Tirer / Utiliser), Joystick enfoncé (Bouger / S'accroupir), Grip (Attraper / Lâcher), Bouton Menu (Pause).
   - **Main droite** : Gâchette (Tirer / Utiliser), Joystick (Rotation Snap Turn ou Smooth Turn), Grip (Attraper / Lâcher).
 - **Paradigmes d'action** : Tirer, Recharger, Regarder autour, Se déplacer, S'accroupir.
-- **Méta-paradigmes d'interaction** : Barricader, Ouvrir/fermer des portes, Récupérer une clé, Actionner des disjoncteurs, Gérer les caméras.
+- **Méta-paradigmes d'interaction** : Barricader, Ouvrir/fermer des portes, Récupérer une clé, Actionner le levier du générateur.
 
 ### 3.2 Progression des 5 Vagues
 Le jeu comprend 5 vagues de difficulté croissante (66 zombies au total), chaque vague débloquant une nouvelle section du complexe :
@@ -129,7 +128,7 @@ Le jeu comprend 5 vagues de difficulté croissante (66 zombies au total), chaque
 - **Condition de Victoire (Win)** :
   1. Survivre aux 5 vagues d'assaut.
   2. Trouver la clé de sécurité.
-  3. Actionner le disjoncteur et démarrer le générateur électrique.
+  3. Démarrer le générateur électrique.
   4. Enfoncer physiquement le gros bouton d'évacuation près du générateur pour ouvrir la grille extérieure et s'enfuir.
 - **Condition de Défaite (Lose)** :
   - Les PV du joueur tombent à 0. Écran noir immédiat et redémarrage de la partie.
@@ -139,7 +138,7 @@ Le jeu comprend 5 vagues de difficulté croissante (66 zombies au total), chaque
 ## 5. Level Design & Circulatoire
 
 Le complexe fortifié est découpé en 6 zones interconnectées :
-1. **Bunker OG (Poste central)** : Point de départ avec l'établi (planches, marteau), la ceinture d'équipement, le pupitre CCTV à 3 écrans et 4 ouvertures (2 portes battantes, 2 fenêtres à barreaux).
+1. **Bunker OG (Poste central)** : Point de départ avec l'établi (planches, marteau), la ceinture d'équipement, le bureau de l'ancien poste de surveillance (sans caméras ni écrans) et 4 ouvertures (2 portes battantes, 2 fenêtres à barreaux).
 2. **Cuisine** : Débloquée après la vague 1, contient des réserves de planches et des munitions supplémentaires.
 3. **Salle de Stockage** : Débloquée après la vague 2, abrite des outils et des caisses de ravitaillement.
 4. **Couloir Ouest** : Long boyau d'accès sous haute tension reliant la cuisine au générateur.
@@ -168,15 +167,15 @@ L'atmosphère visuelle est volontairement sombre, oppressante et contrastée, al
 - **Ambre clair (`#FFD966`)** : Annonces de vagues et messages temporaires.
 - **Blanc cassé (`#E0EBE6`)** : Textes courants et descriptions.
 - **Gris-vert (`#789682`)** : Textes secondaires et informations passives.
-- **Vert terminal (`#59FF8C`)** : Réussite, voyants actifs, image des moniteurs CCTV.
+- **Vert terminal (`#59FF8C`)** : Réussite, voyants actifs.
 - **Rouge alerte (`#FF453D`)** : Panneaux d'accès verrouillé et alertes d'intrusion.
 
 ### Palette Retours de Jeu
 - **Contour au repos (`#8C6926`)** : Liseré fin sur les objets interactifs.
 - **Contour survol (`#FFD166`)** : Halo lumineux lorsque la main du joueur entre dans la zone de préhension.
 - **Vignette dégâts (`#8C0000`)** : Bords de vision rouges réagissant à la perte de points de vie.
-- **Voyant allumé (`#33FF4C`)** : Disjoncteur et générateur opérationnels.
-- **Voyant éteint (`#FF261A`)** : Panne de courant ou disjoncteur déclenché.
+- **Voyant allumé (`#33FF4C`)** : Générateur opérationnel.
+- **Voyant éteint (`#FF261A`)** : Panne de courant.
 - **Générateur activé (`#FFCC80`)** : Lumière chaude baignant la salle lors de la victoire.
 
 ### Palette Ambiance

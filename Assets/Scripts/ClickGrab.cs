@@ -8,7 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 // Option des PARAMÈTRES « Prise : MAINTENIR » (GameSettings.HoldToGrab, au casque) : on tient tant que le grip est enfoncé.
 // La version PC reste en prise par clic (DesktopPlayer prend et lâche lui-même les objets).
 // Les boutons/écrans (XRSimpleInteractable) ne restent pas « tenus » : on les relâche aussitôt, sauf les leviers
-// (générateur, disjoncteur : Lever) et les poignées de porte, qu'on tient pour les déplacer.
+// (générateur : Lever) et les poignées de porte, qu'on tient pour les déplacer.
 [RequireComponent(typeof(XRBaseInputInteractor))]
 public class ClickGrab : MonoBehaviour
 {
@@ -36,7 +36,7 @@ public class ClickGrab : MonoBehaviour
     void OnSelect(SelectEnterEventArgs a)
     {
         if (a.interactableObject is XRGrabInteractable) return;
-        if (a.interactableObject.transform.GetComponentInParent<Lever>()) return;       // levier (générateur, disjoncteur) : tenu tant qu'on l'abaisse
+        if (a.interactableObject.transform.GetComponentInParent<Lever>()) return;       // levier (générateur) : tenu tant qu'on l'abaisse
         if (a.interactableObject.transform.GetComponentInParent<HingedDoor>()) return;   // poignée de porte : tenue tant qu'on tire
         pending = a.interactableObject;                // relâché à la fin de l'image (pas pendant l'événement)
     }

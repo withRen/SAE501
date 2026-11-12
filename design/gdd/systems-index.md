@@ -27,7 +27,7 @@ Le cœur du jeu repose sur une physique viscérale à l'échelle 1:1, une gestio
 | 6 | Santé Joueur & Retours Somatiques | Core | MVP | Implémenté | `design/gdd/player-health.md` | 4, 5 |
 | 7 | IA Zombie & Navigation Spatiale | Core | MVP | Implémenté | `design/gdd/zombie-ai.md` | 1, 3, 6 |
 | 8 | Directeur de Vagues & Progression | Feature | MVP | Implémenté | `design/gdd/wave-manager.md` | 7 |
-| 9 | Énergie, CCTV & Disjoncteur | Feature | MVP | Implémenté | `design/gdd/electrical-cctv.md` | 2, 8 |
+| 9 | ~~Énergie, CCTV & Disjoncteur~~ | Feature | — | Retiré (12/11/2026 : les caméras ne servaient pas au jeu) | — | — |
 | 10 | Réseau & Réplication (NGO) | Foundation | Vertical Slice | En cours | `design/gdd/net-replication.md` | 1, 2, 4, 6 |
 | 11 | Arène & Spawns 1v1 (Level Design) | Feature | Vertical Slice | Modélisé (Blender) | `design/gdd/arena-1v1-map.md` | 10 |
 | 12 | Mode Duel 1v1 (Règles & Victoire) | Feature | Vertical Slice | À concevoir | `design/gdd/duel-1v1-rules.md` | 4, 6, 10, 11 |
@@ -53,7 +53,7 @@ Le cœur du jeu repose sur une physique viscérale à l'échelle 1:1, une gestio
 
 ### Couche 3 : Feature (Modes & Contenu)
 - **Directeur de Vagues** (dépend de 7)
-- **Énergie & Caméras CCTV** (dépend de 2, 8)
+- ~~Énergie & Caméras CCTV~~ : retiré le 12/11/2026
 - **Arène & Spawns 1v1** (dépend de 10) : Géométrie Blender (`arena_1v1_bunker.blend`), 2 spawns opposés, lignes de vue brisées.
 - **Mode Duel 1v1** (dépend de 4, 6, 10, 11) : Rounds en manches gagnantes (3 ou 5 rounds), temps limite, mort subite.
 - **Ravitaillement Contesté** (dépend de 2, 4, 11) : Apparition des chargeurs et armes secondaires au centre.

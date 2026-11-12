@@ -41,11 +41,11 @@ public class InteractableOutline : MonoBehaviour
     {
         foreach (var it in Object.FindObjectsByType<XRBaseInteractable>(FindObjectsInactive.Include))
         {
-            if (it.GetComponent<InteractableOutline>() || it.GetComponent<MonitorOverlayClose>()) continue;   // pas la vue plein écran
+            if (it.GetComponent<InteractableOutline>()) continue;
             var o = it.gameObject.AddComponent<InteractableOutline>();
             o.interactable = it;
             var lever = it.GetComponentInParent<Lever>();
-            if (lever) o.targets = lever.GetComponentsInChildren<Renderer>(true);      // levier (générateur, disjoncteur) : tige et boule
+            if (lever) o.targets = lever.GetComponentsInChildren<Renderer>(true);      // levier (générateur) : tige et boule
         }
     }
 

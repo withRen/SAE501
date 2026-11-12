@@ -36,6 +36,36 @@ public static class NavBuilder
         m.applyToChildren = true;
     }
 
+    /// <summary>Recalcule le NavMesh de la scène ouverte après des déplacements d'objets faits à la main, sans reconstruire la scène
+    /// (même surface, mêmes objets ignorés, même fichier Assets/Generated/NavMesh_MainScene.asset).</summary>
+    [MenuItem("SAE501/Scène/Recuire le NavMesh (sans reconstruire)")]
+    public static void Recuire()
+    {
+        var surface = Object.FindObjectsByType<NavMeshSurface>(FindObjectsInactive.Include).FirstOrDefault(s => s.name == "NavMesh");
+        if (!surface) { Debug.LogWarning("[NavBuilder] surface « NavMesh » introuvable : ouvrir MainScene"); return; }
+        int avant = NavMesh.CalculateTriangulation().indices.Length / 3;
+        foreach (var c in Object.FindObjectsByType<Collider>(FindObjectsInactive.Include))
+            if (SoftClutter.Any(k => c.name.Contains(k))) Ignore(c.gameObject);
+        Physics.SyncTransforms();
+        surface.BuildNavMesh();
+        Sauver(surface);
+        int apres = NavMesh.CalculateTriangulation().indices.Length / 3;
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(surface.gameObject.scene);
+        UnityEditor.SceneManagement.EditorSceneManager.SaveScene(surface.gameObject.scene);
+        Debug.Log($"[NavBuilder] NavMesh recuit sans reconstruire : {avant} -> {apres} triangles");
+    }
+
+    static void Sauver(NavMeshSurface surface)
+    {
+        if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
+        const string path = "Assets/Generated/NavMesh_MainScene.asset";
+        if (surface.navMeshData == null) return;
+        AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CreateAsset(surface.navMeshData, path);
+        surface.navMeshData = AssetDatabase.LoadAssetAtPath<NavMeshData>(path);
+        EditorUtility.SetDirty(surface);
+    }
+
     public static void Bake(Transform parent, params GameObject[] ignored)
     {
         SetupAgentType();

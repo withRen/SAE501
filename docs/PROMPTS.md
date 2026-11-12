@@ -238,6 +238,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [229](#229--cabane--faces-confondues-et-haie-dans-le-mur) | 2026-11-12 | Corriger les vides inutiles et les textures qui scintillent parce que les murs sont les uns dans les autres (7 captures de la cabane) | Carte | Cadre de fenêtre/porte et lambris resserrés de 3-4 mm (plus de faces confondues avec le mur), 5 boules de haie reculées hors du mur du fond, haie recalculée depuis le FBX ; `RaccordsJardin` étape 5, issue #170 ; pas testé au casque |
 | [230](#230--façade-de-la-cuisine--haie-bac-et-coupe) | 2026-11-12 | Le trou à côté de la cuisine, le pot mal placé, la coupe étrange | Carte | Boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin de la cuisine, coupes de l'export rentrées dans le mur du générateur (`RaccordsJardin` étape 6), issue #170 ; pas testé au casque |
 | [231](#231--coin-de-la-cuisine--boules-au-lieu-du-bloc) | 2026-11-12 | C'est visuellement horrible, complète mais garde ça plaisant | Carte | Bloc plat du coin de la cuisine retiré ; les boules rondes du coin avancées de 45 cm contre le mur (partie dans le mur aplatie, rien dans la cuisine) ; pas testé au casque |
+| [232](#232--navmesh-recuit-et-vieux-pc-sur-le-bureau) | 2026-11-12 | NavMesh à mettre à jour après les déplacements d'objets, vieux PC sur la table avec une lumière qui sort de l'écran | Carte / Décor | NavMesh recuit sans reconstruire (menu ajouté), vieux PC modélisé dans Blender (écran cathodique, clavier, tour, terminal vert émissif, lumière temps réel douce) ; issue #171 ; pas testé au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4389,4 +4390,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Le correctif de l'entrée 230 prolongeait le cœur de la haie en bloc plat jusqu'au coin de la cuisine : jour fermé, mais un pan de feuillage carré, laid. **Retiré.**
 - À la place, les boules rondes qui touchent le coin sont avancées de 45 cm vers le mur (au-delà du coin, il n'y a rien derrière) ; la petite partie qui entrerait dans le mur est aplatie dans son épaisseur. Vérifié : aucun sommet de haie dans la cuisine, capture de l'intérieur propre. La haie garde ses boules, les deux bacs restent dégagés et symétriques.
 - Captures `docs/captures/nettoyage_carte/apres_cuisine_*` mises à jour. **Non testé** au casque. Rien poussé.
+
+---
+
+## 232 — NavMesh recuit et vieux PC sur le bureau
+
+**Date** : 2026-11-12 · **Domaine** : Carte / Décor
+
+> J'ai corrigé beaucoup de placement d'élément ducoup il faut mettre à jour le navmesh et aussi je veux que tu rejoutes un vieux pc sur la table pour qu'il y ai une petite déco, avec genre une lumière qui s'émane de l'écran
+
+(capture du bureau vide du poste de surveillance)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **NavMesh** : nouveau menu **SAE501 → Scène → Recuire le NavMesh (sans reconstruire)** (`NavBuilder.Recuire`) : même surface, mêmes objets ignorés, même fichier `Assets/Generated/NavMesh_MainScene.asset`, scène enregistrée. Lancé après les déplacements de Rahim et la pose du PC : 2 103 → 2 111 triangles ; points de contrôle (bunker, cuisine, jardin, portail, stockage) bien sur le NavMesh.
+- **Vieux PC** : aucun modèle dans le projet, et les écrans de caméras ont été retirés exprès (journal 191) : modèle fait pour le projet par un script Blender, `Tools/blender/vieux_pc.py` → `Assets/Decor/VieuxPC/Vieux_PC.fbx` (écran cathodique beige, clavier, tour avec lecteurs, ~4 000 triangles). Écran : texture de terminal vert générée (`Ecran_Terminal.png`, « BUNKER-OS », « NE SORTEZ PAS LA NUIT »), émissive. Lumière : point vert, temps réel, sans ombres, portée 1,4 m, intensité 0,35, léger vacillement (`FlickerLamp`).
+- Posé par `Assets/Editor/VieuxPC.cs` (menu SAE501 → Scène → Vieux PC sur le bureau, appelé aussi par `RoomBuilder`) sur `Bunker_Surveillance_Desk_West`, à droite de la lanterne ; collider boîte. Issue [#171](https://github.com/withRen/SAE501/issues/171), page wiki Vieux-PC.
+- Captures `docs/captures/nettoyage_carte/pc_*.jpg`. Éclairage précalculé non recuit. **Non testé** au casque (coût de la lumière temps réel supplémentaire à vérifier, elle reste petite). Rien poussé.
 

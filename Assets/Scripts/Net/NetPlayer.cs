@@ -256,6 +256,7 @@ public class NetPlayer : NetworkBehaviour
         {
             var mr = mf.GetComponent<MeshRenderer>();
             if (!mr || !mr.enabled || !mf.sharedMesh) continue;
+            if (SniperScope.IsScopePart(mf.transform)) continue;          // lentille de la lunette : image locale, pas pour l'adversaire
             var g = new GameObject(mf.name);
             g.transform.SetParent(root.transform, false);
             g.transform.localPosition = src.transform.InverseTransformPoint(mf.transform.position);

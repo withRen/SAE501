@@ -6,7 +6,8 @@ using UnityEngine.UI;
 //   - aide sous le réticule : touche + action (« E  Prendre le pistolet », « E  Poser la planche », « CLIC  Frapper ») ;
 //   - en bas à droite : munitions du pistolet en main (et chargeur à la ceinture), charge de la lampe ;
 //   - messages courts (« Aucun chargeur à la ceinture ») ; « Cliquez pour reprendre » quand la souris n'est pas capturée ;
-//   - F1 : liste des touches (rappel discret « F1 · commandes » en haut à gauche).
+//   - F1 : liste des touches (rappel discret « F1 · commandes » en haut à gauche) ;
+//   - sniper épaulé (clic droit) : lunette plein écran (cercle, bords noirs, réticule mil-dot, point rouge), réticule normal caché.
 // Caché en pause et à la fin de la partie.
 public class DesktopHud : MonoBehaviour
 {
@@ -22,6 +23,7 @@ public class DesktopHud : MonoBehaviour
     Image dotImg, keyBox;
     Text keyText, hintText, ammoText, ammoSub, messageText, clickText, helpTip, helpText;
     GameObject hintRoot, ammoRoot, helpPanel;
+    RawImage scopeImg;
     float gap = 7f, messageUntil;
     bool help;
     CanvasGroup group;
@@ -56,6 +58,14 @@ public class DesktopHud : MonoBehaviour
         group = gameObject.AddComponent<CanvasGroup>();
         group.blocksRaycasts = false; group.interactable = false;
         var root = (RectTransform)transform;
+
+        // lunette du sniper (sous le reste de l'affichage) : texture carrée étirée sur tout l'écran, le bord noir de la texture remplit les côtés
+        var sr = Rect("Lunette", root, Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f));
+        sr.anchorMin = Vector2.zero; sr.anchorMax = Vector2.one; sr.sizeDelta = Vector2.zero;
+        scopeImg = sr.gameObject.AddComponent<RawImage>();
+        scopeImg.texture = ScopeTexture(1024);
+        scopeImg.raycastTarget = false;
+        scopeImg.gameObject.SetActive(false);
 
         // réticule
         cross = Rect("Reticule", root, Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f));
@@ -134,7 +144,7 @@ public class DesktopHud : MonoBehaviour
         "<b>E</b>   prendre, poser une planche, utiliser\n" +
         "      (levier : <b>maintenir E</b>)\n" +
         "<b>Clic gauche</b>   tirer, frapper, clouer\n" +
-        "<b>Clic droit</b>   viser au pistolet\n" +
+        "<b>Clic droit</b>   viser (sniper : lunette, zoom)\n" +
         "<b>R</b>   recharger (chargeur de la ceinture)\n" +
         "<b>1</b> pistolet   <b>2</b> marteau   <b>3</b> lampe   <b>4</b> mêlée\n" +
         "<b>Molette</b>   objet suivant   <b>G</b>   lâcher\n" +
@@ -164,7 +174,17 @@ public class DesktopHud : MonoBehaviour
         ticks[3].rectTransform.anchoredPosition = new Vector2(gap + 4.5f, 0f);
         foreach (var t in ticks) t.color = col;
         dotImg.color = col;
-        cross.gameObject.SetActive(player.MouseCaptured);
+        // lunette du sniper : plein écran pendant le zoom, à la place du réticule
+        float sb = player.ScopeBlend;
+        scopeImg.gameObject.SetActive(sb > 0.01f && !hidden);
+        if (sb > 0.01f)
+        {
+            var box = scopeImg.rectTransform.rect;
+            float aspect = box.height > 0f ? box.width / box.height : 16f / 9f;
+            scopeImg.uvRect = new Rect(0.5f - aspect * 0.5f, 0f, aspect, 1f);
+            scopeImg.color = new Color(1f, 1f, 1f, Mathf.Clamp01(sb * 1.6f));
+        }
+        cross.gameObject.SetActive(player.MouseCaptured && sb < 0.5f);
 
         // aide sous le réticule
         string key = null, text = null;
@@ -224,6 +244,42 @@ public class DesktopHud : MonoBehaviour
         clickText.gameObject.SetActive(!player.MouseCaptured && !hidden);
         helpPanel.SetActive(help && !hidden);
         helpTip.gameObject.SetActive(!help && !hidden);
+    }
+
+    // lunette plein écran : noir hors du cercle (bord de la texture : il remplit les côtés de l'écran), vignettage, réticule duplex
+    // mil-dot noir et point rouge éclairé au centre
+    public static Texture2D ScopeTexture(int n, bool readable = false)
+    {
+        var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { name = "Lunette_PC", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+        var px = new Color32[n * n];
+        float pixel = 2f / n;
+        float Band(float d, float w) => Mathf.Clamp01((w - d) / pixel + 0.5f);
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+            {
+                float u = ((x + 0.5f) / n - 0.5f) * 2f, v = ((y + 0.5f) / n - 0.5f) * 2f;
+                float r = Mathf.Sqrt(u * u + v * v);
+                float ax = Mathf.Abs(u), ay = Mathf.Abs(v);
+                float outside = Mathf.Clamp01((r - 0.975f) / 0.012f);
+                float vignette = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.78f, 0.975f, r)) * 0.75f;
+                float thin = Mathf.Max(ay < 0.55f ? Band(ax, 0.0022f) : 0f, ax < 0.55f ? Band(ay, 0.0022f) : 0f);
+                float thick = Mathf.Max(ay >= 0.55f ? Band(ax, 0.009f) : 0f, ax >= 0.55f ? Band(ay, 0.009f) : 0f);
+                float dots = 0f;
+                for (int k = 1; k <= 4; k++)
+                {
+                    float s = k * 0.11f;
+                    dots = Mathf.Max(dots, Band(Mathf.Sqrt((ax - s) * (ax - s) + v * v), 0.0075f));
+                    dots = Mathf.Max(dots, Band(Mathf.Sqrt(u * u + (ay - s) * (ay - s)), 0.0075f));
+                }
+                float red = Band(r, 0.007f);
+                float a = Mathf.Max(Mathf.Max(outside, vignette), Mathf.Max(Mathf.Max(thin, thick), dots));
+                a = Mathf.Max(a, red);
+                var c = Color.Lerp(Color.black, new Color(1f, 0.12f, 0.08f), red);
+                px[y * n + x] = new Color(c.r, c.g, c.b, a);
+            }
+        tex.SetPixels32(px);
+        tex.Apply(false, !readable);
+        return tex;
     }
 
     // ───────────────────────── briques uGUI ─────────────────────────

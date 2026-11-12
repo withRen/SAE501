@@ -5,6 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 // Armes principales du duel 1v1 : fusil d'assaut AK74M (pack Cold War Weapons) et sniper.
 // Menu SAE501 → Arène 1v1 → Construire AK74 et sniper : crée Assets/Resources/Weapons/AK74.prefab et Sniper.prefab (chargés par DuelLoadout).
+// Menu SAE501 → Arène 1v1 → Ajouter la lunette au sniper : pose seulement le composant SniperScope (lunette grossissante) sur Sniper.prefab.
 // Ce sont des « Pistol » réglés autrement (cadence, rafale, dégâts, son) : la version PC (DesktopPlayer), le holster, la visée et le tir
 // fonctionnent donc comme pour le pistolet. Le point d'attache est la poignée-pistolet, à l'origine du prefab ; l'axe Z est le canon, Y le haut.
 // AK74 : modèle du pack (matériau recréé en URP). Sniper : MODÈLE PROVISOIRE fait de formes simples, à remplacer par un vrai modèle
@@ -143,7 +144,34 @@ public static class DuelWeaponBuilder
         pi.shotPitch = 0.55f; pi.shotVolume = 1f;
         pi.casingDelay = 0.5f;
         pi.smokeLocalPosition = new Vector3(0f, 0.09f, 0.1f);
+        root.AddComponent<SniperScope>();          // valeurs par défaut : mesurées sur la pièce « Scope » de l'AWM
         Save(root, "Sniper");
+    }
+
+    // lunette grossissante (SniperScope) posée sur le prefab existant, sans le reconstruire
+    [MenuItem("SAE501/Arène 1v1/Ajouter la lunette au sniper")]
+    public static void AddScope()
+    {
+        var path = Out + "/Sniper.prefab";
+        var root = PrefabUtility.LoadPrefabContents(path);
+        try
+        {
+            var placeholder = !root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Scope");
+            var sc = root.GetComponent<SniperScope>();
+            if (!sc) sc = root.AddComponent<SniperScope>();
+            if (placeholder) PlaceholderScope(sc);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            Debug.Log("[Armes] lunette posée sur " + path);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    // lunette du sniper de secours (cylindre « Lunette » : de z = -0,055 à 0,335, à 11,5 cm au-dessus de la poignée)
+    static void PlaceholderScope(SniperScope sc)
+    {
+        sc.eyepiece = new Vector3(0f, 0.115f, -0.072f);
+        sc.objective = new Vector3(0f, 0.115f, 0.34f);
+        sc.lensRadius = 0.02f;
     }
 
     // ---------- sniper de secours (formes simples, si le pack AWM est absent) ----------
@@ -185,6 +213,7 @@ public static class DuelWeaponBuilder
         pi.shotPitch = 0.55f; pi.shotVolume = 1f;
         pi.casingDelay = 0.5f;                         // la douille sort quand on actionne la culasse
         pi.smokeLocalPosition = new Vector3(0f, 0.05f, 0.1f);
+        PlaceholderScope(root.AddComponent<SniperScope>());
         Save(root, "Sniper");
     }
 

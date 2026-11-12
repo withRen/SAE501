@@ -142,9 +142,18 @@ public class Pistol : MonoBehaviour
     /// <summary>Vrai si un tir partirait maintenant (cadence, rechargement, munitions) ; le recul à l'écran ne se joue que dans ce cas.</summary>
     public bool CanFire => !Reloading && Time.time - lastShot >= fireInterval && (ammo > 0 || InfiniteAmmo);
 
+    float lockedClick = -10f;
+
     public void Fire(IXRActivateInteractor interactor = null)
     {
         if (Time.time - lastShot < fireInterval) return;          // cadence (fusil, culasse du sniper)
+        // [hotfix #160] duel : on ne tire qu'en manche active (gel 3-2-1, fin de manche, fin de match : arme bloquée) ;
+        // en réseau, un joueur mort ne tire plus
+        if (!NetDuel.CanShoot || NetSession.Active && PlayerHealth.Instance && PlayerHealth.Instance.IsDead)
+        {
+            if (Time.time - lockedClick > 0.4f) { lockedClick = Time.time; src.pitch = 1f; src.PlayOneShot(dryFireClip ? dryFireClip : click, 0.5f); }
+            return;
+        }
         if (Reloading) return;
         if (ammo <= 0 && InfiniteAmmo) { ReloadInfinite(); return; }
         src.spatialBlend = DesktopMode.On ? 0.20f : 0.65f;

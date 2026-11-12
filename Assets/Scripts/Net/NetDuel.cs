@@ -3,9 +3,16 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// [Multijoueur 1v1] Gestionnaire de match à mort en duel dans l'Arène Bunker "Alvéole 17".
-// Premier joueur à remporter 3 rounds gagne le match.
-// Gère les réapparitions aux sas opposés (Spawn_Player_1 Ouest, Spawn_Player_2 Est), la santé et le score.
+// [Multijoueur 1v1] Gestionnaire du duel (arènes Alvéole 17 et Quai 9). Premier à TargetWins manches gagne le match.
+// [Hotfix #160] Machine à états, décidée par l'hôte et synchronisée (Phase) :
+//   Gel (3-2-1, personne ne tire) → MancheActive (on tire) → FinDeManche (4 s, personne ne tire ni ne marque) → Gel… → FinDeMatch.
+//   - un seul point par manche : le premier joueur tué en MancheActive fait passer en FinDeManche, les morts suivantes sont ignorées
+//     (deux morts presque simultanées : seule la première arrivée à l'hôte compte) ;
+//   - hors MancheActive, l'arme ne tire pas (Pistol.Fire → CanShoot) et un coup qui arriverait quand même est refusé par la victime
+//     (NetPlayer.HitRpc) : un joueur mort ne peut plus marquer ;
+//   - nouvelle manche : vie pleine, chacun à son côté de la carte, arme rendue, gel de 3 s puis MancheActive ;
+//   - le déplacement reste libre pendant le gel et la fin de manche (pas de blocage imposé au casque).
+// Affichage : NetDuelHud (bandeau des scores façon CS:GO, en haut de la vue), à la place de l'ancien tableau suspendu.
 public class NetDuel : NetworkBehaviour
 {
     public static NetDuel Instance { get; private set; }
@@ -22,13 +29,24 @@ public class NetDuel : NetworkBehaviour
     static void ResetStatics() { Rounds = DefaultRounds; Primary = 0; }
     public const string MenuScene = "Menu";
 
+    public enum Phase : byte { Gel = 0, MancheActive = 1, FinDeManche = 2, FinDeMatch = 3 }
+    public const float FreezeTime = 3f, RoundEndTime = 4f, FirstFreezeDelay = 1f;
+
     public readonly NetworkVariable<int> Round = new NetworkVariable<int>(1);
     public readonly NetworkVariable<int> ScoreP1 = new NetworkVariable<int>(0);
     public readonly NetworkVariable<int> ScoreP2 = new NetworkVariable<int>(0);
-    public readonly NetworkVariable<int> Winner = new NetworkVariable<int>(0); // 0 = en cours, 1 = J1 gagne, 2 = J2 gagne
+    public readonly NetworkVariable<int> Winner = new NetworkVariable<int>(0); // 0 = en cours, 1 = côté 1 gagne, 2 = côté 2 gagne
+    public readonly NetworkVariable<byte> PhaseVar = new NetworkVariable<byte>((byte)Phase.Gel);
+    public readonly NetworkVariable<double> PhaseUntil = new NetworkVariable<double>(0);    // fin du gel / de la fin de manche (temps serveur)
+    public readonly NetworkVariable<double> RoundStart = new NetworkVariable<double>(0);    // début de la manche active (chrono)
+    public readonly NetworkVariable<int> RoundWinner = new NetworkVariable<int>(0);         // côté gagnant de la dernière manche
 
-    TextMesh bannerText;
-    bool roundResolving;
+    public Phase CurrentPhase => (Phase)PhaseVar.Value;
+    /// <summary>Peut-on tirer ? Vrai hors duel ; en duel, seulement en MancheActive.</summary>
+    public static bool CanShoot => !Instance || !Instance.IsSpawned || Instance.CurrentPhase == Phase.MancheActive;
+    public double Now => NetworkManager ? NetworkManager.ServerTime.Time : Time.timeAsDouble;
+
+    NetDuelHud hud;
 
     // Un objet réseau doit venir d'un prefab enregistré (Resources/Net/NetDuel, construit par NetPrefabsBuilder) :
     // un objet créé à la volée n'a pas d'identifiant réseau et ne peut pas être « spawné » (erreur « GlobalObjectIdHash 0 »).
@@ -44,20 +62,15 @@ public class NetDuel : NetworkBehaviour
     {
         Instance = this;
         Pistol.InfiniteAmmo = true;             // duel : chargeurs infinis (chargeur limité, rechargement automatique)
-        BuildBanner();
-        Round.OnValueChanged += (_, r) => UpdateBanner();
-        ScoreP1.OnValueChanged += (_, s) => UpdateBanner();
-        ScoreP2.OnValueChanged += (_, s) => UpdateBanner();
-        Winner.OnValueChanged += (_, w) => UpdateBanner();
+        hud = NetDuelHud.Create(this);
 
         var localHealth = PlayerHealth.Instance;
         if (localHealth) localHealth.Died += OnLocalDied;
-
-        UpdateBanner();
-        StartCoroutine(AnnounceStart());
         StartCoroutine(GiveWeaponSoon());
 
         if (!IsServer) return;
+        // gel de départ : le temps que les rigs et les armes soient prêts, puis 3-2-1
+        SetPhase(Phase.Gel, FirstFreezeDelay + FreezeTime);
         // un joueur réseau (avatar visible, zones touchables, vie) par casque connecté, comme en coop (NetGame)
         foreach (var id in NetworkManager.ConnectedClientsIds)
         {
@@ -66,6 +79,13 @@ public class NetDuel : NetworkBehaviour
             go.GetComponent<NetPlayer>().Number.Value = n;
             go.GetComponent<NetworkObject>().SpawnAsPlayerObject(id, true);
         }
+    }
+
+    void SetPhase(Phase p, float seconds = 0f)
+    {
+        PhaseVar.Value = (byte)p;
+        PhaseUntil.Value = Now + seconds;
+        if (p == Phase.MancheActive) RoundStart.Value = Now;
     }
 
     // le rig et ses mains sont prêts une seconde après l'arrivée dans l'arène
@@ -79,62 +99,56 @@ public class NetDuel : NetworkBehaviour
     {
         Pistol.InfiniteAmmo = false;
         if (Instance == this) Instance = null;
+        if (hud) Destroy(hud.gameObject);
         var localHealth = PlayerHealth.Instance;
         if (localHealth) localHealth.Died -= OnLocalDied;
     }
 
+    void Update()
+    {
+        if (!IsServer || !IsSpawned) return;
+        if (CurrentPhase == Phase.Gel && Now >= PhaseUntil.Value) SetPhase(Phase.MancheActive);   // fin du gel : on peut tirer
+    }
+
     void OnLocalDied()
     {
-        if (!IsServer)
-        {
-            ReportDeathServerRpc(NetSession.LocalId);
-        }
-        else
-        {
-            HandlePlayerDeath(NetSession.LocalId);
-        }
+        if (!IsServer) ReportDeathServerRpc(NetSession.LocalId);
+        else HandlePlayerDeath(NetSession.LocalId);
     }
 
-    [Rpc(SendTo.Server)]
-    void ReportDeathServerRpc(ulong deadClientId)
-    {
-        HandlePlayerDeath(deadClientId);
-    }
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void ReportDeathServerRpc(ulong deadClientId) => HandlePlayerDeath(deadClientId);
 
-    void HandlePlayerDeath(ulong deadClientId)
+    /// <summary>Hôte : une mort annoncée. Ne compte qu'en MancheActive, et une seule fois par manche.</summary>
+    public void HandlePlayerDeath(ulong deadClientId)
     {
-        if (!IsServer || roundResolving || Winner.Value != 0) return;
-        roundResolving = true;
+        if (!IsServer || CurrentPhase != Phase.MancheActive || Winner.Value != 0) return;
 
         // [hotfix #158] côté du mort (1 ou 2, rang parmi les deux joueurs) : l'autre côté marque
         int deadSide = NetLobby.Side(deadClientId);
-        int winningPlayer = (deadSide == 1) ? 2 : 1;
-        if (winningPlayer == 1) ScoreP1.Value++;
+        int winningSide = (deadSide == 1) ? 2 : 1;
+        if (winningSide == 1) ScoreP1.Value++;
         else ScoreP2.Value++;
+        RoundWinner.Value = winningSide;
 
-        if (ScoreP1.Value >= TargetWins)
+        if (ScoreP1.Value >= TargetWins || ScoreP2.Value >= TargetWins)
         {
-            Winner.Value = 1;
-            StartCoroutine(EndMatch());
-        }
-        else if (ScoreP2.Value >= TargetWins)
-        {
-            Winner.Value = 2;
+            Winner.Value = winningSide;
+            SetPhase(Phase.FinDeMatch, 7f);
             StartCoroutine(EndMatch());
         }
         else
         {
-            StartCoroutine(NextRoundSequence(winningPlayer));
+            SetPhase(Phase.FinDeManche, RoundEndTime);
+            StartCoroutine(NextRoundSequence());
         }
     }
 
-    IEnumerator NextRoundSequence(int roundWinner)
+    IEnumerator NextRoundSequence()
     {
-        AnnounceRpc($"ROUND {Round.Value} REMPORTÉ PAR LE JOUEUR {roundWinner} !", 3.5f);
-        yield return new WaitForSeconds(4f);
-
+        yield return new WaitForSeconds(RoundEndTime);
         Round.Value++;
-        roundResolving = false;
+        SetPhase(Phase.Gel, FreezeTime);
         ResetRoundRpc();
     }
 
@@ -146,50 +160,13 @@ public class NetDuel : NetworkBehaviour
         {
             h.Revive(100f);
             h.Heal(100f);
+            ArenaMaps.PlaceRig(h.transform, NetLobby.Side(NetSession.LocalId));     // [hotfix #158] côté 1 ou 2, jamais le même
         }
-
-        // Repositionner au sas de départ
-        int n = NetLobby.Side(NetSession.LocalId);       // [hotfix #158] côté 1 ou 2, jamais le même que l'adversaire
-        if (h)
-        {
-            ArenaMaps.PlaceRig(h.transform, n);        // apparitions de la carte jouée (ArenaMaps)
-        }
-
         DuelLoadout.Give();                     // l'arme revient dans la main si elle avait été lâchée
-        StartCoroutine(AnnounceStart());
-    }
-
-    IEnumerator AnnounceStart()
-    {
-        if (bannerText)
-        {
-            bannerText.text = $"ROUND {Round.Value}\nCOMBATTEZ !";
-            bannerText.color = new Color(1f, 0.75f, 0.25f);
-        }
-        yield return new WaitForSeconds(2.5f);
-        UpdateBanner();
-    }
-
-    [Rpc(SendTo.Everyone)]
-    void AnnounceRpc(string msg, float duration)
-    {
-        StartCoroutine(DoAnnounce(msg, duration));
-    }
-
-    IEnumerator DoAnnounce(string msg, float duration)
-    {
-        if (bannerText)
-        {
-            bannerText.text = msg;
-            bannerText.color = Color.white;
-        }
-        yield return new WaitForSeconds(duration);
-        UpdateBanner();
     }
 
     IEnumerator EndMatch()
     {
-        AnnounceRpc($"VICTOIRE FINALE : JOUEUR {Winner.Value} !\nRETOUR AU TERMINAL...", 6f);
         yield return new WaitForSeconds(7f);
         if (IsServer)
         {
@@ -205,46 +182,11 @@ public class NetDuel : NetworkBehaviour
     [Rpc(SendTo.NotServer)]
     void EndMatchRpc() => NetSession.LeaveToMenu();
 
-    void BuildBanner()
+    /// <summary>Nom affiché d'un côté (1 ou 2) : nom du joueur de ce côté, sinon « Joueur N ».</summary>
+    public static string SideName(int side)
     {
-        // Panneau d'affichage suspendu au-dessus de la brèche centrale
-        var go = new GameObject("Duel_Scoreboard");
-        go.transform.position = ArenaMaps.Current.banner;      // au-dessus du centre de la carte jouée
-        bannerText = go.AddComponent<TextMesh>();
-        bannerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        go.GetComponent<MeshRenderer>().sharedMaterial = bannerText.font.material;
-        bannerText.fontSize = 44;
-        bannerText.characterSize = 0.02f;
-        bannerText.alignment = TextAlignment.Center;
-        bannerText.anchor = TextAnchor.MiddleCenter;
-        bannerText.color = new Color(1f, 0.75f, 0.25f);
-    }
-
-    void Update()
-    {
-        // Faire face à la caméra principale
-        if (bannerText && Camera.main)
-        {
-            var cam = Camera.main.transform;
-            var dir = bannerText.transform.position - cam.position;
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.01f)
-                bannerText.transform.rotation = Quaternion.LookRotation(dir);
-        }
-    }
-
-    void UpdateBanner()
-    {
-        if (!bannerText) return;
-        if (Winner.Value != 0)
-        {
-            bannerText.text = $"DUEL TERMINÉ\nVICTOIRE JOUEUR {Winner.Value}";
-            bannerText.color = new Color(0.3f, 1f, 0.4f);
-        }
-        else
-        {
-            bannerText.text = $"{ArenaMaps.Current.name}  //  DUEL 1V1\nROUND {Round.Value}  (PREMIER À {TargetWins})\nJ1 : {ScoreP1.Value}   —   J2 : {ScoreP2.Value}";
-            bannerText.color = new Color(1f, 0.75f, 0.25f);
-        }
+        foreach (var p in NetPlayer.All)
+            if (p && p.IsSpawned && NetLobby.Side(p.OwnerClientId) == side) return p.DisplayName;
+        return "Joueur " + side;
     }
 }

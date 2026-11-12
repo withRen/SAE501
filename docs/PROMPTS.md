@@ -234,6 +234,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [225](#225--rebuild-windows-avec-les-retouches-de-la-map) | 2026-11-12 | Recompiler avec les retouches de la map faites à la main | Build | MainScene modifiée à la main par Rahim reprise telle quelle, build Windows réussi, 0 erreur, zip de 451 Mo ; pas lancé sur Windows |
 | [226](#226--push-global-release-v100-vulkan-gitignore-et-assets) | 2026-11-12 | Push global des branches et du main, release avec .apk et .exe et leur logo, Vulkan dans les optimisations, .gitignore, liste des assets | Git / Build / Documentation | feature/169 et la scène de Rahim fusionnées dans main, 3 branches locales poussées, version 1.0.0, APK et .exe avec l'icône du jeu, release v1.0.0, page wiki Optimisations (Vulkan), ASSETS.md refait ; pas testé au casque ni sur Windows |
 | [227](#227--jardin--écorce-des-arbres-haies-du-portail-étagère-de-la-cabane) | 2026-11-12 | Incohérences de la map : écorce des arbres trop grande, haie qui traverse le pilier du portail, fenêtre de la cabane | Carte | Matériaux tronc/rameaux inversés remis en ordre, boules de haie reculées des piliers, étagère et buffet ramenés hors du mur ; `RaccordsJardin.cs`, issue #170 ; pas testé au casque |
+| [228](#228--tonneaux--rebord-en-petits-blocs) | 2026-11-12 | Le tonneau n'est pas vraiment rond, on dirait plein de carrés | Carte | Normales lissées sur les 14 tonneaux et fûts de la carte (étape 4 de `RaccordsJardin`), forme inchangée ; issue #170 ; pas testé au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4316,4 +4317,21 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Captures** avant/après : `docs/captures/nettoyage_carte/` (JPG, lampe ajoutée le temps de la capture, la scène est de nuit).
 - Issue [#170](https://github.com/withRen/SAE501/issues/170), page wiki [Raccords du jardin](https://github.com/withRen/SAE501/wiki/Raccords-du-jardin).
 - **Non testé** au casque. Rien poussé (attente de l'accord de Rahim).
+
+---
+
+## 228 — Tonneaux : rebord en petits blocs
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> C'est pas vraiment rond, on dirait pleins de carrés additionnés
+
+(capture du tonneau à côté du portail du jardin)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Cause** : l'export de la carte simplifie chaque objet à 6 000 triangles ; le haut de chaque douelle est resté un petit bloc à arêtes vives, d'où un rebord qui ressemble à une suite de carrés.
+- **Correctif** : étape 4 de `RaccordsJardin` : normales lissées (sommets confondus à 2 mm, faces à moins de 80° l'une de l'autre) sur tout objet dont le nom contient « Barrel » ; la forme ne change pas, les arêtes à angle droit restent nettes. 14 maillages (3 tonneaux de vin, fûts, poêles, et leurs LOD1), copies dans `Assets/Generated/Raccords`.
+- Captures `docs/captures/nettoyage_carte/avant_tonneau.jpg` et `apres_tonneau.jpg` ; fût rouge du générateur vérifié, pas abîmé. La silhouette reste un polygone (environ 30 côtés) : seule une version plus détaillée du modèle (Poly Haven, à télécharger) l'arrondirait vraiment.
+- Issue [#170](https://github.com/withRen/SAE501/issues/170), page wiki Raccords du jardin complétée. **Non testé** au casque. Rien poussé.
 

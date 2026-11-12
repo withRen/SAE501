@@ -14,6 +14,8 @@ using UnityEngine;
 //     Chaque boule qui touche un pilier est reculée (sans déformation) pour s'arrêter au milieu du pilier.
 //  3. Cabane : l'étagère entrait de 7 cm dans le mur est, à côté de la fenêtre (le mur coupait son montant). Elle est ramenée
 //     contre le lambris ; le buffet voisin suit pour ne pas la chevaucher.
+//  4. Tonneaux : l'export de la carte (6 000 triangles par objet) laisse le haut de chaque douelle en petit bloc à arêtes
+//     vives : le rebord ressemblait à « plein de carrés ». Normales lissées (sommets confondus, angle < 80°) ; forme inchangée.
 // Les maillages modifiés sont des copies (Assets/Generated/Raccords), le FBX n'est pas touché.
 public static class RaccordsJardin
 {
@@ -30,9 +32,9 @@ public static class RaccordsJardin
     public static bool Apply(Transform root)
     {
         if (!root) return false;
-        int a = Arbres(root), h = Haies(root), e = Etagere(root);
-        Debug.Log($"[RaccordsJardin] {a} arbres remis en ordre, {h} boules de haie reculées des piliers, étagère/buffet déplacés : {e}");
-        return a + h + e > 0;
+        int a = Arbres(root), h = Haies(root), e = Etagere(root), t = Tonneaux(root);
+        Debug.Log($"[RaccordsJardin] {a} arbres remis en ordre, {h} boules de haie reculées des piliers, étagère/buffet déplacés : {e}, {t} tonneaux lissés");
+        return a + h + e + t > 0;
     }
 
     // ---------- 1. ordre des matériaux des arbres ----------
@@ -127,6 +129,44 @@ public static class RaccordsJardin
         {
             var b = Bounds(side); float over = b.max.x - (sb.min.x + dx - 0.01f);
             if (over > 0f && b.max.z > sb.min.z && b.min.z < sb.max.z) { Undo.RecordObject(side, "Raccords jardin"); side.position -= new Vector3(over, 0f, 0f); n++; }
+        }
+        return n;
+    }
+
+    // ---------- 4. tonneaux : normales lissées ----------
+    static int Tonneaux(Transform root)
+    {
+        int n = 0;
+        foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+        {
+            var src = mf.sharedMesh;
+            if (!src || !mf.name.Contains("Barrel") || !src.isReadable) continue;
+            var file = Dir + "/" + mf.name + "_Lisse.asset";
+            if (AssetDatabase.GetAssetPath(src) == file) continue;                 // déjà fait
+            var m = Object.Instantiate(src); m.name = mf.name + "_Lisse";
+            var v = m.vertices; var nr = m.normals;
+            var groups = new Dictionary<Vector3Int, List<int>>();
+            for (int i = 0; i < v.Length; i++)
+            {
+                var k = Vector3Int.RoundToInt(v[i] * 500f);                     // 2 mm
+                if (!groups.TryGetValue(k, out var l)) groups[k] = l = new List<int>();
+                l.Add(i);
+            }
+            var outN = (Vector3[])nr.Clone(); float cos = Mathf.Cos(80f * Mathf.Deg2Rad);
+            foreach (var g in groups.Values)
+                foreach (int i in g)
+                {
+                    var sum = Vector3.zero;
+                    foreach (int j in g) if (Vector3.Dot(nr[i], nr[j]) > cos) sum += nr[j];
+                    outN[i] = sum.normalized;
+                }
+            m.normals = outN;
+            m.RecalculateTangents();
+            Directory.CreateDirectory(Dir);
+            AssetDatabase.DeleteAsset(file);
+            AssetDatabase.CreateAsset(m, file);
+            mf.sharedMesh = m;
+            n++;
         }
         return n;
     }

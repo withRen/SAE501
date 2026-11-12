@@ -26,3 +26,8 @@ sysinfo.txt
 rules.md
 /Assets/_Recovery/
 /Assets/_Recovery.meta
+
+# Fichiers locaux des assistants (non versionnés)
+project.yaml
+AGENTS.md
+agents.md

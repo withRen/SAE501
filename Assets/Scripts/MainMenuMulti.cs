@@ -315,7 +315,9 @@ public partial class MainMenu
         {
             lobbyInfo.text = "";
             lobbyCountdown.text = "Connexion à l'hôte…";
-            if (!NetSession.IsServer && Time.unscaledTime - lobbyEnteredAt > 12f)
+            // seulement si la connexion n'a JAMAIS abouti : au lancement, le lobby disparaît pendant que le casque charge la partie (long sur Quest), ce n'est pas un échec
+            var nm = Unity.Netcode.NetworkManager.Singleton;
+            if (!NetSession.IsServer && !NetSession.InGame && !(nm && nm.IsConnectedClient) && Time.unscaledTime - lobbyEnteredAt > 12f)
             {
                 // l'hôte ne répond pas (paquets UDP bloqués) : on revient au menu avec la piste, au lieu d'attendre sans fin
                 NetSession.Leave();
@@ -362,13 +364,14 @@ public partial class MainMenu
 
         // FORCER LE LANCEMENT : l'hôte, en duel ; un second appui annule
         bool forced = lobby.ForceStart.Value;
-        forceButton.gameObject.SetActive(host && lobby.IsDuel1v1);
+        forceButton.gameObject.SetActive(host && lobby.IsDuel1v1 && !lobby.TooManyForDuel);
         forceButton.label.text = forced ? "LANCEMENT FORCÉ  ·  annuler" : lobby.Players.Count < lobby.minPlayers ? "FORCER LE LANCEMENT  ·  jouer seul" : "FORCER LE LANCEMENT";
         forceButton.selected = forced;
         float c = lobby.Countdown.Value;
         int missing = forced ? 0 : Mathf.Max(0, lobby.minPlayers - lobby.Players.Count);
-        lobbyCountdown.color = c >= 0f ? A : UiKit.Dim;
-        lobbyCountdown.text = c >= 0f ? "LANCEMENT DANS " + Mathf.CeilToInt(c) + " S"
+        lobbyCountdown.color = c >= 0f ? A : lobby.TooManyForDuel ? UiKit.Red : UiKit.Dim;
+        lobbyCountdown.text = lobby.TooManyForDuel ? "Le duel est limité à 2 joueurs (" + lobby.Players.Count + " dans le lobby) : choisis un mode coop"
+                            : c >= 0f ? "LANCEMENT DANS " + Mathf.CeilToInt(c) + " S"
                             : missing > 0 ? "En attente " + (missing > 1 ? "de " + missing + " joueurs" : "d'un autre joueur") + "…"
                             : "La partie démarre quand tout le monde est prêt";
     }

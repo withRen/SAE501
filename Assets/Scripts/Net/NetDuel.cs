@@ -40,6 +40,8 @@ public class NetDuel : NetworkBehaviour
     public readonly NetworkVariable<double> PhaseUntil = new NetworkVariable<double>(0);    // fin du gel / de la fin de manche (temps serveur)
     public readonly NetworkVariable<double> RoundStart = new NetworkVariable<double>(0);    // début de la manche active (chrono)
     public readonly NetworkVariable<int> RoundWinner = new NetworkVariable<int>(0);         // côté gagnant de la dernière manche
+    /// <summary>[Hotfix #163] Victoire par forfait : l'adversaire a quitté la partie.</summary>
+    public readonly NetworkVariable<bool> Forfeit = new NetworkVariable<bool>(false);
 
     public Phase CurrentPhase => (Phase)PhaseVar.Value;
     /// <summary>Peut-on tirer ? Vrai hors duel ; en duel, seulement en MancheActive.</summary>
@@ -65,10 +67,11 @@ public class NetDuel : NetworkBehaviour
         hud = NetDuelHud.Create(this);
 
         var localHealth = PlayerHealth.Instance;
-        if (localHealth) localHealth.Died += OnLocalDied;
+        if (localHealth) { localHealth.Died += OnLocalDied; localHealth.maxRegenPerWave = 0; }     // [hotfix #163] pas de régénération en duel
         StartCoroutine(GiveWeaponSoon());
 
         if (!IsServer) return;
+        NetworkManager.OnClientDisconnectCallback += PlayerLeft;
         // gel de départ : le temps que les rigs et les armes soient prêts, puis 3-2-1
         SetPhase(Phase.Gel, FirstFreezeDelay + FreezeTime);
         // un joueur réseau (avatar visible, zones touchables, vie) par casque connecté, comme en coop (NetGame)
@@ -100,6 +103,7 @@ public class NetDuel : NetworkBehaviour
         Pistol.InfiniteAmmo = false;
         if (Instance == this) Instance = null;
         if (hud) Destroy(hud.gameObject);
+        if (IsServer && NetworkManager) NetworkManager.OnClientDisconnectCallback -= PlayerLeft;
         var localHealth = PlayerHealth.Instance;
         if (localHealth) localHealth.Died -= OnLocalDied;
     }
@@ -142,6 +146,20 @@ public class NetDuel : NetworkBehaviour
             SetPhase(Phase.FinDeManche, RoundEndTime);
             StartCoroutine(NextRoundSequence());
         }
+    }
+
+    /// <summary>[Hotfix #163] Hôte : un joueur a quitté le duel (menu, casque éteint, Wi-Fi) → victoire par forfait de celui qui reste,
+    /// puis retour au menu de tous (EndMatch). Avant, l'hôte restait seul dans l'arène sans fin de match.</summary>
+    public void PlayerLeft(ulong clientId)
+    {
+        if (!IsServer || clientId == NetworkManager.ServerClientId || Winner.Value != 0) return;
+        int leftSide = NetLobby.Side(clientId);
+        Winner.Value = leftSide == 1 ? 2 : 1;
+        Forfeit.Value = true;
+        SetPhase(Phase.FinDeMatch, 7f);
+        StopAllCoroutines();                    // une manche suivante en attente ne doit plus démarrer
+        StartCoroutine(EndMatch());
+        Debug.Log("[Duel] le joueur " + clientId + " (côté " + leftSide + ") a quitté : victoire par forfait du côté " + Winner.Value);
     }
 
     IEnumerator NextRoundSequence()

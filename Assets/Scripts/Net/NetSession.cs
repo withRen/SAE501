@@ -84,7 +84,9 @@ public static class NetSession
         // ce casque a perdu l'hôte (ou a été refusé) : retour au menu avec la raison
         if (Net && !Net.IsServer && id == Net.LocalClientId && !leaving)
         {
-            LastError = string.IsNullOrEmpty(Net.DisconnectReason) ? "Connexion à l'hôte perdue" : Net.DisconnectReason;
+            LastError = !string.IsNullOrEmpty(Net.DisconnectReason) ? Net.DisconnectReason
+                      : ArenaMaps.InArena ? "L'adversaire (hôte) a quitté le duel"          // [hotfix #163]
+                      : "Connexion à l'hôte perdue";
             Leave();
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != MenuScene)
                 UnityEngine.SceneManagement.SceneManager.LoadScene(MenuScene);

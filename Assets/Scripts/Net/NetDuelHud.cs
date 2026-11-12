@@ -180,7 +180,7 @@ public class NetDuelHud : MonoBehaviour
                 break;
             case NetDuel.Phase.FinDeMatch:
                 bool victory = duel.Winner.Value == mySide;
-                msg = victory ? "VICTOIRE" : "DÉFAITE"; col = victory ? Mine : Theirs;
+                msg = victory ? (duel.Forfeit.Value ? "VICTOIRE · ADVERSAIRE PARTI" : "VICTOIRE") : "DÉFAITE"; col = victory ? Mine : Theirs;
                 break;
         }
         banner.text = msg; banner.color = col;

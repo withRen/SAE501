@@ -13,6 +13,7 @@ public class PlayerHitbox : MonoBehaviour
     public void Hit(float headDamage, float bodyDamage, Vector3 point, float legDamage = -1f)
     {
         if (player == null || player.Dead) return;
+        if (!ArenaMaps.InArena) return;         // [hotfix #163] coop : pas de tir ami (coups entre joueurs seulement en duel)
         float amount = zone == HitZone.Head ? headDamage : zone == HitZone.Legs && legDamage >= 0f ? legDamage : bodyDamage;
         player.TakeShotDamage(amount, point);
     }

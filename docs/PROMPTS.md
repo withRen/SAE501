@@ -217,6 +217,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [208](#208--coop-évasion--tous-les-vivants-doivent-passer-le-portail) | 2026-11-12 | Coop Évasion : victoire quand tous les joueurs en vie ont passé le portail | Gameplay / Multijoueur | L'hôte retient les joueurs sortis (plus visés par les zombies) ; victoire quand tous les vivants sont sortis ; compteur « PORTAIL x/y » ; solo inchangé. Règle testée par simulation, chemin hôte et solo testés en mode Play, pas à deux casques (issue #161) |
 | [209](#209--vr--la-tête-ne-traverse-plus-les-murs) | 2026-11-12 | En VR on sort de la carte / traverse les portes en avançant la tête | Gameplay / VR | HeadWallGuard : si la tête traverse du décor solide, le joueur est ramené à la dernière position valide (fondu noir court). Testé dans l'éditeur (tête simulée), pas au casque (issue #162) |
 | [210](#210--hotfix-160-161-162-fusionnés-dans-main) | 2026-11-12 | Tout fusionner dans main | Git | Branches hotfix/160, 161 et 162 poussées et fusionnées dans main (--no-ff) ; seul conflit : le journal (entrées 207 à 209 gardées) ; compilation vérifiée ; issues laissées ouvertes jusqu'au test au casque |
+| [211](#211--audit-du-multijoueur) | 2026-11-12 | Analyser le mode 1v1 et les modes coop, chercher les bugs | Multijoueur / Analyse | Audit en lecture seule : 0 bloquant (depuis ~/SAE501), 5 majeurs (tir ami en coop, forfait en duel, duel à 3+ via le lobby, actions du joueur mort, correctif 12 s non commité), 9 mineurs ; rapport docs/analyses/Audit_multijoueur_2026-11-12.md (non commité) |
+| [212](#212--corrections-de-laudit-multijoueur) | 2026-11-12 | Corriger les 5 bugs majeurs de l'audit | Multijoueur | Tir ami coupé en coop, victoire par forfait en duel, duel limité à 2 dans le lobby, mains du joueur mort désactivées (pistolet rangé), correctif 12 s commité ; + message d'évasion, pas de régénération en duel. Testé dans l'éditeur, pas au casque (issue #163) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4018,4 +4020,39 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Seul conflit : `docs/PROMPTS.md`** (chaque branche ajoutait son entrée) ; résolu en gardant les entrées 207, 208 et 209 dans l'ordre. Le code s'est fusionné sans conflit (`NetPlayer`, `NetKillFx` : changements de 160 et 161 gardés tous les deux).
 - `~/SAE501` est maintenant sur `main`. Compilation vérifiée dans l'éditeur, sans erreur. Fichiers locaux non commités de Rahim intacts (correctif du délai de 12 s, URP, manifeste, profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
 - Wiki poussé. Issues #160, #161, #162 commentées, laissées ouvertes jusqu'au test au casque.
+
+---
+
+## 211 — Audit du multijoueur
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur / Analyse
+
+> Analyse la totalité du mode 1V1 et des modes coop, recherche les bugs possibles
+
+**Résultat** (analyse faite par l'IA, Claude Code, sur le Mac de Rahim ; lecture seule, aucun code modifié)
+
+- Rapport : `docs/analyses/Audit_multijoueur_2026-11-12.md` (non commité, copie dans `~/SAE501_captures_155/`).
+- 15 points : 0 bloquant pour un build depuis `~/SAE501` ; 5 majeurs (tir ami en coop ; l'adversaire qui quitte un duel laisse l'hôte seul sans fin de match ; duel lancé à 3 ou 4 en changeant le mode du lobby ; un joueur mort en coop peut encore frapper, tirer le levier, clouer ; le correctif du délai de 12 s n'est pas commité, bloquant pour un build depuis GitHub) ; 9 mineurs ; 1 remarque (autorité client).
+- Tout est lu dans le code (chemins vérifiés), rien n'est reproduit à deux casques.
+
+---
+
+## 212 — Corrections de l'audit multijoueur
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> Oui $
+
+(réponse de Rahim à la proposition « commencer par 1, 2, 3, 4 et 5 » de l'audit 211, comprise comme « oui, tous les cinq »)
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #163, branche `hotfix/163-audit-multijoueur` depuis `main`, commit local non poussé)
+
+1. **Tir ami** : en coop, un tir sur un coéquipier ne fait plus rien (`PlayerHitbox.Hit`, et refus côté victime dans `NetPlayer.HitRpc`) ; le duel ne change pas.
+2. **Forfait en duel** : si l'adversaire quitte, l'hôte gagne par forfait (« VICTOIRE · ADVERSAIRE PARTI »), puis tout le monde revient au menu (`NetDuel.PlayerLeft`). Si c'est l'hôte qui part, le client revient au menu avec « L'adversaire (hôte) a quitté le duel ».
+3. **Duel à plus de 2** : impossible à lancer, même forcé (`NetLobby.TooManyForDuel`) ; dans le lobby, le bouton « forcer » disparaît et un message rouge s'affiche.
+4. **Joueur mort** (coop et duel) : il lâche ce qu'il tient ; le pistolet retourne à son holster de ceinture s'il est libre ; ses mains sont désactivées (plus de mêlée, levier, planches, ramassage ni tir) jusqu'à sa réapparition.
+5. **Correctif du délai de 12 s du lobby** (Rahim, thread « Plan multijoueur local ») commité dans `MainMenuMulti.cs`.
+- En plus (mineurs de l'audit) : pendant l'évasion, le mort lit « Tes coéquipiers doivent passer le portail » ; plus de régénération de vie en duel.
+- **Testé** en mode Play (hôte + joueurs simulés) : régénération 0 en duel ; mort → mains coupées, pistolet rangé au holster en coop (lâché en duel, rendu à la manche suivante) ; réapparition → mains rendues ; tir ami ignoré en coop, coups toujours comptés en duel ; forfait → fin de match, côté restant gagnant ; lobby à 3 en mode duel → pas de lancement, message affiché. Capture : `~/SAE501_captures_duel_hud/5_victoire_par_forfait_PC.png`. **Non testé** : à deux casques.
+- Rapport d'audit mis à jour (statut de chaque point) et commité avec ces corrections.
 

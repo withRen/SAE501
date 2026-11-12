@@ -158,7 +158,8 @@ public class NetSpectator : MonoBehaviour
         target = alive[((i < 0 ? 0 : i + step) % alive.Count + alive.Count) % alive.Count];
         camInit = false;
         string more = alive.Count > 1 ? (DesktopMode.On ? "   ·   CLIC / ESPACE : joueur suivant" : "   ·   A / X : joueur suivant") : "";
-        caption.text = "Tu regardes " + target.DisplayName + more + "\nRéapparition à la fin de la vague";
+        bool escaping = WaveManager.Instance && WaveManager.Instance.Escaping;    // [hotfix #163] évasion : plus de fin de vague
+        caption.text = "Tu regardes " + target.DisplayName + more + (escaping ? "\nIls doivent passer le portail du jardin" : "\nRéapparition à la fin de la vague");
     }
 
     bool SwitchPressed()

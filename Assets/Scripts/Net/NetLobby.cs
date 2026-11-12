@@ -43,6 +43,8 @@ public class NetLobby : NetworkBehaviour
     public readonly NetworkVariable<int> ModeIndex = new NetworkVariable<int>(0);
 
     public bool IsDuel1v1 => ModeIndex.Value == 2;
+    /// <summary>[Hotfix #163] Mode duel choisi alors que plus de 2 joueurs sont dans le lobby (la limite n'était vérifiée qu'à la connexion).</summary>
+    public bool TooManyForDuel => IsDuel1v1 && Players.Count > 2;
 
     /// <summary>Duel : nombre de manches (1, 3, 5, 7, 9 ; 5 par défaut, premier à 3) et arme principale (0 aucune, 1 AK74, 2 sniper). Choix de l'hôte.</summary>
     public readonly NetworkVariable<int> DuelRounds = new NetworkVariable<int>(NetDuel.DefaultRounds);
@@ -246,6 +248,7 @@ public class NetLobby : NetworkBehaviour
     {
         get
         {
+            if (TooManyForDuel) return false;           // [hotfix #163] jamais de duel à plus de 2 (même forcé)
             if (ForceStart.Value && IsDuel1v1 && Players.Count >= 1) return true;      // lancement forcé par l'hôte
             if (Players.Count < minPlayers) return false;
             foreach (var e in Players) if (!e.ready) return false;

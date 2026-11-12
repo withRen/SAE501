@@ -115,7 +115,7 @@ public class NetPlayer : NetworkBehaviour
         if (Local == this) Local = null;
         var h = PlayerHealth.Instance;
         if (IsOwner && h) { h.Changed -= OnLocalHealth; h.Died -= OnLocalDied; h.Revived -= OnLocalRevived; }
-        if (IsOwner) { NetSpectator.End(); NetKillFx.Alive(); PlayerName.Changed -= OnLocalName; }
+        if (IsOwner) { NetSpectator.End(); NetKillFx.Alive(); PlayerName.Changed -= OnLocalName; SetHands(true); }
     }
 
     void OnLocalHealth(float hp, float max) => Health.Value = hp;
@@ -123,12 +123,15 @@ public class NetPlayer : NetworkBehaviour
 
     void OnLocalDied()
     {
+        SetHands(false);                        // [hotfix #163] mort : il lâche ce qu'il tient, ses mains n'agissent plus jusqu'à sa réapparition
         // [hotfix #155] qui a tué : le dernier joueur qui nous a touché dans les 5 s, sinon personne (zombie, chute, soi-même)
         ulong killer = Time.time - lastAttackTime < 5f ? lastAttacker : NoAttacker;
         DiedRpc(killer);
         if (ArenaMaps.InArena) return;
         // coop : à terre, les autres continuent ; spectateur d'un coéquipier vivant, réapparition à la fin de la vague (NetGame)
-        if (WaveManager.Instance) WaveManager.Instance.RemoteAnnounce("VOUS ÊTES À TERRE\nVos coéquipiers tiennent encore.\nRéapparition à la fin de la vague.", 7f);
+        if (WaveManager.Instance) WaveManager.Instance.RemoteAnnounce(WaveManager.Instance.Escaping
+            ? "VOUS ÊTES À TERRE\nVos coéquipiers doivent passer le portail du jardin."
+            : "VOUS ÊTES À TERRE\nVos coéquipiers tiennent encore.\nRéapparition à la fin de la vague.", 7f);
         StartCoroutine(SpectateSoon());
     }
 
@@ -141,6 +144,7 @@ public class NetPlayer : NetworkBehaviour
 
     void OnLocalRevived()
     {
+        SetHands(true);
         NetSpectator.End();
         NetKillFx.Alive();
     }
@@ -158,10 +162,45 @@ public class NetPlayer : NetworkBehaviour
         {
             string detail = k && !selfKill ? "Éliminé par " + k.DisplayName
                           : ArenaMaps.InArena ? "" : "Tué par les zombies";
-            if (!ArenaMaps.InArena) detail += "\nRéapparition à la fin de la vague";
+            if (!ArenaMaps.InArena)
+                detail += WaveManager.Instance && WaveManager.Instance.Escaping
+                    ? "\nTes coéquipiers doivent passer le portail"          // [hotfix #163] plus de fin de vague pendant l'évasion
+                    : "\nRéapparition à la fin de la vague";
             NetKillFx.Death(detail);
         }
         else if (k && k.IsOwner) NetKillFx.Kill(victim);
+    }
+
+    // [hotfix #163] mains du joueur mort (réseau) : chaque objet tenu est lâché ; s'il a un holster libre sur la ceinture (pistolet,
+    // chargeur…), il y retourne (le joueur le retrouve en réapparaissant) ; sinon il tombe (en duel, l'arme est rendue à chaque manche).
+    // Les interacteurs des mains (direct, rayon…) sont désactivés : plus de mêlée, levier, planches, ramassage ni tir. Réactivés au retour à la vie.
+    static readonly List<Behaviour> disabledHands = new List<Behaviour>();
+
+    static void SetHands(bool on)
+    {
+        if (on)
+        {
+            foreach (var b in disabledHands) if (b) b.enabled = true;
+            disabledHands.Clear();
+            return;
+        }
+        var sockets = FindObjectsByType<BeltSocket>(FindObjectsSortMode.None);
+        foreach (var name in new[] { "Left Controller", "Right Controller" })
+        {
+            var c = GameObject.Find(name);
+            if (!c) continue;
+            foreach (var it in c.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor>(false))
+            {
+                if (it is UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor || !it.enabled) continue;
+                var held = new List<UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable>(it.interactablesSelected);
+                if (it.interactionManager) it.interactionManager.CancelInteractorSelection((UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor)it);
+                foreach (var item in held)
+                    foreach (var s in sockets)
+                        if (s && !s.hasSelection && s.interactionManager && s.CanSelect(item)) { s.interactionManager.SelectEnter((UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor)s, item); break; }
+                it.enabled = false;
+                disabledHands.Add(it);
+            }
+        }
     }
 
     /// <summary>[hotfix #161] Hôte : ce joueur a franchi le portail ; les zombies ne le visent plus (son « double » sur l'hôte,
@@ -222,6 +261,7 @@ public class NetPlayer : NetworkBehaviour
         var h = PlayerHealth.Instance;
         if (!h || h.IsDead) return;
         if (!NetDuel.CanShoot) return;          // [hotfix #160] duel hors manche active : coup refusé (tir parti juste avant la fin de manche)
+        if (attacker != NoAttacker && !ArenaMaps.InArena) return;      // [hotfix #163] coop : pas de tir ami (sécurité côté victime)
         if (attacker != NoAttacker) { lastAttacker = attacker; lastAttackTime = Time.time; }
         h.TakeDamage(amount, from);
     }

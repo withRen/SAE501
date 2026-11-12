@@ -206,6 +206,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [197](#197--launch-app-grisé-dans-mqdh--permission-micro-retirée) | 2026-11-12 | Appli lançable en ligne de commande mais pas depuis MQDH (triangle orange) | Build / Android | Cause : permission micro RECORD_AUDIO non accordée (MQDH grise « Launch app »). Retirée du manifeste (le jeu n'utilise pas le micro), APK reconstruit et testé sur le 2e casque |
 | [198](#198--hotfix-multijoueur--kills-mort-spectateur-téléportation) | 2026-11-12 | Hotfix : animation de kill et de mort en 1v1 / multi, spectateur en coop zombie, TP au joystick gauche, NavMesh des arènes 1v1 | Gameplay / Multijoueur / VR | Croix rouge + son + « ÉLIMINÉ » + fil des éliminations, écran « TU ES MORT », chute du personnage ; spectateur d'un coéquipier et réapparition en fin de vague ; joystick droit = rotation seule ; NavMesh d'Alvéole 17 et Quai 9. Testé en mode Play (PC, sans réseau), pas au casque (issue #155) |
 | [199](#199--nom-du-joueur--compte-meta-ou-casque) | 2026-11-12 | Nom du joueur : nom du compte / du profil du casque | Multijoueur | Meta Platform SDK (si App ID), sinon nom du casque, sinon « Joueur N » ; synchronisé (lobby, étiquette, éliminations, spectateur). Pas d'App ID dans le projet : nom du compte inactif pour l'instant (issue #155) |
+| [200](#200--saut-au-casque--plus-de-vol-en-rafale) | 2026-11-12 | Au casque on peut presque voler en spammant le saut (corrigé sur PC) | Gameplay / VR | JumpGuard pour casque et PC : un saut seulement après 0,15 s au sol sans interruption, pas de saut en l'air, tolérance 0,05 s ; testé en mode Play PC (rafale : un seul saut), pas au casque (issue #156) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3825,4 +3826,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Synchronisé : `NetLobby.Entry.name` (lobby) et `NetPlayer.Name` (étiquette au-dessus de l'avatar, fil des éliminations, « Éliminé par … », spectateur).
 - **Important** : le projet n'a pas d'App ID Meta (pas de `OculusPlatformSettings`). Tant qu'il n'y en a pas, le nom du compte n'est pas demandé : c'est le nom du casque ou « Joueur N ». Pour l'activer : créer l'appli sur le tableau de bord développeur Meta, coller son App ID dans Meta → Platform → Edit Settings, et installer l'APK depuis une chaîne de diffusion (sinon la vérification d'achat échoue et on retombe sur le repli).
 - Vérifié : compilation (le code Android a été compilé à part dans l'éditeur). Non vérifié : au casque.
+
+---
+
+## 200 — Saut au casque : plus de vol en rafale
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> Y a un petit soucis en mode VR qu'on avait patch en mode PC, en gros on peut limite voler en spammant la touche de jump
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #156, même branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause** (lue dans le code de XRI) : le `JumpProvider` permet un saut si le `GravityProvider` dit « au sol » ou pendant la fenêtre de tolérance (0,25 s). La détection du sol (petite sphère sous les pieds) peut clignoter contre un mur, une caisse ou un objet : chaque clignotement remet le saut à zéro, et A en rafale enchaîne les sauts. La correction PC (`DesktopPlayer.TuneJump`, tolérance 0,05 s) ne touchait pas la version casque.
+- **Correction** : `Assets/Scripts/JumpGuard.cs`, ajouté par code au rig de chaque scène (aucune scène modifiée), casque et PC : pas de saut en l'air, tolérance 0,05 s, et un saut n'est permis qu'après 0,15 s au sol sans interruption (et jamais pendant un saut). Le blocage passe par le « bypass » de l'entrée du saut : le bouton est lu comme relâché, la gravité ne change pas.
+- **Testé** en mode Play sur PC (arène Alvéole 17) : Espace en rafale pendant 4 s → un seul saut (0,66 m, la hauteur normale de l'arène), retour au sol. **Non reproduit** dans l'éditeur sans la garde (le clignotement vient du casque), et **pas testé au casque**.
 

@@ -71,6 +71,7 @@ public static class DuelLoadout
         if (!prefab) { Debug.LogWarning("[Duel] Resources/Weapons/" + name + " introuvable : menu SAE501 → Arène 1v1 → Construire AK74 et sniper"); return null; }
         var go = Object.Instantiate(prefab);
         go.name = name;
+        if (kind != 1 && !go.GetComponent<SniperScope>()) go.AddComponent<SniperScope>();      // ancien prefab sans lunette
         var attach = it.attachTransform ? it.attachTransform : it.transform;
         go.transform.SetPositionAndRotation(attach.position, attach.rotation);
         primaryKind = kind;

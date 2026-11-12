@@ -499,6 +499,7 @@ GameObject:
   - component: {fileID: 1945664272361339886}
   - component: {fileID: 1650567141462978456}
   - component: {fileID: 7554656953607341510}
+  - component: {fileID: 8937895557738281776}
   m_Layer: 0
   m_Name: Sniper
   m_TagString: Untagged
@@ -807,6 +808,31 @@ MonoBehaviour:
   dryFireClip: {fileID: 0}
   headRadius: 0.35
   headAngle: 35
+--- !u!114 &8937895557738281776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2348389243897678657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66877e3e6f34146cabb4ebd3e32530e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SniperScope
+  magnification: 5
+  resolution: 512
+  farClip: 250
+  shadows: 0
+  activationDistance: 0.14
+  activationAngle: 30
+  eyeRelief: 0.075
+  eyeTolerance: 0.012
+  halfIpd: 0.032
+  eyepiece: {x: -0.0077, y: 0.2018, z: -0.0205}
+  objective: {x: -0.0077, y: 0.2002, z: 0.39}
+  lensRadius: 0.021
+  pcSensitivity: 0.3
 --- !u!1 &3293819453518202676
 GameObject:
   m_ObjectHideFlags: 0

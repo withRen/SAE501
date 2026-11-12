@@ -10,6 +10,8 @@
 
 ## 1. Dernières réalisations intégrées
 
+- **Lunette du sniper (duel 1v1, 12/11, journal 192, issue #153, branche `feature/153-lunette-sniper`, non poussée)** : `SniperScope` sur `Resources/Weapons/Sniper.prefab` ; au casque caméra ×5 rendue sur la lentille seulement l'œil près de l'oculaire (shader `SAE501/ScopeLens`) ; au PC zoom clic droit + lunette plein écran (`DesktopPlayer`, `DesktopHud`). Captures `docs/images/lunette/`. À tester au casque.
+
 - **Import Unity de l'Arène 1v1 ("Alvéole 17") & Scène Dédiée** :
   - **Fichiers source & Matériaux URP** : [`Assets/Arena1v1/arena_1v1_bunker.fbx`](file:///Users/rahimtam/SAE501/Assets/Arena1v1/arena_1v1_bunker.fbx) (1.05 Mo) avec 8 matériaux URP Lit dans [`Assets/Arena1v1/Materials/`](file:///Users/rahimtam/SAE501/Assets/Arena1v1/Materials/).
   - **Constructeur de scène par script** : [`Assets/Editor/Arena1v1Builder.cs`](file:///Users/rahimtam/SAE501/Assets/Editor/Arena1v1Builder.cs) accessible via le menu **SAE501 → Build Arena 1v1 Scene**.

@@ -11,12 +11,16 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 //   - tant qu'il est tenu par une main, l'objet passe sur le calque HeldLayer (29), que la détection du sol ignore
 //     (masque du GravityProvider : Default, TransparentFX, Water, UI) ; les caméras et lumières, elles, voient tous les calques ;
 //   - ses collisionneurs ne touchent plus la capsule du joueur (CharacterController) : on ne peut plus « marcher » sur son arme ;
-//   - lâché ou rangé dans un holster : calques d'origine et collisions rétablis.
+//   - lâché ou rangé dans un holster : calques d'origine rétablis, et collisions rétablies SEULEMENT pour celles qui existaient
+//     avant la prise (bug du 12/11 : on rétablissait aussi celles qu'IgnorePlayer coupe sur les armes, et le pistolet rangé
+//     à la ceinture bloquait la capsule du joueur : on ne pouvait plus avancer).
 // Branché sur les interacteurs des mains de chaque scène (pas les holsters de la ceinture), donc aussi les armes créées en jeu.
 public static class HeldItemLayer
 {
     public const int HeldLayer = 29;
 
+    // cols : collisionneurs dont on a coupé la collision avec le joueur ET qui la touchaient avant (à rétablir au lâcher).
+    // Ceux qui l'ignoraient déjà (IgnorePlayer sur les armes, la ceinture, les planches) ne sont jamais rétablis.
     class Saved { public List<(GameObject go, int layer)> layers = new List<(GameObject, int)>(); public List<Collider> cols = new List<Collider>(); }
     static readonly Dictionary<Transform, Saved> held = new Dictionary<Transform, Saved>();
     static readonly HashSet<XRBaseInteractor> hooked = new HashSet<XRBaseInteractor>();
@@ -58,8 +62,8 @@ public static class HeldItemLayer
         var cc = Player();
         foreach (var c in t.GetComponentsInChildren<Collider>(true))
         {
-            if (c.isTrigger) continue;
-            if (cc) Physics.IgnoreCollision(cc, c, true);
+            if (c.isTrigger || !cc || Physics.GetIgnoreCollision(cc, c)) continue;     // déjà ignoré (IgnorePlayer) : on n'y touche pas
+            Physics.IgnoreCollision(cc, c, true);
             saved.cols.Add(c);
         }
         held[t] = saved;

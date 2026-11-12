@@ -209,6 +209,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [200](#200--saut-au-casque--plus-de-vol-en-rafale) | 2026-11-12 | Au casque on peut presque voler en spammant le saut (corrigé sur PC) | Gameplay / VR | JumpGuard pour casque et PC : un saut seulement après 0,15 s au sol sans interruption, pas de saut en l'air, tolérance 0,05 s ; testé en mode Play PC (rafale : un seul saut), pas au casque (issue #156) |
 | [201](#201--impossible-douvrir-le-port-7777) | 2026-11-12 | « Impossible d'ouvrir le port 7777 » au casque | Multijoueur | Cause : session réseau restée ouverte après la fin d'un duel (menu rechargé par Netcode sans fermer la session). Fin de match = chacun ferme puis revient au menu ; HÉBERGER/REJOINDRE ferment une session restée ouverte et réessaient. Testé en mode Play (PC), pas au casque (issue #157) |
 | [202](#202--saut-infini-en-visant-au-sniper) | 2026-11-12 | Saut infini toujours là au casque en visant au sniper | Gameplay / VR | Cause : la détection du sol (sphère depuis la tête) touchait l'arme épaulée. Objets tenus sur un calque ignoré par cette détection, plus de collision avec le joueur ; 0,9 s entre deux sauts et redescente obligatoire. Vérifié dans l'éditeur, pas au casque (issue #156) |
+| [203](#203--pistolet-en-main--on-ne-peut-plus-avancer) | 2026-11-12 | Avec le pistolet pris, on ne peut plus avancer | Gameplay / VR | Régression du correctif 202 : au lâcher, la collision arme/joueur était rétablie alors qu'IgnorePlayer la coupait ; l'arme rangée à la ceinture bloquait le joueur. Seules les collisions existant avant la prise sont rétablies. Vérifié (pistolet, AK, sniper) dans l'éditeur, pas au casque (issue #156) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3880,4 +3881,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Correction à la source** (`Assets/Scripts/HeldItemLayer.cs`) : tout objet pris en main (armes, marteau, planches…) passe sur le calque 29 tant qu'il est tenu ; ce calque n'est pas dans la détection du sol (caméras et lumières le voient). Ses collisions avec la capsule du joueur sont coupées (on ne peut plus marcher sur son arme). Calques et collisions sont rétablis quand on le lâche ou le range dans un holster. Branché sur les mains de chaque scène : vaut aussi pour les armes données en jeu.
 - **En plus, comme demandé** (`JumpGuard`) : 0,9 s au moins entre deux sauts, et pas de nouveau saut tant que le joueur n'est pas redescendu (à 0,15 m du point de départ du saut, ou posé depuis 0,6 s sur une caisse).
 - **Vérifié** dans l'éditeur (Alvéole 17) : un pistolet pris par la main droite passe sur le calque 29 et ne touche plus le joueur ; la même détection du sol que XRI, joueur en l'air avec une arme sous le visage : « au sol » sur Default (le bug), plus « au sol » sur le calque 29. **Non vérifié** : le saut lui-même dans l'éditeur (les touches simulées n'ont pas été prises en compte), et tout au casque.
+
+---
+
+## 203 — Pistolet en main : on ne peut plus avancer
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / VR
+
+> bug : Si on se prend le pistolet et qu'on teste de se déplacer on ne peut pas avancer
+
+**Résultat** (diagnostic et correction faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #156, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause : régression du correctif 202** (`HeldItemLayer`, écrit par l'IA). Les armes, la ceinture et les planches ignorent déjà la capsule du joueur (`IgnorePlayer`). En lâchant un objet (rangé au holster, lâché, passé d'une main à l'autre), `HeldItemLayer` remettait la collision avec le joueur à « active » au lieu de la laisser coupée. Le pistolet rangé à la ceinture, collé au corps, bloquait alors la capsule : on ne pouvait plus avancer.
+- **Correction** : à la prise, seuls les collisionneurs qui touchaient encore le joueur sont coupés et retenus ; au lâcher, seuls ceux-là sont rétablis. Ce qu'`IgnorePlayer` a coupé reste coupé.
+- **Vérifié** dans l'éditeur (Alvéole 17) avec le pistolet, l'AK74 et le sniper : pris → calque 29, collision avec le joueur ignorée ; lâché → calque d'origine, collision **toujours ignorée**. **Non vérifié** : la marche elle-même dans l'éditeur (le clavier simulé n'a pas été pris en compte) et au casque.
 

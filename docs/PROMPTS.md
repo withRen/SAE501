@@ -211,6 +211,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [202](#202--saut-infini-en-visant-au-sniper) | 2026-11-12 | Saut infini toujours là au casque en visant au sniper | Gameplay / VR | Cause : la détection du sol (sphère depuis la tête) touchait l'arme épaulée. Objets tenus sur un calque ignoré par cette détection, plus de collision avec le joueur ; 0,9 s entre deux sauts et redescente obligatoire. Vérifié dans l'éditeur, pas au casque (issue #156) |
 | [203](#203--pistolet-en-main--on-ne-peut-plus-avancer) | 2026-11-12 | Avec le pistolet pris, on ne peut plus avancer | Gameplay / VR | Régression du correctif 202 : au lâcher, la collision arme/joueur était rétablie alors qu'IgnorePlayer la coupait ; l'arme rangée à la ceinture bloquait le joueur. Seules les collisions existant avant la prise sont rétablies. Vérifié (pistolet, AK, sniper) dans l'éditeur, pas au casque (issue #156) |
 | [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
+| [205](#205--étiquette-de-nom-masquée-en-duel) | 2026-11-12 | En 1v1 on voit le nametag | Multijoueur | Étiquette au-dessus de l'avatar masquée dans les arènes du duel, gardée en coop ; vérifié en mode Play (arène), pas au casque (issue #159) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3912,4 +3913,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
   - `NetLobby.Add` : premier numéro libre parmi les joueurs **présents dans le lobby** ; la liste est vidée à l'ouverture du lobby, au lancement de la partie (`StartGameRpc`) et à chaque HÉBERGER / REJOINDRE (`NetSession`).
   - `NetLobby.Side` : côté du duel (1 ou 2) selon le rang du joueur parmi les deux joueurs, jamais le même. Utilisé pour l'apparition (`NetPlayer`, `NetDuel` à chaque manche), le pistolet de départ (`DuelLoadout`) et le score (`NetDuel`).
 - **Testé** en mode Play (menu, PC) : avec des numéros périmés d'une « ancienne session », HÉBERGER redonne Joueur 1 à l'hôte ; numéros 3 et 4 → côtés 1 et 2 ; numéros 1 et 2 → côtés 1 et 2. **Non testé** : une vraie partie à deux casques (connexion d'un second joueur, apparitions dans l'arène).
+
+---
+
+## 205 — Étiquette de nom masquée en duel
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> En 1V1 on voit le nametag (il faudrait qu'il ne soit pas visible)
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #159, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- `NetPlayer.BuildAvatar` : l'étiquette (nom au-dessus de la tête de l'avatar) est désactivée dans les arènes du duel (Alvéole 17, Quai 9). On ne repère plus l'adversaire par son nom à travers le décor. Elle reste en coop zombie.
+- Le nom reste dans le fil des éliminations et sur les écrans « ÉLIMINÉ » / « Éliminé par … » ; le tableau du duel affiche « J1 / J2 » (pas de nom).
+- Vérifié en mode Play (Alvéole 17) : l'étiquette d'un joueur distant simulé est créée mais invisible. Non vérifié au casque.
 

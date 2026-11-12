@@ -362,6 +362,7 @@ public class NetPlayer : NetworkBehaviour
         label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         lg.GetComponent<MeshRenderer>().sharedMaterial = label.font.material;
         label.fontSize = 48; label.characterSize = 0.01f; label.anchor = TextAnchor.MiddleCenter; label.alignment = TextAlignment.Center;
+        lg.SetActive(!ArenaMaps.InArena);      // [hotfix #159] duel 1v1 : pas d'étiquette au-dessus de l'adversaire (on ne le repère pas à travers le décor)
         BuildBody();
     }
 

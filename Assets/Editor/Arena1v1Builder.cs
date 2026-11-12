@@ -88,6 +88,7 @@ public static class Arena1v1Builder
 
         // corrections de level design (escaliers, caisses, gravats, socles vides, flaques, ombres) : Arena1v1Fixes
         Arena1v1Fixes.Apply();
+        ArenaNavMesh.Bake(scene);                                   // [hotfix #155] NavMesh pour la téléportation
 
         // Sauvegarde de la scène
         EditorSceneManager.SaveScene(scene, ScenePath);

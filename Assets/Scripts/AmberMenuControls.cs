@@ -67,7 +67,7 @@ public abstract partial class AmberMenu
         var stick = PtStick - new Vector2(0f, 0.022f);
         Callout(p, false, PtTrigger, 0.35f, "GÂCHETTE", () => "Utiliser l'objet tenu\nValider dans les menus");
         Callout(p, false, stick, StickY, "JOYSTICK", () => GameSettings.Teleport
-            ? "Avant : se téléporter\nCôtés : tourner\nEnfoncer : s'accroupir"
+            ? "Avant : se téléporter\nEnfoncer : s'accroupir"
             : "Se déplacer\nEnfoncer : s'accroupir");
         Callout(p, false, PtLow, 0.05f, "X", () => "Maintenir X + A (2 s) :\npasser le tutoriel");
         Callout(p, false, PtSmall, -0.06f, "MENU", () => "Pause");
@@ -76,8 +76,7 @@ public abstract partial class AmberMenu
         // main droite (libellés à droite)
         Callout(p, true, PtTrigger, 0.35f, "GÂCHETTE", () => "Tirer · utiliser l'objet tenu\nValider dans les menus");
         Callout(p, true, PtHigh, 0.26f, "B", () => "Maintenir : vague suivante");
-        Callout(p, true, stick, StickY, "JOYSTICK", () => (GameSettings.SmoothTurn ? "Côtés : tourner (fluide)" : "Côtés : tourner (à-coups)")
-            + (GameSettings.Teleport ? "\nAvant : se téléporter" : ""));
+        Callout(p, true, stick, StickY, "JOYSTICK", () => GameSettings.SmoothTurn ? "Côtés : tourner (fluide)" : "Côtés : tourner (à-coups)");
         Callout(p, true, PtLow, 0.05f, "A", () => "Sauter");
         Callout(p, true, PtGrip, -0.09f, "GRIP", GripText);
 

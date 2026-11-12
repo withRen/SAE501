@@ -25,12 +25,14 @@ public class NetLobby : NetworkBehaviour
         public bool ready;
         public int skin;            // tenue choisie (PlayerSkin), affichée dans le lobby
         public FixedString32Bytes device;
+        public FixedString64Bytes name;     // [hotfix #155] nom du compte Meta / du casque (PlayerName), vide = « Joueur N »
 
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref clientId); s.SerializeValue(ref number); s.SerializeValue(ref ready); s.SerializeValue(ref skin); s.SerializeValue(ref device);
+            s.SerializeValue(ref name);
         }
-        public bool Equals(Entry o) => clientId == o.clientId && number == o.number && ready == o.ready && skin == o.skin && device.Equals(o.device);
+        public bool Equals(Entry o) => clientId == o.clientId && number == o.number && ready == o.ready && skin == o.skin && device.Equals(o.device) && name.Equals(o.name);
     }
 
     public NetworkList<Entry> Players;
@@ -130,6 +132,7 @@ public class NetLobby : NetworkBehaviour
     {
         Instance = this;
         StartCoroutine(SendSkinWhenListed());
+        PlayerName.Changed += SendName;
         if (!IsServer) return;
         if (Array.IndexOf(Environment.GetCommandLineArgs(), "-netsolo") >= 0 || SoloTest) minPlayers = 1;     // test seul
         foreach (var id in NetworkManager.ConnectedClientsIds) Add(id, "");
@@ -140,6 +143,7 @@ public class NetLobby : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         if (Instance == this) Instance = null;
+        PlayerName.Changed -= SendName;
         if (NetworkManager)
         {
             NetworkManager.OnClientConnectedCallback -= OnConnected;
@@ -201,10 +205,26 @@ public class NetLobby : NetworkBehaviour
         float until = Time.unscaledTime + 10f;
         while (Time.unscaledTime < until)
         {
-            foreach (var e in Players) if (e.clientId == NetworkManager.LocalClientId) { SetSkinRpc(PlayerSkin.Selected); yield break; }
+            foreach (var e in Players) if (e.clientId == NetworkManager.LocalClientId) { SetSkinRpc(PlayerSkin.Selected); SendName(); yield break; }
             yield return null;
         }
     }
+
+    // [hotfix #155] nom du joueur (compte Meta / casque), envoyé à l'arrivée et s'il arrive plus tard (réponse du compte Meta)
+    void SendName() => SetNameRpc(new FixedString64Bytes(PlayerName.Local));
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void SetNameRpc(FixedString64Bytes n, RpcParams p = default)
+    {
+        for (int i = 0; i < Players.Count; i++)
+        {
+            if (Players[i].clientId != p.Receive.SenderClientId) continue;
+            var e = Players[i]; e.name = n; Players[i] = e;
+        }
+    }
+
+    /// <summary>Nom d'un joueur du lobby (« Joueur N » s'il n'en a pas).</summary>
+    public string NameOf(Entry e) => PlayerName.Display(e.name.ToString(), e.number);
 
     public bool IsReady(ulong id) { foreach (var e in Players) if (e.clientId == id) return e.ready; return false; }
 

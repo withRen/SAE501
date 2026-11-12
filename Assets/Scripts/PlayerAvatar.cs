@@ -155,7 +155,50 @@ public class PlayerAvatar : MonoBehaviour
         return g;
     }
 
-    void LateUpdate() => Solve(Time.deltaTime);
+    void LateUpdate()
+    {
+        if (fallen) { Fall(); return; }
+        Solve(Time.deltaTime);
+    }
+
+    // ---------- [hotfix #155] mort : le personnage s'effondre en arrière (vu par les autres joueurs) ----------
+    bool fallen;
+    float fallStart;
+    Vector3 fallPivot, fallAxis, fallPos;
+    Quaternion fallRot;
+
+    /// <summary>Joueur mort : le corps se fige et bascule en arrière jusqu'au sol en 0,7 s (instant : déjà à terre, sans animation).
+    /// Relevé : il reprend la pose des cibles (tête, mains).</summary>
+    public void SetFallen(bool down, bool instant = false)
+    {
+        if (down == fallen) return;
+        fallen = down;
+        if (anim) anim.speed = down ? 0f : 1f;          // le corps garde la pose de l'instant de la mort
+        if (down)
+        {
+            fallStart = Time.time - (instant ? 10f : 0f);
+            fallPos = transform.position; fallRot = transform.rotation;
+            fallPivot = new Vector3(fallPos.x, float.IsNaN(floorY) ? fallPos.y : Mathf.Min(fallPos.y, floorY), fallPos.z);   // les pieds, au sol
+            fallAxis = transform.right;
+        }
+        else
+        {
+            transform.SetPositionAndRotation(fallPos, fallRot);
+            hasLast = false;
+        }
+    }
+
+    void Fall()
+    {
+        float t = Mathf.Clamp01((Time.time - fallStart) / 0.7f);
+        // chute qui accélère (t²), petit rebond à l'arrivée
+        float e = t * t;
+        float bounce = t >= 1f ? 0f : Mathf.Sin(Mathf.Clamp01((t - 0.85f) / 0.15f) * Mathf.PI) * 0.06f;
+        float angle = -84f * (e - bounce);                // en arrière (autour de l'axe droite du corps)
+        var q = Quaternion.AngleAxis(angle, fallAxis);
+        transform.SetPositionAndRotation(fallPivot + q * (fallPos - fallPivot) + Vector3.up * (0.12f * Mathf.Abs(Mathf.Sin(angle * Mathf.Deg2Rad))),
+                                         q * fallRot);
+    }
 
     /// <summary>Pose le corps sur les cibles, après l'Animator (public pour l'aperçu de l'éditeur).</summary>
     public void Solve(float deltaTime)

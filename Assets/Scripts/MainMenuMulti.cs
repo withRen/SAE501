@@ -340,7 +340,7 @@ public partial class MainMenu
             bool isHost = e.clientId == Unity.Netcode.NetworkManager.ServerClientId;
             var col = NetPlayer.Colors[Mathf.Clamp(e.number, 1, NetPlayer.Colors.Length) - 1];
             string tag = isHost && me ? "HÔTE · VOUS" : isHost ? "HÔTE" : me ? "VOUS" : "";
-            SetRow(r, col, true, "JOUEUR " + e.number, tag, e.ready ? UiKit.Green : UiKit.Dim, UiKit.White);
+            SetRow(r, col, true, lobby.NameOf(e).ToUpperInvariant(), tag, e.ready ? UiKit.Green : UiKit.Dim, UiKit.White);     // [hotfix #155] nom du compte / du casque
             r.state.text = e.ready ? "✓ PRÊT" : "EN ATTENTE";
             r.skin.text = PlayerSkin.Name(e.skin);
         }

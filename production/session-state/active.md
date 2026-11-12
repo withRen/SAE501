@@ -10,6 +10,14 @@
 
 ## 1. Dernières réalisations intégrées
 
+- **Hotfix multijoueur (12/11, journal 198-199, issue #155, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local NON poussé)** :
+  - Kill / mort : `Net/NetKillFx.cs` (croix, son, « ÉLIMINÉ », fil, écran « TU ES MORT »), chute du personnage `PlayerAvatar.SetFallen`, tueur suivi par `NetPlayer` (HitRpc + DiedRpc).
+  - Coop : spectateur `Net/NetSpectator.cs` (écran flottant au casque, plein écran PC), réapparition vie pleine en fin de vague (`NetGame.ReviveLocal`, `NetPlayer.RespawnAtStart`).
+  - Joysticks : gauche = marche / TP, droit = rotation seule (`GameSettings.StickRoles`).
+  - NavMesh des arènes 1v1 : `Editor/ArenaNavMesh.cs` (cuit dans les 2 scènes ; passerelles d'Alvéole 17 non joignables).
+  - Nom du joueur : `Net/PlayerName.cs` (compte Meta si App ID — absent pour l'instant —, sinon nom du casque, sinon « Joueur N »).
+  - À faire : tester au casque avec 2 joueurs ; App ID Meta à configurer pour le nom du compte ; pousser après accord de Rahim.
+
 - **Retrait des caméras de surveillance (journal 191, issue #154, branche `feature/154-retrait-cameras`, commit local non poussé)** :
   - Caméras des couloirs, écrans du pupitre et leurs flux, vue plein écran, disjoncteur, étapes 9-10 du tutoriel et textes de la version PC retirés ; `MainScene` modifiée sans reconstruction et éclairage recuit ; `RoomBuilder` et `objets_retires.txt` à jour pour qu'ils ne reviennent pas.
   - À décider par Rahim : garder ou retirer l'étagère vide du bureau ; pousser la branche et la fusionner dans `main`.

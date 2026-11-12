@@ -40,8 +40,23 @@ public class NetPlayer : NetworkBehaviour
     public readonly NetworkVariable<int> Number = new NetworkVariable<int>(1);
     /// <summary>Tenue choisie par le joueur (PlayerSkin), envoyée par son casque.</summary>
     public readonly NetworkVariable<int> Skin = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    /// <summary>[hotfix #155] Nom du joueur (compte Meta / casque, PlayerName), envoyé par son casque ; vide = « Joueur N ».</summary>
+    public readonly NetworkVariable<Unity.Collections.FixedString64Bytes> Name = new NetworkVariable<Unity.Collections.FixedString64Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    /// <summary>Nom affiché (« Joueur 2 » s'il n'en a pas) ; Short : étiquettes (« J2 »).</summary>
+    public string DisplayName => PlayerName.Display(Name.Value.ToString(), Number.Value);
+    public string ShortName => PlayerName.Short(Name.Value.ToString(), Number.Value);
 
     public bool Dead => Health.Value <= 0f;
+
+    /// <summary>Point suivi par le mode spectateur : la tête (caméra du casque chez soi, repère de l'avatar chez les autres).</summary>
+    public Transform HeadPoint => IsOwner ? srcHead : head;
+
+    // [hotfix #155] auteur du dernier coup reçu (joueur), pour savoir qui a tué qui ; NoAttacker = zombie, chute, soi-même
+    public const ulong NoAttacker = ulong.MaxValue;
+    ulong lastAttacker = NoAttacker;
+    float lastAttackTime = -100f;
+    Vector3 spawnPos; Quaternion spawnRot; bool hasSpawn;
 
     // propriétaire : sources (rig local)
     Transform srcHead, srcLeft, srcRight;
@@ -70,12 +85,15 @@ public class NetPlayer : NetworkBehaviour
             itLeft = l ? l.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRDirectInteractor>(true) : null;
             itRight = r ? r.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRDirectInteractor>(true) : null;
             Skin.Value = PlayerSkin.Selected;
+            Name.Value = new Unity.Collections.FixedString64Bytes(PlayerName.Local);
+            PlayerName.Changed += OnLocalName;
             var h = PlayerHealth.Instance;
             if (h)
             {
                 Health.Value = h.Health;
                 h.Changed += OnLocalHealth;
                 h.Died += OnLocalDied;
+                h.Revived += OnLocalRevived;
             }
             SpreadRig();
             return;
@@ -83,10 +101,11 @@ public class NetPlayer : NetworkBehaviour
         BuildAvatar();
         Number.OnValueChanged += (_, n) => Tint();
         Skin.OnValueChanged += (_, n) => BuildBody();
+        Name.OnValueChanged += (_, n) => Tint();
         if (IsServer)
         {
             proxy = PlayerHealth.CreateProxy(head.gameObject, head);
-            proxy.RemoteDamaged += (amount, from) => HitRpc(amount, from);
+            proxy.RemoteDamaged += (amount, from) => HitRpc(amount, from, NoAttacker);
         }
     }
 
@@ -95,15 +114,65 @@ public class NetPlayer : NetworkBehaviour
         All.Remove(this);
         if (Local == this) Local = null;
         var h = PlayerHealth.Instance;
-        if (IsOwner && h) { h.Changed -= OnLocalHealth; h.Died -= OnLocalDied; }
+        if (IsOwner && h) { h.Changed -= OnLocalHealth; h.Died -= OnLocalDied; h.Revived -= OnLocalRevived; }
+        if (IsOwner) { NetSpectator.End(); NetKillFx.Alive(); PlayerName.Changed -= OnLocalName; }
     }
 
     void OnLocalHealth(float hp, float max) => Health.Value = hp;
+    void OnLocalName() { if (IsSpawned && IsOwner) Name.Value = new Unity.Collections.FixedString64Bytes(PlayerName.Local); }
 
     void OnLocalDied()
     {
-        // à terre : les autres continuent ; relevé à la pause suivante (NetGame)
-        if (WaveManager.Instance) WaveManager.Instance.RemoteAnnounce("VOUS ÊTES À TERRE\nVos coéquipiers tiennent encore.\nRelevé à la prochaine pause.", 7f);
+        // [hotfix #155] qui a tué : le dernier joueur qui nous a touché dans les 5 s, sinon personne (zombie, chute, soi-même)
+        ulong killer = Time.time - lastAttackTime < 5f ? lastAttacker : NoAttacker;
+        DiedRpc(killer);
+        if (ArenaMaps.InArena) return;
+        // coop : à terre, les autres continuent ; spectateur d'un coéquipier vivant, réapparition à la fin de la vague (NetGame)
+        if (WaveManager.Instance) WaveManager.Instance.RemoteAnnounce("VOUS ÊTES À TERRE\nVos coéquipiers tiennent encore.\nRéapparition à la fin de la vague.", 7f);
+        StartCoroutine(SpectateSoon());
+    }
+
+    System.Collections.IEnumerator SpectateSoon()
+    {
+        yield return new WaitForSeconds(2.5f);          // le temps de voir l'écran « TU ES MORT »
+        var h = PlayerHealth.Instance;
+        if (h && h.IsDead && !GameOverUI.PanelOpen) NetSpectator.Begin();
+    }
+
+    void OnLocalRevived()
+    {
+        NetSpectator.End();
+        NetKillFx.Alive();
+    }
+
+    // annonce d'une mort à tous les casques : fil des éliminations, retour au tueur, écran de mort de la victime
+    [Rpc(SendTo.Everyone)]
+    void DiedRpc(ulong killer)
+    {
+        string victim = DisplayName;
+        NetPlayer k = null;
+        if (killer != NoAttacker) foreach (var p in All) if (p && p.OwnerClientId == killer) k = p;
+        bool selfKill = k == this;
+        NetKillFx.Feed(k && !selfKill ? k.DisplayName + " a éliminé " + victim : victim + " est mort");
+        if (IsOwner)
+        {
+            string detail = k && !selfKill ? "Éliminé par " + k.DisplayName
+                          : ArenaMaps.InArena ? "" : "Tué par les zombies";
+            if (!ArenaMaps.InArena) detail += "\nRéapparition à la fin de la vague";
+            NetKillFx.Death(detail);
+        }
+        else if (k && k.IsOwner) NetKillFx.Kill(victim);
+    }
+
+    /// <summary>[hotfix #155] Réapparition au point de départ (fin de vague en coop) : là où ce joueur est arrivé dans la carte.</summary>
+    public void RespawnAtStart()
+    {
+        var h = PlayerHealth.Instance;
+        if (!IsOwner || !h || !hasSpawn) return;
+        var cc = h.GetComponent<CharacterController>();
+        if (cc) cc.enabled = false;
+        h.transform.SetPositionAndRotation(spawnPos, spawnRot);
+        if (cc) cc.enabled = true;
     }
 
     // chaque joueur arrive à sa place dans le bunker ou l'arène 1v1
@@ -127,19 +196,25 @@ public class NetPlayer : NetworkBehaviour
             rig.position += new Vector3(((n % 2 == 0) ? 1f : -1f) * 0.5f * ((n + 1) / 2), 0f, 0f);
         }
         if (cc) cc.enabled = true;
+        spawnPos = rig.position; spawnRot = rig.rotation; hasSpawn = true;
     }
 
     /// <summary>Appelé par PlayerHitbox quand une balle touche l'avatar distant.</summary>
     public void TakeShotDamage(float amount, Vector3 from)
     {
-        HitRpc(amount, from);
+        HitRpc(amount, from, NetworkManager.LocalClientId);
+        NetKillFx.Hit();                    // croix blanche chez le tireur (rouge s'il le tue : DiedRpc)
     }
 
     // le zombie ou une balle a frappé ce joueur : on applique le coup à la vraie vie, sur son casque
+    // attacker : joueur qui a tiré (NoAttacker pour un zombie)
     [Rpc(SendTo.Owner)]
-    void HitRpc(float amount, Vector3 from)
+    void HitRpc(float amount, Vector3 from, ulong attacker)
     {
-        if (PlayerHealth.Instance) PlayerHealth.Instance.TakeDamage(amount, from);
+        var h = PlayerHealth.Instance;
+        if (!h || h.IsDead) return;
+        if (attacker != NoAttacker) { lastAttacker = attacker; lastAttackTime = Time.time; }
+        h.TakeDamage(amount, from);
     }
 
     void Update()
@@ -172,8 +247,8 @@ public class NetPlayer : NetworkBehaviour
             body.floorY = v.floorY;
             body.leftHolding = v.leftItem != 0; body.rightHolding = v.rightItem != 0;
         }
-        ShowProp(propLeft, left, v.leftItem, v.leftItemPos, v.leftItemRot);
-        ShowProp(propRight, right, v.rightItem, v.rightItemPos, v.rightItemRot);
+        ShowProp(propLeft, left, Dead ? 0 : v.leftItem, v.leftItemPos, v.leftItemRot);       // mort : il lâche ce qu'il tenait
+        ShowProp(propRight, right, Dead ? 0 : v.rightItem, v.rightItemPos, v.rightItemRot);
         // version PC, arme à feu dans la main droite : l'avatar la tient à la 3e personne (PlayerAvatar.HoldGun)
         if (body)
         {
@@ -181,7 +256,7 @@ public class NetPlayer : NetworkBehaviour
             body.HoldGun(tps ? propRight.go.transform : null, propRight.grip, propRight.muzzle, tps && propLeft.go ? propLeft.go.transform : null);
         }
         if (proxy) proxy.SetProxyHealth(Health.Value);
-        if (shownDead != Dead) { shownDead = Dead; Tint(); }
+        if (shownDead != Dead) { shownDead = Dead; Tint(); if (body) body.SetFallen(Dead); }
         if (label && Camera.main) label.transform.rotation = Quaternion.LookRotation(label.transform.position - Camera.main.transform.position);
     }
 
@@ -305,6 +380,7 @@ public class NetPlayer : NetworkBehaviour
             LegBox(HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg); LegBox(HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot);
             LegBox(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg); LegBox(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot);
             body.SetDowned(Dead);
+            body.SetFallen(Dead, true);
         }
         else BuildSimple();
         Tint();
@@ -387,6 +463,6 @@ public class NetPlayer : NetworkBehaviour
         var c = Dead ? new Color(0.35f, 0.35f, 0.35f) : Colors[n - 1];
         if (body) body.SetDowned(Dead);
         if (tinted != null) foreach (var r in tinted) r.material.color = c;
-        if (label) { label.text = "J" + n + (Dead ? "  À TERRE" : ""); label.color = c; }
+        if (label) { label.text = ShortName + (Dead ? "  À TERRE" : ""); label.color = c; }
     }
 }

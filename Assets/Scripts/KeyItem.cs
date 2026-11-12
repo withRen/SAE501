@@ -11,6 +11,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 public class KeyItem : MonoBehaviour
 {
     public string displayName = "Clé de la salle du générateur";
+    public string hintText = "→ approchez-la de la serrure";
     public float above = 0.07f;
 
     XRGrabInteractable grab;
@@ -56,6 +57,10 @@ public class KeyItem : MonoBehaviour
         bool show = grab && (grab.isHovered || HeldByHand);
         if (label.gameObject.activeSelf != show) label.gameObject.SetActive(show);
         if (!show) return;
+        // tenue près de la porte encore verrouillée : la serrure luit (KeyLock) et l'étiquette dit quoi faire
+        var lk = KeyLock.Instance;
+        string text = lk && lk.key == this && lk.Guiding ? displayName + "\n" + hintText : displayName;
+        if (label.text != text) label.text = text;
         if (!head) { var cam = Camera.main; if (cam) head = cam.transform; else return; }
         var t = label.transform;
         t.position = transform.position + Vector3.up * above;

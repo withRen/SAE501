@@ -223,6 +223,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
 | [215](#215--hotfix-164-fusionné-dans-main) | 2026-11-12 | Pousser et fusionner le hotfix 164 | Git | hotfix/164-radio-build poussée et fusionnée dans main (--no-ff), wiki poussé, issue #164 laissée ouverte jusqu'au test au casque |
 | [216](#216--clé-de-la-salle-du-générateur) | 2026-11-12 | Porte du générateur verrouillée sans la clé, message, libellé de la clé | Gameplay / Multijoueur | KeyLock (clé en main pour déverrouiller), message panneau + HUD PC, étiquette « Clé de la salle du générateur », déverrouillage synchronisé en coop ; testé sur PC en mode Play, pas au casque (issue #165) |
+| [217](#217--clé-du-générateur--indication-visuelle-au-casque) | 2026-11-12 | Indication visuelle pour déverrouiller avec la clé au casque | Gameplay / UX | Serrure visible sous la poignée ; clé en main près de la porte : serrure qui luit et pulse, panneau « approchez-la de la serrure », étiquette de la clé ; testé sur PC, pas au casque (issue #165) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4124,3 +4125,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Coop** (`NetGame.cs`) : un joueur qui déverrouille prévient l'hôte (RPC), qui passe `GeneratorDoorUnlocked` (NetworkVariable) à vrai : la porte est déverrouillée sur tous les casques. Chaque casque garde sa propre clé et ses propres portes (comme avant) ; le message « verrouillée » reste local. Duel : non concerné (arènes sans cette porte, `NetDuel` n'utilise pas `NetGame`).
 - **Durable** : `RoomBuilder` ajoute `KeyItem` et `KeyLock` à la construction ; la scène n'a **pas** été reconstruite : les deux composants ont été ajoutés directement à `MainScene` (seul changement de la scène). Sans clé dans la scène, la porte n'a pas de serrure (jamais de porte impossible à ouvrir).
 - **Testé** en mode Play (PC, MainScene, niveau 4 forcé) : sans clé, E sur la porte → refus, message PC et panneau (captures) ; clé prise → étiquette visible, E sur la porte → déverrouillée, panneau caché. Compilation sans erreur. **Non testé** : au casque (poignée, geste de la clé), en coop réel sur deux machines. Dans ce test scripté (joueur téléporté), la poignée saisie ne fait pas pivoter le battant, ni sur cette porte ni sur la porte du stockage non modifiée : limite du test, pas du changement, mais l'ouverture complète n'a pas été vue.
+
+---
+
+## 217 — Clé du générateur : indication visuelle au casque
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / UX
+
+> Au casque : tu saisis la poignée avec la clé dans l’autre main, ou tu approches la clé à moins de 25 cm de la poignée. il va falloir une indication visuelle pour ça
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #165, branche `feature/165-cle-generateur`, commit local non poussé)
+
+- **Serrure visible** sous la poignée de la porte du générateur, côté joueur (plaque de la matière de la poignée, trou et fente noirs), créée au lancement par `KeyLock` : la scène n'est pas modifiée.
+- **Quand le joueur tient la clé à moins de 4 m de la porte encore verrouillée** : la serrure luit en ambre et pulse (plus fort et plus vite en approchant, matériau `Fx_Lueur` des yeux des zombies) ; le panneau passe en ambre : « CLÉ EN MAIN — Approchez-la de la serrure (sous la poignée) » ; l'étiquette de la clé ajoute « → approchez-la de la serrure ». La clé déverrouille à moins de 25 cm de la serrure ou de la poignée ; saisir la poignée avec la clé dans l'autre main marche toujours.
+- **Testé** en mode Play (PC, niveau 4 forcé, clé en main à 0,77 m) : lueur visible, textes du panneau et de l'étiquette (capture), pas d'erreur. **Non testé** : au casque (taille et lisibilité réelles, geste d'approche de la clé jusqu'au déverrouillage).

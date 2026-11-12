@@ -8,6 +8,9 @@ using UnityEngine;
 //   - sans la clé : la poignée se lâche, petit bruit de serrure, message « Verrouillée — il faut la clé de la salle du
 //     générateur » sur le panneau de la porte (texte dans le monde, lisible au casque) et en bas de l'écran sur PC ;
 //   - une fois déverrouillée, elle le reste (la clé n'est plus nécessaire, la porte s'ouvre ensuite normalement).
+// [Indication au casque] une serrure (plaque et trou) sous la poignée, côté joueur ; quand le joueur tient la clé à moins de
+//   hintDistance de la porte encore verrouillée : la serrure luit en ambre et pulse (plus fort en approchant), le panneau dit
+//   « CLÉ EN MAIN — Approchez-la de la serrure » et l'étiquette de la clé ajoute « → approchez-la de la serrure ».
 // Multijoueur coop : le déverrouillage passe par NetGame (LocalUnlocked → l'hôte → NetworkVariable GeneratorDoorUnlocked) : la
 // porte est déverrouillée sur tous les casques ; le message « verrouillée » reste propre au joueur qui essaie.
 public class KeyLock : MonoBehaviour
@@ -16,7 +19,9 @@ public class KeyLock : MonoBehaviour
     public ZoneGate gate;                       // panneau de la porte (gate.sign) et verrou de niveau
     public KeyItem key;                         // la clé de CE casque (chaque casque a sa propre scène)
     public string lockedText = "VERROUILLÉE\nIl faut la clé de la salle\ndu générateur";
-    public float unlockDistance = 0.25f;
+    public string keyHeldText = "CLÉ EN MAIN\nApprochez-la de la serrure\n(sous la poignée)";
+    public float unlockDistance = 0.25f;        // clé → serrure ou poignée
+    public float hintDistance = 4f;             // clé tenue à cette distance de la porte : indication visible
     public float messageSeconds = 3f;
 
     public static KeyLock Instance { get; private set; }
@@ -30,6 +35,11 @@ public class KeyLock : MonoBehaviour
     float messageUntil = -1f;
     string signDefault;
     Color signColor;
+    Transform keyhole;                          // centre de la serrure (enfant de la charnière : tourne avec la porte)
+    Renderer glow;
+    MaterialPropertyBlock mpb;
+    static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+    static readonly Color Amber = new Color(1f, 0.7f, 0.25f, 1f);
 
     void Awake()
     {
@@ -48,7 +58,51 @@ public class KeyLock : MonoBehaviour
     void Start()
     {
         if (gate && gate.sign) { signDefault = gate.sign.text; signColor = gate.sign.color; }
+        if (door && door.handle && door.leaf && key) BuildKeyhole();
     }
+
+    // serrure faite au lancement (pas d'objet dans la scène) : plaque de la matière de la poignée, trou noir, lueur additive
+    void BuildKeyhole()
+    {
+        var h = door.handle.transform;
+        var normal = door.leaf.right; normal.y = 0f; normal.Normalize();             // face du battant côté poignée (joueur)
+        var side = h.position - door.leaf.position; side.y = 0f;
+        if (Vector3.Dot(normal, side) < 0f) normal = -normal;
+        keyhole = new GameObject("Serrure").transform;
+        keyhole.SetParent(door.transform, true);
+        keyhole.SetPositionAndRotation(h.position + Vector3.down * 0.15f, Quaternion.LookRotation(normal, Vector3.up));
+        var hr = h.GetComponent<Renderer>();
+        Part(PrimitiveType.Cube, "Plaque", new Vector3(0f, 0f, -0.004f), new Vector3(0.055f, 0.1f, 0.008f), hr ? hr.sharedMaterial : null, Color.clear);
+        Part(PrimitiveType.Cube, "Trou", new Vector3(0f, 0.008f, 0f), new Vector3(0.012f, 0.012f, 0.004f), null, Color.black);
+        Part(PrimitiveType.Cube, "Fente", new Vector3(0f, -0.006f, 0f), new Vector3(0.005f, 0.02f, 0.004f), null, Color.black);
+        var mat = Resources.Load<Material>("Fx_Lueur");
+        if (mat)
+        {
+            glow = Part(PrimitiveType.Quad, "Lueur", new Vector3(0f, 0f, 0.01f), Vector3.one * 0.16f, mat, Color.clear);
+            glow.enabled = false;
+            mpb = new MaterialPropertyBlock();
+        }
+    }
+
+    Renderer Part(PrimitiveType type, string name, Vector3 localPos, Vector3 scale, Material mat, Color color)
+    {
+        var go = GameObject.CreatePrimitive(type);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());                  // ne gêne ni la prise de la poignée ni le joueur
+        go.transform.SetParent(keyhole, false);
+        go.transform.localPosition = localPos; go.transform.localScale = scale;
+        var r = go.GetComponent<Renderer>();
+        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        if (mat) r.sharedMaterial = mat;
+        else { var m = new Material(r.sharedMaterial); m.SetColor(BaseColor, color); m.SetFloat("_Smoothness", 0f); r.sharedMaterial = m; }
+        return r;
+    }
+
+    /// <summary>Le joueur de ce casque tient la clé près de la porte encore verrouillée (zone ouverte) : il faut le guider.</summary>
+    public bool Guiding => !Unlocked && gate && gate.IsOpen && KeyInHand && door
+                           && Vector3.Distance(key.transform.position, LockPoint) < hintDistance;
+
+    Vector3 LockPoint => keyhole ? keyhole.position : door.handle.transform.position;
 
     /// <summary>Le joueur de ce casque a sa clé en main.</summary>
     public bool KeyInHand => key && key.HeldByHand;
@@ -89,8 +143,28 @@ public class KeyLock : MonoBehaviour
     {
         // clé tenue approchée de la poignée (geste de la serrure, VR) : déverrouille
         if (!Unlocked && KeyInHand && door && door.handle && !door.locked
-            && Vector3.Distance(key.transform.position, door.handle.transform.position) < unlockDistance)
+            && (Vector3.Distance(key.transform.position, door.handle.transform.position) < unlockDistance
+                || Vector3.Distance(key.transform.position, LockPoint) < unlockDistance))
             Unlock(true);
+        UpdateGlow();
+    }
+
+    // lueur ambre de la serrure : pulse, de plus en plus forte et rapide quand la clé approche
+    void UpdateGlow()
+    {
+        if (!glow) return;
+        bool on = Guiding;
+        if (glow.enabled != on) glow.enabled = on;
+        if (!on) return;
+        float d = Vector3.Distance(key.transform.position, LockPoint);
+        float near = 1f - Mathf.InverseLerp(unlockDistance, hintDistance, d);         // 0 loin → 1 contre la serrure
+        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * Mathf.Lerp(3f, 9f, near));
+        float a = Mathf.Lerp(0.35f, 1f, near) * Mathf.Lerp(0.55f, 1f, pulse);
+        mpb.SetColor(BaseColor, Amber * a);
+        glow.SetPropertyBlock(mpb);
+        var cam = Camera.main;
+        if (cam) glow.transform.rotation = Quaternion.LookRotation(glow.transform.position - cam.transform.position, Vector3.up);
+        glow.transform.localScale = Vector3.one * Mathf.Lerp(0.12f, 0.2f, near) * Mathf.Lerp(0.9f, 1.1f, pulse);
     }
 
     void LateUpdate()
@@ -100,9 +174,10 @@ public class KeyLock : MonoBehaviour
         if (gate.IsOpen && !Unlocked)
         {
             if (!gate.sign.gameObject.activeSelf) gate.sign.gameObject.SetActive(true);
-            gate.sign.text = lockedText;
+            bool guiding = Guiding;
+            gate.sign.text = guiding ? keyHeldText : lockedText;
             bool flash = Time.time < messageUntil;
-            gate.sign.color = flash && Mathf.Repeat(Time.time * 3f, 1f) < 0.5f ? Color.white : signColor;
+            gate.sign.color = guiding ? Amber : flash && Mathf.Repeat(Time.time * 3f, 1f) < 0.5f ? Color.white : signColor;
         }
         else if (gate.IsOpen && Unlocked && gate.sign.gameObject.activeSelf) gate.sign.gameObject.SetActive(false);
         else if (!gate.IsOpen && signDefault != null && gate.sign.text != signDefault) { gate.sign.text = signDefault; gate.sign.color = signColor; }

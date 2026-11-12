@@ -198,6 +198,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [189](#189--mur-manquant-du-couloir-près-de-la-salle-du-générateur) | 2026-11-11 | Remettre le mur manquant à gauche de la salle du générateur | Carte / Outils éditeur | Face du mur ouest du couloir retirée à tort par MursSuperposes (test sur les seuls sommets) ; test refait sur toute la surface, face remise sans reconstruire la scène, rustine MurCouloir retirée, éclairage recuit |
 | [190](#190--fusion-de-tout-le-travail-dans-main) | 2026-11-12 | Pousser proprement tout le travail dans main | Git / Documentation | Travail non commité rangé en 4 commits, feature/multijoueur (avec develop) fusionnée dans main, fichiers locaux laissés hors du dépôt, page wiki Historique des versions |
 | [192](#192--lunette-du-sniper-duel-1v1) | 2026-11-12 | Lunette grossissante pour le sniper des duels 1v1 | Gameplay / Duel / Rendu | Composant SniperScope sur le prefab : au casque caméra ×5 sur la lunette, active seulement l'œil près de l'oculaire ; au PC zoom clic droit + lunette plein écran, sensibilité réduite ; captures et test en mode Play (issue #153) |
+| [193](#193--lunette--test-au-casque-sur-une-version-sans-lunette) | 2026-11-12 | Le scope ne fonctionne pas au casque | Diagnostic / Build | L'APK testé (09 h 21) venait de ~/SAE501 (branche feature/154-retrait-cameras), sans SniperScope : la lunette n'était pas dans le build. Code inchangé ; comment builder la bonne copie |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3679,3 +3680,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Outil** `Assets/Editor/ScopeCaptures.cs`, menu **SAE501 → Arène 1v1 → Captures lunette** : captures dans `docs/images/lunette/` (vue de l'œil droit au casque, gros plan, œil décalé, lunette au repos, vue PC normale et zoomée) dans Alvéole 17 et Quai 9.
 - **Vérifié** dans Unity en ligne de commande (copie de travail séparée, l'éditeur ouvert de Rahim n'a pas été utilisé) : compilation sans erreur ; captures (silhouette à 13 m environ 4,5 à 5 fois plus grande dans la lunette qu'à l'œil nu) ; **test en mode Play temporaire (non commité)** : version PC, sniper en main, visée forcée (le curseur ne peut pas être capturé en mode batch) → champ 60° → 13,2°, arme cachée, sensibilité × 0,30, tout revient au relâchement ; version casque sans casque, tête placée à la main → lunette éteinte à 30 cm (caméra pas même créée), allumée à 7,5 cm, éteinte la tête tournée de 60°.
 - **Non vérifié** : rien au casque (confort, lisibilité du réticule, 72 fps avec la caméra de lunette sur Quest 3, réglage des 14 cm et de l'ombre de pupille avec un vrai œil), ni en partie réseau à deux joueurs, ni le vrai clic droit à la souris (simulé). L'image de la lunette est la même pour les deux yeux (on vise d'un œil).
+
+---
+
+## 193 — Lunette : test au casque sur une version sans lunette
+
+**Date** : 2026-11-12 · **Domaine** : Diagnostic / Build
+
+> J'ai beau le rapprocher, le scope ne fonctionne pas
+
+**Résultat** (diagnostic fait par l'IA, Claude Code, sur le Mac de Rahim ; aucun code changé)
+
+- **Cause** : l'APK installé sur le casque (`~/SAE501/The Last Escapor.apk`, construit à 09 h 21) vient du dossier `~/SAE501`, sur la branche `feature/154-retrait-cameras`, qui **ne contient pas la lunette** : la lunette est sur la branche `feature/153-lunette-sniper`, dans la copie de travail séparée `~/SAE501-lunette`. Vérifié dans l'APK lui-même : aucune classe `SniperScope` ni shader `ScopeLens` dans ses métadonnées (alors que `NetDuel` et `PlayerHitbox` y sont), et `Sniper.prefab` de `~/SAE501` n'a pas le composant. Le « verre sombre » vu au casque est donc la texture d'origine de l'oculaire du modèle AWM, pas la lentille de `SniperScope`.
+- **Pour tester la lunette** : construire l'APK depuis `~/SAE501-lunette` (l'ouvrir comme projet à part dans Unity Hub ; son dossier `Library` est déjà prêt), ou fusionner `feature/153-lunette-sniper` dans la branche de `~/SAE501` (conflits à résoudre dans `DesktopHud.cs`, `docs/PROMPTS.md` et l'état de session, à cause du retrait des caméras).
+- Le code de la lunette n'a pas été modifié : rien ne montre pour l'instant que ses seuils (14 cm, 30°) posent problème au casque. Ils restent réglables dans l'inspecteur du prefab (`activationDistance`, `activationAngle`).
+- **Non vérifié** : le petit texte jaune vu sur la lentille (la capture n'a pas été vue par l'IA) ; la lunette elle-même au casque.

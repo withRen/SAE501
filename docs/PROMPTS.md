@@ -233,6 +233,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [224](#224--build-windows-exe-avec-toutes-les-mises-à-jour) | 2026-11-12 | Build du .exe dans les téléchargements | Build | Build Windows 64 bits réussi sur la copie du projet (main + correctif #169 non poussé), 0 erreur ; zip de 451 Mo dans les téléchargements ; pas lancé sur Windows |
 | [225](#225--rebuild-windows-avec-les-retouches-de-la-map) | 2026-11-12 | Recompiler avec les retouches de la map faites à la main | Build | MainScene modifiée à la main par Rahim reprise telle quelle, build Windows réussi, 0 erreur, zip de 451 Mo ; pas lancé sur Windows |
 | [226](#226--push-global-release-v100-vulkan-gitignore-et-assets) | 2026-11-12 | Push global des branches et du main, release avec .apk et .exe et leur logo, Vulkan dans les optimisations, .gitignore, liste des assets | Git / Build / Documentation | feature/169 et la scène de Rahim fusionnées dans main, 3 branches locales poussées, version 1.0.0, APK et .exe avec l'icône du jeu, release v1.0.0, page wiki Optimisations (Vulkan), ASSETS.md refait ; pas testé au casque ni sur Windows |
+| [227](#227--jardin--écorce-des-arbres-haies-du-portail-étagère-de-la-cabane) | 2026-11-12 | Incohérences de la map : écorce des arbres trop grande, haie qui traverse le pilier du portail, fenêtre de la cabane | Carte | Matériaux tronc/rameaux inversés remis en ordre, boules de haie reculées des piliers, étagère et buffet ramenés hors du mur ; `RaccordsJardin.cs`, issue #170 ; pas testé au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4292,4 +4293,27 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Builds** depuis le main final : APK `TheLastEscapor-v1.0.0.apk` (371 Mo, éditeur ouvert, `QuestBuild.ReleaseApk`), Windows 64 bits sur la copie (0 erreur, zip de 453 Mo). Copiés dans les téléchargements.
 - **Release** GitHub v1.0.0 avec l'APK et le zip Windows.
 - **Non testé** : l'APK au casque et le `.exe` sur Windows.
+
+---
+
+## 227 — Jardin : écorce des arbres, haies du portail, étagère de la cabane
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Je te liste quelques incohérence niveau de la map qu'il faut corriger, rendre plus propre visuellement, plus beau
+>
+> (La fenêtre c'est celle que je t'avais fait patch dans le cabanon)
+> La taille des textures est pas bonne sur l'arbre, elle est ultra grande par rapport à ce que ça pourrait être !
+
+(avec 3 captures : tronc d'un arbre du jardin, coin du portail, fenêtre de la cabane près de l'étagère)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, dans l'éditeur ouvert, sans reconstruire la scène)
+
+- **Arbres** : la texture n'était pas trop grande, c'était la mauvaise. Depuis le jacaranda (entrée 175, FBX remplacé sans reconstruire), l'ordre des sous-maillages est feuilles, rameaux, tronc, mais tous les arbres de la scène (jardin et forêt) gardaient l'ordre de l'olivier : le tronc recevait la texture des rameaux, faite pour des brindilles (une tuile pour ~3 m d'écorce). Matériaux remis dans l'ordre sur les 86 rendus d'arbres ; le code de reconstruction (`JardinNature`) était déjà juste.
+- **Portail** : les boules de haie de chaque côté avalaient les piliers en brique et dépassaient dans le passage. Les 6 boules qui touchaient un pilier sont reculées (déplacées, pas déformées) pour s'arrêter au milieu du pilier ; le passage est un peu plus large, le collider de la haie suit.
+- **Cabane** : à droite de la fenêtre, l'étagère entrait de 7 cm dans le mur est (et dans le lambris) : le mur coupait son montant. Étagère reculée de 11 cm, buffet voisin de 12 cm pour ne pas la chevaucher (la lanterne et la clé restent dessus). La fenêtre elle-même et le feuillage (entrée 220) n'avaient rien.
+- **Durable** : `Assets/Editor/RaccordsJardin.cs` (menu SAE501 → Scène → Raccords du jardin), appelé par `RoomBuilder` après `FeuillageCabane` ; maillage de haie copié dans `Assets/Generated/Raccords`. Scène enregistrée, éclairage **non recuit** (l'étagère et le buffet ont bougé d'environ 10 cm).
+- **Captures** avant/après : `docs/captures/nettoyage_carte/` (JPG, lampe ajoutée le temps de la capture, la scène est de nuit).
+- Issue [#170](https://github.com/withRen/SAE501/issues/170), page wiki [Raccords du jardin](https://github.com/withRen/SAE501/wiki/Raccords-du-jardin).
+- **Non testé** au casque. Rien poussé (attente de l'accord de Rahim).
 

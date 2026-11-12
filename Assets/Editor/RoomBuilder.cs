@@ -126,6 +126,7 @@ public static class RoomBuilder
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("Belt"), gatesRoot);
         LodBuilder.Build(roomRoot.transform);          // [#118] après le NavMesh : les LOD1 n'y entrent pas
         FeuillageCabane.Apply(roomRoot.transform);     // [#167] après les LOD : feuillage des arbres qui traversait la cabane retiré
+        RaccordsJardin.Apply(roomRoot.transform);      // [#170] ordre des matériaux des arbres, haies hors des piliers du portail, étagère hors du mur
         BuildLightProbes();
         UnbatchInteractables();
         TexturesUsure.Appliquer();                     // textures PBR des matériaux recréés en couleur unie (Dark, Metal, Radio)

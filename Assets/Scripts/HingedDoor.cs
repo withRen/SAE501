@@ -30,6 +30,7 @@ public class HingedDoor : MonoBehaviour
     Quaternion rest;
     Vector3 closedDir;                     // de la charnière vers le bout du battant, porte fermée (à plat)
     float forced = -1f;                    // ouverture imposée par un zombie (animée)
+    float driven = -1f;                    // [#168] PC, les deux mains prises : la porte va seule à cet angle (rien n'est lâché)
     int hits;
     AudioSource src;
     static AudioClip thud, creak;
@@ -71,7 +72,21 @@ public class HingedDoor : MonoBehaviour
             }
         }
         else if (forced >= 0f) Angle = Mathf.MoveTowards(Angle, forced, 140f * Time.deltaTime);
+        else if (driven >= 0f)
+        {
+            Angle = Mathf.MoveTowards(Angle, Mathf.Min(driven, Barricaded ? 0f : maxAngle), 95f * Time.deltaTime);
+            if (Mathf.Abs(Angle - driven) < 0.5f || (Barricaded && Angle <= 0f)) driven = -1f;
+        }
         transform.localRotation = rest * Quaternion.Euler(0f, Angle * openSign, 0f);
+    }
+
+    /// <summary>[#168] Ouvre ou ferme la porte sans la tenir (version PC, mains prises). Sans effet si verrouillée.</summary>
+    public void DriveTo(float angle)
+    {
+        if (locked || KeyLocked) return;
+        driven = Mathf.Clamp(angle, 0f, maxAngle);
+        src.pitch = 1f;
+        src.PlayOneShot(creak, 0.5f);
     }
 
     // coup de zombie sur la porte fermée

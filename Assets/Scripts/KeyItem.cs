@@ -13,6 +13,8 @@ public class KeyItem : MonoBehaviour
     public string displayName = "Clé de la salle du générateur";
     public string hintText = "→ approchez-la de la serrure";
     public float above = 0.07f;
+    [Tooltip("[#168] Point de prise sur l'anneau (repère de la clé : tige vers +X, à plat dans le plan XZ).")]
+    public Vector3 gripLocal = new Vector3(-0.045f, 0f, 0f);
 
     XRGrabInteractable grab;
     TextMesh label;
@@ -21,6 +23,16 @@ public class KeyItem : MonoBehaviour
     void Awake()
     {
         grab = GetComponent<XRGrabInteractable>();
+        // [#168] tenue : la main prend l'anneau, la tige part vers l'avant, la clé est à la verticale (comme dans une serrure).
+        // Sans point de prise, la main la tenait par son centre et dans un angle quelconque.
+        if (!grab.attachTransform || grab.attachTransform == transform)
+        {
+            var grip = new GameObject("Prise_Cle").transform;
+            grip.SetParent(transform, false);
+            grip.localPosition = gripLocal;
+            grip.localRotation = Quaternion.LookRotation(Vector3.right, Vector3.forward);
+            grab.attachTransform = grip;
+        }
         var go = new GameObject("Etiquette_Cle");
         // pas enfant de la clé : son échelle et sa rotation ne déforment pas le texte
         label = go.AddComponent<TextMesh>();

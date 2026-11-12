@@ -18,6 +18,7 @@ using UnityEngine;
 //     vives : le rebord ressemblait à « plein de carrés ». Normales lissées (sommets confondus, angle < 80°) ; forme inchangée.
 //  5. Cabane : faces confondues du cadre de fenêtre/porte et du lambris avec le mur (scintillement en dents de scie) ;
 //     boules de haie qui entraient dans le mur du fond (reculées dans l'épaisseur du mur, voir Haies).
+//  7. Évier de la cuisine : fond des bacs sous le dessus du meuble (on voyait le bois) remonté au-dessus du meuble.
 //  6. Façade de la cuisine (côté jardin) : boules de haie au-dessus du bac sud reculées, boules du coin avancées contre le mur
 //     (plus de jour entre la haie et la cuisine), coupes de l'export rentrées dans le mur de la salle du générateur.
 // Les maillages modifiés sont des copies (Assets/Generated/Raccords), le FBX n'est pas touché.
@@ -36,9 +37,9 @@ public static class RaccordsJardin
     public static bool Apply(Transform root)
     {
         if (!root) return false;
-        int a = Arbres(root), h = Haies(root), e = Etagere(root), t = Tonneaux(root), f = FacesConfondues(root);
-        Debug.Log($"[RaccordsJardin] {a} arbres remis en ordre, {h} boules de haie déplacées (piliers, cabane), étagère/buffet déplacés : {e}, {t} tonneaux lissés, {f} maillages de la cabane resserrés");
-        return a + h + e + t + f > 0;
+        int a = Arbres(root), h = Haies(root), e = Etagere(root), t = Tonneaux(root), f = FacesConfondues(root), ev = Evier(root);
+        Debug.Log($"[RaccordsJardin] {a} arbres remis en ordre, {h} boules de haie déplacées (piliers, cabane), étagère/buffet déplacés : {e}, {t} tonneaux lissés, {f} maillages de la cabane resserrés, évier : {ev}");
+        return a + h + e + t + f + ev > 0;
     }
 
     // ---------- 1. ordre des matériaux des arbres ----------
@@ -269,6 +270,35 @@ public static class RaccordsJardin
             if (over > 0f && b.max.z > sb.min.z && b.min.z < sb.max.z) { Undo.RecordObject(side, "Raccords jardin"); side.position -= new Vector3(over, 0f, 0f); n++; }
         }
         return n;
+    }
+
+    // ---------- 7. évier de la cuisine ----------
+    // Le fond des deux bacs (y 0,846) était 1,4 cm sous le dessus du meuble bas (y 0,86) : on voyait le bois du meuble au fond
+    // des bacs, comme un cadre sans fond. Les sommets du fond sont remontés 1,2 cm au-dessus du meuble (bacs émaillés visibles).
+    public static int Evier(Transform root)
+    {
+        var all = root.GetComponentsInChildren<MeshFilter>(true);
+        var sink = all.FirstOrDefault(f => f.name == "Sink");
+        var cab = root.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.name == "KitchenCabinets_Lower");
+        if (!sink || !cab || !sink.sharedMesh || !sink.sharedMesh.isReadable) return 0;
+        var file = Dir + "/Sink.asset";
+        var src = AssetDatabase.GetAssetPath(sink.sharedMesh) == file ? FbxMesh(cab.GetComponent<MeshFilter>().sharedMesh, "Sink") ?? sink.sharedMesh : sink.sharedMesh;
+        float top = cab.bounds.max.y, fond = top + 0.012f;
+        var M = sink.transform.localToWorldMatrix; var Mi = sink.transform.worldToLocalMatrix;
+        var v = src.vertices; int n = 0;
+        for (int i = 0; i < v.Length; i++)
+        {
+            var p = M.MultiplyPoint3x4(v[i]);
+            if (p.y < fond) { p.y = fond; v[i] = Mi.MultiplyPoint3x4(p); n++; }
+        }
+        if (n == 0) return 0;
+        var copy = Object.Instantiate(src); copy.name = "Sink"; copy.vertices = v; copy.RecalculateBounds();
+        if (AssetDatabase.GetAssetPath(sink.sharedMesh) == file && sink.sharedMesh.vertices.SequenceEqual(v)) { Object.DestroyImmediate(copy); return 0; }
+        Directory.CreateDirectory(Dir);
+        AssetDatabase.DeleteAsset(file);
+        AssetDatabase.CreateAsset(copy, file);
+        sink.sharedMesh = copy;
+        return 1;
     }
 
     // ---------- 4. tonneaux : normales lissées ----------

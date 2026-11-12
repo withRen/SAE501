@@ -239,6 +239,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [230](#230--façade-de-la-cuisine--haie-bac-et-coupe) | 2026-11-12 | Le trou à côté de la cuisine, le pot mal placé, la coupe étrange | Carte | Boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin de la cuisine, coupes de l'export rentrées dans le mur du générateur (`RaccordsJardin` étape 6), issue #170 ; pas testé au casque |
 | [231](#231--coin-de-la-cuisine--boules-au-lieu-du-bloc) | 2026-11-12 | C'est visuellement horrible, complète mais garde ça plaisant | Carte | Bloc plat du coin de la cuisine retiré ; les boules rondes du coin avancées de 45 cm contre le mur (partie dans le mur aplatie, rien dans la cuisine) ; pas testé au casque |
 | [232](#232--navmesh-recuit-et-vieux-pc-sur-le-bureau) | 2026-11-12 | NavMesh à mettre à jour après les déplacements d'objets, vieux PC sur la table avec une lumière qui sort de l'écran | Carte / Décor | NavMesh recuit sans reconstruire (menu ajouté), vieux PC modélisé dans Blender (écran cathodique, clavier, tour, terminal vert émissif, lumière temps réel douce) ; issue #171 ; pas testé au casque |
+| [233](#233--évier-de-la-cuisine--fond-des-bacs) | 2026-11-12 | Mini souci au niveau de l'évier | Carte | Fond des deux bacs remonté au-dessus du meuble bas (on voyait le bois du meuble) ; `RaccordsJardin` étape 7 ; scène à enregistrer par Rahim ; pas testé au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4407,4 +4408,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Vieux PC** : aucun modèle dans le projet, et les écrans de caméras ont été retirés exprès (journal 191) : modèle fait pour le projet par un script Blender, `Tools/blender/vieux_pc.py` → `Assets/Decor/VieuxPC/Vieux_PC.fbx` (écran cathodique beige, clavier, tour avec lecteurs, ~4 000 triangles). Écran : texture de terminal vert générée (`Ecran_Terminal.png`, « BUNKER-OS », « NE SORTEZ PAS LA NUIT »), émissive. Lumière : point vert, temps réel, sans ombres, portée 1,4 m, intensité 0,35, léger vacillement (`FlickerLamp`).
 - Posé par `Assets/Editor/VieuxPC.cs` (menu SAE501 → Scène → Vieux PC sur le bureau, appelé aussi par `RoomBuilder`) sur `Bunker_Surveillance_Desk_West`, à droite de la lanterne ; collider boîte. Issue [#171](https://github.com/withRen/SAE501/issues/171), page wiki Vieux-PC.
 - Captures `docs/captures/nettoyage_carte/pc_*.jpg`. Éclairage précalculé non recuit. **Non testé** au casque (coût de la lumière temps réel supplémentaire à vérifier, elle reste petite). Rien poussé.
+
+---
+
+## 233 — Évier de la cuisine : fond des bacs
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Y a un mini soucis au niveau de l'évier
+
+(capture de l'évier de la cuisine vu de dessus)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Cause** : le fond des deux bacs de l'évier (`Sink`, y 0,846) était 1,4 cm sous le dessus du meuble bas (`KitchenCabinets_Lower`, y 0,86) : le meuble bouchait les bacs et on voyait son bois au fond, comme un cadre sans fond.
+- **Correctif** (étape 7 de `RaccordsJardin`, `Evier`) : les sommets du fond sont remontés 1,2 cm au-dessus du meuble ; les bacs sont émaillés jusqu'au fond (copie `Assets/Generated/Raccords/Sink.asset`, FBX non touché). Les bacs restent peu profonds (~5 cm) : les creuser vraiment demanderait de découper le meuble.
+- Appliqué dans l'éditeur ouvert **sans enregistrer la scène**, parce que Rahim avait des modifications en cours non enregistrées : la scène est à enregistrer de son côté. Captures `docs/captures/nettoyage_carte/*_evier.jpg`. **Non testé** au casque. Rien poussé.
 

@@ -295,6 +295,7 @@ public class WaveManager : MonoBehaviour
     void UpdateWave()
     {
         var def = cur;
+        if (def == null) return;            // [hotfix #164] évasion ouverte sans vague en cours (outil de test) : rien à faire
         bool last = !Endless && Level == levels.Length;      // mode survie : jamais de dernier niveau
         // mode survie, vague 4 : renforts pendant endlessLastLevelReinforce secondes (sinon cette vague était plus facile que le niveau 4 d'Évasion)
         bool reinforce = last || (Endless && Level == levels.Length && LevelTime < endlessLastLevelReinforce);

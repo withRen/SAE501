@@ -14,6 +14,17 @@ public class ItemSafety : MonoBehaviour
     public float killY = -3f;               // en dessous : l'objet est tombé de la carte
     public float lift = 0.08f;              // marge au-dessus de la surface quand on le remet en place
 
+    // [hotfix #164] objet hors de portée : posé et immobile plus de UnreachableDelay s à un endroit qu'on ne peut pas atteindre à pied
+    // (dehors par une fenêtre, derrière une porte de zone fermée), il revient à sa dernière position atteignable. Contrôle toutes les
+    // 2 s environ, seulement si l'objet a bougé ; rien si la scène n'a pas de NavMesh (menu) ni pour un objet jamais atteignable
+    // (chargeur posé dans une zone encore fermée en début de partie).
+    const float UnreachableDelay = 8f, CheckEvery = 2f;
+    Vector3 lastReachable, lastChecked = new Vector3(float.MaxValue, 0f, 0f);
+    Quaternion lastReachableRot;
+    bool hasReachable;
+    float unreachableSince = -1f, nextCheck;
+    static UnityEngine.AI.NavMeshPath path;
+
     XRGrabInteractable grab;
     Rigidbody rb;
     Vector3 lastSafe;
@@ -43,6 +54,37 @@ public class ItemSafety : MonoBehaviour
         if (p.y < killY) { Place(lastSafe, lastSafeRot); return; }
         // position sûre : posé et immobile, ou rangé (cinématique)
         if (rb.isKinematic || rb.linearVelocity.sqrMagnitude < 0.0025f) { lastSafe = p; lastSafeRot = transform.rotation; }
+        CheckReachable(p);
+    }
+
+    void CheckReachable(Vector3 p)
+    {
+        if (rb.isKinematic || rb.linearVelocity.sqrMagnitude > 0.0025f || Time.time < nextCheck) return;   // rangé, en mouvement
+        nextCheck = Time.time + CheckEvery * Random.Range(0.8f, 1.2f);
+        bool moved = (p - lastChecked).sqrMagnitude > 0.01f;
+        if (!moved && unreachableSince < 0f) return;                // déjà vérifié à cet endroit, atteignable
+        lastChecked = p;
+        var player = PlayerHealth.Instance;
+        if (!player) return;
+        var feet = player.transform.position;
+        if (!UnityEngine.AI.NavMesh.SamplePosition(feet, out var from, 1.5f, UnityEngine.AI.NavMesh.AllAreas)) return;   // pas de NavMesh ici
+        bool reachable = UnityEngine.AI.NavMesh.SamplePosition(p, out var to, 2f, UnityEngine.AI.NavMesh.AllAreas);
+        if (reachable)
+        {
+            if (path == null) path = new UnityEngine.AI.NavMeshPath();
+            // à pied seulement : sans les passages par les fenêtres et les trous du toit (zones réservées aux zombies)
+            reachable = UnityEngine.AI.NavMesh.CalculatePath(from.position, to.position, Zombie.WalkMask, path)
+                        && path.status == UnityEngine.AI.NavMeshPathStatus.PathComplete;
+        }
+        if (reachable) { lastReachable = p; lastReachableRot = transform.rotation; hasReachable = true; unreachableSince = -1f; return; }
+        if (!hasReachable) return;                                  // jamais atteignable : on ne le déplace pas
+        if (unreachableSince < 0f) { unreachableSince = Time.time; return; }
+        if (Time.time - unreachableSince >= UnreachableDelay)
+        {
+            unreachableSince = -1f;
+            Place(lastReachable, lastReachableRot);
+            lastChecked = lastReachable;
+        }
     }
 
     void LiftIfUnderFloor()

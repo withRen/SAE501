@@ -220,6 +220,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [211](#211--audit-du-multijoueur) | 2026-11-12 | Analyser le mode 1v1 et les modes coop, chercher les bugs | Multijoueur / Analyse | Audit en lecture seule : 0 bloquant (depuis ~/SAE501), 5 majeurs (tir ami en coop, forfait en duel, duel à 3+ via le lobby, actions du joueur mort, correctif 12 s non commité), 9 mineurs ; rapport docs/analyses/Audit_multijoueur_2026-11-12.md (non commité) |
 | [212](#212--corrections-de-laudit-multijoueur) | 2026-11-12 | Corriger les 5 bugs majeurs de l'audit | Multijoueur | Tir ami coupé en coop, victoire par forfait en duel, duel limité à 2 dans le lobby, mains du joueur mort désactivées (pistolet rangé), correctif 12 s commité ; + message d'évasion, pas de régénération en duel. Testé dans l'éditeur, pas au casque (issue #163) |
 | [213](#213--hotfix-163-fusionné-et-audit-du-reste-du-jeu) | 2026-11-12 | Fusionner, puis chercher d'autres bugs importants | Git / Analyse | hotfix/163 fusionné dans main (aca05d2) ; audit du reste du jeu : 0 bloquant (depuis ~/SAE501), 2 majeurs (bouton de la radio au casque, réglages de build non commités), 4 mineurs ; rapport docs/analyses/Audit_jeu_complet_2026-11-12.md |
+| [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4074,4 +4075,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
   - **MINEUR** : objet lancé hors de portée jamais rendu ; erreur de `WaveManager.UpdateWave` si l'évasion s'ouvre sans vague (outil de test) ; `DesktopHud` sans contrôle du joueur ; erreurs « routine is null » du paquet XRI.
   - Les ≈ 39 700 erreurs du log de l'éditeur viennent d'un test de l'IA (rig détruit exprès), pas du jeu.
 - Lu dans le code et les logs, rien testé au casque.
+
+---
+
+## 214 — Radio au casque, réglages de build, mineurs
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Build
+
+> Oui corrige tout ça
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #164, branche `hotfix/164-radio-build` partie de `main` + rapport d'audit (journal 213), commit local non poussé)
+
+- **Radio de ravitaillement** (`SupplyRadio.cs`) : le bouton rouge se déclenche aussi à la gâchette et au simple toucher. Une main qui tient une arme et touche le bouton appuie dessus sans lâcher l'arme (son grip est ignoré tant qu'elle est sur le bouton). Retour : bouton enfoncé, son, vibration ; petit bip si la radio est déjà utilisée ; anti-rebond. PC inchangé (clic).
+- **Réglages de build commités** (uniquement ces lignes) : `Assets/Plugins/Android/AndroidManifest.xml` (retrait de la permission micro), `ProjectSettings/ProjectSettings.asset` et `Assets/Settings/Build Profiles/Meta Quest.asset` (Graphics APIs : Vulkan seul). Le reste des modifications locales de Rahim n'est pas commité.
+- **Objet hors de portée** (`ItemSafety.cs`) : posé plus de 8 s là où on ne peut pas aller à pied, il revient à sa dernière position atteignable.
+- **Gardes** : `WaveManager.UpdateWave` sans vague en cours, `DesktopHud` sans réticule.
+- **Testé** en mode Play (MainScene) : appel par clic, appuis répétés sans double appel, main tenant le pistolet sur le bouton (appel, arme gardée), marteau posé dehors rendu, évasion sans vague sans erreur. **Non testé** : au casque (gâchette, toucher réel), build Quest.
 

@@ -3,17 +3,19 @@
 Demande de Rahim : « Puis recherche si il y a d'autres bugs important également à corriger » (après l'audit multijoueur).
 Audit en **lecture seule** fait par l'IA (Claude Code) sur `main` (`aca05d2`), hors multijoueur (déjà audité : `Audit_multijoueur_2026-11-12.md`). Aucun code modifié.
 
+> **Mise à jour (même jour, journal 214, issue #164, branche `hotfix/164-radio-build`)** : points 1 à 5 **corrigés** (colonne « Statut »). Testés en mode Play dans l'éditeur, pas au casque. Points 6 et 7 laissés (paquet XRI, comportement voulu).
+
 Légende : **BLOQUANT** / **MAJEUR** / **MINEUR**. « Lu dans le code » = chemin vérifié en lisant l'appelant et l'appelé. « Vu dans les logs » = trace réelle dans `Logs/Editor.log` (56 Mo, session du 12/11).
 
 ## Résumé
 
 | # | Sévérité | Zone | Problème | Statut |
 |---|---|---|---|---|
-| 1 | MAJEUR | Radio de ravitaillement (VR) | Le bouton ne réagit qu'au grip, main vide : la gâchette, le simple toucher et une main qui tient déjà un objet ne font rien | Lu dans le code |
-| 2 | MAJEUR (BLOQUANT depuis un clone) | Build Quest | Réglages de build seulement en local : permission micro retirée (sinon « Launch app » grisé dans MQDH), OpenGLES3 retiré (build 2 à 3 fois plus long) | Lu (`git diff`) |
-| 3 | MINEUR | Objets | Un objet lancé hors de portée (dehors par une fenêtre, derrière une porte de zone fermée) n'est jamais rendu ; seuls les objets tombés sous le sol reviennent | Lu dans le code |
-| 4 | MINEUR | Évasion | Ouvrir le portail avant la 1re vague (outil de test / passage direct au niveau 4) provoque une erreur à chaque image dans `WaveManager.UpdateWave` | Vu dans les logs (test) |
-| 5 | MINEUR | Version PC | `DesktopHud.Update` plante à chaque image si le joueur PC est détruit (aucun contrôle) | Vu dans les logs (test) |
+| 1 | MAJEUR | Radio de ravitaillement (VR) | Le bouton ne réagit qu'au grip, main vide : la gâchette, le simple toucher et une main qui tient déjà un objet ne font rien | Corrigé (testé dans l'éditeur) |
+| 2 | MAJEUR (BLOQUANT depuis un clone) | Build Quest | Réglages de build seulement en local : permission micro retirée (sinon « Launch app » grisé dans MQDH), OpenGLES3 retiré (build 2 à 3 fois plus long) | Corrigé (commité) |
+| 3 | MINEUR | Objets | Un objet lancé hors de portée (dehors par une fenêtre, derrière une porte de zone fermée) n'est jamais rendu ; seuls les objets tombés sous le sol reviennent | Corrigé (testé dans l'éditeur) |
+| 4 | MINEUR | Évasion | Ouvrir le portail avant la 1re vague (outil de test / passage direct au niveau 4) provoque une erreur à chaque image dans `WaveManager.UpdateWave` | Corrigé (testé dans l'éditeur) |
+| 5 | MINEUR | Version PC | `DesktopHud.Update` plante à chaque image si le joueur PC est détruit (aucun contrôle) | Corrigé |
 | 6 | MINEUR | Ceinture (XRI) | « routine is null » dans `XRSocketInteractor.OnEnable/OnDisable` (18 fois), venant du paquet XRI, sans effet visible | Vu dans les logs |
 | 7 | INFO | Pause en multijoueur | Le temps ne s'arrête pas (voulu), mais on peut mourir menu ouvert | Lu dans le code |
 
@@ -68,3 +70,14 @@ Légende : **BLOQUANT** / **MAJEUR** / **MINEUR**. « Lu dans le code » = chemi
 
 - Rien n'a été testé au casque ; le point 1 est déduit du code (le bouton marche sur PC).
 - Performances non mesurées (pas de profilage au casque dans cette analyse).
+
+## Corrections (hotfix #164)
+
+| # | Correction | Fichiers | Test (éditeur) |
+|---|---|---|---|
+| 1 | Bouton de la radio : gâchette, toucher (main vide : survol XRI ; main qui tient un objet : à moins de 3 cm, grip gelé tant qu'elle est dessus, l'arme n'est plus lâchée), bouton enfoncé, vibration, bip si déjà utilisée, anti-rebond 0,6 s ; PC inchangé (clic) | `SupplyRadio.cs` | clic → appel ; deux appuis de plus → un seul appel ; main gauche avec le pistolet sur le bouton → appel, grip gelé, pistolet toujours tenu ; main éloignée → grip rendu |
+| 2 | Commités : `AndroidManifest.xml` (retrait de `RECORD_AUDIO`), `ProjectSettings.asset` (ligne `m_APIs` : Vulkan seul), `Build Profiles/Meta Quest.asset` (seul le bloc `m_APIs`). Restent en local : le reste du profil (define ajouté par Meta, cible de déploiement), réglages URP, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`. `INTERNET` reste dans le manifeste (`ACCESS_NETWORK_STATE` ajouté par Unity au build, vu dans le dernier APK) | 3 fichiers | relu (`git diff --cached`) |
+| 3 | Objet posé hors de portée à pied (sans passer par les fenêtres) plus de 8 s : revient à sa dernière position atteignable | `ItemSafety.cs` | marteau posé dehors (point d'approche des zombies) : revenu à 0,3 m de sa position atteignable en moins de 16 s |
+| 4 | `WaveManager.UpdateWave` : rien à faire sans vague en cours | `WaveManager.cs` | évasion ouverte sans vague : aucune erreur |
+| 5 | `DesktopHud` : réticule ignoré s'il a été détruit avec le joueur | `DesktopHud.cs` | relu |
+

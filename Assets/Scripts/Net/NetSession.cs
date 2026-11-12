@@ -27,6 +27,11 @@ public static class NetSession
     /// <summary>Message à afficher au retour dans le menu (hôte parti, version différente…).</summary>
     public static string LastError;
 
+    /// <summary>[Hotfix #157] Une session est encore ouverte ou en train de se fermer (Netcode ferme à l'image suivante) :
+    /// on ne peut ni héberger ni rejoindre tant qu'elle n'est pas fermée (StartHost refuse, « Impossible d'ouvrir le port »).</summary>
+    public static bool Busy => Net != null && (Net.IsListening || Net.ShutdownInProgress);
+    static bool leaving;            // départ volontaire : pas de message « connexion perdue »
+
     static string Version => Application.version;
     /// <summary>Vérification de version à la connexion : désactivée pour l'instant (en attendant l'auto-updateur).</summary>
     public const bool CheckVersion = false;
@@ -77,7 +82,7 @@ public static class NetSession
     static void OnDisconnect(ulong id)
     {
         // ce casque a perdu l'hôte (ou a été refusé) : retour au menu avec la raison
-        if (Net && !Net.IsServer && id == Net.LocalClientId)
+        if (Net && !Net.IsServer && id == Net.LocalClientId && !leaving)
         {
             LastError = string.IsNullOrEmpty(Net.DisconnectReason) ? "Connexion à l'hôte perdue" : Net.DisconnectReason;
             Leave();
@@ -90,7 +95,8 @@ public static class NetSession
     {
         var nm = Ensure();
         if (!nm) return false;
-        LastError = null; InGame = false;
+        if (Busy) { LastError = "La partie précédente se ferme encore, réessaie dans une seconde"; Leave(); return false; }
+        LastError = null; InGame = false; leaving = false;
         nm.GetComponent<UnityTransport>().SetConnectionData("127.0.0.1", GamePort, "0.0.0.0");
         nm.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(Version);
         if (!nm.StartHost()) { LastError = "Impossible d'ouvrir le port " + GamePort; return false; }
@@ -106,7 +112,8 @@ public static class NetSession
     {
         var nm = Ensure();
         if (!nm) return false;
-        LastError = null; InGame = false;
+        if (Busy) { LastError = "La partie précédente se ferme encore, réessaie dans une seconde"; Leave(); return false; }
+        LastError = null; InGame = false; leaving = false;
         nm.GetComponent<UnityTransport>().SetConnectionData(ip, GamePort);
         nm.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(Version);
         if (!nm.StartClient()) { LastError = "Impossible de joindre " + ip; return false; }
@@ -118,7 +125,29 @@ public static class NetSession
     {
         LanDiscovery.StopAdvertising();
         InGame = false;
-        if (Net && Net.IsListening) Net.Shutdown();
+        if (Net && Net.IsListening) { leaving = true; Net.Shutdown(); }
         WaveManager.Endless = false;
     }
+
+    /// <summary>[Hotfix #157] Fin d'un match : fermer la session et revenir au menu, sans message d'erreur.</summary>
+    public static void LeaveToMenu()
+    {
+        Leave();
+        LastError = null;
+        var go = new GameObject("Retour_Menu");
+        Object.DontDestroyOnLoad(go);
+        go.AddComponent<Runner>().StartCoroutine(MenuWhenClosed(go));
+    }
+
+    // le menu est chargé une fois la session vraiment fermée (Netcode ferme à l'image suivante), 3 s au plus
+    static System.Collections.IEnumerator MenuWhenClosed(GameObject runner)
+    {
+        float until = Time.unscaledTime + 3f; int frames = 0;
+        while (Busy && (Time.unscaledTime < until || frames++ < 30)) yield return null;
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != MenuScene)
+            UnityEngine.SceneManagement.SceneManager.LoadScene(MenuScene);
+        Object.Destroy(runner);
+    }
+
+    class Runner : MonoBehaviour { }
 }

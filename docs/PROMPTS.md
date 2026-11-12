@@ -207,6 +207,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [198](#198--hotfix-multijoueur--kills-mort-spectateur-téléportation) | 2026-11-12 | Hotfix : animation de kill et de mort en 1v1 / multi, spectateur en coop zombie, TP au joystick gauche, NavMesh des arènes 1v1 | Gameplay / Multijoueur / VR | Croix rouge + son + « ÉLIMINÉ » + fil des éliminations, écran « TU ES MORT », chute du personnage ; spectateur d'un coéquipier et réapparition en fin de vague ; joystick droit = rotation seule ; NavMesh d'Alvéole 17 et Quai 9. Testé en mode Play (PC, sans réseau), pas au casque (issue #155) |
 | [199](#199--nom-du-joueur--compte-meta-ou-casque) | 2026-11-12 | Nom du joueur : nom du compte / du profil du casque | Multijoueur | Meta Platform SDK (si App ID), sinon nom du casque, sinon « Joueur N » ; synchronisé (lobby, étiquette, éliminations, spectateur). Pas d'App ID dans le projet : nom du compte inactif pour l'instant (issue #155) |
 | [200](#200--saut-au-casque--plus-de-vol-en-rafale) | 2026-11-12 | Au casque on peut presque voler en spammant le saut (corrigé sur PC) | Gameplay / VR | JumpGuard pour casque et PC : un saut seulement après 0,15 s au sol sans interruption, pas de saut en l'air, tolérance 0,05 s ; testé en mode Play PC (rafale : un seul saut), pas au casque (issue #156) |
+| [201](#201--impossible-douvrir-le-port-7777) | 2026-11-12 | « Impossible d'ouvrir le port 7777 » au casque | Multijoueur | Cause : session réseau restée ouverte après la fin d'un duel (menu rechargé par Netcode sans fermer la session). Fin de match = chacun ferme puis revient au menu ; HÉBERGER/REJOINDRE ferment une session restée ouverte et réessaient. Testé en mode Play (PC), pas au casque (issue #157) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3840,4 +3841,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Cause** (lue dans le code de XRI) : le `JumpProvider` permet un saut si le `GravityProvider` dit « au sol » ou pendant la fenêtre de tolérance (0,25 s). La détection du sol (petite sphère sous les pieds) peut clignoter contre un mur, une caisse ou un objet : chaque clignotement remet le saut à zéro, et A en rafale enchaîne les sauts. La correction PC (`DesktopPlayer.TuneJump`, tolérance 0,05 s) ne touchait pas la version casque.
 - **Correction** : `Assets/Scripts/JumpGuard.cs`, ajouté par code au rig de chaque scène (aucune scène modifiée), casque et PC : pas de saut en l'air, tolérance 0,05 s, et un saut n'est permis qu'après 0,15 s au sol sans interruption (et jamais pendant un saut). Le blocage passe par le « bypass » de l'entrée du saut : le bouton est lu comme relâché, la gravité ne change pas.
 - **Testé** en mode Play sur PC (arène Alvéole 17) : Espace en rafale pendant 4 s → un seul saut (0,66 m, la hauteur normale de l'arène), retour au sol. **Non reproduit** dans l'éditeur sans la garde (le clignotement vient du casque), et **pas testé au casque**.
+
+---
+
+## 201 — « Impossible d'ouvrir le port 7777 »
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> Ma game vient de crash en me disant "Impossible d'ouvrir le port 7777" sur le casque
+
+> Reprend la patching
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #157, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Logs du casque** : non lus, aucun casque n'était branché au Mac.
+- **Permissions** : pas en cause. Le dernier APK (11 h 31) a bien `INTERNET` et `ACCESS_NETWORK_STATE` (vérifié avec aapt2).
+- **Cause** (trouvée dans le code) : ce message s'affiche quand `NetworkManager.StartHost` refuse de démarrer. Netcode refuse tant qu'une session « écoute » encore. Or, à la fin d'un duel 1v1, l'hôte rechargeait le menu par Netcode **sans fermer la session** : le lobby disparaît, mais la session reste ouverte en arrière-plan, et le HÉBERGER suivant échoue. Même chose en cliquant HÉBERGER juste après QUITTER (Netcode ne ferme qu'à l'image suivante).
+- **Correction** :
+  - `NetDuel.EndMatch` : l'hôte demande à tous de fermer la session (`NetSession.LeaveToMenu`), puis la ferme lui-même ; le menu est chargé une fois la session fermée.
+  - `NetSession` : `Busy` (session ouverte ou en fermeture) ; HÉBERGER / REJOINDRE refusent proprement dans ce cas ; plus de « connexion perdue » quand on part volontairement.
+  - `MainMenuMulti` : HÉBERGER / REJOINDRE pendant une session ouverte la ferment, attendent (3 s et 30 images au plus) et relancent tout seuls ; au retour au menu, une session restée ouverte sans lobby est fermée.
+- **Testé** en mode Play (menu, PC) : héberger, puis HÉBERGER pendant la session → elle se ferme et l'hôte repart avec son lobby ; fin de match → session fermée, retour au menu ; héberger de nouveau → OK. **Non testé** : au casque, et avec un vrai second joueur à la fin d'un duel. « Crash » : si l'appli s'est vraiment fermée, la cause n'est pas connue sans les logs du casque.
 

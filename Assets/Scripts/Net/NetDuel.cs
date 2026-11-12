@@ -193,10 +193,17 @@ public class NetDuel : NetworkBehaviour
         yield return new WaitForSeconds(7f);
         if (IsServer)
         {
-            NetSession.InGame = false;
-            NetworkManager.SceneManager.LoadScene(MenuScene, LoadSceneMode.Single);
+            // [Hotfix #157] fin du match : chacun ferme la session réseau et revient au menu de lui-même. Avant, l'hôte rechargeait
+            // le menu par Netcode sans fermer la session : elle restait ouverte en arrière-plan (lobby disparu) et le HÉBERGER
+            // suivant échouait (« Impossible d'ouvrir le port 7777 »).
+            EndMatchRpc();
+            yield return new WaitForSeconds(0.5f);          // le message part avant que l'hôte ne ferme la session
+            NetSession.LeaveToMenu();
         }
     }
+
+    [Rpc(SendTo.NotServer)]
+    void EndMatchRpc() => NetSession.LeaveToMenu();
 
     void BuildBanner()
     {

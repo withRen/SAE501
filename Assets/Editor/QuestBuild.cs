@@ -26,8 +26,8 @@ public static class QuestBuild
     }
 
     // Version publiée (release GitHub) : à augmenter à chaque nouvelle release
-    public const string Version = "1.0.0";
-    public const int VersionCode = 3;
+    public const string Version = "1.0.1";
+    public const int VersionCode = 4;
 
     const string IconPath = "Assets/Branding/AppIcon_1024.png";
     const string AdaptiveBackPath = "Assets/Branding/AppIcon_Adaptive_Fond.png";

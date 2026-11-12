@@ -10,6 +10,8 @@
 
 ## 1. Dernières réalisations intégrées
 
+- **Raccords du jardin (12/11, journal 227, issue #170, branche `feature/170-raccords-jardin`, commit local NON poussé ; wiki « Raccords-du-jardin » NON poussé)** : matériaux tronc/rameaux remis en ordre sur les 86 rendus d'arbres, 6 boules de haie reculées des piliers du portail, étagère et buffet de la cabane ramenés hors du mur est. `Assets/Editor/RaccordsJardin.cs`, appelé par RoomBuilder. Éclairage non recuit, pas testé au casque.
+
 - **Clé de la salle du générateur (12/11, journal 216, issue #165, branche `feature/165-cle-generateur`, commit local NON poussé ; wiki f82ea9a local NON poussé)** :
   - `KeyLock.cs` (porte du générateur : clé tenue en main pour déverrouiller, message panneau + HUD PC, son) ; `KeyItem.cs` (étiquette « Clé de la salle du générateur ») ; coop : `NetGame.GeneratorDoorUnlocked`.
   - Testé sur PC en mode Play ; pas au casque, pas en coop réel.

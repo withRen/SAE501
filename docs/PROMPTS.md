@@ -233,6 +233,14 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [224](#224--build-windows-exe-avec-toutes-les-mises-à-jour) | 2026-11-12 | Build du .exe dans les téléchargements | Build | Build Windows 64 bits réussi sur la copie du projet (main + correctif #169 non poussé), 0 erreur ; zip de 451 Mo dans les téléchargements ; pas lancé sur Windows |
 | [225](#225--rebuild-windows-avec-les-retouches-de-la-map) | 2026-11-12 | Recompiler avec les retouches de la map faites à la main | Build | MainScene modifiée à la main par Rahim reprise telle quelle, build Windows réussi, 0 erreur, zip de 451 Mo ; pas lancé sur Windows |
 | [226](#226--push-global-release-v100-vulkan-gitignore-et-assets) | 2026-11-12 | Push global des branches et du main, release avec .apk et .exe et leur logo, Vulkan dans les optimisations, .gitignore, liste des assets | Git / Build / Documentation | feature/169 et la scène de Rahim fusionnées dans main, 3 branches locales poussées, version 1.0.0, APK et .exe avec l'icône du jeu, release v1.0.0, page wiki Optimisations (Vulkan), ASSETS.md refait ; pas testé au casque ni sur Windows |
+| [227](#227--jardin--écorce-des-arbres-haies-du-portail-étagère-de-la-cabane) | 2026-11-12 | Incohérences de la map : écorce des arbres trop grande, haie qui traverse le pilier du portail, fenêtre de la cabane | Carte | Matériaux tronc/rameaux inversés remis en ordre, boules de haie reculées des piliers, étagère et buffet ramenés hors du mur ; `RaccordsJardin.cs`, issue #170 ; pas testé au casque |
+| [228](#228--tonneaux--rebord-en-petits-blocs) | 2026-11-12 | Le tonneau n'est pas vraiment rond, on dirait plein de carrés | Carte | Normales lissées sur les 14 tonneaux et fûts de la carte (étape 4 de `RaccordsJardin`), forme inchangée ; issue #170 ; pas testé au casque |
+| [229](#229--cabane--faces-confondues-et-haie-dans-le-mur) | 2026-11-12 | Corriger les vides inutiles et les textures qui scintillent parce que les murs sont les uns dans les autres (7 captures de la cabane) | Carte | Cadre de fenêtre/porte et lambris resserrés de 3-4 mm (plus de faces confondues avec le mur), 5 boules de haie reculées hors du mur du fond, haie recalculée depuis le FBX ; `RaccordsJardin` étape 5, issue #170 ; pas testé au casque |
+| [230](#230--façade-de-la-cuisine--haie-bac-et-coupe) | 2026-11-12 | Le trou à côté de la cuisine, le pot mal placé, la coupe étrange | Carte | Boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin de la cuisine, coupes de l'export rentrées dans le mur du générateur (`RaccordsJardin` étape 6), issue #170 ; pas testé au casque |
+| [231](#231--coin-de-la-cuisine--boules-au-lieu-du-bloc) | 2026-11-12 | C'est visuellement horrible, complète mais garde ça plaisant | Carte | Bloc plat du coin de la cuisine retiré ; les boules rondes du coin avancées de 45 cm contre le mur (partie dans le mur aplatie, rien dans la cuisine) ; pas testé au casque |
+| [232](#232--navmesh-recuit-et-vieux-pc-sur-le-bureau) | 2026-11-12 | NavMesh à mettre à jour après les déplacements d'objets, vieux PC sur la table avec une lumière qui sort de l'écran | Carte / Décor | NavMesh recuit sans reconstruire (menu ajouté), vieux PC modélisé dans Blender (écran cathodique, clavier, tour, terminal vert émissif, lumière temps réel douce) ; issue #171 ; pas testé au casque |
+| [233](#233--évier-de-la-cuisine--fond-des-bacs) | 2026-11-12 | Mini souci au niveau de l'évier | Carte | Fond des deux bacs remonté au-dessus du meuble bas (on voyait le bois du meuble) ; `RaccordsJardin` étape 7 ; scène à enregistrer par Rahim ; pas testé au casque |
+| [234](#234--push-fixmap-collisions-fusion-et-release-v101) | 2026-11-12 | Pousser la scène retouchée sur fix/map-collisions, main sur cette base, rebuild APK et .exe en package (ajustements de la map) | Git / Build | Branche poussée et fusionnée dans main, wiki poussé, version 1.0.1 (code 4), APK et .exe reconstruits, release v1.0.1 ; pas testé au casque ni sur Windows |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4292,4 +4300,148 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Builds** depuis le main final : APK `TheLastEscapor-v1.0.0.apk` (371 Mo, éditeur ouvert, `QuestBuild.ReleaseApk`), Windows 64 bits sur la copie (0 erreur, zip de 453 Mo). Copiés dans les téléchargements.
 - **Release** GitHub v1.0.0 avec l'APK et le zip Windows.
 - **Non testé** : l'APK au casque et le `.exe` sur Windows.
+
+---
+
+## 227 — Jardin : écorce des arbres, haies du portail, étagère de la cabane
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Je te liste quelques incohérence niveau de la map qu'il faut corriger, rendre plus propre visuellement, plus beau
+>
+> (La fenêtre c'est celle que je t'avais fait patch dans le cabanon)
+> La taille des textures est pas bonne sur l'arbre, elle est ultra grande par rapport à ce que ça pourrait être !
+
+(avec 3 captures : tronc d'un arbre du jardin, coin du portail, fenêtre de la cabane près de l'étagère)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, dans l'éditeur ouvert, sans reconstruire la scène)
+
+- **Arbres** : la texture n'était pas trop grande, c'était la mauvaise. Depuis le jacaranda (entrée 175, FBX remplacé sans reconstruire), l'ordre des sous-maillages est feuilles, rameaux, tronc, mais tous les arbres de la scène (jardin et forêt) gardaient l'ordre de l'olivier : le tronc recevait la texture des rameaux, faite pour des brindilles (une tuile pour ~3 m d'écorce). Matériaux remis dans l'ordre sur les 86 rendus d'arbres ; le code de reconstruction (`JardinNature`) était déjà juste.
+- **Portail** : les boules de haie de chaque côté avalaient les piliers en brique et dépassaient dans le passage. Les 6 boules qui touchaient un pilier sont reculées (déplacées, pas déformées) pour s'arrêter au milieu du pilier ; le passage est un peu plus large, le collider de la haie suit.
+- **Cabane** : à droite de la fenêtre, l'étagère entrait de 7 cm dans le mur est (et dans le lambris) : le mur coupait son montant. Étagère reculée de 11 cm, buffet voisin de 12 cm pour ne pas la chevaucher (la lanterne et la clé restent dessus). La fenêtre elle-même et le feuillage (entrée 220) n'avaient rien.
+- **Durable** : `Assets/Editor/RaccordsJardin.cs` (menu SAE501 → Scène → Raccords du jardin), appelé par `RoomBuilder` après `FeuillageCabane` ; maillage de haie copié dans `Assets/Generated/Raccords`. Scène enregistrée, éclairage **non recuit** (l'étagère et le buffet ont bougé d'environ 10 cm).
+- **Captures** avant/après : `docs/captures/nettoyage_carte/` (JPG, lampe ajoutée le temps de la capture, la scène est de nuit).
+- Issue [#170](https://github.com/withRen/SAE501/issues/170), page wiki [Raccords du jardin](https://github.com/withRen/SAE501/wiki/Raccords-du-jardin).
+- **Non testé** au casque. Rien poussé (attente de l'accord de Rahim).
+
+---
+
+## 228 — Tonneaux : rebord en petits blocs
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> C'est pas vraiment rond, on dirait pleins de carrés additionnés
+
+(capture du tonneau à côté du portail du jardin)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Cause** : l'export de la carte simplifie chaque objet à 6 000 triangles ; le haut de chaque douelle est resté un petit bloc à arêtes vives, d'où un rebord qui ressemble à une suite de carrés.
+- **Correctif** : étape 4 de `RaccordsJardin` : normales lissées (sommets confondus à 2 mm, faces à moins de 80° l'une de l'autre) sur tout objet dont le nom contient « Barrel » ; la forme ne change pas, les arêtes à angle droit restent nettes. 14 maillages (3 tonneaux de vin, fûts, poêles, et leurs LOD1), copies dans `Assets/Generated/Raccords`.
+- Captures `docs/captures/nettoyage_carte/avant_tonneau.jpg` et `apres_tonneau.jpg` ; fût rouge du générateur vérifié, pas abîmé. La silhouette reste un polygone (environ 30 côtés) : seule une version plus détaillée du modèle (Poly Haven, à télécharger) l'arrondirait vraiment.
+- Issue [#170](https://github.com/withRen/SAE501/issues/170), page wiki Raccords du jardin complétée. **Non testé** au casque. Rien poussé.
+
+---
+
+## 229 — Cabane : faces confondues et haie dans le mur
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Corrige tout ça, que ce soit les gaps inutiles, les problèmes de textures qui glitch parce que les murs sont les uns dans les autres
+
+(7 captures de la vue Scène autour de la cabane du jardin : appui et tableau de la fenêtre, montant de la porte avec le lambris, haie contre les murs)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Recherche** : script qui compare toutes les faces des objets de la cabane deux à deux (même plan à 3 mm près, même sens, surfaces qui se recouvrent). Faces confondues trouvées : cadre de la fenêtre et de la porte (`Garden_Cabin_WindowSash`) avec l'appui, les tableaux et le linteau du mur ; lambris (`Garden_Cabin_Wainscot`) avec les bords du mur à la porte et ses faces extérieures. C'est le scintillement en dents de scie des captures.
+- **Correctif** (étape 5 de `RaccordsJardin`) : chaque morceau du cadre est resserré de 4 mm vers son centre, le lambris de 3 mm : les faces intérieures du cadre passent devant le mur (le bois se voit), les bords du lambris passent derrière. Invisible à l'œil, plus de faces au même endroit.
+- **Haie** : 5 boules de la haie du fond entraient de 10 à 20 cm dans le mur arrière de la cabane (coupées net par le mur). Elles sont reculées pour s'arrêter 2 cm dans l'épaisseur du mur : ni vide entre la haie et la cabane, ni feuilles qui traversent. La haie est maintenant recalculée à partir du maillage d'origine du FBX (déplacements du portail et de la cabane, puis rognage de l'intérieur), pour ne pas faire réapparaître les trous laissés par l'ancien rognage (#167).
+- Captures avant/après dans `docs/captures/nettoyage_carte/` (`*_appui_fenetre`, `*_montant_porte`, `*_cabane_arriere_*`, `*_cabane_dessus`).
+- **Limites** : vu d'en haut, le bord du toit reste pris dans le haut de la haie (la haie est plus haute que la cabane) ; reculer la haie jusqu'au toit laisserait 40 cm de vide au pied du mur. Éclairage non recuit. **Non testé** au casque. Rien poussé.
+
+---
+
+## 230 — Façade de la cuisine : haie, bac et coupe
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Corrige le trou à côté de la cuisine
+> Le pot est mal placé
+> Le cut est étrange un peu
+
+(3 captures de la façade de la cuisine côté jardin)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Pot** : le bac sud de la porte (`Garden_Planter_Porch_South`) n'était pas mal placé, c'est la haie qui commençait au-dessus de lui (boules jusqu'à 70 cm dans le bac). Les boules qui couvrent un bac du jardin sont maintenant reculées à l'horizontale pour laisser 5 cm autour ; les deux bacs restent symétriques de part et d'autre de la porte.
+- **Trou** : le cœur de la haie (bloc d'un mètre) s'arrêtait 20 cm avant le coin du mur de la cuisine et les boules arrondies laissaient voir l'extérieur. Le bout du cœur est prolongé jusque derrière le coin et collé au mur.
+- **Coupe** : les boules de haie coupées net par l'export à 10 cm du mur en brique de la salle du générateur sont avancées pour que la coupe soit dans le mur.
+- Étape 6 de `RaccordsJardin` (même recalcul de la haie depuis le FBX). Captures `docs/captures/nettoyage_carte/*_cuisine_*` ; portail et cabane revérifiés, inchangés.
+- **Non testé** au casque. Rien poussé.
+
+---
+
+## 231 — Coin de la cuisine : boules au lieu du bloc
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> C'est visuellement horrible, complete mais au moins garde ça visuellement plaisant
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- Le correctif de l'entrée 230 prolongeait le cœur de la haie en bloc plat jusqu'au coin de la cuisine : jour fermé, mais un pan de feuillage carré, laid. **Retiré.**
+- À la place, les boules rondes qui touchent le coin sont avancées de 45 cm vers le mur (au-delà du coin, il n'y a rien derrière) ; la petite partie qui entrerait dans le mur est aplatie dans son épaisseur. Vérifié : aucun sommet de haie dans la cuisine, capture de l'intérieur propre. La haie garde ses boules, les deux bacs restent dégagés et symétriques.
+- Captures `docs/captures/nettoyage_carte/apres_cuisine_*` mises à jour. **Non testé** au casque. Rien poussé.
+
+---
+
+## 232 — NavMesh recuit et vieux PC sur le bureau
+
+**Date** : 2026-11-12 · **Domaine** : Carte / Décor
+
+> J'ai corrigé beaucoup de placement d'élément ducoup il faut mettre à jour le navmesh et aussi je veux que tu rejoutes un vieux pc sur la table pour qu'il y ai une petite déco, avec genre une lumière qui s'émane de l'écran
+
+(capture du bureau vide du poste de surveillance)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **NavMesh** : nouveau menu **SAE501 → Scène → Recuire le NavMesh (sans reconstruire)** (`NavBuilder.Recuire`) : même surface, mêmes objets ignorés, même fichier `Assets/Generated/NavMesh_MainScene.asset`, scène enregistrée. Lancé après les déplacements de Rahim et la pose du PC : 2 103 → 2 111 triangles ; points de contrôle (bunker, cuisine, jardin, portail, stockage) bien sur le NavMesh.
+- **Vieux PC** : aucun modèle dans le projet, et les écrans de caméras ont été retirés exprès (journal 191) : modèle fait pour le projet par un script Blender, `Tools/blender/vieux_pc.py` → `Assets/Decor/VieuxPC/Vieux_PC.fbx` (écran cathodique beige, clavier, tour avec lecteurs, ~4 000 triangles). Écran : texture de terminal vert générée (`Ecran_Terminal.png`, « BUNKER-OS », « NE SORTEZ PAS LA NUIT »), émissive. Lumière : point vert, temps réel, sans ombres, portée 1,4 m, intensité 0,35, léger vacillement (`FlickerLamp`).
+- Posé par `Assets/Editor/VieuxPC.cs` (menu SAE501 → Scène → Vieux PC sur le bureau, appelé aussi par `RoomBuilder`) sur `Bunker_Surveillance_Desk_West`, à droite de la lanterne ; collider boîte. Issue [#171](https://github.com/withRen/SAE501/issues/171), page wiki Vieux-PC.
+- Captures `docs/captures/nettoyage_carte/pc_*.jpg`. Éclairage précalculé non recuit. **Non testé** au casque (coût de la lumière temps réel supplémentaire à vérifier, elle reste petite). Rien poussé.
+
+---
+
+## 233 — Évier de la cuisine : fond des bacs
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Y a un mini soucis au niveau de l'évier
+
+(capture de l'évier de la cuisine vu de dessus)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Cause** : le fond des deux bacs de l'évier (`Sink`, y 0,846) était 1,4 cm sous le dessus du meuble bas (`KitchenCabinets_Lower`, y 0,86) : le meuble bouchait les bacs et on voyait son bois au fond, comme un cadre sans fond.
+- **Correctif** (étape 7 de `RaccordsJardin`, `Evier`) : les sommets du fond sont remontés 1,2 cm au-dessus du meuble ; les bacs sont émaillés jusqu'au fond (copie `Assets/Generated/Raccords/Sink.asset`, FBX non touché). Les bacs restent peu profonds (~5 cm) : les creuser vraiment demanderait de découper le meuble.
+- Appliqué dans l'éditeur ouvert **sans enregistrer la scène**, parce que Rahim avait des modifications en cours non enregistrées : la scène est à enregistrer de son côté. Captures `docs/captures/nettoyage_carte/*_evier.jpg`. **Non testé** au casque. Rien poussé.
+
+---
+
+## 234 — Push fix/map-collisions, fusion et release v1.0.1
+
+**Date** : 2026-11-12 · **Domaine** : Git / Build
+
+> Ok je viens de patch beaucoup de petits éléments de la map, tu peux en refaire un push sur github, une sous branch : fix/map-collisions
+>
+> faire le main sur cette base
+>
+> rebuild apk et exe et les mettre dans package en expliquand que les modifs c'est juste des ajustements de la map
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- Scène de Rahim vérifiée enregistrée (retouches à la main + corrections 227-233), NavMesh recuit (2 111 triangles, inchangé).
+- Branche `fix/map-collisions` (reprend `feature/170-raccords-jardin`), poussée et fusionnée dans `main` ; wiki (pages Raccords du jardin et Vieux PC) poussé. Réglages locaux de Rahim non commités.
+- Version 1.0.1 (code 4) ; APK Quest et .exe Windows reconstruits depuis ce main ; release GitHub v1.0.1 avec une note « ajustements de la map uniquement » ; copies dans les téléchargements.
+- **Non testé** au casque ni sur Windows.
 

@@ -41,7 +41,7 @@ public static class DuelLoadout
     {
         var health = PlayerHealth.Instance;
         if (!health) return;
-        int number = NetLobby.Numbers.TryGetValue(NetSession.LocalId, out var k) ? k : 1;
+        int number = NetLobby.Side(NetSession.LocalId);  // [hotfix #158] côté du duel (1 ou 2)
         var pistol = FindPistol(number == 1 ? "Pistol_West" : "Pistol_East");
         var hand = GameObject.Find("Right Controller");
         var it = hand ? hand.GetComponentInChildren<XRDirectInteractor>(true) : null;

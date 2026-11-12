@@ -210,6 +210,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [201](#201--impossible-douvrir-le-port-7777) | 2026-11-12 | « Impossible d'ouvrir le port 7777 » au casque | Multijoueur | Cause : session réseau restée ouverte après la fin d'un duel (menu rechargé par Netcode sans fermer la session). Fin de match = chacun ferme puis revient au menu ; HÉBERGER/REJOINDRE ferment une session restée ouverte et réessaient. Testé en mode Play (PC), pas au casque (issue #157) |
 | [202](#202--saut-infini-en-visant-au-sniper) | 2026-11-12 | Saut infini toujours là au casque en visant au sniper | Gameplay / VR | Cause : la détection du sol (sphère depuis la tête) touchait l'arme épaulée. Objets tenus sur un calque ignoré par cette détection, plus de collision avec le joueur ; 0,9 s entre deux sauts et redescente obligatoire. Vérifié dans l'éditeur, pas au casque (issue #156) |
 | [203](#203--pistolet-en-main--on-ne-peut-plus-avancer) | 2026-11-12 | Avec le pistolet pris, on ne peut plus avancer | Gameplay / VR | Régression du correctif 202 : au lâcher, la collision arme/joueur était rétablie alors qu'IgnorePlayer la coupait ; l'arme rangée à la ceinture bloquait le joueur. Seules les collisions existant avant la prise sont rétablies. Vérifié (pistolet, AK, sniper) dans l'éditeur, pas au casque (issue #156) |
+| [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3895,4 +3896,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Cause : régression du correctif 202** (`HeldItemLayer`, écrit par l'IA). Les armes, la ceinture et les planches ignorent déjà la capsule du joueur (`IgnorePlayer`). En lâchant un objet (rangé au holster, lâché, passé d'une main à l'autre), `HeldItemLayer` remettait la collision avec le joueur à « active » au lieu de la laisser coupée. Le pistolet rangé à la ceinture, collé au corps, bloquait alors la capsule : on ne pouvait plus avancer.
 - **Correction** : à la prise, seuls les collisionneurs qui touchaient encore le joueur sont coupés et retenus ; au lâcher, seuls ceux-là sont rétablis. Ce qu'`IgnorePlayer` a coupé reste coupé.
 - **Vérifié** dans l'éditeur (Alvéole 17) avec le pistolet, l'AK74 et le sniper : pris → calque 29, collision avec le joueur ignorée ; lâché → calque d'origine, collision **toujours ignorée**. **Non vérifié** : la marche elle-même dans l'éditeur (le clavier simulé n'a pas été pris en compte) et au casque.
+
+---
+
+## 204 — « Joueur 3 », « Joueur 4 » et apparitions du duel
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> En gros : le jeu detecte par moment plus de 2 joueur ducoup ça devient : Joueur 3 et joueur 4 etc etc, et ducoup le spawn en 1V1 est cassé, les deux joueurs spawnent l'un à côté de l'autre au lieu de spawn des deux côtés de la map
+
+**Résultat** (diagnostic et code faits par l'IA, Claude Code, sur le Mac de Rahim ; issue #158, branche `hotfix/155-multijoueur-kills-spectateur-tp`, commit local non poussé)
+
+- **Cause** (trouvée dans le code) : `NetLobby.Numbers` (numéro de chaque connexion) est une liste statique **jamais vidée** entre deux sessions. Un nouveau joueur prenait « le premier numéro absent de cette liste », où restaient les connexions des sessions précédentes (hôte refermé, nouvelle connexion, fin de duel…) : Joueur 3, Joueur 4 avec deux casques. Le duel plaçait « J1 d'un côté, tous les autres de l'autre » : J3 et J4 apparaissaient du même côté, côte à côte, et le score (qui attend 1 et 2) était faussé.
+- **Correction** :
+  - `NetLobby.Add` : premier numéro libre parmi les joueurs **présents dans le lobby** ; la liste est vidée à l'ouverture du lobby, au lancement de la partie (`StartGameRpc`) et à chaque HÉBERGER / REJOINDRE (`NetSession`).
+  - `NetLobby.Side` : côté du duel (1 ou 2) selon le rang du joueur parmi les deux joueurs, jamais le même. Utilisé pour l'apparition (`NetPlayer`, `NetDuel` à chaque manche), le pistolet de départ (`DuelLoadout`) et le score (`NetDuel`).
+- **Testé** en mode Play (menu, PC) : avec des numéros périmés d'une « ancienne session », HÉBERGER redonne Joueur 1 à l'hôte ; numéros 3 et 4 → côtés 1 et 2 ; numéros 1 et 2 → côtés 1 et 2. **Non testé** : une vraie partie à deux casques (connexion d'un second joueur, apparitions dans l'arène).
 

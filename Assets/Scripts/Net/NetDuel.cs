@@ -106,9 +106,9 @@ public class NetDuel : NetworkBehaviour
         if (!IsServer || roundResolving || Winner.Value != 0) return;
         roundResolving = true;
 
-        int deadNumber = NetLobby.Numbers.TryGetValue(deadClientId, out var dn) ? dn : 1;
-        // Si J1 est mort, J2 marque. Si J2 est mort, J1 marque.
-        int winningPlayer = (deadNumber == 1) ? 2 : 1;
+        // [hotfix #158] côté du mort (1 ou 2, rang parmi les deux joueurs) : l'autre côté marque
+        int deadSide = NetLobby.Side(deadClientId);
+        int winningPlayer = (deadSide == 1) ? 2 : 1;
         if (winningPlayer == 1) ScoreP1.Value++;
         else ScoreP2.Value++;
 
@@ -149,7 +149,7 @@ public class NetDuel : NetworkBehaviour
         }
 
         // Repositionner au sas de départ
-        int n = NetLobby.Numbers.TryGetValue(NetSession.LocalId, out var k) ? k : 1;
+        int n = NetLobby.Side(NetSession.LocalId);       // [hotfix #158] côté 1 ou 2, jamais le même que l'adversaire
         if (h)
         {
             ArenaMaps.PlaceRig(h.transform, n);        // apparitions de la carte jouée (ArenaMaps)

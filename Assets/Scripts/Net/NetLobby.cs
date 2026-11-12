@@ -121,6 +121,16 @@ public class NetLobby : NetworkBehaviour
     /// <summary>Numéro (1..4) attribué à un joueur dans le lobby, gardé pour la partie (avatar, scores).</summary>
     public static readonly System.Collections.Generic.Dictionary<ulong, int> Numbers = new System.Collections.Generic.Dictionary<ulong, int>();
 
+    /// <summary>[Hotfix #158] Côté du duel (1 ou 2) d'un joueur : son rang parmi les joueurs de la partie (plus petit numéro = côté 1).
+    /// Jamais le même côté pour deux joueurs, même si les numéros ne sont pas 1 et 2.</summary>
+    public static int Side(ulong clientId)
+    {
+        if (!Numbers.TryGetValue(clientId, out var mine)) return 1;
+        int rank = 0;
+        foreach (var kv in Numbers) if (kv.Key != clientId && (kv.Value < mine || kv.Value == mine && kv.Key < clientId)) rank++;
+        return rank == 0 ? 1 : 2;
+    }
+
     /// <summary>Test : un seul joueur suffit pour lancer (éditeur, mode Play sans second casque).</summary>
     public static bool SoloTest;
 
@@ -135,6 +145,7 @@ public class NetLobby : NetworkBehaviour
         PlayerName.Changed += SendName;
         if (!IsServer) return;
         if (Array.IndexOf(Environment.GetCommandLineArgs(), "-netsolo") >= 0 || SoloTest) minPlayers = 1;     // test seul
+        Numbers.Clear();                    // [hotfix #158] les numéros d'une session précédente ne comptent plus
         foreach (var id in NetworkManager.ConnectedClientsIds) Add(id, "");
         NetworkManager.OnClientConnectedCallback += OnConnected;
         NetworkManager.OnClientDisconnectCallback += OnDisconnected;
@@ -163,8 +174,11 @@ public class NetLobby : NetworkBehaviour
     void Add(ulong id, string device)
     {
         foreach (var e in Players) if (e.clientId == id) return;
+        // [hotfix #158] premier numéro libre parmi les joueurs VRAIMENT présents dans le lobby (avant : parmi une liste jamais
+        // vidée entre deux sessions, d'où « Joueur 3 », « Joueur 4 » avec seulement deux casques)
         int n = 1;
-        while (Numbers.ContainsValue(n)) n++;
+        bool Taken(int k) { foreach (var e in Players) if (e.number == k) return true; return false; }
+        while (Taken(n)) n++;
         Numbers[id] = n;
         Players.Add(new Entry { clientId = id, number = n, ready = false, device = device });
     }
@@ -264,6 +278,7 @@ public class NetLobby : NetworkBehaviour
         NetSession.InGame = true;
         WaveManager.Endless = endless;
         WaveManager.ResumeLevel = 0;
+        Numbers.Clear();                    // [hotfix #158] seulement les joueurs de cette partie
         foreach (var e in Players) Numbers[e.clientId] = e.number;
     }
 }

@@ -97,6 +97,7 @@ public static class NetSession
         if (!nm) return false;
         if (Busy) { LastError = "La partie précédente se ferme encore, réessaie dans une seconde"; Leave(); return false; }
         LastError = null; InGame = false; leaving = false;
+        NetLobby.Numbers.Clear();           // [hotfix #158] numéros de la session précédente
         nm.GetComponent<UnityTransport>().SetConnectionData("127.0.0.1", GamePort, "0.0.0.0");
         nm.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(Version);
         if (!nm.StartHost()) { LastError = "Impossible d'ouvrir le port " + GamePort; return false; }
@@ -114,6 +115,7 @@ public static class NetSession
         if (!nm) return false;
         if (Busy) { LastError = "La partie précédente se ferme encore, réessaie dans une seconde"; Leave(); return false; }
         LastError = null; InGame = false; leaving = false;
+        NetLobby.Numbers.Clear();
         nm.GetComponent<UnityTransport>().SetConnectionData(ip, GamePort);
         nm.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(Version);
         if (!nm.StartClient()) { LastError = "Impossible de joindre " + ip; return false; }

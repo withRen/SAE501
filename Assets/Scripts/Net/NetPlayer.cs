@@ -189,7 +189,7 @@ public class NetPlayer : NetworkBehaviour
         if (ArenaMaps.IsArena(sceneName))
         {
             // En 1v1 : J1 et J2 aux 2 apparitions de la carte jouée (ArenaMaps), face au centre
-            ArenaMaps.PlaceRig(rig, n);
+            ArenaMaps.PlaceRig(rig, NetLobby.Side(OwnerClientId));     // [hotfix #158] côté 1 ou 2 (rang), jamais le même
         }
         else if (n > 1)
         {

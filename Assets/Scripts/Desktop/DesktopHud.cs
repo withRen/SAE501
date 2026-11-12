@@ -163,6 +163,7 @@ public class DesktopHud : MonoBehaviour
         group.alpha = Mathf.MoveTowards(group.alpha, hidden ? 0f : 1f, Time.unscaledDeltaTime * 6f);
 
         // réticule
+        if (ticks == null || ticks.Length < 4 || !ticks[0]) return;      // [hotfix #164] HUD détruit avec le joueur
         bool hov = player.Hovering;
         bool aim = player.Aiming;
         float goal = aim ? 4f : hov ? 11f : 7f;

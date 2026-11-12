@@ -212,6 +212,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [203](#203--pistolet-en-main--on-ne-peut-plus-avancer) | 2026-11-12 | Avec le pistolet pris, on ne peut plus avancer | Gameplay / VR | Régression du correctif 202 : au lâcher, la collision arme/joueur était rétablie alors qu'IgnorePlayer la coupait ; l'arme rangée à la ceinture bloquait le joueur. Seules les collisions existant avant la prise sont rétablies. Vérifié (pistolet, AK, sniper) dans l'éditeur, pas au casque (issue #156) |
 | [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
 | [205](#205--étiquette-de-nom-masquée-en-duel) | 2026-11-12 | En 1v1 on voit le nametag | Multijoueur | Étiquette au-dessus de l'avatar masquée dans les arènes du duel, gardée en coop ; vérifié en mode Play (arène), pas au casque (issue #159) |
+| [206](#206--hotfix-poussé-et-fusionné-dans-main) | 2026-11-12 | Pousser en hotfix puis dans main | Git | Branche hotfix/155-multijoueur-kills-spectateur-tp poussée, fusionnée dans main (1be77bd, --no-ff), wiki poussé ; issues #155 à #159 laissées ouvertes jusqu'au test au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3927,4 +3928,19 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `NetPlayer.BuildAvatar` : l'étiquette (nom au-dessus de la tête de l'avatar) est désactivée dans les arènes du duel (Alvéole 17, Quai 9). On ne repère plus l'adversaire par son nom à travers le décor. Elle reste en coop zombie.
 - Le nom reste dans le fil des éliminations et sur les écrans « ÉLIMINÉ » / « Éliminé par … » ; le tableau du duel affiche « J1 / J2 » (pas de nom).
 - Vérifié en mode Play (Alvéole 17) : l'étiquette d'un joueur distant simulé est créée mais invisible. Non vérifié au casque.
+
+---
+
+## 206 — Hotfix poussé et fusionné dans main
+
+**Date** : 2026-11-12 · **Domaine** : Git
+
+> Oui pousse en hotfix puis puis main
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- Branche `hotfix/155-multijoueur-kills-spectateur-tp` poussée (journal 198 à 205).
+- Fusion `--no-ff` dans `main` : commit `1be77bd`, poussé. `main` n'avait pas bougé depuis `c445983` : aucun conflit, le contenu est celui de la branche hotfix (compilé sans erreur dans l'éditeur). La fusion a été faite sans changer de branche dans `~/SAE501`, pour ne pas toucher aux fichiers locaux de Rahim (correctif du délai de 12 s dans `MainMenuMulti.cs`, réglages URP, manifeste, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`), toujours non commités.
+- Wiki poussé (pages Kills, mort et spectateur ; Déplacement ; Multijoueur).
+- Issues #155 à #159 commentées, laissées ouvertes jusqu'au test au casque.
 

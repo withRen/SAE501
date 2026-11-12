@@ -230,6 +230,8 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [221](#221--tenue-de-la-clé--sur-pc-la-porte-ne-range-plus-larme) | 2026-11-12 | Tenue de la clé, porte qui range l'arme sur PC (même prompt que 220) | Gameplay / Version PC | Point de prise sur l'anneau de la clé (VR et PC) ; porte tirée par la main libre, ou ouverte seule si les deux mains sont prises : l'arme et la clé restent en main ; testé sur PC, pas au casque (issue #168) |
 | [222](#222--branches-165-166-et-167-fusionnées-dans-main) | 2026-11-12 | Pousser proprement le tout | Git | Branches 165, 166, 167 poussées et fusionnées dans main (--no-ff), conflit du journal résolu en gardant tout, main et wiki poussés, issues #165 à #168 laissées ouvertes jusqu'au test au casque |
 | [223](#223--armes-de-mêlée--le-souffle-seulement-à-lattaque) | 2026-11-12 | Le son des armes de mêlée se joue quand on bouge, seulement à l'attaque | Audio / Armes | Vitesse du geste par rapport au rig (casque), souffle et coup seulement pendant la frappe (PC) ; marche + rotation : 0 souffle, 5 coups : 5 souffles ; pas testé au casque (issue #169) |
+| [224](#224--build-windows-exe-avec-toutes-les-mises-à-jour) | 2026-11-12 | Build du .exe dans les téléchargements | Build | Build Windows 64 bits réussi sur la copie du projet (main + correctif #169 non poussé), 0 erreur ; zip de 451 Mo dans les téléchargements ; pas lancé sur Windows |
+| [225](#225--rebuild-windows-avec-les-retouches-de-la-map) | 2026-11-12 | Recompiler avec les retouches de la map faites à la main | Build | MainScene modifiée à la main par Rahim reprise telle quelle, build Windows réussi, 0 erreur, zip de 451 Mo ; pas lancé sur Windows |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4236,3 +4238,32 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
   - **PC** : souffle et coup seulement pendant l'animation de frappe (clic gauche, `DesktopPlayer.Swinging`) : marcher ou tourner la souris ne fait plus siffler l'arme (un premier essai par rapport à la caméra laissait encore passer quelques souffles : l'arme est replacée dans la même image que la caméra).
   - Les sons d'impact sur un zombie ne changent pas. Le marteau n'avait pas de souffle. Coop : les autres joueurs ne voient qu'une copie visuelle de l'arme (sans script), donc aucun son de leur côté au déplacement.
 - **Testé** en mode Play (PC, hache du bunker en main) : marche 3 m/s + rotation 200°/s pendant 5 s → **0 souffle** (avant : 1 à 2 souffles, et la vitesse « monde » montait à 75 m/s) ; 5 coups (clic gauche) → **5 souffles**. Pas d'erreur venant de ce changement (erreurs connues à l'arrêt du mode Play : XRI « routine is null », `JumpGuard`). **Non testé** : au casque (geste réel, marche continue, rotation par crans, téléportation).
+
+---
+
+## 224 — Build Windows (.exe) avec toutes les mises à jour
+
+**Date** : 2026-11-12 · **Domaine** : Build
+
+> Ok maintenant après toutes les updates qu'on a faites, je veux que tu me build le .exe du jeu (et que tu le place dans mes téléchargements)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- Build fait sur la **copie** `~/SAE501_WinBuild` (le projet principal reste en Android / Quest) : `Assets` et `Packages` resynchronisés depuis `~/SAE501` (branche `feature/169-son-melee-attaque` = `main` 8ffe31d + correctif du son de mêlée, commit d5d174d non poussé), réglages de la copie gardés. Build en ligne de commande (`-buildTarget StandaloneWindows64 -executeMethod WinBuildCopie.Build`, Mono, plein écran), scènes Menu, MainScene, Arena1v1_Bunker, Arena1v1_Quai.
+- **Résultat** : build réussi, 0 erreur ; dossier de 794 Mo, zip `~/Downloads/TheLastEscapor-Windows.zip` de 451 Mo (remplace celui du 11/11), dossier `~/Downloads/TheLastEscapor/` avec `LISEZMOI.txt`. Le dossier de symboles `..._BackUpThisFolder_ButDontShipItWithYourGame` n'est pas mis dans le zip.
+- Scène non reconstruite, `Library` non supprimé, réglages locaux de Rahim non touchés. **Non testé** : le jeu n'a pas été lancé sur Windows (pas de PC Windows ici).
+
+---
+
+## 225 — Rebuild Windows avec les retouches de la map
+
+**Date** : 2026-11-12 · **Domaine** : Build
+
+> J'ai modifié à la main 2/3 éléments de la map zombis, recompile avec cette petite modification
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- Retouches de Rahim dans `MainScene` (faites dans l'éditeur, non commitées) : une caisse en bois et un carton du couloir retirés, quelques objets déplacés ou tournés. Copie `~/SAE501_WinBuild` resynchronisée (scène identique à celle du projet), même build qu'à l'entrée 224.
+- **Résultat** : build réussi, 0 erreur ; zip `~/Downloads/TheLastEscapor-Windows.zip` de 451 Mo (dossier de 790 Mo), remplace le précédent. **Non testé** sur Windows.
+- À noter : ces retouches sont dans la scène seulement ; un prochain « Build VR Scene » les écraserait tant qu'elles ne sont pas reportées dans `RoomBuilder`.
+

@@ -221,6 +221,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [212](#212--corrections-de-laudit-multijoueur) | 2026-11-12 | Corriger les 5 bugs majeurs de l'audit | Multijoueur | Tir ami coupé en coop, victoire par forfait en duel, duel limité à 2 dans le lobby, mains du joueur mort désactivées (pistolet rangé), correctif 12 s commité ; + message d'évasion, pas de régénération en duel. Testé dans l'éditeur, pas au casque (issue #163) |
 | [213](#213--hotfix-163-fusionné-et-audit-du-reste-du-jeu) | 2026-11-12 | Fusionner, puis chercher d'autres bugs importants | Git / Analyse | hotfix/163 fusionné dans main (aca05d2) ; audit du reste du jeu : 0 bloquant (depuis ~/SAE501), 2 majeurs (bouton de la radio au casque, réglages de build non commités), 4 mineurs ; rapport docs/analyses/Audit_jeu_complet_2026-11-12.md |
 | [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
+| [215](#215--hotfix-164-fusionné-dans-main) | 2026-11-12 | Pousser et fusionner le hotfix 164 | Git | hotfix/164-radio-build poussée et fusionnée dans main (--no-ff), wiki poussé, issue #164 laissée ouverte jusqu'au test au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4091,4 +4092,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Objet hors de portée** (`ItemSafety.cs`) : posé plus de 8 s là où on ne peut pas aller à pied, il revient à sa dernière position atteignable.
 - **Gardes** : `WaveManager.UpdateWave` sans vague en cours, `DesktopHud` sans réticule.
 - **Testé** en mode Play (MainScene) : appel par clic, appuis répétés sans double appel, main tenant le pistolet sur le bouton (appel, arme gardée), marteau posé dehors rendu, évasion sans vague sans erreur. **Non testé** : au casque (gâchette, toucher réel), build Quest.
+
+---
+
+## 215 — Hotfix 164 fusionné dans main
+
+**Date** : 2026-11-12 · **Domaine** : Git
+
+> Oui
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- `hotfix/164-radio-build` poussée (avec le rapport `docs/analyses/Audit_jeu_complet_2026-11-12.md`) et fusionnée dans `main` (`--no-ff`, sans conflit), puis cette entrée du journal. Fusion sans toucher aux fichiers locaux de Rahim (réglages URP, reste du profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
+- Wiki poussé (page Radio de ravitaillement). Issue #164 commentée, laissée ouverte jusqu'au test au casque.
 

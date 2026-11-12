@@ -11,7 +11,8 @@ using UnityEngine;
 //   - les barricades : planche posée, clouée, retirée par n'importe qui, arrachée par un zombie (repérées par leur numéro) ;
 //   - l'écran du bunker (annonces, statut), début et fin de vague (soin, portes de zone), poussière avant une chute par le toit ;
 //   - les scores (par joueur et d'équipe), les joueurs à terre relevés à la pause, la fin de partie quand tous sont tombés.
-// Ce qui reste propre à chaque casque : les objets en main (pistolet, chargeurs, marteau, planches libres), la radio, les portes.
+// Ce qui reste propre à chaque casque : les objets en main (pistolet, chargeurs, marteau, planches libres), la radio, les portes
+//   (sauf la serrure de la salle du générateur : déverrouillée pour tous, GeneratorDoorUnlocked).
 public class NetGame : NetworkBehaviour
 {
     public static NetGame Instance { get; private set; }
@@ -44,6 +45,8 @@ public class NetGame : NetworkBehaviour
     public readonly NetworkVariable<int> Wave = new NetworkVariable<int>(0);
     /// <summary>Évasion, niveau 4 : le générateur peut démarrer (décidé par l'hôte).</summary>
     public readonly NetworkVariable<bool> GeneratorReady = new NetworkVariable<bool>(false);
+    /// <summary>[Clé du générateur] porte de la salle du générateur déverrouillée par un joueur (KeyLock) : ouverte pour tous.</summary>
+    public readonly NetworkVariable<bool> GeneratorDoorUnlocked = new NetworkVariable<bool>(false);
 
     /// <summary>Somme des scores des joueurs + bonus par vague terminée.</summary>
     public int TeamScore
@@ -87,6 +90,9 @@ public class NetGame : NetworkBehaviour
         WaveManager.EscapeRequested += OnEscapeRequested;
         GeneratorReady.OnValueChanged += (_, v) => WaveManager.RemoteGeneratorReady = v;
         WaveManager.RemoteGeneratorReady = GeneratorReady.Value;
+        KeyLock.LocalUnlocked += OnKeyUnlocked;
+        GeneratorDoorUnlocked.OnValueChanged += OnDoorUnlockedChanged;
+        OnDoorUnlockedChanged(false, GeneratorDoorUnlocked.Value);
         BuildScoreText();
         Scores.OnListChanged += _ => scoresDirty = true;
         Wave.OnValueChanged += (_, __) => scoresDirty = true;
@@ -135,6 +141,8 @@ public class NetGame : NetworkBehaviour
         WaveManager.GeneratorRequested -= OnGeneratorRequested;
         WaveManager.EscapeRequested -= OnEscapeRequested;
         WaveManager.EscapeOpened -= OnEscapeOpened;
+        KeyLock.LocalUnlocked -= OnKeyUnlocked;
+        GeneratorDoorUnlocked.OnValueChanged -= OnDoorUnlockedChanged;
     }
 
     static List<T> StableOrder<T>(IEnumerable<T> items) where T : Component =>
@@ -352,6 +360,24 @@ public class NetGame : NetworkBehaviour
         if (i < 0 || i >= openings.Count || !openings[i]) return;
         Opening.ApplyingRemote = true;
         try { openings[i].WarnFromAbove(seconds); } finally { Opening.ApplyingRemote = false; }
+    }
+
+    // ---------- [Clé du générateur] porte à serrure ----------
+    // un joueur a ouvert avec sa clé : l'hôte note la porte déverrouillée, la NetworkVariable la déverrouille sur tous les casques
+    void OnKeyUnlocked() => KeyDoorRpc();
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void KeyDoorRpc()
+    {
+        // l'hôte décide : refusé tant que la salle du générateur n'est pas ouverte chez lui (niveau 4), quel que soit l'envoyeur
+        var kl = KeyLock.Instance;
+        if (kl && kl.gate && !kl.gate.IsOpen) { Debug.Log("[Net] déverrouillage de la porte du générateur refusé : zone pas encore ouverte"); return; }
+        if (!GeneratorDoorUnlocked.Value) GeneratorDoorUnlocked.Value = true;
+    }
+
+    void OnDoorUnlockedChanged(bool _, bool unlocked)
+    {
+        if (unlocked && KeyLock.Instance && !KeyLock.Instance.Unlocked) KeyLock.Instance.Unlock(false);
     }
 
     // ---------- Évasion : le générateur ----------

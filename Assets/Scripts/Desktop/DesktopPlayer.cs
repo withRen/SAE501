@@ -25,7 +25,7 @@ public class DesktopPlayer : MonoBehaviour
     public float reach = 2.2f;              // distance maximale pour prendre un objet ou appuyer sur un bouton
     public float swingDuration = 0.34f;     // coup de marteau / d'arme : aller-retour
 
-    public enum Kind { None, Pistol, Hammer, Melee, Lamp, Plank, Magazine, Battery, Other }
+    public enum Kind { None, Pistol, Hammer, Melee, Lamp, Plank, Magazine, Battery, Key, Other }
 
     // ───────────────────────── une main ─────────────────────────
     class Hand
@@ -78,6 +78,7 @@ public class DesktopPlayer : MonoBehaviour
     float recoil;
     Lever lever; float leverGoal;
     HingedDoor door; float doorGoal; float doorTime;
+    Hand doorHand;                         // [#168] main qui tire la poignée (la main libre : l'arme reste en main)
     IXRSelectInteractable press; float pressT = -1f; Vector3 pressPoint;
     float reload = -1f; MagWell reloadWell; bool lampWasInLeft;
     float bob, bobAmount;
@@ -411,7 +412,7 @@ public class DesktopPlayer : MonoBehaviour
     /// <summary>E : interagir avec ce que vise le réticule.</summary>
     public void Interact()
     {
-        if (door) { door = null; ReleaseRight(); return; }                       // 2e appui : on lâche la porte
+        if (door) { door = null; Release(doorHand); return; }                  // 2e appui : on lâche la porte
 
         // planche en main : la poser sur l'emplacement visé (ou celui où elle est déjà calée)
         var plank = rightH.Item<Plank>();
@@ -775,13 +776,17 @@ public class DesktopPlayer : MonoBehaviour
     void GrabDoor(HingedDoor hd, IXRSelectInteractable handle)
     {
         if (hd.locked) { DesktopHud.Message("Verrouillée"); return; }
-        if (rightH.Held != null) Stow(rightH);
-        if (rightH.Held != null) return;
-        Reach(rightH, handle.transform.position);
-        rightH.it.interactionManager.SelectEnter((IXRSelectInteractor)rightH.it, handle);
-        if (!rightH.it.IsSelecting(handle)) return;
-        door = hd;
-        doorGoal = hd.Closed ? hd.maxAngle * 0.92f : 0f;
+        if (hd.keyLock && !hd.keyLock.TryOpen()) return;          // [Clé du générateur] sans la clé en main : message de KeyLock
+        // [#168] on ne range plus l'arme : la porte est tirée par la main libre (droite, sinon gauche) ; les deux mains prises
+        // (lampe + pistolet, clé…), elle s'ouvre seule
+        float goal = hd.Closed ? hd.maxAngle * 0.92f : 0f;
+        var h = rightH.Held == null ? rightH : leftH.Held == null ? leftH : null;
+        if (h == null) { hd.DriveTo(goal); return; }
+        Reach(h, handle.transform.position);
+        h.it.interactionManager.SelectEnter((IXRSelectInteractor)h.it, handle);
+        if (!h.it.IsSelecting(handle)) { hd.DriveTo(goal); return; }
+        door = hd; doorHand = h;
+        doorGoal = goal;
         doorTime = 0f;
     }
 
@@ -802,7 +807,7 @@ public class DesktopPlayer : MonoBehaviour
         }
 
         // levier : la main pousse la boule vers la butée visée tant que E est tenu
-        rightH.target = null;
+        rightH.target = null; leftH.target = null;
         if (lever)
         {
             if (!lever.handle || !rightH.it.IsSelecting(lever.handle) || lever.locked) lever = null;
@@ -822,7 +827,7 @@ public class DesktopPlayer : MonoBehaviour
         if (door)
         {
             doorTime += dt;
-            if (!door.handle || !rightH.it.IsSelecting(door.handle) || doorTime > 2.5f) { door = null; if (rightH.Held is XRSimpleInteractable) Release(rightH); }
+            if (!door.handle || !doorHand.it.IsSelecting(door.handle) || doorTime > 2.5f) { door = null; if (doorHand.Held is XRSimpleInteractable) Release(doorHand); }
             else
             {
                 var hinge = door.transform.position;
@@ -830,8 +835,8 @@ public class DesktopPlayer : MonoBehaviour
                 var v = hp - hinge; float y = v.y; v.y = 0f;
                 float next = Mathf.MoveTowards(door.Angle, doorGoal, 95f * dt);
                 var dir = Quaternion.AngleAxis((next - door.Angle) * door.openSign, Vector3.up) * v;
-                rightH.target = hinge + dir + Vector3.up * y;
-                if (Mathf.Abs(door.Angle - doorGoal) < 1.5f) { door = null; Release(rightH); }
+                doorHand.target = hinge + dir + Vector3.up * y;
+                if (Mathf.Abs(door.Angle - doorGoal) < 1.5f) { door = null; Release(doorHand); }
             }
         }
 
@@ -870,6 +875,7 @@ public class DesktopPlayer : MonoBehaviour
     {
         var g = h.Grab;
         bool visible = g != null || (h.right && (h.target.HasValue || pressT >= 0f && (rightH.Held == null || rightH.Held is XRSimpleInteractable)))
+                       || (!h.right && h.target.HasValue)
                        || (!h.right && pressT >= 0f && rightH.Held != null && !(rightH.Held is XRSimpleInteractable));
         if (hiddenScope) visible = false;          // lunette plein écran (sniper) : mains cachées
         foreach (var r in h.renderers) if (r) r.enabled = visible;
@@ -988,6 +994,18 @@ public class DesktopPlayer : MonoBehaviour
                     pos = tipPos - r * tip;
                 }
                 if (inspecting) { pos = head.TransformPoint(new Vector3(0.05f, -0.12f, 0.45f)); rot = head.rotation * Quaternion.Euler(0f, -70f, 20f) * Quaternion.Inverse(Quaternion.LookRotation(faceLocal, Vector3.up)); }
+                return;
+            }
+            case Kind.Key:
+            {
+                // [#168] clé tenue par l'anneau (KeyItem.grip), tige vers l'avant un peu relevée, à plat à la verticale
+                local = (h.right ? new Vector3(0.15f, -0.15f, 0.34f) : new Vector3(-0.15f, -0.15f, 0.34f)) + bobOff + swayOff;
+                if (inspecting) local = new Vector3(h.right ? 0.04f : -0.04f, -0.06f, 0.26f);
+                var ga = g.GetAttachTransform(h.it);
+                var attachLocal = Quaternion.Inverse(g.transform.rotation) * ga.rotation;
+                var attachRot = head.rotation * Quaternion.Euler(-15f, h.right ? -12f : 12f, 0f);
+                rot = attachRot * Quaternion.Inverse(attachLocal);
+                pos = head.TransformPoint(local);
                 return;
             }
             case Kind.Plank:
@@ -1180,6 +1198,7 @@ public class DesktopPlayer : MonoBehaviour
         if (g.GetComponent<Plank>()) return Kind.Plank;
         if (g.GetComponent<Magazine>()) return Kind.Magazine;
         if (g.GetComponent<Battery>()) return Kind.Battery;
+        if (g.GetComponent<KeyItem>()) return Kind.Key;
         return Kind.Other;
     }
 
@@ -1189,6 +1208,8 @@ public class DesktopPlayer : MonoBehaviour
         var lv = t.GetComponentInParent<Lever>();
         if (lv) return lv.locked ? "Levier (bloqué)" : (lv.GetComponentInParent<Generator>() || lv.springBack ? "Maintenir : abaisser le levier" : lv.Down01 < 0.5f ? "Maintenir : abaisser le levier" : "Maintenir : remonter le levier");
         var hd = t.GetComponentInParent<HingedDoor>();
+        if (hd && hd.keyLock && !hd.locked && !hd.keyLock.Unlocked)
+            return hd.keyLock.KeyInHand ? "Déverrouiller avec la clé" : "Porte verrouillée (il faut la clé)";
         if (hd) return hd.locked ? "Porte verrouillée" : hd.Closed ? "Ouvrir la porte" : "Fermer la porte";
         if (t.GetComponentInParent<SupplyRadio>()) return "Appeler un ravitaillement";
         if (t.GetComponent<Pistol>()) return "Prendre le pistolet";
@@ -1198,6 +1219,8 @@ public class DesktopPlayer : MonoBehaviour
         if (t.GetComponent<Flashlight>()) return "Prendre la lampe";
         if (t.GetComponent<Battery>()) return "Prendre la pile";
         if (t.GetComponent<MeleeWeapon>()) return "Prendre " + (t.name.ToLowerInvariant().Contains("hache") || t.name.ToLowerInvariant().Contains("axe") ? "la hache" : "l'arme");
+        var key = t.GetComponent<KeyItem>();
+        if (key) return "Prendre : " + key.displayName;
         if (t.name.StartsWith("Cle")) return "Prendre la clé";
         return s is XRGrabInteractable ? "Prendre" : "Utiliser";
     }

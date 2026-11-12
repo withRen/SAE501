@@ -222,6 +222,10 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [213](#213--hotfix-163-fusionné-et-audit-du-reste-du-jeu) | 2026-11-12 | Fusionner, puis chercher d'autres bugs importants | Git / Analyse | hotfix/163 fusionné dans main (aca05d2) ; audit du reste du jeu : 0 bloquant (depuis ~/SAE501), 2 majeurs (bouton de la radio au casque, réglages de build non commités), 4 mineurs ; rapport docs/analyses/Audit_jeu_complet_2026-11-12.md |
 | [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
 | [215](#215--hotfix-164-fusionné-dans-main) | 2026-11-12 | Pousser et fusionner le hotfix 164 | Git | hotfix/164-radio-build poussée et fusionnée dans main (--no-ff), wiki poussé, issue #164 laissée ouverte jusqu'au test au casque |
+| [216](#216--clé-de-la-salle-du-générateur) | 2026-11-12 | Porte du générateur verrouillée sans la clé, message, libellé de la clé | Gameplay / Multijoueur | KeyLock (clé en main pour déverrouiller), message panneau + HUD PC, étiquette « Clé de la salle du générateur », déverrouillage synchronisé en coop ; testé sur PC en mode Play, pas au casque (issue #165) |
+| [217](#217--clé-du-générateur--indication-visuelle-au-casque) | 2026-11-12 | Indication visuelle pour déverrouiller avec la clé au casque | Gameplay / UX | Serrure visible sous la poignée ; clé en main près de la porte : serrure qui luit et pulse, panneau « approchez-la de la serrure », étiquette de la clé ; testé sur PC, pas au casque (issue #165) |
+| [218](#218--captures-de-la-serrure-et-vérification-coop) | 2026-11-12 | Captures de la serrure, risques de bug en coop | Gameplay / Multijoueur | 5 captures (sans clé, clé à 2 m, texte casque, clé proche, déverrouillée) ; lueur fixe sur la serrure, textes PC ; l'hôte refuse un déverrouillage avant l'ouverture de la salle ; risques coop examinés (issue #165) |
+| [221](#221--tenue-de-la-clé--sur-pc-la-porte-ne-range-plus-larme) | 2026-11-12 | Tenue de la clé, porte qui range l'arme sur PC (même prompt que 220) | Gameplay / Version PC | Point de prise sur l'anneau de la clé (VR et PC) ; porte tirée par la main libre, ou ouverte seule si les deux mains sont prises : l'arme et la clé restent en main ; testé sur PC, pas au casque (issue #168) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4106,3 +4110,62 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `hotfix/164-radio-build` poussée (avec le rapport `docs/analyses/Audit_jeu_complet_2026-11-12.md`) et fusionnée dans `main` (`--no-ff`, sans conflit), puis cette entrée du journal. Fusion sans toucher aux fichiers locaux de Rahim (réglages URP, reste du profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
 - Wiki poussé (page Radio de ravitaillement). Issue #164 commentée, laissée ouverte jusqu'au test au casque.
 
+
+---
+
+## 216 — Clé de la salle du générateur
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Multijoueur
+
+> La clé actuellement n'a aucune utilité pour ça faisons en sorte que si le joueur n'a pas la clé il n'a pas accès à la salle du générateur (donc il faut rajouter un message si le joueur tente d'ouvrir la porte du générateur sans avoir la clé) et rajouter une specification sur la clé genre "Clé de la salle du générateur"
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #165, branche `feature/165-cle-generateur` partie de `main`, commit local non poussé)
+
+- **Serrure** (`KeyLock.cs`, sur `Porte_Generateur`) : en plus du verrou de niveau (salle ouverte après la vague 3, inchangé), la porte reste fermée tant qu'on n'a pas la clé de la cabane du jardin (`Cle_Jardin`). Modèle choisi : la clé doit être **tenue en main** (comme tous les objets du jeu, pas d'inventaire) : au casque, saisir la poignée avec la clé dans l'autre main, ou approcher la clé de la poignée (25 cm) ; sur PC, viser la porte avec la clé en main et appuyer sur E. Une fois déverrouillée, elle le reste (la clé n'est plus nécessaire).
+- **Sans la clé** : la poignée se saisit mais se relâche (`HingedDoor`), bruit de serrure, le panneau de la porte affiche « VERROUILLÉE — Il faut la clé de la salle du générateur » (il clignote après un essai ; texte dans le monde, donc visible au casque) ; sur PC, message en bas de l'écran et réticule « Porte verrouillée (il faut la clé) » / « Déverrouiller avec la clé ». L'annonce de fin de vague 3 ajoute « (il faut la clé de la salle du générateur) ». Déverrouillage : son `Porte_Deverrouillee` existant.
+- **Libellé de la clé** (`KeyItem.cs`) : « Clé de la salle du générateur » flotte au-dessus de la clé quand on la vise ou qu'on la tient (VR) ; réticule PC « Prendre : Clé de la salle du générateur ».
+- **Coop** (`NetGame.cs`) : un joueur qui déverrouille prévient l'hôte (RPC), qui passe `GeneratorDoorUnlocked` (NetworkVariable) à vrai : la porte est déverrouillée sur tous les casques. Chaque casque garde sa propre clé et ses propres portes (comme avant) ; le message « verrouillée » reste local. Duel : non concerné (arènes sans cette porte, `NetDuel` n'utilise pas `NetGame`).
+- **Durable** : `RoomBuilder` ajoute `KeyItem` et `KeyLock` à la construction ; la scène n'a **pas** été reconstruite : les deux composants ont été ajoutés directement à `MainScene` (seul changement de la scène). Sans clé dans la scène, la porte n'a pas de serrure (jamais de porte impossible à ouvrir).
+- **Testé** en mode Play (PC, MainScene, niveau 4 forcé) : sans clé, E sur la porte → refus, message PC et panneau (captures) ; clé prise → étiquette visible, E sur la porte → déverrouillée, panneau caché. Compilation sans erreur. **Non testé** : au casque (poignée, geste de la clé), en coop réel sur deux machines. Dans ce test scripté (joueur téléporté), la poignée saisie ne fait pas pivoter le battant, ni sur cette porte ni sur la porte du stockage non modifiée : limite du test, pas du changement, mais l'ouverture complète n'a pas été vue.
+
+---
+
+## 217 — Clé du générateur : indication visuelle au casque
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / UX
+
+> Au casque : tu saisis la poignée avec la clé dans l’autre main, ou tu approches la clé à moins de 25 cm de la poignée. il va falloir une indication visuelle pour ça
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #165, branche `feature/165-cle-generateur`, commit local non poussé)
+
+- **Serrure visible** sous la poignée de la porte du générateur, côté joueur (plaque de la matière de la poignée, trou et fente noirs), créée au lancement par `KeyLock` : la scène n'est pas modifiée.
+- **Quand le joueur tient la clé à moins de 4 m de la porte encore verrouillée** : la serrure luit en ambre et pulse (plus fort et plus vite en approchant, matériau `Fx_Lueur` des yeux des zombies) ; le panneau passe en ambre : « CLÉ EN MAIN — Approchez-la de la serrure (sous la poignée) » ; l'étiquette de la clé ajoute « → approchez-la de la serrure ». La clé déverrouille à moins de 25 cm de la serrure ou de la poignée ; saisir la poignée avec la clé dans l'autre main marche toujours.
+- **Testé** en mode Play (PC, niveau 4 forcé, clé en main à 0,77 m) : lueur visible, textes du panneau et de l'étiquette (capture), pas d'erreur. **Non testé** : au casque (taille et lisibilité réelles, geste d'approche de la clé jusqu'au déverrouillage).
+
+---
+
+## 218 — Captures de la serrure et vérification coop
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Multijoueur / Captures
+
+> Prend moi un screen de ça pour que j'en ai la certitude (réfléchi si y aura pas de bug en coop par rapport à ça justement)
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #165, branche `feature/165-cle-generateur`, commit local non poussé)
+
+- **Captures** (mode Play, MainScene, niveau 4 forcé, zombies retirés pour la prise de vue) dans `docs/captures/cle_generateur/` (non commitées) : `a_porte_verrouillee_sans_cle.png` (panneau rouge et petite lueur fixe sur la serrure), `b_cle_en_main_2m_PC.png` (clé en main à 2 m, version PC), `b_bis_cle_en_main_texte_casque_0m77.png` (texte du casque et étiquette de la clé, capture du journal 217), `c1_cle_proche_avant.png` (geste du casque simulé : main à 38 cm, lueur au maximum), `c2_apres_deverrouillage.png` (clé à 24 cm : déverrouillée, panneau et lueur éteints). Le geste du casque a été simulé en déplaçant la main qui tient la clé (contrôle PC coupé) : il déverrouille bien à moins de 25 cm.
+- **Corrections trouvées grâce aux captures** : sans la clé, la serrure était invisible dans le noir → petite lueur fixe (0,6) dès que la salle est ouverte. Sur PC, la clé en main est dessinée près de la caméra, loin de sa vraie position : étiquette au survol seulement, et texte PC du panneau « CLÉ EN MAIN — Visez la porte et appuyez sur E » (3 lignes, la ligne longue était coupée par le cadre de la porte). Lueur un peu plus grande en approchant.
+- **Coop, risques examinés** : l'hôte décide (NetworkVariable écrite par l'hôte seul) ; **corrigé** : l'hôte refuse maintenant le déverrouillage tant que la salle n'est pas ouverte chez lui. Rejoindre en cours de partie : refusé par le jeu (« La partie a déjà commencé ») ; l'état initial est quand même appliqué à l'apparition de `NetGame`. Deux joueurs en même temps : sans effet (déverrouillage idempotent). Clé : chaque casque a la sienne, non synchronisée ; seules les mains du joueur local comptent (les avatars distants n'ont pas d'interacteur) ; lueur, panneau « CLÉ EN MAIN » et étiquette sont locaux. Serrure créée une fois par casque (une seule `KeyLock` par scène). Nouvelle partie : la scène est rechargée, tout repart verrouillé. Solo sans `NetGame` : rien n'écoute l'événement, sans effet. Porte ouverte chez un joueur mais fermée chez l'autre : comportement déjà existant de toutes les portes (angles propres à chaque casque), non changé. Duel : non concerné. **À tester à deux casques** : le déverrouillage relayé, le son entendu chez l'autre joueur.
+
+---
+
+## 221 — Tenue de la clé ; sur PC, la porte ne range plus l'arme
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Version PC
+
+> (même prompt que l'entrée 220, sur la branche `feature/167-feuillage-cabane`) La tenu de la clé doit être corrigée […] Et y a un soucis sur pc quand on ouvre une porte ça range l'arme
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #168, branche `feature/165-cle-generateur`, commit local non poussé ; la partie « fenêtre » est l'entrée 220)
+
+- **Tenue de la clé** : elle n'avait pas de point de prise, donc la main la tenait par son centre, et sur PC dans l'angle où on l'avait ramassée. `KeyItem` ajoute un point de prise `Prise_Cle` sur l'anneau (4,5 cm du centre) : tige vers l'avant, clé à la verticale (comme dans une serrure), au casque comme sur PC. Sur PC, nouvelle pose `Kind.Key` dans `DesktopPlayer` : en bas à droite, tige vers l'avant un peu relevée.
+- **PC, ouvrir une porte rangeait l'arme** : E sur une porte libérait la main droite (pistolet à la ceinture, clé lâchée par terre) pour tirer la poignée. Maintenant la poignée est tirée par la main libre (droite, sinon gauche) ; si les deux mains sont prises (lampe + pistolet, lampe + clé), la porte s'ouvre ou se ferme seule (`HingedDoor.DriveTo`, même vitesse, petit grincement), sans rien lâcher. Porte barricadée ou verrouillée : sans effet. Cas de la clé : E avec la clé en main déverrouille la porte du générateur et l'ouvre, la clé reste en main.
+- **Testé** en mode Play (PC) : clé tenue par l'anneau (capture) ; clé en main droite et lampe en main gauche : E sur la porte du générateur → déverrouillée, ouverte à 92° toute seule, clé et lampe toujours tenues (capture). Captures dans `docs/captures/tenue_cle_porte/` (non commitées, éclairage d'appoint ajouté pour la prise de vue seulement). Pas d'erreur. **Non testé** : la tenue au casque (point de prise réel dans la main), et l'ouverture tirée par la main gauche dans un vrai jeu (dans ce test scripté, l'éditeur tournait à ~3 images/s en arrière-plan : la poignée tirée par une main se relâche aussi sur une porte non modifiée).

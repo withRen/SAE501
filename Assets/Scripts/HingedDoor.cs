@@ -6,6 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // - verrouillée (ZoneGate, niveau pas encore atteint) : la poignée ne répond pas ;
 // - déverrouillée : on attrape la poignée (grip, prise par clic) et on TIRE : la porte suit la main autour de la charnière ;
 //   on la lâche (grip à nouveau, ou main trop loin) et elle reste où elle est ;
+// - [Clé du générateur] avec une serrure (KeyLock) : la poignée se saisit mais se relâche tant qu'on n'a pas la clé en main ;
 // - barricadable (portes ouest / est du bunker) : tant qu'une planche est posée sur son ouverture, elle ne s'ouvre plus ;
 // - un zombie devant la porte fermée la frappe : au bout de hitsToBreak coups elle cède (Zombie, Opening.door).
 // Le battant découpe le NavMesh (NavMeshObstacle) : fermée, les zombies ne passent pas à travers.
@@ -18,6 +19,10 @@ public class HingedDoor : MonoBehaviour
     public float maxAngle = 100f;
     public int hitsToBreak = 3;
     public bool locked = true;
+    public KeyLock keyLock;                // [Clé du générateur] serrure : poignée saisissable, mais la porte ne bouge pas sans la clé
+
+    bool KeyLocked => keyLock && !keyLock.Unlocked;
+    bool wasSelected;
 
     public float Angle { get; private set; }
     public bool Closed => Angle < 20f;
@@ -25,6 +30,7 @@ public class HingedDoor : MonoBehaviour
     Quaternion rest;
     Vector3 closedDir;                     // de la charnière vers le bout du battant, porte fermée (à plat)
     float forced = -1f;                    // ouverture imposée par un zombie (animée)
+    float driven = -1f;                    // [#168] PC, les deux mains prises : la porte va seule à cet angle (rien n'est lâché)
     int hits;
     AudioSource src;
     static AudioClip thud, creak;
@@ -44,7 +50,15 @@ public class HingedDoor : MonoBehaviour
     void Update()
     {
         if (handle) handle.enabled = !locked;
-        if (handle && handle.isSelected && !locked && forced < 0f)
+        // serrure : la poignée saisie sans la clé en main est relâchée (KeyLock : message et bruit de serrure)
+        bool sel = handle && handle.isSelected && !locked;
+        if (sel && !wasSelected && KeyLocked && !keyLock.TryOpen())
+        {
+            handle.interactionManager.SelectExit(handle.firstInteractorSelecting, handle);
+            sel = false;
+        }
+        wasSelected = sel;
+        if (sel && !KeyLocked && forced < 0f)
         {
             var hand = handle.firstInteractorSelecting.GetAttachTransform(handle).position;
             // main trop loin de la poignée : on lâche
@@ -58,7 +72,21 @@ public class HingedDoor : MonoBehaviour
             }
         }
         else if (forced >= 0f) Angle = Mathf.MoveTowards(Angle, forced, 140f * Time.deltaTime);
+        else if (driven >= 0f)
+        {
+            Angle = Mathf.MoveTowards(Angle, Mathf.Min(driven, Barricaded ? 0f : maxAngle), 95f * Time.deltaTime);
+            if (Mathf.Abs(Angle - driven) < 0.5f || (Barricaded && Angle <= 0f)) driven = -1f;
+        }
         transform.localRotation = rest * Quaternion.Euler(0f, Angle * openSign, 0f);
+    }
+
+    /// <summary>[#168] Ouvre ou ferme la porte sans la tenir (version PC, mains prises). Sans effet si verrouillée.</summary>
+    public void DriveTo(float angle)
+    {
+        if (locked || KeyLocked) return;
+        driven = Mathf.Clamp(angle, 0f, maxAngle);
+        src.pitch = 1f;
+        src.PlayOneShot(creak, 0.5f);
     }
 
     // coup de zombie sur la porte fermée

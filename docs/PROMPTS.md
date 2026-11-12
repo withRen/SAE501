@@ -232,6 +232,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [223](#223--armes-de-mêlée--le-souffle-seulement-à-lattaque) | 2026-11-12 | Le son des armes de mêlée se joue quand on bouge, seulement à l'attaque | Audio / Armes | Vitesse du geste par rapport au rig (casque), souffle et coup seulement pendant la frappe (PC) ; marche + rotation : 0 souffle, 5 coups : 5 souffles ; pas testé au casque (issue #169) |
 | [224](#224--build-windows-exe-avec-toutes-les-mises-à-jour) | 2026-11-12 | Build du .exe dans les téléchargements | Build | Build Windows 64 bits réussi sur la copie du projet (main + correctif #169 non poussé), 0 erreur ; zip de 451 Mo dans les téléchargements ; pas lancé sur Windows |
 | [225](#225--rebuild-windows-avec-les-retouches-de-la-map) | 2026-11-12 | Recompiler avec les retouches de la map faites à la main | Build | MainScene modifiée à la main par Rahim reprise telle quelle, build Windows réussi, 0 erreur, zip de 451 Mo ; pas lancé sur Windows |
+| [226](#226--push-global-release-v100-vulkan-gitignore-et-assets) | 2026-11-12 | Push global des branches et du main, release avec .apk et .exe et leur logo, Vulkan dans les optimisations, .gitignore, liste des assets | Git / Build / Documentation | feature/169 et la scène de Rahim fusionnées dans main, 3 branches locales poussées, version 1.0.0, APK et .exe avec l'icône du jeu, release v1.0.0, page wiki Optimisations (Vulkan), ASSETS.md refait ; pas testé au casque ni sur Windows |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4266,4 +4267,29 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Retouches de Rahim dans `MainScene` (faites dans l'éditeur, non commitées) : une caisse en bois et un carton du couloir retirés, quelques objets déplacés ou tournés. Copie `~/SAE501_WinBuild` resynchronisée (scène identique à celle du projet), même build qu'à l'entrée 224.
 - **Résultat** : build réussi, 0 erreur ; zip `~/Downloads/TheLastEscapor-Windows.zip` de 451 Mo (dossier de 790 Mo), remplace le précédent. **Non testé** sur Windows.
 - À noter : ces retouches sont dans la scène seulement ; un prochain « Build VR Scene » les écraserait tant qu'elles ne sont pas reportées dans `RoomBuilder`.
+
+---
+
+## 226 — Push global, release v1.0.0, Vulkan, .gitignore et assets
+
+**Date** : 2026-11-12 · **Domaine** : Git / Build / Documentation
+
+> Ok fait un push global propre sur github des branch qui sont encore en local / du dernier main (la version actuelle qui tourne du jeu)
+> Fait Egalement le Releases avec le .apk et .exe avec aussi le logo du jeu bien placé sur chacun des executables
+>
+> Rajoute également dans les optimisations le passage de openGl à Vulkan
+>
+> Rajoute dans le gitignore project.yaml, agents.md
+> Met également à jour la liste des assets
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- **Git** : `feature/169-son-melee-attaque` fusionnée dans `main` (commit de fusion), puis `chore/version-finale` : `MainScene` telle que Rahim l'a retouchée à la main (version qui tourne), `.gitignore`, version 1.0.0 (code 3), liste des assets, journal 224 et 225. Branches qui n'existaient qu'en local poussées : `feature/169-son-melee-attaque`, `chore/version-finale`, `feature/cinematiques` et `feature/musiques-playlist` (ces deux dernières ne sont pas fusionnées dans main, poussées telles quelles). Les autres branches locales étaient déjà dans main. Réglages locaux de Rahim non commités (URP, `DevAgentSettings`, `RuntimeActionBindings.json` supprimé, cible de déploiement, `Protection_suite`, `scripts/`). Scène non reconstruite.
+- **.gitignore** : `project.yaml` et `AGENTS.md` (et `agents.md`) ignorés et retirés du suivi ; les fichiers restent sur le disque. Chez les autres membres, le prochain `git pull` les supprimera de leur copie.
+- **Optimisations** : section « Vulkan seul » ajoutée à la page wiki [Optimisations](https://github.com/withRen/SAE501/wiki/Optimisations) (OpenGL ES 3 retiré à l'entrée 196, build ~25 min → ~4 min, shaders compilés une fois et gardés dans `Library`).
+- **Assets** : `docs/ASSETS.md` commence par la liste de la version finale (packs, modèles CC0, ce qui est fait pour le projet, sons, police, avec source, licence et dossier) ; l'ancienne liste d'octobre est gardée comme « liste de départ ». Sources et licences marquées « à confirmer » quand l'IA ne les a pas retrouvées (ZombieMale_AAB, pack Zombie, AK74M, AWM, musiques).
+- **Icônes** : Android, icône par défaut et icône adaptative (`Assets/Branding`) dans le profil « Meta Quest » (`QuestBuild.ApplyIdentity`) ; vérifié dans l'APK (`aapt` : The Last Escapor 1.0.0, code 3, icône adaptative). Windows : `WinBuildCopie.Build` (script de la copie `~/SAE501_WinBuild`) met `AppIcon_1024` sur toutes les tailles avant le build ; icône relue dans le `.exe` (256 px, le logo du jeu).
+- **Builds** depuis le main final : APK `TheLastEscapor-v1.0.0.apk` (371 Mo, éditeur ouvert, `QuestBuild.ReleaseApk`), Windows 64 bits sur la copie (0 erreur, zip de 453 Mo). Copiés dans les téléchargements.
+- **Release** GitHub v1.0.0 avec l'APK et le zip Windows.
+- **Non testé** : l'APK au casque et le `.exe` sur Windows.
 

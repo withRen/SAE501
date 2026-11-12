@@ -213,6 +213,7 @@ public class NetPlayer : NetworkBehaviour
     {
         var h = PlayerHealth.Instance;
         if (!h || h.IsDead) return;
+        if (!NetDuel.CanShoot) return;          // [hotfix #160] duel hors manche active : coup refusé (tir parti juste avant la fin de manche)
         if (attacker != NoAttacker) { lastAttacker = attacker; lastAttackTime = Time.time; }
         h.TakeDamage(amount, from);
     }

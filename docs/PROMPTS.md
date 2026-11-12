@@ -213,6 +213,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
 | [205](#205--étiquette-de-nom-masquée-en-duel) | 2026-11-12 | En 1v1 on voit le nametag | Multijoueur | Étiquette au-dessus de l'avatar masquée dans les arènes du duel, gardée en coop ; vérifié en mode Play (arène), pas au casque (issue #159) |
 | [206](#206--hotfix-poussé-et-fusionné-dans-main) | 2026-11-12 | Pousser en hotfix puis dans main | Git | Branche hotfix/155-multijoueur-kills-spectateur-tp poussée, fusionnée dans main (1be77bd, --no-ff), wiki poussé ; issues #155 à #159 laissées ouvertes jusqu'au test au casque |
+| [207](#207--duel--hud-des-scores-et-états-de-manche) | 2026-11-12 | 1v1 : HUD des scores façon CS:GO ; un joueur mort peut encore tirer et marquer | Multijoueur | États du duel synchronisés (gel 3-2-1, manche active, fin de manche, fin de match), un point par manche, tirs et coups refusés hors manche active ; bandeau des scores en haut de la vue. Testé en mode Play (hôte + adversaire simulé), pas à deux casques (issue #160) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3943,4 +3944,23 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Fusion `--no-ff` dans `main` : commit `1be77bd`, poussé. `main` n'avait pas bougé depuis `c445983` : aucun conflit, le contenu est celui de la branche hotfix (compilé sans erreur dans l'éditeur). La fusion a été faite sans changer de branche dans `~/SAE501`, pour ne pas toucher aux fichiers locaux de Rahim (correctif du délai de 12 s dans `MainMenuMulti.cs`, réglages URP, manifeste, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`), toujours non commités.
 - Wiki poussé (pages Kills, mort et spectateur ; Déplacement ; Multijoueur).
 - Issues #155 à #159 commentées, laissées ouvertes jusqu'au test au casque.
+
+---
+
+## 207 — Duel : HUD des scores et états de manche
+
+**Date** : 2026-11-12 · **Domaine** : Multijoueur
+
+> En 1V1 il faudrait un HUD propre pour afficher le nombre de points de chacuns (Pour ça inspires toi de CSGO)
+> Egalement lorsqu'il joueur meurt il peut encore tirer, ce qui fait en sorte qu'il marque des points (ça ne devrait pas ce produire, quand un joueur meurt il y a le state fin de manche, pendant ce state personne ne peut tirer, et après quand une nouvelle manche recommence on passe au state mancheactive et là ils peuvent tirer)
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #160, branche `hotfix/160-duel-hud-etats` depuis `main`, commit local non poussé)
+
+- **États du duel** (`NetDuel`, décidés par l'hôte, synchronisés) : Gel (1 s d'arrivée + 3-2-1) → MancheActive → FinDeManche (4 s) → Gel de la manche suivante… → FinDeMatch.
+  - On ne tire qu'en MancheActive : `Pistol.Fire` refuse (petit clic à vide) pendant le gel, la fin de manche et la fin de match ; en réseau, un joueur mort ne tire plus.
+  - Un coup qui arriverait quand même hors MancheActive est refusé par la victime (`NetPlayer.HitRpc`).
+  - **Un seul point par manche** : la première mort en MancheActive passe en FinDeManche ; les morts suivantes (dont deux morts presque simultanées) sont ignorées.
+  - Nouvelle manche : vie pleine, chacun à son côté, arme rendue, puis gel 3-2-1. Le déplacement reste libre pendant le gel et la fin de manche.
+- **HUD** (`Net/NetDuelHud.cs`, à la place de l'ancien tableau suspendu au centre de l'arène) : bandeau en haut de la vue façon CS:GO : nom, score et pastilles de chaque joueur (toi en bleu, l'adversaire en rouge), au centre « MANCHE n », chrono de la manche et « PREMIER À k » ; dessous : décompte 3-2-1 / « COMBATTEZ ! », « MANCHE GAGNÉE / PERDUE », « VICTOIRE / DÉFAITE ». Au casque, à 1,3 m, un peu au-dessus du regard, suit la tête avec un léger retard ; sur PC, fixe dans la vue ; toujours dessiné devant le décor.
+- **Testé** en mode Play (Alvéole 17, hôte + adversaire simulé) : mort pendant le gel ignorée ; tir pendant le gel → 12 balles restent 12 ; en manche active → 12 → 11 ; kill + mort « simultanée » → 1-0 (un seul point) ; tir en fin de manche refusé ; deux morts de plus pendant la fin de manche ignorées ; manche 2 en gel puis active ; manche perdue → 1-1. Captures dans `~/SAE501_captures_duel_hud/` (PC et simulation casque). **Non testé** : vraie partie à deux casques.
 

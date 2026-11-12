@@ -16,6 +16,9 @@ using UnityEngine.AI;
 //   - en tombant : le corps part de là où il est (sur le rebord) et tombe juste derrière le mur (chute courte) ;
 //   - en se relevant : le bassin reste où il est tombé (le clip le place 1 m plus loin au départ : plus de saut).
 // À la fin, le décalage est reporté sur le zombie lui-même : pas de téléportation quand l'agent reprend la main.
+// [Fenêtres] La chute n'est plus systématique (elle lui faisait perdre ~3,5 s à chaque fenêtre) : tirée au sort (fallChance).
+// Sinon il passe normalement par-dessus le rebord : une fois le bassin au-dessus, il repart en marchant et redescend
+// côté bunker en ~0,7 s (Fit.Step), puis l'agent reprend la main.
 [RequireComponent(typeof(NavMeshAgent))]
 public class ZombieWindowClimb : MonoBehaviour
 {
@@ -30,13 +33,15 @@ public class ZombieWindowClimb : MonoBehaviour
     // avec les vraies animations (Climbing, Falling Flat Impact, Zombie Stand Up) : montée plus lente, et il se relève du sol
     public float climbTimeAnimated = 1.9f;   // 2e moitié du clip Climbing (ZombieMixamo.ClimbStartOffset, ×1,1)
     public float standUpTime = 2.6f;        // se relever (clip joué x1,5) avant de repartir
+    [Range(0f, 1f)] public float fallChance = 0.25f;   // chance de tomber à plat en passant la fenêtre (sinon il enjambe)
+    public float stepDownTime = 0.7f;       // enjambée : du rebord au sol, côté bunker
 
     bool Animated => anim != null && anim.HasClimbAnims && visual && hips && handL && handR;
 
     public bool Climbing { get; private set; }
 
     // décalage du modèle calculé après l'Animator (vrais clips) : phase en cours et repères
-    enum Fit { None, Climb, Fall, Rise }
+    enum Fit { None, Climb, Fall, Rise, Step }
     Fit fit;
     float fitT, fitDur;
     Vector3 fitOffset;                       // décalage monde du modèle (appliqué à Visual)
@@ -210,6 +215,17 @@ public class ZombieWindowClimb : MonoBehaviour
             yield return null;
         }
 
+        // 3 bis. le plus souvent : il passe par-dessus le rebord et redescend en marchant (pas de chute ni de relevé)
+        if (Random.value >= fallChance)
+        {
+            anim.BackToWalk();
+            StartFit(Fit.Step, stepDownTime, hips ? hips.position : At(tWall), At(tWall + 0.7f));
+            for (float t = 0; t < stepDownTime; t += Time.deltaTime) { if (Abort()) yield break; anim.SetMoveSpeed(approachSpeed); yield return null; }
+            EndFit(true);
+            yield return FinishLink(end);
+            yield break;
+        }
+
         // 3. bascule et tombe à plat, juste derrière le mur (le corps part du rebord : chute de moins d'1 m)
         anim.FallFlat();
         StartFit(Fit.Fall, dropTimeAnimated, hips ? hips.position : At(tWall), At(tWall + 0.6f));
@@ -227,8 +243,14 @@ public class ZombieWindowClimb : MonoBehaviour
 
         // le décalage horizontal du modèle passe au zombie lui-même (rien ne bouge à l'écran), puis l'agent reprend la main
         EndFit(true);
-        a = transform.position; b = end;
-        dur = Mathf.Max(0.05f, Vector3.Distance(a, b) / approachSpeed);
+        yield return FinishLink(end);
+    }
+
+    // marche jusqu'au bout du lien NavMesh, puis l'agent reprend la main
+    IEnumerator FinishLink(Vector3 end)
+    {
+        Vector3 a = transform.position, b = end;
+        float dur = Mathf.Max(0.05f, Vector3.Distance(a, b) / approachSpeed);
         for (float t = 0; t < dur; t += Time.deltaTime)
         {
             if (Abort()) yield break;
@@ -290,6 +312,16 @@ public class ZombieWindowClimb : MonoBehaviour
                 float s = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(fitT / 0.55f));
                 float startY = hipsFrom.y - hipsRaw.y;
                 if (fitT < 0.12f) fallStartY = startY;                  // le temps du fondu vers le clip de chute
+                want.y = Mathf.Lerp(fallStartY, 0f, s);
+                var goal = Vector3.Lerp(hipsFrom, hipsTo, s);
+                want.x = goal.x - hipsRaw.x; want.z = goal.z - hipsRaw.z;
+                break;
+            }
+            case Fit.Step:
+            {
+                // enjambée : le bassin part d'au-dessus du rebord et descend jusqu'à la hauteur de marche, en avançant
+                float s = Mathf.SmoothStep(0f, 1f, k);
+                if (fitT < 0.12f) fallStartY = hipsFrom.y - hipsRaw.y;   // le temps du fondu vers la marche
                 want.y = Mathf.Lerp(fallStartY, 0f, s);
                 var goal = Vector3.Lerp(hipsFrom, hipsTo, s);
                 want.x = goal.x - hipsRaw.x; want.z = goal.z - hipsRaw.z;

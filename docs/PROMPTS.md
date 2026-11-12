@@ -222,6 +222,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [213](#213--hotfix-163-fusionné-et-audit-du-reste-du-jeu) | 2026-11-12 | Fusionner, puis chercher d'autres bugs importants | Git / Analyse | hotfix/163 fusionné dans main (aca05d2) ; audit du reste du jeu : 0 bloquant (depuis ~/SAE501), 2 majeurs (bouton de la radio au casque, réglages de build non commités), 4 mineurs ; rapport docs/analyses/Audit_jeu_complet_2026-11-12.md |
 | [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
 | [215](#215--hotfix-164-fusionné-dans-main) | 2026-11-12 | Pousser et fusionner le hotfix 164 | Git | hotfix/164-radio-build poussée et fusionnée dans main (--no-ff), wiki poussé, issue #164 laissée ouverte jusqu'au test au casque |
+| [219](#219--zombies-aux-fenêtres--chute-aléatoire) | 2026-11-12 | Le zombie tombe à chaque fenêtre et perd du temps : chute aléatoire, sinon passage normal | Zombies / Animation | Chute tirée au sort (25 %), sinon il enjambe le rebord et redescend en marchant (~0,7 s) ; testé en mode Play, pas au casque (issue #166) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4106,3 +4107,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `hotfix/164-radio-build` poussée (avec le rapport `docs/analyses/Audit_jeu_complet_2026-11-12.md`) et fusionnée dans `main` (`--no-ff`, sans conflit), puis cette entrée du journal. Fusion sans toucher aux fichiers locaux de Rahim (réglages URP, reste du profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
 - Wiki poussé (page Radio de ravitaillement). Issue #164 commentée, laissée ouverte jusqu'au test au casque.
 
+
+---
+
+## 219 — Zombies aux fenêtres : chute aléatoire
+
+**Date** : 2026-11-12 · **Domaine** : Zombies / Animation
+
+> A chaque fois il tombe et perd du temps, il faudrait randomiser le fait qu'il tombe, sinon il fait juste un passage normal par dessus le rebord de la fenêtre
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; issue #166, branche `feature/166-chute-fenetre-aleatoire` partie de `main`, commit local non poussé ; les entrées 216 à 218 sont sur la branche `feature/165-cle-generateur`)
+
+- **Cause** : `ZombieWindowClimb` enchaînait à chaque fenêtre « se hisser → tomber à plat → se relever » (clips Mixamo), soit ~3,5 s de chute et de relevé à chaque passage.
+- **Correction** : la chute est tirée au sort (`fallChance`, 25 % par défaut, réglable sur le prefab). Sinon, une fois le bassin au-dessus du rebord, le zombie repasse en fondu sur la marche (`ZombieAnimationBridge.BackToWalk`, état « Walk ») et redescend côté bunker en ~0,7 s (`stepDownTime`, nouvelle phase `Fit.Step` qui abaisse le modèle du rebord jusqu'au sol en avançant de 0,7 m), puis l'agent reprend la main. Escalade sans les vrais clips (anciens zombies en boîtes) : inchangée. Toit : inchangé.
+- **Multijoueur** : l'escalade ne tourne que chez l'hôte (les marionnettes des clients ont `ZombieWindowClimb` désactivé et suivent les positions envoyées) : le tirage n'a lieu qu'une fois, rien de nouveau à synchroniser.
+- **Testé** en mode Play (PC, MainScene, vague 1, zombies renvoyés dehors pour repasser) : enjambements mesurés de 2,7 à 4,9 s (approche et fin du lien NavMesh comprises), chutes de 7,6 à 8,5 s (dont une forcée avec `fallChance` = 1, la chute marche toujours) ; pas d'erreur. Captures dans `docs/captures/chute_fenetre/` (non commitées) : arrivée au rebord, se hisse, enjambe et redescend, repart sans chute. **Non testé** : au casque. La descente est un petit saut animé avec la marche (pas de clip dédié d'enjambement).

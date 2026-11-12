@@ -62,6 +62,9 @@ public class ZombieAnimationBridge : MonoBehaviour
     public void ClimbUp() { if (HasClimbAnims) animator.SetTrigger("Climb"); }
     public void FallFlat() { if (HasClimbAnims) animator.SetTrigger("Fall"); }
     public void StandUp() { if (HasClimbAnims) animator.SetTrigger("StandUp"); }
+    static readonly int WalkState = Animator.StringToHash("Walk");
+    /// <summary>[Fenêtres] fin d'escalade sans chute : retour en fondu à la marche (état « Walk » de ZombieMixamo).</summary>
+    public void BackToWalk() { if (HasClimbAnims && animator.HasState(0, WalkState)) animator.CrossFadeInFixedTime(WalkState, 0.3f, 0); }
 
     public void Die()
     {

@@ -222,6 +222,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [213](#213--hotfix-163-fusionné-et-audit-du-reste-du-jeu) | 2026-11-12 | Fusionner, puis chercher d'autres bugs importants | Git / Analyse | hotfix/163 fusionné dans main (aca05d2) ; audit du reste du jeu : 0 bloquant (depuis ~/SAE501), 2 majeurs (bouton de la radio au casque, réglages de build non commités), 4 mineurs ; rapport docs/analyses/Audit_jeu_complet_2026-11-12.md |
 | [214](#214--radio-au-casque-réglages-de-build-mineurs) | 2026-11-12 | Corriger les bugs de l'audit du jeu | Gameplay / Build | Radio : gâchette, toucher, plus de lâcher d'arme ; permission micro et Vulkan seul commités ; objet hors de portée rendu ; gardes WaveManager et HUD PC. Testé dans l'éditeur, pas au casque (issue #164) |
 | [215](#215--hotfix-164-fusionné-dans-main) | 2026-11-12 | Pousser et fusionner le hotfix 164 | Git | hotfix/164-radio-build poussée et fusionnée dans main (--no-ff), wiki poussé, issue #164 laissée ouverte jusqu'au test au casque |
+| [220](#220--cabane-du-jardin--feuillage-qui-traverse-la-fenêtre) | 2026-11-12 | Tenue de la clé, fenêtre qui « glitche », porte qui range l'arme sur PC (partie fenêtre) | Carte | Feuillage de deux arbres et de la haie retiré de l'intérieur de la cabane (FeuillageCabane, durable via RoomBuilder) ; captures avant / après ; pas testé au casque (issue #167) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4106,3 +4107,20 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - `hotfix/164-radio-build` poussée (avec le rapport `docs/analyses/Audit_jeu_complet_2026-11-12.md`) et fusionnée dans `main` (`--no-ff`, sans conflit), puis cette entrée du journal. Fusion sans toucher aux fichiers locaux de Rahim (réglages URP, reste du profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).
 - Wiki poussé (page Radio de ravitaillement). Issue #164 commentée, laissée ouverte jusqu'au test au casque.
 
+
+---
+
+## 220 — Cabane du jardin : feuillage qui traverse la fenêtre
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> La tenu de la clé doit être corrigée
+> La fenêtre aussi doit être corrigée, les textures glitchent car elles passent les unes dans les autres
+>
+> Et y a un soucis sur pc quand on ouvre une porte ça range l'arme
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; partie « fenêtre » : issue #167, branche `feature/167-feuillage-cabane` partie de `main`, commit local non poussé ; la clé et la porte sont dans l'entrée 221, branche `feature/165-cle-generateur` ; les entrées 216 à 219 sont sur les branches 165 et 166)
+
+- **Cause** (trouvée en mode Play à la position de la capture, puis par calcul sur les maillages) : ce ne sont pas les murs de la cabane (aucune face superposée entre murs, cadre, fenêtre, lambris, toit), mais le **feuillage de deux arbres** (`Garden_RealTree_07` et son LOD1, `Garden_RealTree_08` et son LOD1) et un bout de la **haie** (`Garden_HighHedges_Boundary`) qui entrent dans la cabane : de l'intérieur, les feuilles traversent le mur, le cadre de la fenêtre et l'étagère.
+- **Correction** : `Assets/Editor/FeuillageCabane.cs` retire tout triangle de végétation dont un sommet est dans le volume de la cabane (murs compris, + 5 cm) : environ 1 400 triangles pour l'arbre 07, 600 pour l'arbre 08, plus leurs LOD1 et la haie (collision de la haie mise à jour aussi). Copies des maillages dans `Assets/Generated/Feuillage` (les FBX ne sont pas touchés). Appliqué à la scène par le menu **SAE501 → Scène → Feuillage hors de la cabane** (seul changement de `MainScene` : 6 références de maillage), et appelé par `RoomBuilder` après les LOD pour que ça tienne si la scène est reconstruite. La scène n'a pas été reconstruite.
+- **Testé** en mode Play (PC) à la position de la capture : captures avant / après dans `docs/captures/fenetre_cabane/` (non commitées) : plus de feuilles dans la cabane. Le feuillage reste visible dehors, à travers la vitre. **Non testé** : au casque.

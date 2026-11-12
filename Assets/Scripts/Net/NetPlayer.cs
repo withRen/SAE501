@@ -164,6 +164,14 @@ public class NetPlayer : NetworkBehaviour
         else if (k && k.IsOwner) NetKillFx.Kill(victim);
     }
 
+    /// <summary>[hotfix #161] Hôte : ce joueur a franchi le portail ; les zombies ne le visent plus (son « double » sur l'hôte,
+    /// ou le joueur de l'hôte lui-même).</summary>
+    public void MarkEscaped()
+    {
+        if (IsOwner) { if (PlayerHealth.Instance) PlayerHealth.Instance.Escaped = true; }
+        else if (proxy) proxy.Escaped = true;
+    }
+
     /// <summary>[hotfix #155] Réapparition au point de départ (fin de vague en coop) : là où ce joueur est arrivé dans la carte.</summary>
     public void RespawnAtStart()
     {

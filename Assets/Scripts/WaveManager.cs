@@ -219,7 +219,7 @@ public class WaveManager : MonoBehaviour
         // pendant le tutoriel : rien ne bouge (pas de compte à rebours, pas de zombie), même si le WaveManager a été réactivé
         if (spawner == null || Tutorial.Running) return;
         // [Multijoueur] la partie continue tant qu'un joueur est debout ; sur un casque client, l'hôte décide de tout (NetGame relaie)
-        bool running = NetSession.Active ? PlayerHealth.NearestAlive(Vector3.zero) != null : !(PlayerHealth.Instance && PlayerHealth.Instance.Dead);
+        bool running = NetSession.Active ? PlayerHealth.AnyAlive() : !(PlayerHealth.Instance && PlayerHealth.Instance.Dead);
         if (phase != Phase.Victory && running) GameStats.Tick(Time.deltaTime);   // [#122] temps de jeu (figé à la fin)
         if (NetSession.IsClientOnly) return;
         switch (phase)
@@ -484,11 +484,20 @@ public class WaveManager : MonoBehaviour
         EscapeOpened?.Invoke();
     }
 
-    /// <summary>[Évasion] un joueur a franchi le portail du jardin (EscapeGate) : victoire.</summary>
+    /// <summary>[Évasion] ce joueur a franchi le portail du jardin (EscapeGate). Solo : victoire.
+    /// [Hotfix #161] En réseau (hôte comme client) : c'est une demande à l'hôte (NetGame), qui ne déclare la victoire
+    /// (TeamVictory) que lorsque tous les joueurs vivants sont sortis.</summary>
     public void PlayerEscaped()
     {
         if (phase != Phase.Escape) return;
-        if (NetSession.IsClientOnly) { if (!remoteVictory) EscapeRequested?.Invoke(); return; }
+        if (NetSession.Active) { if (!remoteVictory) EscapeRequested?.Invoke(); return; }
+        TeamVictory();
+    }
+
+    /// <summary>Victoire de l'évasion (solo : le joueur est sorti ; réseau : décidée par l'hôte, NetGame).</summary>
+    public void TeamVictory()
+    {
+        if (phase != Phase.Escape || NetSession.IsClientOnly) return;
         phase = Phase.Victory;
         Zombie.HuntPlayer = false;
         Debug.Log(GameStats.LogLine("victoire", Level, PlayerHealth.Instance ? PlayerHealth.Instance.Health : 0f, AmmoInGun()));

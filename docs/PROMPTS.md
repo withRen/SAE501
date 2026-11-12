@@ -213,6 +213,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [204](#204--joueur-3-joueur-4-et-apparitions-du-duel) | 2026-11-12 | « Joueur 3 », « Joueur 4 » avec deux casques ; en 1v1 les deux joueurs apparaissent côte à côte | Multijoueur | Cause : liste des numéros jamais vidée entre deux sessions. Numéros pris parmi les joueurs présents, liste vidée à chaque session ; côté du duel (et score) selon le rang du joueur. Testé en mode Play (hôte seul + numéros simulés), pas à deux casques (issue #158) |
 | [205](#205--étiquette-de-nom-masquée-en-duel) | 2026-11-12 | En 1v1 on voit le nametag | Multijoueur | Étiquette au-dessus de l'avatar masquée dans les arènes du duel, gardée en coop ; vérifié en mode Play (arène), pas au casque (issue #159) |
 | [206](#206--hotfix-poussé-et-fusionné-dans-main) | 2026-11-12 | Pousser en hotfix puis dans main | Git | Branche hotfix/155-multijoueur-kills-spectateur-tp poussée, fusionnée dans main (1be77bd, --no-ff), wiki poussé ; issues #155 à #159 laissées ouvertes jusqu'au test au casque |
+| [208](#208--coop-évasion--tous-les-vivants-doivent-passer-le-portail) | 2026-11-12 | Coop Évasion : victoire quand tous les joueurs en vie ont passé le portail | Gameplay / Multijoueur | L'hôte retient les joueurs sortis (plus visés par les zombies) ; victoire quand tous les vivants sont sortis ; compteur « PORTAIL x/y » ; solo inchangé. Règle testée par simulation, chemin hôte et solo testés en mode Play, pas à deux casques (issue #161) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -3943,4 +3944,25 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - Fusion `--no-ff` dans `main` : commit `1be77bd`, poussé. `main` n'avait pas bougé depuis `c445983` : aucun conflit, le contenu est celui de la branche hotfix (compilé sans erreur dans l'éditeur). La fusion a été faite sans changer de branche dans `~/SAE501`, pour ne pas toucher aux fichiers locaux de Rahim (correctif du délai de 12 s dans `MainMenuMulti.cs`, réglages URP, manifeste, profil de build, `DevAgentSettings.asset`, `RuntimeActionBindings.json`, `Protection_suite`, `scripts/`), toujours non commités.
 - Wiki poussé (pages Kills, mort et spectateur ; Déplacement ; Multijoueur).
 - Issues #155 à #159 commentées, laissées ouvertes jusqu'au test au casque.
+
+---
+
+## 208 — Coop Évasion : tous les vivants doivent passer le portail
+
+**Date** : 2026-11-12 · **Domaine** : Gameplay / Multijoueur
+
+> Ok, pour le mode zombi / evasion, comment se passe la victoire, c'est quoi la condition
+
+> Ok, en multi coop evasion la victoire se passe comment ? Un joueur passe le portail et c'est fini pour tous ? Il fudrait que tous les joueurs en vie passent le portail pour le coup
+
+**Résultat** (réponse puis code écrits par l'IA, Claude Code, sur le Mac de Rahim ; issue #161, branche `hotfix/161-evasion-coop-portail` depuis `main`, commit local non poussé)
+
+- **Réponse à la première question** (lue dans le code) : vagues 1 à 3 ; à la vague 4, le générateur devient utilisable après 6 zombies tués ou 60 s, levier tenu 5 s ; il ouvre le portail du jardin ; la victoire tombait dès qu'**un** joueur franchissait le portail (coop compris). Mode survie : pas de victoire.
+- **Changement (coop Évasion)** :
+  - franchir le portail, en réseau, est une demande à l'hôte (`WaveManager.PlayerEscaped` → `NetGame.EscapeRpc`) ; l'hôte garde la liste synchronisée des joueurs sortis (`NetGame.Escaped`) ;
+  - un joueur sorti n'est plus visé par les zombies (`PlayerHealth.Escaped`, ignoré par `NearestAlive`) ; il peut attendre dans le jardin ;
+  - **victoire quand tous les joueurs vivants sont sortis** (`NetGame.AllOut`) : un joueur mort (en spectateur ; pendant l'évasion il n'y a plus de fin de vague, donc pas de réapparition) ou déconnecté n'est plus attendu ; si le dernier joueur encore dedans meurt, ceux déjà sortis gagnent ; si tous meurent, défaite d'équipe comme avant ;
+  - affichage pour tous : « PORTAIL : 1/2 joueurs sortis » ; pour celui qui est sorti : « TU ES SORTI · ATTENDS TON ÉQUIPE » ; pour les autres : « Rejoins-les : passe le portail du jardin » ;
+  - la victoire passe par l'ancien chemin (`TeamVictory` → cinématique et bilan chez tous) ; **solo inchangé**.
+- **Testé** : règle seule (simulation) : 1 sorti sur 2 → non ; 2 sur 2 → victoire ; celui resté dedans meurt → victoire ; déconnexion → victoire ; tous morts → non ; 2 sur 3 → non. Mode Play (MainScene) : solo → victoire au passage ; hôte → marqué sorti, plus visé, victoire (seul joueur). **Non testé** : vraie partie à deux casques. (Une erreur `WaveManager.UpdateWave` vue pendant le test vient du test lui-même : évasion forcée au niveau 0, sans vague en cours.)
 

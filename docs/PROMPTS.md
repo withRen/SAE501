@@ -228,6 +228,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [219](#219--zombies-aux-fenêtres--chute-aléatoire) | 2026-11-12 | Le zombie tombe à chaque fenêtre et perd du temps : chute aléatoire, sinon passage normal | Zombies / Animation | Chute tirée au sort (25 %), sinon il enjambe le rebord et redescend en marchant (~0,7 s) ; testé en mode Play, pas au casque (issue #166) |
 | [220](#220--cabane-du-jardin--feuillage-qui-traverse-la-fenêtre) | 2026-11-12 | Tenue de la clé, fenêtre qui « glitche », porte qui range l'arme sur PC (partie fenêtre) | Carte | Feuillage de deux arbres et de la haie retiré de l'intérieur de la cabane (FeuillageCabane, durable via RoomBuilder) ; captures avant / après ; pas testé au casque (issue #167) |
 | [221](#221--tenue-de-la-clé--sur-pc-la-porte-ne-range-plus-larme) | 2026-11-12 | Tenue de la clé, porte qui range l'arme sur PC (même prompt que 220) | Gameplay / Version PC | Point de prise sur l'anneau de la clé (VR et PC) ; porte tirée par la main libre, ou ouverte seule si les deux mains sont prises : l'arme et la clé restent en main ; testé sur PC, pas au casque (issue #168) |
+| [222](#222--branches-165-166-et-167-fusionnées-dans-main) | 2026-11-12 | Pousser proprement le tout | Git | Branches 165, 166, 167 poussées et fusionnées dans main (--no-ff), conflit du journal résolu en gardant tout, main et wiki poussés, issues #165 à #168 laissées ouvertes jusqu'au test au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4203,3 +4204,17 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Tenue de la clé** : elle n'avait pas de point de prise, donc la main la tenait par son centre, et sur PC dans l'angle où on l'avait ramassée. `KeyItem` ajoute un point de prise `Prise_Cle` sur l'anneau (4,5 cm du centre) : tige vers l'avant, clé à la verticale (comme dans une serrure), au casque comme sur PC. Sur PC, nouvelle pose `Kind.Key` dans `DesktopPlayer` : en bas à droite, tige vers l'avant un peu relevée.
 - **PC, ouvrir une porte rangeait l'arme** : E sur une porte libérait la main droite (pistolet à la ceinture, clé lâchée par terre) pour tirer la poignée. Maintenant la poignée est tirée par la main libre (droite, sinon gauche) ; si les deux mains sont prises (lampe + pistolet, lampe + clé), la porte s'ouvre ou se ferme seule (`HingedDoor.DriveTo`, même vitesse, petit grincement), sans rien lâcher. Porte barricadée ou verrouillée : sans effet. Cas de la clé : E avec la clé en main déverrouille la porte du générateur et l'ouvre, la clé reste en main.
 - **Testé** en mode Play (PC) : clé tenue par l'anneau (capture) ; clé en main droite et lampe en main gauche : E sur la porte du générateur → déverrouillée, ouverte à 92° toute seule, clé et lampe toujours tenues (capture). Captures dans `docs/captures/tenue_cle_porte/` (non commitées, éclairage d'appoint ajouté pour la prise de vue seulement). Pas d'erreur. **Non testé** : la tenue au casque (point de prise réel dans la main), et l'ouverture tirée par la main gauche dans un vrai jeu (dans ce test scripté, l'éditeur tournait à ~3 images/s en arrière-plan : la poignée tirée par une main se relâche aussi sur une porte non modifiée).
+
+---
+
+## 222 — Branches 165, 166 et 167 fusionnées dans main
+
+**Date** : 2026-11-12 · **Domaine** : Git
+
+> Oui push proprement le tout
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim)
+
+- Branches `feature/165-cle-generateur`, `feature/166-chute-fenetre-aleatoire` et `feature/167-feuillage-cabane` poussées, puis fusionnées une par une dans `main` (`--no-ff`). Seul conflit : `docs/PROMPTS.md` (entrées ajoutées en fin de fichier par chaque branche), résolu en gardant toutes les entrées, dans l'ordre 216 à 221 (index et journal). `MainScene` fusionnée sans conflit (composants de la clé + maillages du feuillage).
+- Vérifié après fusion : compilation sans erreur, la scène a la serrure et la clé, les zombies ont la chute aléatoire, les arbres et la haie utilisent les maillages sans la cabane.
+- `main` et le wiki poussés. Issues #165 à #168 commentées, laissées ouvertes jusqu'au test au casque. Fichiers locaux de Rahim non touchés (réglages URP, profil de build, `DevAgentSettings`, `RuntimeActionBindings`, `Protection_suite`, `scripts/`).

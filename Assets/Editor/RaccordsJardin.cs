@@ -16,6 +16,8 @@ using UnityEngine;
 //     contre le lambris ; le buffet voisin suit pour ne pas la chevaucher.
 //  4. Tonneaux : l'export de la carte (6 000 triangles par objet) laisse le haut de chaque douelle en petit bloc à arêtes
 //     vives : le rebord ressemblait à « plein de carrés ». Normales lissées (sommets confondus, angle < 80°) ; forme inchangée.
+//  5. Cabane : faces confondues du cadre de fenêtre/porte et du lambris avec le mur (scintillement en dents de scie) ;
+//     boules de haie qui entraient dans le mur du fond (reculées dans l'épaisseur du mur, voir Haies).
 // Les maillages modifiés sont des copies (Assets/Generated/Raccords), le FBX n'est pas touché.
 public static class RaccordsJardin
 {
@@ -32,9 +34,9 @@ public static class RaccordsJardin
     public static bool Apply(Transform root)
     {
         if (!root) return false;
-        int a = Arbres(root), h = Haies(root), e = Etagere(root), t = Tonneaux(root);
-        Debug.Log($"[RaccordsJardin] {a} arbres remis en ordre, {h} boules de haie reculées des piliers, étagère/buffet déplacés : {e}, {t} tonneaux lissés");
-        return a + h + e + t > 0;
+        int a = Arbres(root), h = Haies(root), e = Etagere(root), t = Tonneaux(root), f = FacesConfondues(root);
+        Debug.Log($"[RaccordsJardin] {a} arbres remis en ordre, {h} boules de haie déplacées (piliers, cabane), étagère/buffet déplacés : {e}, {t} tonneaux lissés, {f} maillages de la cabane resserrés");
+        return a + h + e + t + f > 0;
     }
 
     // ---------- 1. ordre des matériaux des arbres ----------
@@ -70,40 +72,126 @@ public static class RaccordsJardin
         var span = pillars[1].center - pillars[0].center;
         int axis = Mathf.Abs(span.x) > Mathf.Abs(span.z) ? 0 : 2;
 
-        var mesh = hedge.sharedMesh;
+        // source : le maillage d'origine du FBX de la carte (et pas la copie déjà rognée par FeuillageCabane, dont les trous
+        // réapparaîtraient en déplaçant les boules) ; le rognage de l'intérieur de la cabane est refait ici, après les déplacements
+        var mesh = FbxMesh(pillarsMf.sharedMesh, hedge.name) ?? hedge.sharedMesh;
+        var current = hedge.sharedMesh;
         var v = mesh.vertices; var M = hedge.transform.localToWorldMatrix; var Mi = hedge.transform.worldToLocalMatrix;
-        int moved = 0; bool changed = false;
+        var wallsR = root.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.name == "Garden_Cabin_Walls");
+        var cabin = wallsR ? wallsR.bounds : new Bounds();
+        int moved = 0;
         foreach (var part in Parts(mesh, hedge.transform))
         {
             if (part.box.size.magnitude > 4.5f) continue;                       // seulement les boules, pas le cœur de la haie
+            var d = Vector3.zero;
             foreach (var p in pillars)
             {
                 if (!part.box.Intersects(p)) continue;
                 float dir = Mathf.Sign(gate[axis] - p.center[axis]);            // côté du passage
                 float edge = dir > 0 ? part.box.max[axis] : part.box.min[axis];
-                float limit = p.center[axis];
-                float shift = limit - edge;                                      // < 0 si dir > 0 et la boule dépasse vers le passage
-                if (dir * shift >= -0.005f) continue;
-                var d = Vector3.zero; d[axis] = shift;
-                foreach (int i in part.verts) v[i] = Mi.MultiplyPoint3x4(M.MultiplyPoint3x4(v[i]) + d);
-                moved++; changed = true;
+                float shift = p.center[axis] - edge;                             // la boule s'arrête au milieu du pilier
+                if (dir * shift < -0.005f) d[axis] = shift;
                 break;
             }
+            // boule qui entre dans un mur de la cabane : reculée pour s'arrêter 2 cm dans l'épaisseur du mur (ni vide, ni feuilles dedans)
+            if (wallsR && part.box.Intersects(cabin) && !cabin.Contains(new Vector3(part.box.center.x, cabin.center.y, part.box.center.z)))
+            {
+                const float inset = 0.02f;
+                var cands = new[]
+                {
+                    new Vector3(cabin.min.x + inset - part.box.max.x, 0, 0), new Vector3(cabin.max.x - inset - part.box.min.x, 0, 0),
+                    new Vector3(0, 0, cabin.min.z + inset - part.box.max.z), new Vector3(0, 0, cabin.max.z - inset - part.box.min.z),
+                };
+                // sens : celui qui éloigne la boule de la cabane, le plus court
+                var best = cands.Where(c => Vector3.Dot(c, part.box.center - cabin.center) > 0f).OrderBy(c => c.magnitude).FirstOrDefault();
+                if (best.magnitude > 0.005f) d += best;
+            }
+            if (d == Vector3.zero) continue;
+            foreach (int i in part.verts) v[i] = Mi.MultiplyPoint3x4(M.MultiplyPoint3x4(v[i]) + d);
+            moved++;
         }
-        if (!changed) return 0;
 
+        // rognage : tout triangle dont un sommet est dans le volume intérieur de la cabane (murs de 13 cm exclus)
+        var inner = cabin; inner.Expand(new Vector3(-0.2f, 0f, -0.2f));
         var copy = Object.Instantiate(mesh);
         copy.name = "Garden_HighHedges_Boundary";
         copy.vertices = v;
+        if (wallsR)
+            for (int s = 0; s < copy.subMeshCount; s++)
+            {
+                var t = copy.GetTriangles(s); var keep = new List<int>(t.Length);
+                for (int i = 0; i < t.Length; i += 3)
+                {
+                    bool In(int k) => inner.Contains(M.MultiplyPoint3x4(v[t[k]]));
+                    if (In(i) || In(i + 1) || In(i + 2)) continue;
+                    keep.Add(t[i]); keep.Add(t[i + 1]); keep.Add(t[i + 2]);
+                }
+                copy.SetTriangles(keep, s, false);
+            }
         copy.RecalculateBounds();
-        Directory.CreateDirectory(Dir);
         var file = Dir + "/Garden_HighHedges_Boundary.asset";
+        if (AssetDatabase.GetAssetPath(current) == file && current.vertexCount == copy.vertexCount
+            && current.triangles.Length == copy.triangles.Length && current.vertices.SequenceEqual(copy.vertices))
+        { Object.DestroyImmediate(copy); return 0; }                             // déjà à jour
+        Directory.CreateDirectory(Dir);
         AssetDatabase.DeleteAsset(file);
         AssetDatabase.CreateAsset(copy, file);
         var mc = hedge.GetComponent<MeshCollider>();
-        if (mc && mc.sharedMesh == mesh) mc.sharedMesh = copy;
+        if (mc) mc.sharedMesh = copy;
         hedge.sharedMesh = copy;
-        return moved;
+        return Mathf.Max(moved, 1);
+    }
+
+    // maillage d'origine (même nom) dans le FBX d'où vient « reference »
+    static Mesh FbxMesh(Mesh reference, string name)
+    {
+        var path = AssetDatabase.GetAssetPath(reference);
+        if (string.IsNullOrEmpty(path) || !path.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase)) return null;
+        return AssetDatabase.LoadAllAssetsAtPath(path).OfType<Mesh>().FirstOrDefault(m => m.name == name);
+    }
+
+    // ---------- 5. cabane : faces confondues (scintillement) ----------
+    // Le cadre de la fenêtre et de la porte (Garden_Cabin_WindowSash) a ses faces intérieures exactement sur les tableaux,
+    // l'appui et le linteau du mur, et le lambris (Garden_Cabin_Wainscot) a ses bords sur ceux du mur à la porte : deux faces
+    // au même endroit scintillent en dents de scie. Chaque morceau de ces maillages est resserré de quelques millimètres vers
+    // son centre : les faces intérieures du cadre passent devant le mur (bois visible), les bords du lambris passent derrière.
+    static int FacesConfondues(Transform root)
+    {
+        int n = 0;
+        foreach (var (name, mm) in new[] { ("Garden_Cabin_WindowSash", 0.004f), ("Garden_Cabin_Wainscot", 0.003f) })
+        {
+            var mf = root.GetComponentsInChildren<MeshFilter>(true).FirstOrDefault(f => f.name == name);
+            if (!mf || !mf.sharedMesh) continue;
+            var file = Dir + "/" + name + ".asset";
+            if (AssetDatabase.GetAssetPath(mf.sharedMesh) == file) continue;          // déjà fait
+            var src = mf.sharedMesh;
+            if (!src.isReadable) continue;
+            var copy = Object.Instantiate(src); copy.name = name;
+            var v = copy.vertices;
+            foreach (var part in Parts(src, mf.transform))
+            {
+                var c = mf.transform.InverseTransformPoint(part.box.center);
+                foreach (int i in part.verts)
+                {
+                    var p = v[i];
+                    for (int a = 0; a < 3; a++)
+                    {
+                        float off = p[a] - c[a];
+                        if (Mathf.Abs(off) > 0.01f) p[a] -= Mathf.Sign(off) * mm;
+                    }
+                    v[i] = p;
+                }
+            }
+            copy.vertices = v; copy.RecalculateBounds();
+            Directory.CreateDirectory(Dir);
+            AssetDatabase.DeleteAsset(file);
+            AssetDatabase.CreateAsset(copy, file);
+            var mc = mf.GetComponent<MeshCollider>();
+            if (mc && mc.sharedMesh == src) mc.sharedMesh = copy;
+            mf.sharedMesh = copy;
+            n++;
+        }
+        return n;
     }
 
     // ---------- 3. étagère de la cabane ----------

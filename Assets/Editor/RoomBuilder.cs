@@ -125,6 +125,7 @@ public static class RoomBuilder
         new GameObject("XR Interaction Manager").AddComponent<XRInteractionManager>();
         NavBuilder.Bake(mapRoot, rig, items.gameObject, GameObject.Find("Belt"), gatesRoot);
         LodBuilder.Build(roomRoot.transform);          // [#118] après le NavMesh : les LOD1 n'y entrent pas
+        FeuillageCabane.Apply(roomRoot.transform);     // [#167] après les LOD : feuillage des arbres qui traversait la cabane retiré
         BuildLightProbes();
         UnbatchInteractables();
         TexturesUsure.Appliquer();                     // textures PBR des matériaux recréés en couleur unie (Dark, Metal, Radio)

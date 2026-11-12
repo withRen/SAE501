@@ -226,6 +226,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [217](#217--clé-du-générateur--indication-visuelle-au-casque) | 2026-11-12 | Indication visuelle pour déverrouiller avec la clé au casque | Gameplay / UX | Serrure visible sous la poignée ; clé en main près de la porte : serrure qui luit et pulse, panneau « approchez-la de la serrure », étiquette de la clé ; testé sur PC, pas au casque (issue #165) |
 | [218](#218--captures-de-la-serrure-et-vérification-coop) | 2026-11-12 | Captures de la serrure, risques de bug en coop | Gameplay / Multijoueur | 5 captures (sans clé, clé à 2 m, texte casque, clé proche, déverrouillée) ; lueur fixe sur la serrure, textes PC ; l'hôte refuse un déverrouillage avant l'ouverture de la salle ; risques coop examinés (issue #165) |
 | [219](#219--zombies-aux-fenêtres--chute-aléatoire) | 2026-11-12 | Le zombie tombe à chaque fenêtre et perd du temps : chute aléatoire, sinon passage normal | Zombies / Animation | Chute tirée au sort (25 %), sinon il enjambe le rebord et redescend en marchant (~0,7 s) ; testé en mode Play, pas au casque (issue #166) |
+| [220](#220--cabane-du-jardin--feuillage-qui-traverse-la-fenêtre) | 2026-11-12 | Tenue de la clé, fenêtre qui « glitche », porte qui range l'arme sur PC (partie fenêtre) | Carte | Feuillage de deux arbres et de la haie retiré de l'intérieur de la cabane (FeuillageCabane, durable via RoomBuilder) ; captures avant / après ; pas testé au casque (issue #167) |
 | [221](#221--tenue-de-la-clé--sur-pc-la-porte-ne-range-plus-larme) | 2026-11-12 | Tenue de la clé, porte qui range l'arme sur PC (même prompt que 220) | Gameplay / Version PC | Point de prise sur l'anneau de la clé (VR et PC) ; porte tirée par la main libre, ou ouverte seule si les deux mains sont prises : l'arme et la clé restent en main ; testé sur PC, pas au casque (issue #168) |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
@@ -4171,6 +4172,23 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Correction** : la chute est tirée au sort (`fallChance`, 25 % par défaut, réglable sur le prefab). Sinon, une fois le bassin au-dessus du rebord, le zombie repasse en fondu sur la marche (`ZombieAnimationBridge.BackToWalk`, état « Walk ») et redescend côté bunker en ~0,7 s (`stepDownTime`, nouvelle phase `Fit.Step` qui abaisse le modèle du rebord jusqu'au sol en avançant de 0,7 m), puis l'agent reprend la main. Escalade sans les vrais clips (anciens zombies en boîtes) : inchangée. Toit : inchangé.
 - **Multijoueur** : l'escalade ne tourne que chez l'hôte (les marionnettes des clients ont `ZombieWindowClimb` désactivé et suivent les positions envoyées) : le tirage n'a lieu qu'une fois, rien de nouveau à synchroniser.
 - **Testé** en mode Play (PC, MainScene, vague 1, zombies renvoyés dehors pour repasser) : enjambements mesurés de 2,7 à 4,9 s (approche et fin du lien NavMesh comprises), chutes de 7,6 à 8,5 s (dont une forcée avec `fallChance` = 1, la chute marche toujours) ; pas d'erreur. Captures dans `docs/captures/chute_fenetre/` (non commitées) : arrivée au rebord, se hisse, enjambe et redescend, repart sans chute. **Non testé** : au casque. La descente est un petit saut animé avec la marche (pas de clip dédié d'enjambement).
+
+---
+
+## 220 — Cabane du jardin : feuillage qui traverse la fenêtre
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> La tenu de la clé doit être corrigée
+> La fenêtre aussi doit être corrigée, les textures glitchent car elles passent les unes dans les autres
+>
+> Et y a un soucis sur pc quand on ouvre une porte ça range l'arme
+
+**Résultat** (code écrit par l'IA, Claude Code, sur le Mac de Rahim ; partie « fenêtre » : issue #167, branche `feature/167-feuillage-cabane` partie de `main`, commit local non poussé ; la clé et la porte sont dans l'entrée 221, branche `feature/165-cle-generateur` ; les entrées 216 à 219 sont sur les branches 165 et 166)
+
+- **Cause** (trouvée en mode Play à la position de la capture, puis par calcul sur les maillages) : ce ne sont pas les murs de la cabane (aucune face superposée entre murs, cadre, fenêtre, lambris, toit), mais le **feuillage de deux arbres** (`Garden_RealTree_07` et son LOD1, `Garden_RealTree_08` et son LOD1) et un bout de la **haie** (`Garden_HighHedges_Boundary`) qui entrent dans la cabane : de l'intérieur, les feuilles traversent le mur, le cadre de la fenêtre et l'étagère.
+- **Correction** : `Assets/Editor/FeuillageCabane.cs` retire tout triangle de végétation dont un sommet est dans le volume de la cabane (murs compris, + 5 cm) : environ 1 400 triangles pour l'arbre 07, 600 pour l'arbre 08, plus leurs LOD1 et la haie (collision de la haie mise à jour aussi). Copies des maillages dans `Assets/Generated/Feuillage` (les FBX ne sont pas touchés). Appliqué à la scène par le menu **SAE501 → Scène → Feuillage hors de la cabane** (seul changement de `MainScene` : 6 références de maillage), et appelé par `RoomBuilder` après les LOD pour que ça tienne si la scène est reconstruite. La scène n'a pas été reconstruite.
+- **Testé** en mode Play (PC) à la position de la capture : captures avant / après dans `docs/captures/fenetre_cabane/` (non commitées) : plus de feuilles dans la cabane. Le feuillage reste visible dehors, à travers la vitre. **Non testé** : au casque.
 
 ---
 

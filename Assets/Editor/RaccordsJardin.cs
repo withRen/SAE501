@@ -18,6 +18,8 @@ using UnityEngine;
 //     vives : le rebord ressemblait à « plein de carrés ». Normales lissées (sommets confondus, angle < 80°) ; forme inchangée.
 //  5. Cabane : faces confondues du cadre de fenêtre/porte et du lambris avec le mur (scintillement en dents de scie) ;
 //     boules de haie qui entraient dans le mur du fond (reculées dans l'épaisseur du mur, voir Haies).
+//  6. Façade de la cuisine (côté jardin) : boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin
+//     du mur (plus de jour entre la haie et la cuisine), coupes de l'export rentrées dans le mur de la salle du générateur.
 // Les maillages modifiés sont des copies (Assets/Generated/Raccords), le FBX n'est pas touché.
 public static class RaccordsJardin
 {
@@ -79,6 +81,11 @@ public static class RaccordsJardin
         var v = mesh.vertices; var M = hedge.transform.localToWorldMatrix; var Mi = hedge.transform.worldToLocalMatrix;
         var wallsR = root.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.name == "Garden_Cabin_Walls");
         var cabin = wallsR ? wallsR.bounds : new Bounds();
+        var rends = root.GetComponentsInChildren<MeshRenderer>(true);
+        // bacs à fleurs du jardin (la haie ne doit pas pousser dedans) ; mur en brique de la salle du générateur ; mur de la cuisine
+        var planters = rends.Where(r => r.name.StartsWith("Garden_Planter_") && !r.name.Contains("_LOD")).Select(r => r.bounds).ToList();
+        var genWall = rends.FirstOrDefault(r => r.name == "Wall_GeneratorRoom_West");
+        var kitchenWall = rends.FirstOrDefault(r => r.name == "Wall_North");
         int moved = 0;
         foreach (var part in Parts(mesh, hedge.transform))
         {
@@ -106,9 +113,48 @@ public static class RaccordsJardin
                 var best = cands.Where(c => Vector3.Dot(c, part.box.center - cabin.center) > 0f).OrderBy(c => c.magnitude).FirstOrDefault();
                 if (best.magnitude > 0.005f) d += best;
             }
+            // boule au-dessus d'un bac : reculée à l'horizontale (sens le plus court) pour laisser 5 cm autour du bac
+            foreach (var pl in planters)
+            {
+                var b = part.box; b.center += d;
+                if (b.max.x <= pl.min.x - 0.05f || b.min.x >= pl.max.x + 0.05f || b.max.z <= pl.min.z - 0.05f || b.min.z >= pl.max.z + 0.05f) continue;
+                var cands = new[]
+                {
+                    new Vector3(pl.min.x - 0.05f - b.max.x, 0, 0), new Vector3(pl.max.x + 0.05f - b.min.x, 0, 0),
+                    new Vector3(0, 0, pl.min.z - 0.05f - b.max.z), new Vector3(0, 0, pl.max.z + 0.05f - b.min.z),
+                };
+                d += cands.Where(c => Vector3.Dot(c, b.center - pl.center) > 0f).OrderBy(c => c.magnitude).FirstOrDefault();
+            }
+            // boule coupée net par l'export à 10 cm du mur en brique de la salle du générateur : la coupe est rentrée dans le mur
+            if (genWall)
+            {
+                var w = genWall.bounds; var b = part.box;
+                if (b.min.x > w.max.x && b.min.x < w.max.x + 0.2f && b.min.z < w.max.z + 1.2f && b.max.z > w.min.z)
+                    d.x += (w.max.x - 0.02f) - b.min.x;
+            }
             if (d == Vector3.zero) continue;
             foreach (int i in part.verts) v[i] = Mi.MultiplyPoint3x4(M.MultiplyPoint3x4(v[i]) + d);
             moved++;
+        }
+
+        // coin de la cuisine : le cœur de la haie (bloc d'un mètre de large) s'arrêtait 20 cm avant le coin du mur, et les boules
+        // arrondies laissaient un jour vers l'extérieur. Le bout du cœur est prolongé jusque derrière le coin et collé au mur.
+        if (kitchenWall)
+        {
+            var w = kitchenWall.bounds;
+            foreach (var part in Parts(mesh, hedge.transform))
+            {
+                var b = part.box;
+                if (b.size.magnitude <= 4.5f || b.min.z < w.max.z - 0.3f || b.min.z > w.max.z + 0.6f || b.min.x > w.max.x + 0.5f || b.max.x < w.max.x) continue;
+                foreach (int i in part.verts)
+                {
+                    var p = M.MultiplyPoint3x4(v[i]);
+                    if (p.z < b.min.z + 0.05f) p.z = w.max.z - 0.1f;             // bout du cœur : 10 cm derrière le coin, dans l'épaisseur du mur
+                    if (p.x < b.min.x + 0.05f) p.x = w.max.x - 0.05f;             // flanc côté mur : collé au mur
+                    v[i] = Mi.MultiplyPoint3x4(p);
+                }
+                moved++;
+            }
         }
 
         // rognage : tout triangle dont un sommet est dans le volume intérieur de la cabane (murs de 13 cm exclus)

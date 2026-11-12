@@ -236,6 +236,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [227](#227--jardin--écorce-des-arbres-haies-du-portail-étagère-de-la-cabane) | 2026-11-12 | Incohérences de la map : écorce des arbres trop grande, haie qui traverse le pilier du portail, fenêtre de la cabane | Carte | Matériaux tronc/rameaux inversés remis en ordre, boules de haie reculées des piliers, étagère et buffet ramenés hors du mur ; `RaccordsJardin.cs`, issue #170 ; pas testé au casque |
 | [228](#228--tonneaux--rebord-en-petits-blocs) | 2026-11-12 | Le tonneau n'est pas vraiment rond, on dirait plein de carrés | Carte | Normales lissées sur les 14 tonneaux et fûts de la carte (étape 4 de `RaccordsJardin`), forme inchangée ; issue #170 ; pas testé au casque |
 | [229](#229--cabane--faces-confondues-et-haie-dans-le-mur) | 2026-11-12 | Corriger les vides inutiles et les textures qui scintillent parce que les murs sont les uns dans les autres (7 captures de la cabane) | Carte | Cadre de fenêtre/porte et lambris resserrés de 3-4 mm (plus de faces confondues avec le mur), 5 boules de haie reculées hors du mur du fond, haie recalculée depuis le FBX ; `RaccordsJardin` étape 5, issue #170 ; pas testé au casque |
+| [230](#230--façade-de-la-cuisine--haie-bac-et-coupe) | 2026-11-12 | Le trou à côté de la cuisine, le pot mal placé, la coupe étrange | Carte | Boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin de la cuisine, coupes de l'export rentrées dans le mur du générateur (`RaccordsJardin` étape 6), issue #170 ; pas testé au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4353,4 +4354,24 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Haie** : 5 boules de la haie du fond entraient de 10 à 20 cm dans le mur arrière de la cabane (coupées net par le mur). Elles sont reculées pour s'arrêter 2 cm dans l'épaisseur du mur : ni vide entre la haie et la cabane, ni feuilles qui traversent. La haie est maintenant recalculée à partir du maillage d'origine du FBX (déplacements du portail et de la cabane, puis rognage de l'intérieur), pour ne pas faire réapparaître les trous laissés par l'ancien rognage (#167).
 - Captures avant/après dans `docs/captures/nettoyage_carte/` (`*_appui_fenetre`, `*_montant_porte`, `*_cabane_arriere_*`, `*_cabane_dessus`).
 - **Limites** : vu d'en haut, le bord du toit reste pris dans le haut de la haie (la haie est plus haute que la cabane) ; reculer la haie jusqu'au toit laisserait 40 cm de vide au pied du mur. Éclairage non recuit. **Non testé** au casque. Rien poussé.
+
+---
+
+## 230 — Façade de la cuisine : haie, bac et coupe
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> Corrige le trou à côté de la cuisine
+> Le pot est mal placé
+> Le cut est étrange un peu
+
+(3 captures de la façade de la cuisine côté jardin)
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- **Pot** : le bac sud de la porte (`Garden_Planter_Porch_South`) n'était pas mal placé, c'est la haie qui commençait au-dessus de lui (boules jusqu'à 70 cm dans le bac). Les boules qui couvrent un bac du jardin sont maintenant reculées à l'horizontale pour laisser 5 cm autour ; les deux bacs restent symétriques de part et d'autre de la porte.
+- **Trou** : le cœur de la haie (bloc d'un mètre) s'arrêtait 20 cm avant le coin du mur de la cuisine et les boules arrondies laissaient voir l'extérieur. Le bout du cœur est prolongé jusque derrière le coin et collé au mur.
+- **Coupe** : les boules de haie coupées net par l'export à 10 cm du mur en brique de la salle du générateur sont avancées pour que la coupe soit dans le mur.
+- Étape 6 de `RaccordsJardin` (même recalcul de la haie depuis le FBX). Captures `docs/captures/nettoyage_carte/*_cuisine_*` ; portail et cabane revérifiés, inchangés.
+- **Non testé** au casque. Rien poussé.
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -9,6 +10,11 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 // qu'une fois par coup (délai entre deux coups).
 // [SONS, PR #151] Le souffle du geste est le vrai son « axe_whoosh » : un seul par GRAND geste (extrémité plus rapide que
 // whooshMinSpeed), réarmé quand le geste est fini. Sans le fichier : l'ancien souffle procédural, au seuil d'avant.
+// [#169] Le souffle (et le coup) ne viennent plus du simple déplacement du joueur : avant, la vitesse était mesurée dans le
+// monde, donc marcher, tourner (souris, rotation par crans) ou se téléporter faisait siffler l'arme.
+//   - casque : vitesse du geste PAR RAPPORT AU RIG (position de l'extrémité recalculée depuis la manette qui tient l'arme,
+//     même hiérarchie que le rig : ni la marche, ni la rotation, ni la téléportation ne comptent) ;
+//   - PC : souffle et coup seulement pendant l'animation de frappe (clic gauche, DesktopPlayer.Swinging).
 public class MeleeWeapon : MonoBehaviour
 {
     [Header("Dégâts (part des PV de base du zombie)")]
@@ -33,6 +39,8 @@ public class MeleeWeapon : MonoBehaviour
     bool whooshArmed = true;
     static AudioClip swingClip, axeClip, crowbarClip;
     Vector3 lastPos, swingDir;
+    Transform rig;                         // [#169] XR Origin (casque)
+    bool lastRigSpace;
     float speed, lastSwingAt = -10f;
     bool isAxe;
     readonly Dictionary<Zombie, float> lastHit = new Dictionary<Zombie, float>();
@@ -58,20 +66,41 @@ public class MeleeWeapon : MonoBehaviour
         if (!swingClip) { swingClip = ProcAudio.MeleeSwing(); axeClip = ProcAudio.AxeImpact(); crowbarClip = ProcAudio.CrowbarImpact(); }
     }
 
-    void Start() { if (striker) lastPos = striker.position; }
+    void Start() { if (striker) lastPos = Sample(out lastRigSpace); }
+
+    // [#169] position de l'extrémité : au casque, dans le repère du rig, calculée depuis la manette qui tient l'arme
+    // (l'arme suit la manette : décalage constant dans l'arme) ; sinon dans le monde
+    Vector3 Sample(out bool rigSpace)
+    {
+        rigSpace = false;
+        if (DesktopMode.On || !grab || !BeltItem.InHand(grab)) return striker.position;
+        if (!rig) { var o = FindAnyObjectByType<XROrigin>(); if (o) rig = o.transform; }
+        var it = grab.firstInteractorSelecting;
+        if (!rig || it == null) return striker.position;
+        var ia = it.GetAttachTransform(grab); var ga = grab.GetAttachTransform(it);
+        rigSpace = true;
+        return rig.InverseTransformPoint(ia.TransformPoint(ga.InverseTransformPoint(striker.position)));
+    }
+
+    // [#169] PC : seule l'animation de frappe compte (marcher et tourner avec la souris ne font pas siffler l'arme)
+    bool Attacking => !DesktopMode.On || (DesktopPlayer.Instance && DesktopPlayer.Instance.Swinging);
 
     void Update()
     {
         if (!striker) return;
-        if (PauseMenu.Paused) { lastPos = striker.position; speed = 0f; return; }   // pause : temps figé, pas de coup
+        if (PauseMenu.Paused) { lastPos = Sample(out lastRigSpace); speed = 0f; return; }   // pause : temps figé, pas de coup
         float dt = Mathf.Max(Time.deltaTime, 1e-4f);
-        var p = striker.position;
-        speed = Mathf.Max((p - lastPos).magnitude / dt, speed * 0.8f);   // vitesse lissée : reste « chaude » le temps du contact
-        if ((p - lastPos).sqrMagnitude > 1e-8f) swingDir = p - lastPos;
+        var p = Sample(out bool rigSpace);
+        if (rigSpace != lastRigSpace) { lastPos = p; speed = 0f; lastRigSpace = rigSpace; }   // prise ou lâcher : pas de saut de vitesse
+        var d = p - lastPos;
+        speed = Mathf.Max(d.magnitude / dt, speed * 0.8f);   // vitesse lissée : reste « chaude » le temps du contact
+        if (d.sqrMagnitude > 1e-8f) swingDir = rigSpace && rig ? rig.TransformVector(d) : d;
         lastPos = p;
         bool held = BeltItem.InHand(grab);
-        if (held) Whoosh();
-        if (!held || speed < minSpeed) return;
+        bool attacking = held && Attacking;
+        if (!attacking) whooshArmed = true;
+        if (attacking) Whoosh();
+        if (!attacking || speed < minSpeed) return;
         Strike();
     }
 

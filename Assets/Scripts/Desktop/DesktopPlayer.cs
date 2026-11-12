@@ -89,6 +89,8 @@ public class DesktopPlayer : MonoBehaviour
     BeltSocket[] sockets = new BeltSocket[0];
 
     public static DesktopPlayer Instance { get; private set; }
+    /// <summary>[#169] Animation de frappe en cours (clic gauche, outil ou arme de mêlée en main droite).</summary>
+    public bool Swinging => swing >= 0f;
     public bool MenuScene => menuScene;
     public Vector3 AimPoint => aimPoint;
     public string HoverText => hoverText;

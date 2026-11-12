@@ -18,8 +18,8 @@ using UnityEngine;
 //     vives : le rebord ressemblait à « plein de carrés ». Normales lissées (sommets confondus, angle < 80°) ; forme inchangée.
 //  5. Cabane : faces confondues du cadre de fenêtre/porte et du lambris avec le mur (scintillement en dents de scie) ;
 //     boules de haie qui entraient dans le mur du fond (reculées dans l'épaisseur du mur, voir Haies).
-//  6. Façade de la cuisine (côté jardin) : boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin
-//     du mur (plus de jour entre la haie et la cuisine), coupes de l'export rentrées dans le mur de la salle du générateur.
+//  6. Façade de la cuisine (côté jardin) : boules de haie au-dessus du bac sud reculées, boules du coin avancées contre le mur
+//     (plus de jour entre la haie et la cuisine), coupes de l'export rentrées dans le mur de la salle du générateur.
 // Les maillages modifiés sont des copies (Assets/Generated/Raccords), le FBX n'est pas touché.
 public static class RaccordsJardin
 {
@@ -137,20 +137,24 @@ public static class RaccordsJardin
             moved++;
         }
 
-        // coin de la cuisine : le cœur de la haie (bloc d'un mètre de large) s'arrêtait 20 cm avant le coin du mur, et les boules
-        // arrondies laissaient un jour vers l'extérieur. Le bout du cœur est prolongé jusque derrière le coin et collé au mur.
+        // coin de la cuisine : entre le coin du mur et les boules arrondies de la haie, on voyait l'extérieur. Les boules qui
+        // touchent le coin sont avancées de 45 cm vers le mur (au-delà du coin, rien derrière) ; la petite partie qui entrerait
+        // dans le mur est aplatie dans son épaisseur, pour que rien ne dépasse dans la cuisine. Pas de bloc plat : on garde les boules.
         if (kitchenWall)
         {
             var w = kitchenWall.bounds;
             foreach (var part in Parts(mesh, hedge.transform))
             {
-                var b = part.box;
-                if (b.size.magnitude <= 4.5f || b.min.z < w.max.z - 0.3f || b.min.z > w.max.z + 0.6f || b.min.x > w.max.x + 0.5f || b.max.x < w.max.x) continue;
+                var b0 = part.box;
+                // position actuelle (après les déplacements ci-dessus)
+                var b = new Bounds(M.MultiplyPoint3x4(v[part.verts[0]]), Vector3.zero);
+                foreach (int i in part.verts) b.Encapsulate(M.MultiplyPoint3x4(v[i]));
+                if (b0.size.magnitude > 4.5f || b.min.x > w.max.x + 0.15f || b.max.z < w.max.z || b.min.z > w.max.z + 0.8f) continue;
                 foreach (int i in part.verts)
                 {
                     var p = M.MultiplyPoint3x4(v[i]);
-                    if (p.z < b.min.z + 0.05f) p.z = w.max.z - 0.1f;             // bout du cœur : 10 cm derrière le coin, dans l'épaisseur du mur
-                    if (p.x < b.min.x + 0.05f) p.x = w.max.x - 0.05f;             // flanc côté mur : collé au mur
+                    p.x -= 0.45f;
+                    if (p.z < w.max.z + 0.02f && p.x < w.min.x + 0.03f) p.x = w.min.x + 0.03f;
                     v[i] = Mi.MultiplyPoint3x4(p);
                 }
                 moved++;

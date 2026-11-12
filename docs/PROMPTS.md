@@ -237,6 +237,7 @@ Chaque nouveau prompt est ajouté **en bas de ce fichier** (entrée suivante) et
 | [228](#228--tonneaux--rebord-en-petits-blocs) | 2026-11-12 | Le tonneau n'est pas vraiment rond, on dirait plein de carrés | Carte | Normales lissées sur les 14 tonneaux et fûts de la carte (étape 4 de `RaccordsJardin`), forme inchangée ; issue #170 ; pas testé au casque |
 | [229](#229--cabane--faces-confondues-et-haie-dans-le-mur) | 2026-11-12 | Corriger les vides inutiles et les textures qui scintillent parce que les murs sont les uns dans les autres (7 captures de la cabane) | Carte | Cadre de fenêtre/porte et lambris resserrés de 3-4 mm (plus de faces confondues avec le mur), 5 boules de haie reculées hors du mur du fond, haie recalculée depuis le FBX ; `RaccordsJardin` étape 5, issue #170 ; pas testé au casque |
 | [230](#230--façade-de-la-cuisine--haie-bac-et-coupe) | 2026-11-12 | Le trou à côté de la cuisine, le pot mal placé, la coupe étrange | Carte | Boules de haie au-dessus du bac sud reculées, cœur de la haie prolongé jusqu'au coin de la cuisine, coupes de l'export rentrées dans le mur du générateur (`RaccordsJardin` étape 6), issue #170 ; pas testé au casque |
+| [231](#231--coin-de-la-cuisine--boules-au-lieu-du-bloc) | 2026-11-12 | C'est visuellement horrible, complète mais garde ça plaisant | Carte | Bloc plat du coin de la cuisine retiré ; les boules rondes du coin avancées de 45 cm contre le mur (partie dans le mur aplatie, rien dans la cuisine) ; pas testé au casque |
 | [110](#110--revue-ld-gd-de-lhôpital-v03) | 2026-10-21 | Revue critique LD/GD de Hospital_VR_Survival_QualityPass_v03_PBR_CoD_Zombie.blend | Carte | Analyse seule : 10 bloquants (accès du hall, escalier plein, rampe sous dalle, bloc op muré…), barricades et apparitions à refaire, couche CoD à retirer, 202 maillages à normales inversées |
 
 **Domaines :** Documentation · Gameplay · Environnement · Éclairage · Optimisation · Build / Quest · GitHub / organisation · Audio · UI
@@ -4374,4 +4375,18 @@ Copier ce bloc en fin de fichier, incrémenter le numéro, puis ajouter une lign
 - **Coupe** : les boules de haie coupées net par l'export à 10 cm du mur en brique de la salle du générateur sont avancées pour que la coupe soit dans le mur.
 - Étape 6 de `RaccordsJardin` (même recalcul de la haie depuis le FBX). Captures `docs/captures/nettoyage_carte/*_cuisine_*` ; portail et cabane revérifiés, inchangés.
 - **Non testé** au casque. Rien poussé.
+
+---
+
+## 231 — Coin de la cuisine : boules au lieu du bloc
+
+**Date** : 2026-11-12 · **Domaine** : Carte
+
+> C'est visuellement horrible, complete mais au moins garde ça visuellement plaisant
+
+**Résultat** (fait par l'IA, Claude Code, sur le Mac de Rahim, sans reconstruire la scène)
+
+- Le correctif de l'entrée 230 prolongeait le cœur de la haie en bloc plat jusqu'au coin de la cuisine : jour fermé, mais un pan de feuillage carré, laid. **Retiré.**
+- À la place, les boules rondes qui touchent le coin sont avancées de 45 cm vers le mur (au-delà du coin, il n'y a rien derrière) ; la petite partie qui entrerait dans le mur est aplatie dans son épaisseur. Vérifié : aucun sommet de haie dans la cuisine, capture de l'intérieur propre. La haie garde ses boules, les deux bacs restent dégagés et symétriques.
+- Captures `docs/captures/nettoyage_carte/apres_cuisine_*` mises à jour. **Non testé** au casque. Rien poussé.
 
